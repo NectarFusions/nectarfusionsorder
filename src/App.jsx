@@ -57,6 +57,13 @@ const Logo = ({ size = 72 }) => (
     style={{ width: size, height: size, objectFit: "contain", flexShrink: 0, display: "block" }} />
 );
 
+/* --- deep link: /order/<token> lets a customer reopen their order later --- */
+const TOKEN_RE = /^\/order\/([0-9a-f-]{36})\/?$/i;
+const tokenFromUrl = () => (window.location.pathname.match(TOKEN_RE) || [])[1] || null;
+const pushOrderUrl = (token) => window.history.pushState({}, "", `/order/${token}`);
+const pushHome = () => window.history.pushState({}, "", "/");
+export const orderUrl = (token) => `${window.location.origin}/order/${token}`;
+
 const Field = ({ value, onChange, placeholder, type, required = true, rows }) => {
   const filled = String(value || "").trim().length > 0;
   const cls = required ? (filled ? "done" : "needs") : "";
@@ -146,6 +153,25 @@ export default function App() {
 
   useEffect(() => { reload(); }, [reload]);
 
+  /* If someone lands on /order/<token> — from their email, a bookmark, or
+     just hitting refresh — pull that order straight back up. */
+  useEffect(() => {
+    const open = async (t) => {
+      if (!t) { setReceipt(null); return; }
+      try {
+        const o = await api.getOrder(t);
+        setReceipt({ ...o, token: t });
+      } catch {
+        setReceipt(null);
+        setErr("That order link isn't valid. Check the link in your email, or text us.");
+      }
+    };
+    open(tokenFromUrl());
+    const onPop = () => open(tokenFromUrl());
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
   useEffect(() => {
     api.session().then(async (s) => {
       setUser(s?.user ?? null);
@@ -166,13 +192,25 @@ export default function App() {
     api.getOrder(receipt.token).then((o) => setReceipt((r) => ({ ...r, ...o }))).catch(() => {});
   }, [tick, receipt?.token]);
 
-  const B = cat?.bundle ?? { size: "4oz", count: 3, price: 20 };
-  const sizeOf = (id) =>
-    cat?.sizes?.find((s) => s.id === id) ?? { id, label: id, price: 0 };
+  if (boot) {
+    return <div className="nf"><style>{CSS}</style>
+      <div className="nf-wrap" style={{ paddingTop: 80 }}>
+        <div className="err">Couldn&rsquo;t reach the database.<br />{boot}</div>
+      </div></div>;
+  }
+  if (!cat) {
+    return <div className="nf"><style>{CSS}</style>
+      <div className="nf-wrap" style={{ paddingTop: 100, textAlign: "center" }}>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}><Logo size={70} /></div>
+        <div className="eyebrow">Loading the shelf…</div>
+      </div></div>;
+  }
+
+  const B = cat.bundle;
+  const sizeOf = (id) => cat.sizes.find((s) => s.id === id);
   const typeName = (id) => TYPES.find((t) => t.id === id)?.name ?? "Regular";
 
   const shelf = useMemo(() => {
-    if (!cat) return [];
     const on = cat.flavors.filter((f) => api.inStock(f, pickSize, pickType));
     const best = on.find((f) => f.name === cat.bestSeller);
     return best ? [best, ...on.filter((f) => f !== best)] : on;
@@ -187,7 +225,6 @@ export default function App() {
 
   /* Preview only. place_order recomputes this server-side and its answer wins. */
   const price = useMemo(() => {
-    if (!cat) return { sub: 0, saved: 0, bundles: 0, jars: 0 };
     const jars = cart.filter((x) => x.size_id === B.size).reduce((s, x) => s + x.qty, 0);
     const bundles = Math.floor(jars / B.count);
     const loose = jars - bundles * B.count;
@@ -195,42 +232,20 @@ export default function App() {
       cart.filter((x) => x.size_id !== B.size).reduce((s, x) => s + x.qty * sizeOf(x.size_id).price, 0);
     const full = cart.reduce((s, x) => s + x.qty * sizeOf(x.size_id).price, 0);
     return { sub, saved: full - sub, bundles, jars };
-  }, [cart, cat, B.size, B.count, B.price]);
+  }, [cart, cat]);
 
-  const zone = cat?.zones?.find((z) => z.zips.includes(zip.trim()));
-  const subZone = cat?.zones?.find((z) => z.zips.includes(subZip.trim()));
+  const zone = cat.zones.find((z) => z.zips.includes(zip.trim()));
+  const subZone = cat.zones.find((z) => z.zips.includes(subZip.trim()));
   const outOfArea = method === "delivery" && zip.trim().length === 5 && !zone;
-  const shipOK = !!cat && price.sub >= cat.shipFreeOver;
-  const toShip = cat ? Math.max(0, cat.shipFreeOver - price.sub) : 0;
+  const shipOK = price.sub >= cat.shipFreeOver;
+  const toShip = cat.shipFreeOver - price.sub;
   const fee = method === "delivery" && zone ? (price.sub >= zone.freeOver ? 0 : zone.fee) : 0;
   const belowMin = method === "delivery" && zone && price.sub < zone.minimum;
   const total = price.sub + fee;
-  const slots = zone && cat ? deliveryDays(zone, cat.blockedDates ?? []) : [];
+  const slots = zone ? deliveryDays(zone, cat.blockedDates) : [];
 
-  useEffect(() => {
-    if (method === "ship" && !shipOK) {
-      setMethod(null);
-      setSlot(null);
-    }
-  }, [shipOK, method]);
-
-  useEffect(() => {
-    setSlot(method === "ship" ? { kind: "ship" } : null);
-  }, [method, zone?.id]);
-
-  if (boot) {
-    return <div className="nf"><style>{CSS}</style>
-      <div className="nf-wrap" style={{ paddingTop: 80 }}>
-        <div className="err">Couldn&rsquo;t reach the database.<br />{boot}</div>
-      </div></div>;
-  }
-  if (!cat) {
-    return <div className="nf"><style>{CSS}</style>
-      <div className="nf-wrap" style={{ paddingTop: 100, textAlign: "center" }}>
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}><Logo size={70} /></div>
-        <div className="eyebrow">Loading the shelf…</div>
-      </div></div>;
-  }
+  useEffect(() => { if (method === "ship" && !shipOK) { setMethod(null); setSlot(null); } }, [shipOK, method]);
+  useEffect(() => { setSlot(method === "ship" ? { kind: "ship" } : null); }, [method, zone?.id]);
 
   const missing = [];
   if (slot) {
@@ -253,6 +268,7 @@ export default function App() {
         marketDateId: slot.kind === "market" ? slot.m.id : null,
       });
       const full = await api.getOrder(r.token);
+      pushOrderUrl(r.token);   // survives a refresh, and it's what the email links to
       setReceipt({ ...full, token: r.token, email: cust.email, address: cust.address });
       setCart([]); setSlot(null); setMethod(null); setZip(""); setCtaOff(false);
       reload();  // stock may have moved
@@ -379,7 +395,7 @@ export default function App() {
                     : <>Same shelf price on the honey, free delivery with no minimum, and a bonus jar every third box.</>}
                 </p>
                 <button className="btn solid" style={{ width: "100%", padding: 13 }}
-                  onClick={() => { setReceipt(null); setView("subscribe"); }}>See the boxes</button>
+                  onClick={() => { pushHome(); setReceipt(null); setView("subscribe"); }}>See the boxes</button>
               </div>
 
               {canKill ? (
@@ -400,8 +416,13 @@ export default function App() {
             </>
           )}
 
-          <button className="btn ghost" style={{ width: "100%", padding: 14, marginTop: 26 }}
-            onClick={() => { setReceipt(null); setCust({ name:"", phone:"", email:"", address:"", notes:"" }); }}>
+          <div className="card" style={{ padding: 14, marginTop: 26, background: "#FBF7F1", fontSize: 12.5,
+            color: c.brown, lineHeight: 1.6, textAlign: "center" }}>
+            Keep this page — <strong style={{ color: c.darkBrown }}>bookmark it or find it in your email</strong> — and you
+            can pull your order back up any time.
+          </div>
+          <button className="btn ghost" style={{ width: "100%", padding: 14, marginTop: 10 }}
+            onClick={() => { pushHome(); setReceipt(null); setErr(null); setCust({ name:"", phone:"", email:"", address:"", notes:"" }); }}>
             Start another order
           </button>
         </div>
