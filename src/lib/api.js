@@ -1,0 +1,276 @@
+import { supabase } from "./supabase";
+
+/* Every database call lives here. Nothing else in the app talks to
+   Supabase directly — so if a query is wrong, there's one place to look. */
+
+const throwIf = ({ data, error }) => {
+  if (error) throw new Error(error.message);
+  return data;
+};
+
+const stockKey = (sizeId, type) => `${sizeId}:${type}`;
+
+/* ---------- public catalog ---------- */
+
+export async function getCatalog() {
+  const [sizes, flavors, stock, zones, venues, marketDates, blocked, plans, settings] = await Promise.all([
+    supabase.from("sizes").select("*").order("sort").then(throwIf),
+    supabase.from("flavors").select("*").order("sort").then(throwIf),
+    supabase.from("stock").select("*").then(throwIf),
+    supabase.from("zones").select("*").then(throwIf),
+    supabase.from("venues").select("*").order("name").then(throwIf),
+    supabase.from("market_dates").select("*").gte("day", today()).order("day").then(throwIf),
+    supabase.from("blocked_dates").select("*").then(throwIf),
+    supabase.from("plans").select("*").order("sort").then(throwIf),
+    supabase.from("settings").select("*").then(throwIf),
+  ]);
+
+  const byFlavor = {};
+  for (const s of stock) {
+    (byFlavor[s.flavor_id] ??= {})[stockKey(s.size_id, s.type)] = s.in_stock;
+  }
+
+  const cfg = Object.fromEntries(settings.map((s) => [s.key, s.value]));
+
+  return {
+    sizes: sizes.map((s) => ({ ...s, price: s.price_cents / 100 })),
+    flavors: flavors.map((f) => ({ ...f, stock: byFlavor[f.id] || {} })),
+    zones: zones.map((z) => ({
+      ...z,
+      fee: z.fee_cents / 100,
+      minimum: z.minimum_cents / 100,
+      freeOver: z.free_over_cents / 100,
+    })),
+    venues,
+    marketDates: marketDates
+      .map((m) => ({ ...m, venue: venues.find((v) => v.id === m.venue_id) }))
+      .filter((m) => m.venue),
+    blockedDates: blocked.map((b) => b.day),
+    plans: plans.map((p) => ({ ...p, price: p.price_cents / 100 })),
+    bestSeller: cfg.best_seller ?? "",
+    bundle: {
+      size: cfg.bundle?.size_id ?? "4oz",
+      count: cfg.bundle?.count ?? 3,
+      price: (cfg.bundle?.price_cents ?? 2000) / 100,
+    },
+    shipFreeOver: (cfg.shipping?.free_over_cents ?? 7500) / 100,
+    cancelMinutes: cfg.cancel_minutes ?? 60,
+  };
+}
+
+export const inStock = (flavor, sizeId, type) =>
+  flavor.stock?.[stockKey(sizeId, type)] !== false;
+
+/* ---------- ordering (anonymous, via security-definer RPCs) ---------- */
+
+export async function placeOrder(payload) {
+  const { data, error } = await supabase.rpc("place_order", {
+    p_items: payload.items,
+    p_method: payload.method,
+    p_name: payload.name,
+    p_phone: payload.phone,
+    p_email: payload.email,
+    p_address: payload.address ?? null,
+    p_notes: payload.notes ?? null,
+    p_zip: payload.zip ?? null,
+    p_day: payload.day ?? null,
+    p_market_date_id: payload.marketDateId ?? null,
+  });
+
+  if (error) throw new Error(error.message);
+
+  const row = Array.isArray(data) ? data[0] : data;
+  return {
+    orderNo: row.order_no,
+    token: row.token,
+    total: row.total_cents / 100,
+  };
+}
+
+export async function getOrder(token) {
+  const { data, error } = await supabase.rpc("get_order", { p_token: token });
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function cancelOrder(token) {
+  const { error } = await supabase.rpc("cancel_order", { p_token: token });
+  if (error) throw new Error(error.message);
+}
+
+/* ---------- auth ---------- */
+
+export const signIn = (email, password) =>
+  supabase.auth.signInWithPassword({ email, password }).then(({ data, error }) => {
+    if (error) throw new Error(error.message);
+    return data;
+  });
+
+export const signOut = () => supabase.auth.signOut();
+
+export const session = () =>
+  supabase.auth.getSession().then(({ data }) => data.session);
+
+export const onAuth = (cb) =>
+  supabase.auth.onAuthStateChange((_event, currentSession) => cb(currentSession));
+
+export async function amAdmin() {
+  const { data, error } = await supabase
+    .from("admins")
+    .select("user_id")
+    .maybeSingle();
+
+  if (error) return false;
+  return !!data;
+}
+
+/* ---------- admin ---------- */
+
+export const listOrders = () =>
+  supabase
+    .from("orders")
+    .select("*, order_items(*), customers(flagged, consecutive_noshows)")
+    .order("placed_at", { ascending: false })
+    .limit(200)
+    .then(throwIf);
+
+export const setOrderStatus = (id, status) =>
+  supabase
+    .from("orders")
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .then(throwIf);
+
+export const listSubs = () =>
+  supabase
+    .from("subscriptions")
+    .select("*, customers(name, phone, email)")
+    .order("started_at", { ascending: false })
+    .then(throwIf);
+
+export const setSubStatus = (id, status) =>
+  supabase
+    .from("subscriptions")
+    .update({ status })
+    .eq("id", id)
+    .then(throwIf);
+
+export const setStock = (flavorId, sizeId, type, on) =>
+  supabase
+    .from("stock")
+    .update({ in_stock: on })
+    .eq("flavor_id", flavorId)
+    .eq("size_id", sizeId)
+    .eq("type", type)
+    .then(throwIf);
+
+export const setFlavorStockAll = async (flavorId, on) =>
+  supabase
+    .from("stock")
+    .update({ in_stock: on })
+    .eq("flavor_id", flavorId)
+    .then(throwIf);
+
+export const addFlavor = (name, hex) =>
+  supabase
+    .from("flavors")
+    .insert({ name, hex })
+    .select()
+    .single()
+    .then(throwIf);
+
+export const updateFlavor = (id, patch) =>
+  supabase.from("flavors").update(patch).eq("id", id).then(throwIf);
+
+export const deleteFlavor = (id) =>
+  supabase.from("flavors").delete().eq("id", id).then(throwIf);
+
+export const setBestSeller = (name) =>
+  supabase
+    .from("settings")
+    .update({ value: name })
+    .eq("key", "best_seller")
+    .then(throwIf);
+
+export const addVenue = (venue) =>
+  supabase.from("venues").insert(venue).select().single().then(throwIf);
+
+export const updateVenue = (id, patch) =>
+  supabase.from("venues").update(patch).eq("id", id).then(throwIf);
+
+export const deleteVenue = (id) =>
+  supabase.from("venues").delete().eq("id", id).then(throwIf);
+
+export const addMarketDate = (venue_id, day) =>
+  supabase
+    .from("market_dates")
+    .insert({ venue_id, day })
+    .select()
+    .single()
+    .then(throwIf);
+
+export const deleteMarketDate = (id) =>
+  supabase.from("market_dates").delete().eq("id", id).then(throwIf);
+
+export const listAllMarketDates = () =>
+  supabase
+    .from("market_dates")
+    .select("*, venues(name)")
+    .order("day")
+    .then(throwIf);
+
+export const blockDay = (day) =>
+  supabase.from("blocked_dates").insert({ day }).then(throwIf);
+
+export const unblockDay = (day) =>
+  supabase.from("blocked_dates").delete().eq("day", day).then(throwIf);
+
+/* ---------- subscriptions (enrolment only; Square does the billing) ---------- */
+
+export async function startSubscription(subscription) {
+  const { data, error } = await supabase.rpc("start_subscription", {
+    p_plan_id: subscription.planId,
+    p_cadence: subscription.cadence,
+    p_method: subscription.method,
+    p_name: subscription.name,
+    p_phone: subscription.phone,
+    p_email: subscription.email,
+    p_address: subscription.address ?? null,
+    p_zip: subscription.zip ?? null,
+  });
+
+  if (error) throw new Error(error.message);
+
+  const row = Array.isArray(data) ? data[0] : data;
+  return {
+    subNo: row.sub_no,
+    token: row.token,
+    price: row.price_cents / 100,
+  };
+}
+
+export async function getSubscription(token) {
+  const { data, error } = await supabase.rpc("get_subscription", {
+    p_token: token,
+  });
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function cancelSubscription(token) {
+  const { error } = await supabase.rpc("cancel_subscription", {
+    p_token: token,
+  });
+
+  if (error) throw new Error(error.message);
+}
+
+/* ---------- helpers ---------- */
+
+export function today() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+    d.getDate()
+  ).padStart(2, "0")}`;
+}
