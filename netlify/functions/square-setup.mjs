@@ -43,7 +43,7 @@ export default async (req) => {
     /* ---- 1. the plan itself ---- */
     const planRes = await square("/v2/catalog/object", {
       body: {
-        idempotency_key: `nf-plan-${p.id}`,
+        idempotency_key: idem(),
         object: {
           type: "SUBSCRIPTION_PLAN",
           id: p.square_plan_id || `#plan_${p.id}`,
@@ -62,7 +62,7 @@ export default async (req) => {
     for (const cd of CADENCES) {
       const varRes = await square("/v2/catalog/object", {
         body: {
-          idempotency_key: `nf-var-${p.id}-${cd.cadence}`,
+          idempotency_key: idem(),
           object: {
             type: "SUBSCRIPTION_PLAN_VARIATION",
             id: p[cd.col] || `#var_${p.id}_${cd.cadence}`,
