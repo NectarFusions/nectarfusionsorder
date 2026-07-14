@@ -78,9 +78,8 @@ export default async (req) => {
         merchant_support_email: "info@nectar-fusions.com",
       },
       pre_populated_data: {
-        buyer_email: o.email,
-        buyer_phone_number: o.phone,
-      },
+  buyer_email: o.email,
+},
       description: `NectarFusions order #${o.order_no}`,
     },
   });
