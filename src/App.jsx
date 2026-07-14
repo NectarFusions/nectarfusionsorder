@@ -192,25 +192,13 @@ export default function App() {
     api.getOrder(receipt.token).then((o) => setReceipt((r) => ({ ...r, ...o }))).catch(() => {});
   }, [tick, receipt?.token]);
 
-  if (boot) {
-    return <div className="nf"><style>{CSS}</style>
-      <div className="nf-wrap" style={{ paddingTop: 80 }}>
-        <div className="err">Couldn&rsquo;t reach the database.<br />{boot}</div>
-      </div></div>;
-  }
-  if (!cat) {
-    return <div className="nf"><style>{CSS}</style>
-      <div className="nf-wrap" style={{ paddingTop: 100, textAlign: "center" }}>
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}><Logo size={70} /></div>
-        <div className="eyebrow">Loading the shelf…</div>
-      </div></div>;
-  }
-
-  const B = cat.bundle;
-  const sizeOf = (id) => cat.sizes.find((s) => s.id === id);
+  const B = cat?.bundle ?? { size: "4oz", count: 3, price: 20 };
+  const sizeOf = (id) =>
+    cat?.sizes?.find((s) => s.id === id) ?? { id, label: id, price: 0 };
   const typeName = (id) => TYPES.find((t) => t.id === id)?.name ?? "Regular";
 
   const shelf = useMemo(() => {
+    if (!cat) return [];
     const on = cat.flavors.filter((f) => api.inStock(f, pickSize, pickType));
     const best = on.find((f) => f.name === cat.bestSeller);
     return best ? [best, ...on.filter((f) => f !== best)] : on;
@@ -225,6 +213,7 @@ export default function App() {
 
   /* Preview only. place_order recomputes this server-side and its answer wins. */
   const price = useMemo(() => {
+    if (!cat) return { sub: 0, saved: 0, bundles: 0, jars: 0 };
     const jars = cart.filter((x) => x.size_id === B.size).reduce((s, x) => s + x.qty, 0);
     const bundles = Math.floor(jars / B.count);
     const loose = jars - bundles * B.count;
@@ -232,20 +221,34 @@ export default function App() {
       cart.filter((x) => x.size_id !== B.size).reduce((s, x) => s + x.qty * sizeOf(x.size_id).price, 0);
     const full = cart.reduce((s, x) => s + x.qty * sizeOf(x.size_id).price, 0);
     return { sub, saved: full - sub, bundles, jars };
-  }, [cart, cat]);
+  }, [cart, cat, B.size, B.count, B.price]);
 
-  const zone = cat.zones.find((z) => z.zips.includes(zip.trim()));
-  const subZone = cat.zones.find((z) => z.zips.includes(subZip.trim()));
+  const zone = cat?.zones?.find((z) => z.zips.includes(zip.trim()));
+  const subZone = cat?.zones?.find((z) => z.zips.includes(subZip.trim()));
   const outOfArea = method === "delivery" && zip.trim().length === 5 && !zone;
-  const shipOK = price.sub >= cat.shipFreeOver;
-  const toShip = cat.shipFreeOver - price.sub;
+  const shipOK = !!cat && price.sub >= cat.shipFreeOver;
+  const toShip = cat ? Math.max(0, cat.shipFreeOver - price.sub) : 0;
   const fee = method === "delivery" && zone ? (price.sub >= zone.freeOver ? 0 : zone.fee) : 0;
   const belowMin = method === "delivery" && zone && price.sub < zone.minimum;
   const total = price.sub + fee;
-  const slots = zone ? deliveryDays(zone, cat.blockedDates) : [];
+  const slots = zone && cat ? deliveryDays(zone, cat.blockedDates ?? []) : [];
 
   useEffect(() => { if (method === "ship" && !shipOK) { setMethod(null); setSlot(null); } }, [shipOK, method]);
   useEffect(() => { setSlot(method === "ship" ? { kind: "ship" } : null); }, [method, zone?.id]);
+
+  if (boot) {
+    return <div className="nf"><style>{CSS}</style>
+      <div className="nf-wrap" style={{ paddingTop: 80 }}>
+        <div className="err">Couldn&rsquo;t reach the database.<br />{boot}</div>
+      </div></div>;
+  }
+  if (!cat) {
+    return <div className="nf"><style>{CSS}</style>
+      <div className="nf-wrap" style={{ paddingTop: 100, textAlign: "center" }}>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}><Logo size={70} /></div>
+        <div className="eyebrow">Loading the shelf…</div>
+      </div></div>;
+  }
 
   const missing = [];
   if (slot) {
@@ -274,6 +277,14 @@ export default function App() {
       reload();  // stock may have moved
     } catch (e) { setErr(e.message); }
     setBusy(false);
+  }
+
+  async function pay() {
+    setBusy(true); setErr(null);
+    try {
+      const url = receipt.pay_url || await api.payLink(receipt.token);
+      window.location.href = url;   // hand off to Square's hosted checkout
+    } catch (e) { setErr(e.message); setBusy(false); }
   }
 
   async function kill() {
@@ -336,7 +347,8 @@ export default function App() {
   if (receipt) {
     const cancelled = receipt.status === "cancelled";
     const left = receipt.minutes_left ?? 0;
-    const canKill = !cancelled && left > 0;
+    // A paid order can't be self-cancelled — that's a refund, and refunds are a decision.
+    const canKill = !cancelled && left > 0 && !receipt.paid;
     return (
       <div className="nf"><style>{CSS}</style>
         <div className="head">
@@ -380,8 +392,42 @@ export default function App() {
                 </div>
               </div>
 
-              <p style={{ color: c.brown, fontSize: 14, marginTop: 16, lineHeight: 1.6, textAlign: "center" }}>
-                A confirmation is on its way to <strong>{receipt.email}</strong>.
+              {receipt.requires_prepay && !receipt.paid && (
+                <div className="card" style={{ padding: 17, marginTop: 16, borderColor: c.amber, background: "#FFFBF0" }}>
+                  <div className="eyebrow" style={{ marginBottom: 6 }}>Payment</div>
+                  <p style={{ fontSize: 14, lineHeight: 1.6, margin: "0 0 12px" }}>
+                    {receipt.method === "market"
+                      ? <>This order needs to be paid before we pack it. Once it&rsquo;s paid, your jars are set aside and waiting at the table.</>
+                      : <>Pay now and we&rsquo;ll start packing. Nothing leaves our hands until it&rsquo;s paid.</>}
+                  </p>
+                  <button className="btn solid" style={{ width: "100%", padding: 14, fontSize: 15 }}
+                    disabled={busy} onClick={pay}>
+                    {busy ? "Opening Square…" : `Pay ${money(receipt.total_cents / 100)} securely`}
+                  </button>
+                  <div style={{ fontSize: 11.5, color: c.brown, marginTop: 8, textAlign: "center" }}>
+                    Card handled by Square. We never see your card number.
+                  </div>
+                </div>
+              )}
+
+              {receipt.paid && (
+                <div className="card" style={{ padding: 15, marginTop: 16, borderColor: "#8FA97B",
+                  background: "#FCFDFA", textAlign: "center" }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: "#4F6B3C" }}>✓ Paid</div>
+                  <div style={{ fontSize: 13, color: c.brown, marginTop: 3 }}>
+                    Thank you. We&rsquo;re packing your jars.
+                  </div>
+                </div>
+              )}
+
+              {!receipt.requires_prepay && !receipt.paid && (
+                <p style={{ color: c.brown, fontSize: 14, marginTop: 16, lineHeight: 1.6, textAlign: "center" }}>
+                  Pay at the market table — cash, card, or tap.
+                </p>
+              )}
+
+              <p style={{ color: c.tan, fontSize: 13, marginTop: 14, lineHeight: 1.6, textAlign: "center" }}>
+                A confirmation is on its way to <strong style={{ color: c.brown }}>{receipt.email}</strong>.
               </p>
 
               <div className="card" style={{ padding: 17, marginTop: 20, background: "#FFFBF0", borderColor: c.gold }}>
@@ -473,7 +519,11 @@ export default function App() {
           name: cust.name, phone: cust.phone, email: cust.email,
           address: cust.address || null, zip: subMethod === "delivery" ? subZip : null,
         });
-        setSubDone({ ...r, planName: p.name });
+        // Straight to Square to put a card on file. Nothing is charged
+        // until they do, and the subscription stays "pending" until
+        // Square's webhook tells us the card is real.
+        const url = await api.subscribeLink(r.token);
+        window.location.href = url;
       } catch (e) { setErr(e.message); }
       setBusy(false);
     };
