@@ -1132,8 +1132,17 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                       <button className="btn" style={{ padding: "8px 12px", fontSize: 12.5 }}
                         onClick={() => guard(() => api.setOrderStatus(o.id, "noshow"))}>No-show</button>
                     )}
-                    <button className="btn danger" style={{ padding: "8px 12px", fontSize: 12.5 }}
-                      onClick={() => confirm(`Cancel #${o.order_no}?`) && guard(() => api.setOrderStatus(o.id, "cancelled"))}>Cancel</button>
+                    <button
+  className="btn danger"
+  style={{ padding: "8px 12px", fontSize: 12.5 }}
+  onClick={() =>
+    confirm(
+      `Cancel #${s.sub_no}?\n\nThis stops Square from billing them. They keep the box they've already paid for.`
+    ) && guard(() => api.subAction(s.id, "cancel"))
+  }
+>
+  Cancel
+</button>
                   </div>
                 )}
               </div>
@@ -1151,10 +1160,12 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
           <div style={{ marginBottom: 32 }}>
             {subs.map((s) => {
               const p = cat.plans.find((p) => p.id === s.plan_id);
-              const paused = s.status === "paused", cx = s.status === "cancelled", pending = s.status === "pending";
+              const paused = s.status === "paused", cx = s.status === "cancelled",
+      pending = s.status === "pending", late = s.status === "past_due";
               return (
                 <div key={s.id} className="card" style={{ padding: 13, marginBottom: 8, opacity: cx ? .5 : 1,
-                  borderColor: cx ? "#E2D6C4" : pending ? c.orange : paused ? c.tan : c.sky }}>
+                  borderColor: cx ? "#E2D6C4" : late ? c.red : pending ? c.orange : paused ? c.tan : c.sky
+       }}>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 9 }}>
                     <span className="num" style={{ fontSize: 22, color: c.darkBrown }}>#{s.sub_no}</span>
                     <span style={{ fontWeight: 600, fontSize: 14.5, flex: 1, minWidth: 0 }}>{s.customers?.name}</span>
@@ -1166,21 +1177,46 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                   </div>
                   <div style={{ fontSize: 12.5, color: c.tan }}>{s.customers?.phone} · {s.customers?.email}</div>
                   {pending && (
-                    <div style={{ fontSize: 11.5, color: c.orange, fontWeight: 700, marginTop: 6 }}>
-                      NO CARD ON FILE YET — don&rsquo;t pack a box until Square confirms.
-                    </div>
-                  )}
+  <div style={{ fontSize: 11.5, color: c.orange, fontWeight: 700, marginTop: 6 }}>
+    NO CARD ON FILE YET — don&rsquo;t pack a box until Square confirms.
+  </div>
+)}
+
+{late && (
+  <div
+    style={{
+      fontSize: 11.5,
+      color: c.red,
+      fontWeight: 700,
+      marginTop: 6,
+      lineHeight: 1.5,
+    }}
+  >
+    ⚠ CARD DECLINED — Square has invoiced them. Don’t pack their next box until it clears.
+  </div>
+)}
                   {(s.boxes_sent + 1) % 3 === 0 && !cx && (
                     <div style={{ fontSize: 11.5, color: c.amber, fontWeight: 700, marginTop: 4 }}>★ BONUS JAR DUE THIS BOX</div>
                   )}
                   {!cx && (
                     <div style={{ display: "flex", gap: 6, marginTop: 10 }}>
                       <button className={`btn ${paused ? "on" : ""}`} style={{ flex: 1, padding: 8, fontSize: 12.5 }}
-                        onClick={() => guard(() => api.setSubStatus(s.id, paused ? "active" : "paused"))}>
+                        onClick={() =>
+  guard(() => api.subAction(s.id, paused ? "resume" : "pause"))
+}>
                         {paused ? "Paused — resume" : "Skip / pause"}
                       </button>
-                      <button className="btn danger" style={{ padding: "8px 12px", fontSize: 12.5 }}
-                        onClick={() => confirm(`Cancel #${s.sub_no}?`) && guard(() => api.setSubStatus(s.id, "cancelled"))}>Cancel</button>
+                      <button
+                        className="btn danger"
+                        style={{ padding: "8px 12px", fontSize: 12.5 }}
+                        onClick={() =>
+                          confirm(
+                            `Cancel #${s.sub_no}?\n\nThis stops Square from billing them. They keep the box they've already paid for.`
+                          ) && guard(() => api.subAction(s.id, "cancel"))
+                        }
+                      >
+                        Cancel
+                      </button>
                     </div>
                   )}
                 </div>
