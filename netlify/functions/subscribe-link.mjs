@@ -74,9 +74,9 @@ export default async (req) => {
         price_money: { amount: plan.price_cents, currency: "USD" },
         location_id: process.env.SQUARE_LOCATION_ID,
       },
-      // The field says "plan", the value must be the VARIATION.
-      subscription_plan_id: variationId,
       checkout_options: {
+        // Despite the name, Square requires the PLAN VARIATION ID here.
+        subscription_plan_id: variationId,
         redirect_url: `${site()}/club/${s.token}`,
         ask_for_shipping_address: s.method === "ship",
         merchant_support_email: "info@nectar-fusions.com",
