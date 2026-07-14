@@ -83,7 +83,6 @@ export default async (req) => {
       },
       pre_populated_data: {
         buyer_email: s.customers.email,
-        buyer_phone_number: s.customers.phone,
       },
     },
   });
