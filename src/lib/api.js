@@ -265,7 +265,39 @@ export async function cancelSubscription(token) {
 
   if (error) throw new Error(error.message);
 }
+/* ---------- Square (via Netlify functions) ---------- */
 
+export async function payLink(token) {
+  const response = await fetch("/.netlify/functions/pay-link", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token }),
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.error || "Couldn't create a payment link.");
+  }
+
+  return result.url;
+}
+
+export async function subscribeLink(token) {
+  const response = await fetch("/.netlify/functions/subscribe-link", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token }),
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.error || "Couldn't create a checkout link.");
+  }
+
+  return result.url;
+}
 /* ---------- helpers ---------- */
 
 export function today() {
