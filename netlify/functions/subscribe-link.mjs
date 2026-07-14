@@ -45,24 +45,7 @@ export default async (req) => {
     return bad("Square plans aren't set up yet. Run /.netlify/functions/square-setup first.", 500);
   }
 
-  /* ---- 1. Square needs a customer profile, and it needs an email.
-            That's where it sends invoices and receipts. ---- */
-  let squareCustomerId = s.square_customer_id;
-  if (!squareCustomerId) {
-    const parts = (s.customers.name || "").trim().split(/\s+/);
-    const created = await square("/v2/customers", {
-      body: {
-        idempotency_key: `sub-cust-${s.id}`,
-        given_name: parts[0] || "Member",
-        family_name: parts.slice(1).join(" ") || undefined,
-        email_address: s.customers.email,
-        phone_number: s.customers.phone,
-        reference_id: s.sub_no,
-        note: `Honey Club ${plan.name} · ${s.method}`,
-      },
-    });
-    squareCustomerId = created.customer.id;
-  }
+  /* Square hosted checkout creates or identifies the billing customer. */
 
   /* ---- 2. the hosted checkout that stores the card ---- */
   const res = await square("/v2/online-checkout/payment-links", {
@@ -90,7 +73,6 @@ export default async (req) => {
   const url = res.payment_link.url;
 
   await supa.from("subscriptions").update({
-    square_customer_id: squareCustomerId,
     square_checkout_url: url,
     square_plan_variation_id: variationId,
   }).eq("id", s.id);

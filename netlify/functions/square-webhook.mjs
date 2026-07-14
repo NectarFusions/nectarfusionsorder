@@ -14,7 +14,7 @@
    ============================================================ */
 
 import crypto from "node:crypto";
-import { db, ok, bad } from "./_square.mjs";
+import { square, db, ok, bad } from "./_square.mjs";
 
 /* Square signs (notification_url + raw body) with your signature key. */
 function verify(rawBody, signature) {
@@ -80,26 +80,86 @@ export default async (req) => {
         const sub = obj.subscription;
         if (!sub) break;
 
-        const { data: row } = await supa
-          .from("subscriptions").select("id")
+        let row = null;
+
+        // Fast path for subscriptions already connected.
+        const direct = await supa
+          .from("subscriptions")
+          .select("id")
           .eq("square_customer_id", sub.customer_id)
-          .in("status", ["pending", "active", "paused"])
+          .in("status", ["pending", "active", "paused", "past_due"])
           .order("started_at", { ascending: false })
-          .limit(1).maybeSingle();
+          .limit(1);
 
-        if (!row) break;
+        row = direct.data?.[0] ?? null;
 
-        // Square: PENDING → ACTIVE → PAUSED / CANCELED / DEACTIVATED
+        // Hosted checkout can use a different Square customer.
+        // Fetch that customer's email and match the newest local
+        // subscription with the same email and plan variation.
+        if (!row && sub.customer_id) {
+          const result = await square(
+            `/v2/customers/${sub.customer_id}`,
+            { method: "GET" }
+          );
+
+          const email = result.customer?.email_address?.trim();
+
+          if (email) {
+            let query = supa
+              .from("subscriptions")
+              .select("id, customers!inner(email)")
+              .ilike("customers.email", email)
+              .in("status", ["pending", "active", "paused", "past_due"])
+              .order("started_at", { ascending: false })
+              .limit(1);
+
+            if (sub.plan_variation_id) {
+              query = query.eq(
+                "square_plan_variation_id",
+                sub.plan_variation_id
+              );
+            }
+
+            const fallback = await query;
+            row = fallback.data?.[0] ?? null;
+          }
+        }
+
+        if (!row) {
+          console.error(
+            "No local subscription matched Square subscription",
+            sub.id,
+            sub.customer_id,
+            sub.plan_variation_id
+          );
+          break;
+        }
+
         const map = {
-          ACTIVE: "active", PENDING: "pending", PAUSED: "paused",
-          CANCELED: "cancelled", DEACTIVATED: "cancelled",
+          ACTIVE: "active",
+          PENDING: "pending",
+          PAUSED: "paused",
+          CANCELED: "cancelled",
+          DEACTIVATED: "cancelled",
         };
+
         const status = map[sub.status] ?? "pending";
 
-        await supa.from("subscriptions").update({
+        const patch = {
+          square_customer_id: sub.customer_id,
           square_subscription_id: sub.id,
           status,
-        }).eq("id", row.id);
+        };
+
+        if (sub.plan_variation_id) {
+          patch.square_plan_variation_id = sub.plan_variation_id;
+        }
+
+        await supa
+          .from("subscriptions")
+          .update(patch)
+          .eq("id", row.id);
+
         console.log("Subscription", row.id, "→", status);
         break;
       }
