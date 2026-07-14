@@ -1160,11 +1160,14 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
           <div style={{ marginBottom: 32 }}>
             {subs.map((s) => {
               const p = cat.plans.find((p) => p.id === s.plan_id);
-              const paused = s.status === "paused", cx = s.status === "cancelled",
-      pending = s.status === "pending", late = s.status === "past_due";
+              const cx = s.status === "cancelled";
+              const pending = s.status === "pending";
+              const late = s.status === "past_due";
+              const skipScheduled =
+                !!s.paused_until && s.paused_until >= api.today();
               return (
                 <div key={s.id} className="card" style={{ padding: 13, marginBottom: 8, opacity: cx ? .5 : 1,
-                  borderColor: cx ? "#E2D6C4" : late ? c.red : pending ? c.orange : paused ? c.tan : c.sky
+                  borderColor: cx ? "#E2D6C4" : late ? c.red : pending ? c.orange : skipScheduled ? c.tan : c.sky
        }}>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 9 }}>
                     <span className="num" style={{ fontSize: 22, color: c.darkBrown }}>#{s.sub_no}</span>
@@ -1195,16 +1198,27 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
     ⚠ CARD DECLINED — Square has invoiced them. Don’t pack their next box until it clears.
   </div>
 )}
+                  {skipScheduled && (
+                    <div style={{ fontSize: 11.5, color: c.brown, fontWeight: 700, marginTop: 6, lineHeight: 1.5 }}>
+                      NEXT BOX SKIPPED — Square will resume automatically on {fmt(parseDay(s.paused_until))}.
+                    </div>
+                  )}
                   {(s.boxes_sent + 1) % 3 === 0 && !cx && (
                     <div style={{ fontSize: 11.5, color: c.amber, fontWeight: 700, marginTop: 4 }}>★ BONUS JAR DUE THIS BOX</div>
                   )}
                   {!cx && (
                     <div style={{ display: "flex", gap: 6, marginTop: 10 }}>
-                      <button className={`btn ${paused ? "on" : ""}`} style={{ flex: 1, padding: 8, fontSize: 12.5 }}
+                      <button
+                        className={`btn ${skipScheduled ? "on" : ""}`}
+                        style={{ flex: 1, padding: 8, fontSize: 12.5 }}
+                        disabled={pending || late || skipScheduled}
                         onClick={() =>
-  guard(() => api.subAction(s.id, paused ? "resume" : "pause"))
-}>
-                        {paused ? "Paused — resume" : "Skip / pause"}
+                          confirm(
+                            `Skip the next box for #${s.sub_no}?\n\nSquare will pause one billing cycle and resume automatically.`
+                          ) && guard(() => api.subAction(s.id, "skip"))
+                        }
+                      >
+                        {skipScheduled ? "Next box skipped ✓" : "Skip next box"}
                       </button>
                       <button
                         className="btn danger"
