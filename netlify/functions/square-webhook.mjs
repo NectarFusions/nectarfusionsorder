@@ -82,21 +82,20 @@ export default async (req) => {
 
         let row = null;
 
-        // Fast path for subscriptions already connected.
-        const direct = await supa
+        // 1. An already-linked Square subscription must only update
+        //    the exact local subscription it belongs to.
+        const exact = await supa
           .from("subscriptions")
           .select("id")
-          .eq("square_customer_id", sub.customer_id)
-          .in("status", ["pending", "active", "paused", "past_due"])
-          .order("started_at", { ascending: false })
-          .limit(1);
+          .eq("square_subscription_id", sub.id)
+          .maybeSingle();
 
-        row = direct.data?.[0] ?? null;
+        row = exact.data ?? null;
 
-        // Hosted checkout can use a different Square customer.
-        // Fetch that customer's email and match the newest local
-        // subscription with the same email and plan variation.
-        if (!row && sub.customer_id) {
+        // 2. For the first webhook from hosted checkout, identify the
+        //    customer's newest pending local subscription whose selected
+        //    cadence maps to this exact Square plan variation.
+        if (!row && sub.customer_id && sub.plan_variation_id) {
           const result = await square(
             `/v2/customers/${sub.customer_id}`,
             { method: "GET" }
@@ -105,23 +104,28 @@ export default async (req) => {
           const email = result.customer?.email_address?.trim();
 
           if (email) {
-            let query = supa
+            const fallback = await supa
               .from("subscriptions")
-              .select("id, customers!inner(email)")
+              .select(`
+                id,
+                cadence,
+                customers!inner(email),
+                plans!inner(square_var_1mo, square_var_2mo)
+              `)
               .ilike("customers.email", email)
-              .in("status", ["pending", "active", "paused", "past_due"])
+              .eq("status", "pending")
               .order("started_at", { ascending: false })
-              .limit(1);
+              .limit(10);
 
-            if (sub.plan_variation_id) {
-              query = query.eq(
-                "square_plan_variation_id",
-                sub.plan_variation_id
-              );
-            }
+            row =
+              fallback.data?.find((candidate) => {
+                const expectedVariation =
+                  candidate.cadence === "1mo"
+                    ? candidate.plans?.square_var_1mo
+                    : candidate.plans?.square_var_2mo;
 
-            const fallback = await query;
-            row = fallback.data?.[0] ?? null;
+                return expectedVariation === sub.plan_variation_id;
+              }) ?? null;
           }
         }
 
