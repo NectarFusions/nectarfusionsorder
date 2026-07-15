@@ -27,6 +27,16 @@ export async function square(path, { method = "POST", body } = {}) {
   try { json = text ? JSON.parse(text) : {}; } catch { json = { raw: text }; }
 
   if (!res.ok) {
+    const token = process.env.SQUARE_ACCESS_TOKEN || "";
+    console.error("Square request diagnostics:", {
+      square_env: process.env.SQUARE_ENV ?? "(missing)",
+      square_base: squareBase(),
+      token_length: token.length,
+      token_suffix: token ? token.slice(-4) : "(missing)",
+      path,
+      status: res.status,
+    });
+
     const detail = json?.errors?.map((e) => `${e.code}: ${e.detail}`).join("; ") || text;
     throw new Error(`Square ${res.status} — ${detail}`);
   }
