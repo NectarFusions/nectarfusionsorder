@@ -587,6 +587,121 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
   padding:9px 12px !important; border-radius:10px;
 }
 .nf-modern-links .btn.ghost:hover { background:rgba(255,255,255,.08); }
+.nf-brand-copy { display:grid; gap:2px; }
+.nf-brand-wordmark { color:#F8E1A7; line-height:1; }
+.nf-brand-wordmark > span { color:#72B7E4; }
+.nf-nav-tagline {
+  color:#FFF8E8; font-family:'Montserrat',sans-serif;
+  font-size:9px; font-weight:700; letter-spacing:.08em;
+  text-transform:uppercase; line-height:1.2;
+}
+.nf-nav-actions { display:flex; align-items:center; gap:8px; margin-left:auto; }
+.nf-menu-button,.nf-cart-button,.nf-admin-gear {
+  position:relative; width:42px; height:42px; border-radius:12px;
+  border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.07);
+  color:#FFF8E8; display:grid; place-items:center; cursor:pointer;
+}
+.nf-menu-button { gap:4px; align-content:center; }
+.nf-menu-button span { display:block; width:19px; height:2px; border-radius:2px; background:currentColor; }
+.nf-admin-gear { opacity:.62; font-size:17px; }
+.nf-cart-badge {
+  position:absolute; right:-5px; top:-6px; min-width:20px; height:20px;
+  padding:0 5px; border-radius:999px; display:grid; place-items:center;
+  background:#F2AA00; color:#17120E; border:2px solid #1F140C;
+  font-size:10px; font-weight:900;
+}
+.nf-modern-links {
+  position:absolute; top:calc(100% + 8px); right:20px;
+  width:min(290px,calc(100vw - 30px)); display:none;
+  padding:10px; border-radius:16px; background:#24170F;
+  border:1px solid rgba(255,255,255,.12); box-shadow:0 18px 38px rgba(0,0,0,.28);
+}
+.nf-modern-links.open { display:grid; gap:3px; }
+.nf-modern-links .btn.ghost {
+  width:100%; text-align:left; font-size:14px !important;
+  padding:12px 13px !important;
+}
+.nf-modern-trust-icon svg {
+  width:20px; height:20px; fill:none; stroke:currentColor;
+  stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;
+}
+.nf-type-choice { position:relative; }
+.nf-type-choice::after {
+  content:attr(data-tip); position:absolute; left:8px; right:8px; top:calc(100% + 8px);
+  z-index:20; padding:9px 10px; border-radius:10px; background:#24170F; color:#FFF8E8;
+  font-size:11px; line-height:1.4; font-weight:650; opacity:0; pointer-events:none;
+  transform:translateY(-3px); transition:.15s ease;
+}
+.nf-type-choice:hover::after,.nf-type-choice:focus-visible::after {
+  opacity:1; transform:translateY(0);
+}
+.nf-bundle-grid.size-only { grid-template-columns:minmax(0,1fr); padding-top:118px; }
+.nf-bundle-grid.size-only .nf-size-stack { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.nf-nonbundle-note {
+  padding:18px; border-radius:16px; background:#F4F8FB; color:#49667B;
+  font-size:13px; font-weight:700; line-height:1.55; text-align:center;
+}
+.nf-cart-tray {
+  position:fixed; left:0; right:0; bottom:0; z-index:120;
+  background:#24A0ED; border-top:1px solid rgba(255,255,255,.48);
+  box-shadow:0 -10px 30px rgba(18,89,132,.28);
+}
+.nf-cart-tray-inner { width:min(1180px,100%); margin:0 auto; padding:10px 20px 13px; }
+.nf-cart-tray-toggle {
+  width:100%; border:0; background:transparent; color:#FFF;
+  display:flex; justify-content:space-between; align-items:center;
+  padding:2px 0 9px; font:inherit; font-size:12px; font-weight:800; cursor:pointer;
+}
+.nf-cart-tray-label { display:flex; align-items:center; gap:8px; text-transform:uppercase; letter-spacing:.08em; }
+.nf-cart-tray-count {
+  min-width:21px; height:21px; padding:0 5px; border-radius:999px;
+  display:grid; place-items:center; background:#FFF4CE; color:#23465D; font-size:10px;
+}
+.nf-cart-items {
+  max-height:230px; overflow:auto; margin-bottom:10px;
+  border-radius:14px; background:rgba(255,255,255,.12);
+}
+.nf-cart-item {
+  display:grid; grid-template-columns:9px minmax(0,1fr) 32px 24px 32px;
+  align-items:center; gap:8px; padding:9px 10px; color:#FFF;
+  border-bottom:1px solid rgba(255,255,255,.16);
+}
+.nf-cart-item:last-child { border-bottom:0; }
+.nf-cart-item-dot { width:9px; height:9px; border-radius:50%; }
+.nf-cart-item-name { display:grid; min-width:0; font-size:12.5px; }
+.nf-cart-item-name strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.nf-cart-item-name small { color:rgba(255,255,255,.82); margin-top:2px; }
+.nf-cart-item button {
+  width:32px; height:32px; border-radius:50%; border:1px solid rgba(255,255,255,.58);
+  background:rgba(255,255,255,.12); color:#FFF; font-size:18px; cursor:pointer;
+}
+.nf-cart-item-qty { text-align:center; font-weight:850; }
+.nf-cart-savings { padding:9px 11px; color:#FFF4CE; text-align:right; font-size:12px; font-weight:800; }
+.nf-cart-summary { display:flex; align-items:center; gap:16px; }
+.nf-cart-totals { flex:1; color:#FFF; font-size:12.5px; line-height:1.4; }
+.nf-cart-totals span {
+  display:block; margin-top:3px; font-size:10px; text-transform:uppercase; letter-spacing:.1em;
+}
+.nf-cart-totals strong {
+  display:block; font-family:'Bebas Neue',sans-serif; font-size:34px; line-height:1;
+}
+.nf-cart-summary > .btn { padding:13px 20px; flex-shrink:0; }
+.nf-about {
+  padding-top:44px; padding-bottom:60px;
+  display:grid; grid-template-columns:minmax(280px,.8fr) minmax(0,1.2fr);
+  align-items:center; gap:42px;
+}
+.nf-about-image {
+  min-height:410px; display:grid; place-items:center; align-content:center; gap:18px;
+  border-radius:24px; background:linear-gradient(145deg,#FFF8E8,#F2ECE4);
+  border:1px solid #E8DFD4; color:#8A796C; font-size:12px; font-weight:700;
+}
+.nf-about-copy h2 {
+  margin:10px 0 18px; font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:48px; line-height:.95;
+}
+.nf-about-copy p { color:#5D5148; font-size:15px; line-height:1.75; }
+
 .nf-modern-hero { background:#FFFFFF; padding:54px 0 34px; }
 .nf-modern-hero-grid {
   display:grid; grid-template-columns:minmax(0,.9fr) minmax(420px,1.1fr);
@@ -973,7 +1088,7 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
   background:linear-gradient(180deg,#FFCB36 0%,#E69700 100%);
   opacity:.84;
   mix-blend-mode:multiply;
-  transition:height .35s ease;
+  transition:height 1.35s cubic-bezier(.22,1,.36,1);
   z-index:3;
   pointer-events:none;
 }
@@ -1063,6 +1178,12 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
 }
 @media (max-width:640px) {
   .nf-modern-nav-inner { min-height:66px; gap:10px; }
+  .nf-modern-brand { font-size:19px; gap:8px; }
+  .nf-nav-tagline { font-size:7px; letter-spacing:.045em; }
+  .nf-menu-button,.nf-cart-button,.nf-admin-gear { width:38px; height:38px; border-radius:11px; }
+  .nf-nav-actions { gap:5px; }
+  .nf-modern-links { right:8px; width:calc(100vw - 16px); }
+
   .nf-modern-brand { font-size:21px; }
   .nf-page-heading { padding:25px 0 20px; }
   .nf-page-title { font-size:38px; }
@@ -1075,8 +1196,23 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
   .nf-modern-title { font-size:50px; }
   .nf-modern-subtitle { font-size:15px; }
   .nf-modern-trust { gap:8px; }
-  .nf-modern-trust-item { display:block; border-right:none; padding-right:0; }
+  .nf-modern-trust-item {
+    display:flex; align-items:center; gap:7px; border-right:none; padding-right:0;
+  }
+  .nf-modern-trust-icon { width:28px; height:28px; flex-basis:28px; }
+  .nf-modern-trust-icon svg { width:18px; height:18px; }
   .nf-modern-trust-copy { display:none; }
+  .nf-modern-trust-title { font-size:9px; }
+  .nf-bundle-grid.size-only { padding-top:0; }
+  .nf-bundle-grid.size-only .nf-size-stack { grid-template-columns:1fr; }
+  .nf-cart-tray-inner { padding:9px 12px 11px; }
+  .nf-cart-summary { gap:10px; }
+  .nf-cart-summary > .btn { padding:12px 13px; font-size:12.5px; max-width:47%; }
+  .nf-cart-totals strong { font-size:30px; }
+  .nf-about { grid-template-columns:1fr; padding-top:26px; gap:24px; }
+  .nf-about-image { min-height:280px; }
+  .nf-about-copy h2 { font-size:39px; }
+
   .nf-modern-hero-image { max-height:310px; }
   .nf-promo-grid { grid-template-columns:1fr; }
   .nf-promo-card {
@@ -1097,6 +1233,961 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
   .nf-section-title { font-size:32px; }
 }
 
+
+/* STOREFRONT PHASE 1 REFINEMENT */
+.nf-modern-nav-inner { position:relative; }
+.nf-modern-links {
+  top:calc(100% + 12px);
+  right:74px;
+  width:min(340px,calc(100vw - 30px));
+  padding:12px;
+  border-radius:20px;
+  background:linear-gradient(155deg,#2B1B12 0%,#1E130D 100%);
+  border:1px solid rgba(247,196,28,.24);
+  box-shadow:0 22px 54px rgba(0,0,0,.34);
+}
+.nf-modern-links.open { gap:6px; }
+.nf-modern-links .btn.ghost {
+  min-height:52px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  padding:14px 17px !important;
+  border:1px solid transparent !important;
+  border-radius:13px;
+  color:#FFF8E8 !important;
+  font-size:17px !important;
+  font-weight:750;
+  letter-spacing:.01em;
+}
+.nf-modern-links .btn.ghost:hover {
+  background:rgba(247,196,28,.12) !important;
+  border-color:rgba(247,196,28,.24) !important;
+  transform:translateX(3px);
+}
+.nf-top-card {
+  text-align:center;
+  transition:transform .18s ease,box-shadow .18s ease,background .18s ease,border-color .18s ease;
+}
+.nf-top-card:hover {
+  background:#FFD447;
+  border-color:#E1A100;
+  transform:translateY(-6px);
+  box-shadow:0 17px 34px rgba(189,126,0,.22);
+}
+.nf-top-card.selected {
+  background:#FFD447;
+  border-color:#D99600;
+  box-shadow:0 0 0 3px rgba(247,196,28,.26),0 15px 32px rgba(189,126,0,.20);
+}
+.nf-top-name {
+  font-size:18px;
+  line-height:1.25;
+  font-weight:850;
+  text-align:center;
+}
+.nf-top-price {
+  margin-top:6px;
+  color:#51463D;
+  font-size:14px;
+  font-weight:700;
+  text-align:center;
+}
+.nf-top-badge,.nf-top-add { display:none !important; }
+.nf-order-panel { overflow:visible; }
+.nf-type-choice { z-index:8; overflow:visible; }
+.nf-type-choice:hover,.nf-type-choice:focus-visible { z-index:30; }
+.nf-type-choice::after {
+  left:50%;
+  right:auto;
+  width:min(290px,calc(100vw - 54px));
+  top:calc(100% + 10px);
+  transform:translate(-50%,-3px);
+  padding:13px 15px;
+  border-radius:13px;
+  background:#4F91C6;
+  border:1px solid #3F7EAF;
+  color:#FFFFFF;
+  box-shadow:0 13px 28px rgba(46,112,163,.28);
+  font-size:13px;
+  line-height:1.5;
+  text-align:center;
+}
+.nf-type-choice:hover::after,.nf-type-choice:focus-visible::after {
+  transform:translate(-50%,0);
+}
+.nf-bundle-builder { overflow:visible; }
+.nf-nonbundle-note {
+  padding:24px 22px;
+  border:2px solid #7CB4DC;
+  border-radius:18px;
+  background:linear-gradient(145deg,#EAF6FF,#F6FBFF);
+  color:#153E5A;
+  font-size:17px;
+  font-weight:850;
+  line-height:1.55;
+  box-shadow:0 9px 22px rgba(79,145,198,.14);
+}
+.nf-cart-tray-toggle > span:last-child {
+  padding:6px 10px;
+  border:1px solid rgba(255,255,255,.48);
+  border-radius:999px;
+  background:rgba(255,255,255,.12);
+}
+@media (max-width:640px) {
+  .nf-modern-links {
+    top:calc(100% + 8px);
+    right:8px;
+    width:calc(100vw - 16px);
+  }
+  .nf-modern-links .btn.ghost {
+    min-height:54px;
+    font-size:17px !important;
+    padding:15px 17px !important;
+  }
+  .nf-top-name { font-size:16px; }
+  .nf-top-price { font-size:13px; }
+  .nf-nonbundle-note { font-size:15px; padding:20px 17px; }
+  .nf-type-choice::after {
+    width:min(250px,calc(100vw - 44px));
+    font-size:12.5px;
+  }
+}
+
+
+/* GUIDED CART ACTION */
+.nf-order-anchor {
+  scroll-margin-top:110px;
+}
+.nf-guided-order-button {
+  background:#FFF4CE !important;
+  color:#23465D !important;
+  border-color:#FFFFFF !important;
+  box-shadow:0 7px 18px rgba(17,81,119,.22) !important;
+  opacity:1 !important;
+}
+.nf-guided-order-button:hover {
+  background:#FFFFFF !important;
+  transform:translateY(-1px);
+}
+.nf-guided-order-button:disabled {
+  background:#D9EAF5 !important;
+  color:#66869A !important;
+  border-color:rgba(255,255,255,.35) !important;
+  box-shadow:none !important;
+}
+
+
+/* NAVIGATION + FULFILLMENT REFINEMENT */
+.nf-modern-links {
+  top:calc(100% + 10px) !important;
+  right:18px !important;
+  width:min(320px,calc(100vw - 36px)) !important;
+  padding:10px !important;
+  grid-template-columns:1fr !important;
+  align-items:stretch !important;
+}
+.nf-modern-links.open {
+  display:grid !important;
+}
+.nf-modern-links .btn.ghost {
+  width:100% !important;
+  min-height:50px !important;
+  justify-content:flex-start !important;
+  text-align:left !important;
+  padding:13px 15px !important;
+  font-size:17px !important;
+  border-radius:12px !important;
+}
+.nf-fulfillment-section {
+  margin-top:34px;
+  padding:30px;
+  border:2px solid #7CB4DC;
+  border-radius:24px;
+  background:
+    radial-gradient(circle at 90% 10%,rgba(114,183,228,.18),transparent 28%),
+    linear-gradient(145deg,#F7FBFF 0%,#EAF5FC 100%);
+  box-shadow:0 14px 34px rgba(62,116,154,.14);
+}
+.nf-fulfillment-title {
+  margin:8px 0 0;
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:42px;
+  line-height:.95;
+  letter-spacing:.02em;
+  color:#123F5C;
+}
+.nf-fulfillment-intro {
+  margin:10px 0 18px;
+  max-width:640px;
+  color:#4F6A7C;
+  font-size:15px;
+  line-height:1.55;
+  font-weight:600;
+}
+.nf-fulfillment-section .btn {
+  background:#FFFFFF;
+  border-color:#A7CBE4;
+}
+.nf-fulfillment-section .btn.on {
+  background:linear-gradient(145deg,#7BB4DC,#4F91C6);
+  color:#FFFFFF;
+  border-color:#3F7EAF;
+  box-shadow:0 8px 20px rgba(79,145,198,.24);
+}
+.nf-fulfillment-section .eyebrow {
+  color:#3F6E8F;
+}
+@media (max-width:640px) {
+  .nf-modern-links {
+    right:8px !important;
+    width:calc(100vw - 16px) !important;
+  }
+  .nf-fulfillment-section {
+    margin-top:28px;
+    padding:22px 17px;
+    border-radius:20px;
+  }
+  .nf-fulfillment-title {
+    font-size:35px;
+  }
+  .nf-fulfillment-intro {
+    font-size:14px;
+  }
+}
+
+
+/* ABOUT + GUIDANCE + ICON + BUNDLE POLISH */
+.nf-modern-trust-icon {
+  width:38px;
+  height:38px;
+  flex:0 0 38px;
+  border-radius:0;
+  background:transparent;
+  color:#D58A00;
+}
+.nf-modern-trust-icon svg {
+  width:35px;
+  height:35px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  overflow:visible;
+}
+.nf-modern-trust-icon.nf-michigan-icon svg {
+  fill:currentColor;
+  stroke:currentColor;
+  stroke-width:1.1;
+}
+.nf-bundle-promo-card img {
+  object-fit:cover !important;
+  object-position:center center !important;
+  padding:0 !important;
+  min-height:100% !important;
+  transform:scale(1.06);
+  background:#F4EEE7 !important;
+}
+.nf-continue-help {
+  position:fixed;
+  right:22px;
+  bottom:124px;
+  z-index:135;
+  width:min(390px,calc(100vw - 30px));
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  padding:16px 17px;
+  border:1px solid #7CB4DC;
+  border-radius:16px;
+  background:#F1F9FF;
+  color:#153E5A;
+  box-shadow:0 16px 38px rgba(23,79,119,.24);
+}
+.nf-continue-help > div {
+  display:grid;
+  gap:4px;
+}
+.nf-continue-help strong {
+  font-size:13px;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+.nf-continue-help span {
+  font-size:13.5px;
+  line-height:1.5;
+  font-weight:650;
+}
+.nf-continue-help button {
+  width:30px;
+  height:30px;
+  flex:0 0 30px;
+  border:1px solid #A7CBE4;
+  border-radius:50%;
+  background:#FFFFFF;
+  color:#315E7A;
+  font-size:20px;
+  line-height:1;
+  cursor:pointer;
+}
+.nf-about {
+  align-items:start;
+  grid-template-columns:minmax(330px,.9fr) minmax(0,1.1fr);
+  gap:52px;
+  padding-top:52px;
+}
+.nf-about-image {
+  position:sticky;
+  top:104px;
+  min-height:0;
+  margin:0;
+  display:block;
+  overflow:hidden;
+  border-radius:26px;
+  background:#F2ECE4;
+  box-shadow:0 18px 42px rgba(48,34,23,.15);
+}
+.nf-about-image img {
+  display:block;
+  width:100%;
+  height:auto;
+  aspect-ratio:2 / 3;
+  object-fit:cover;
+  object-position:center top;
+}
+.nf-about-image figcaption {
+  padding:14px 18px;
+  color:#6F6258;
+  background:#FFF9F0;
+  font-size:12px;
+  font-weight:750;
+  text-align:center;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+}
+.nf-about-copy h2 {
+  font-size:56px;
+  color:#17120E;
+}
+.nf-about-copy p {
+  margin:0 0 17px;
+  font-size:15px;
+  line-height:1.78;
+}
+.nf-about-closing {
+  margin-top:24px !important;
+  padding:20px 22px;
+  border-left:5px solid #F2AA00;
+  border-radius:0 15px 15px 0;
+  background:#FFF8DF;
+  color:#3F321F !important;
+  font-weight:750;
+}
+@media (max-width:760px) {
+  .nf-about {
+    grid-template-columns:1fr;
+    gap:28px;
+    padding-top:28px;
+  }
+  .nf-about-image {
+    position:relative;
+    top:auto;
+    width:min(100%,520px);
+    margin:0 auto;
+  }
+  .nf-about-copy h2 {
+    font-size:43px;
+  }
+  .nf-continue-help {
+    right:10px;
+    bottom:112px;
+    width:calc(100vw - 20px);
+  }
+}
+@media (max-width:640px) {
+  .nf-modern-trust-icon {
+    width:30px;
+    height:30px;
+    flex-basis:30px;
+  }
+  .nf-modern-trust-icon svg {
+    width:28px;
+    height:28px;
+  }
+  .nf-bundle-promo-card img {
+    transform:scale(1.1);
+  }
+}
+
+
+/* EXACT TRUST ICON IMAGE STYLING */
+.nf-modern-trust-icon-image {
+  width:42px;
+  height:42px;
+  flex:0 0 42px;
+  display:grid;
+  place-items:center;
+}
+.nf-modern-trust-icon-image img {
+  display:block;
+  width:34px;
+  height:34px;
+  object-fit:contain;
+}
+@media (max-width:640px) {
+  .nf-modern-trust-icon-image {
+    width:34px;
+    height:34px;
+    flex-basis:34px;
+  }
+  .nf-modern-trust-icon-image img {
+    width:27px;
+    height:27px;
+  }
+}
+
+
+/* FINAL TRUST ICON ASSETS */
+.nf-modern-trust-icon-image {
+  width:44px; height:44px; flex:0 0 44px;
+  display:grid; place-items:center;
+}
+.nf-modern-trust-icon-image img {
+  display:block; width:40px; height:40px; object-fit:contain;
+}
+@media (max-width:640px) {
+  .nf-modern-trust-icon-image { width:34px; height:34px; flex-basis:34px; }
+  .nf-modern-trust-icon-image img { width:31px; height:31px; }
+}
+
+
+/* MARKET PICKUP ADMIN */
+.nf-market-pickup-card { position:relative; overflow:hidden; }
+.nf-market-pickup-banner {
+  display:inline-flex; align-items:center; padding:7px 10px; border-radius:999px;
+  background:#153E5A; color:#FFFFFF; font-size:10px; font-weight:900; letter-spacing:.13em;
+}
+.nf-market-location {
+  display:grid; gap:3px; margin-top:9px; padding:12px 13px; border-radius:12px;
+  background:#EDF7FE; border:1px solid #A7CBE4; color:#153E5A;
+}
+.nf-market-location strong { font-size:15px; }
+.nf-market-location span { font-size:12.5px; font-weight:650; }
+.nf-noshow-status {
+  margin-top:11px; padding:9px 11px; border-radius:10px;
+  background:#F5F7F8; color:#587080; font-size:12px; font-weight:750;
+}
+.nf-noshow-status.warning { background:#FFF8DF; color:#806018; }
+.nf-noshow-status.final { background:#FFF0EF; color:#922E28; }
+
+
+/* ADMIN-CONTROLLED TOP PICKS */
+.nf-top-tagline {
+  margin-top:5px;
+  min-height:17px;
+  color:#8B640C;
+  font-size:11px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.07em;
+}
+.nf-top-image-placeholder {
+  width:100%;
+  aspect-ratio:1/1;
+  display:grid;
+  place-items:center;
+  padding:18px;
+  border-radius:14px;
+  color:#FFFFFF;
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:20px;
+  text-align:center;
+}
+.nf-admin-top-picks-list {
+  display:grid;
+  gap:12px;
+}
+.nf-admin-top-pick-card {
+  display:grid;
+  grid-template-columns:76px 130px minmax(0,1fr);
+  gap:14px;
+  align-items:start;
+  padding:14px;
+}
+.nf-admin-top-pick-order {
+  display:grid;
+  justify-items:center;
+  gap:8px;
+}
+.nf-admin-top-pick-order .num {
+  font-size:24px;
+  color:#4A3313;
+}
+.nf-admin-top-pick-order > div {
+  display:flex;
+  gap:4px;
+}
+.nf-admin-top-pick-order .btn {
+  width:30px;
+  height:30px;
+  padding:0;
+}
+.nf-admin-top-pick-preview {
+  width:130px;
+  height:130px;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  border-radius:15px;
+  border:1px solid #E6D8C3;
+  background:linear-gradient(145deg,#FFF9E9,#FFFFFF);
+  color:#9A8D79;
+  font-size:11px;
+  text-align:center;
+}
+.nf-admin-top-pick-preview img {
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  padding:7px;
+}
+.nf-admin-top-pick-fields {
+  display:grid;
+  gap:10px;
+}
+.nf-admin-top-pick-fields label > span {
+  display:block;
+  margin-bottom:5px;
+  color:#7B5821;
+  font-size:10px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+}
+.nf-admin-top-pick-fields select {
+  width:100%;
+  min-height:44px;
+  padding:10px 12px;
+  border:1.5px solid #CDB58D;
+  border-radius:12px;
+  background:#FFFFFF;
+  font:inherit;
+}
+.nf-admin-top-pick-upload input {
+  padding:9px;
+  font-size:12px;
+}
+.nf-admin-top-pick-upload small {
+  display:block;
+  margin-top:5px;
+  color:#8C7C70;
+  font-size:10.5px;
+  line-height:1.4;
+}
+.nf-admin-top-pick-toggle {
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.nf-admin-top-pick-toggle input {
+  width:18px;
+  height:18px;
+}
+.nf-admin-top-pick-toggle > span {
+  margin:0 !important;
+  color:#4A3313 !important;
+  font-size:12px !important;
+  letter-spacing:0 !important;
+  text-transform:none !important;
+}
+.nf-admin-top-pick-actions {
+  display:flex;
+  justify-content:flex-end;
+  gap:7px;
+}
+.nf-admin-top-pick-actions .btn {
+  padding:8px 10px;
+  font-size:11px;
+}
+.nf-admin-top-pick-footer {
+  position:sticky;
+  bottom:0;
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  margin-top:16px;
+  padding:14px;
+  border:1px solid #E6D8C3;
+  border-radius:15px;
+  background:rgba(255,255,255,.96);
+  box-shadow:0 -8px 24px rgba(74,51,19,.08);
+}
+.nf-admin-top-pick-footer .btn {
+  padding:12px 16px;
+}
+@media (max-width:700px) {
+  .nf-admin-top-pick-card {
+    grid-template-columns:56px minmax(0,1fr);
+  }
+  .nf-admin-top-pick-preview {
+    width:100%;
+    height:150px;
+  }
+  .nf-admin-top-pick-fields {
+    grid-column:1 / -1;
+  }
+}
+
+
+/* DRIZZLE PROMO + FINAL ORDER REVIEW */
+.nf-drizzle-promo-card img {
+  object-fit:cover !important;
+  object-position:center center !important;
+  padding:0 !important;
+  min-height:100% !important;
+  transform:scale(1.06);
+  background:#F4EEE7 !important;
+}
+.nf-details-continue {
+  width:100%;
+  margin-top:18px;
+  padding:15px 18px;
+  font-size:15px;
+}
+.nf-final-review {
+  position:fixed;
+  inset:0;
+  z-index:300;
+  overflow:auto;
+  padding:28px 18px;
+  background:#24A0ED;
+}
+.nf-final-review-shell {
+  width:min(980px,100%);
+  min-height:calc(100vh - 56px);
+  margin:0 auto;
+  display:flex;
+  flex-direction:column;
+  padding:28px;
+  border:1px solid rgba(255,255,255,.5);
+  border-radius:26px;
+  background:linear-gradient(160deg,#2FA8EF 0%,#168ED7 100%);
+  box-shadow:0 24px 70px rgba(10,74,113,.34);
+}
+.nf-final-review-header {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:22px;
+  color:#FFFFFF;
+}
+.nf-final-review-eyebrow {
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:#FFF4CE;
+}
+.nf-final-review-header h2 {
+  margin:8px 0 0;
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:52px;
+  line-height:.95;
+  letter-spacing:.02em;
+}
+.nf-final-review-header p {
+  max-width:650px;
+  margin:10px 0 0;
+  color:rgba(255,255,255,.88);
+  font-size:14px;
+  line-height:1.6;
+}
+.nf-final-review-close {
+  width:44px;
+  height:44px;
+  flex:0 0 44px;
+  border:1px solid rgba(255,255,255,.55);
+  border-radius:50%;
+  background:rgba(255,255,255,.12);
+  color:#FFFFFF;
+  font-size:28px;
+  cursor:pointer;
+}
+.nf-final-review-grid {
+  display:grid;
+  grid-template-columns:1.25fr .75fr;
+  gap:14px;
+  margin-top:24px;
+}
+.nf-final-review-card {
+  position:relative;
+  padding:19px;
+  border:1px solid rgba(255,255,255,.48);
+  border-radius:18px;
+  background:rgba(255,255,255,.96);
+  box-shadow:0 10px 28px rgba(13,84,126,.14);
+}
+.nf-final-review-label {
+  margin-bottom:13px;
+  color:#2C698F;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+}
+.nf-final-review-items {
+  display:grid;
+  gap:9px;
+}
+.nf-final-review-item {
+  display:grid;
+  grid-template-columns:11px minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+  padding:10px 0;
+  border-bottom:1px solid #DFEAF1;
+}
+.nf-final-review-item:last-child { border-bottom:0; }
+.nf-final-review-dot {
+  width:11px;
+  height:11px;
+  border-radius:50%;
+}
+.nf-final-review-item > div:nth-child(2) {
+  display:grid;
+  min-width:0;
+}
+.nf-final-review-item strong {
+  color:#173C52;
+  font-size:14px;
+}
+.nf-final-review-item span {
+  margin-top:3px;
+  color:#69808E;
+  font-size:11.5px;
+}
+.nf-final-review-quantity {
+  display:flex !important;
+  align-items:center;
+  gap:9px;
+}
+.nf-final-review-quantity button {
+  width:31px;
+  height:31px;
+  border:1px solid #8FC4E4;
+  border-radius:50%;
+  background:#EAF7FF;
+  color:#195E88;
+  font-size:17px;
+  cursor:pointer;
+}
+.nf-final-review-quantity b {
+  min-width:18px;
+  text-align:center;
+  color:#173C52;
+}
+.nf-final-review-savings {
+  margin-top:11px;
+  padding:10px 12px;
+  border-radius:10px;
+  background:#FFF6D8;
+  color:#7B5B0D;
+  font-size:12px;
+  font-weight:850;
+  text-align:right;
+}
+.nf-final-review-detail {
+  display:grid;
+  gap:6px;
+  color:#657A87;
+  font-size:13px;
+  line-height:1.5;
+}
+.nf-final-review-detail strong {
+  color:#173C52;
+  font-size:16px;
+}
+.nf-final-review-notes {
+  margin-top:4px;
+  padding-top:8px;
+  border-top:1px solid #DFEAF1;
+  font-style:italic;
+}
+.nf-final-review-edit {
+  margin-top:15px;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:#247BAA;
+  font-weight:800;
+  cursor:pointer;
+}
+.nf-final-review-price-row {
+  display:flex;
+  justify-content:space-between;
+  gap:14px;
+  padding:7px 0;
+  color:#5F7481;
+  font-size:13px;
+}
+.nf-final-review-price-row strong { color:#173C52; }
+.nf-final-review-grand-total {
+  display:flex;
+  align-items:end;
+  justify-content:space-between;
+  gap:14px;
+  margin-top:11px;
+  padding-top:14px;
+  border-top:2px solid #B9D9EC;
+  color:#173C52;
+  font-weight:850;
+}
+.nf-final-review-grand-total strong {
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:42px;
+  line-height:.9;
+  color:#0C6DA6;
+}
+.nf-final-review-actions {
+  display:flex;
+  justify-content:flex-end;
+  gap:11px;
+  margin-top:auto;
+  padding-top:22px;
+}
+.nf-final-review-back,
+.nf-final-review-place {
+  min-height:50px;
+  padding:13px 22px;
+  border-radius:13px;
+  font:inherit;
+  font-weight:850;
+  cursor:pointer;
+}
+.nf-final-review-back {
+  border:1px solid rgba(255,255,255,.62);
+  background:rgba(255,255,255,.14);
+  color:#FFFFFF;
+}
+.nf-final-review-place {
+  min-width:190px;
+  border:1px solid #D29000;
+  background:linear-gradient(145deg,#FFE073,#F7C41C);
+  color:#1B1005;
+  box-shadow:0 10px 24px rgba(80,57,0,.22);
+}
+.nf-final-review-place:disabled {
+  opacity:.55;
+  cursor:not-allowed;
+}
+@media (max-width:700px) {
+  .nf-final-review {
+    padding:0;
+  }
+  .nf-final-review-shell {
+    min-height:100vh;
+    padding:20px 14px 24px;
+    border:0;
+    border-radius:0;
+  }
+  .nf-final-review-header h2 {
+    font-size:40px;
+  }
+  .nf-final-review-grid {
+    grid-template-columns:1fr;
+  }
+  .nf-final-review-actions {
+    position:sticky;
+    bottom:0;
+    margin:18px -14px -24px;
+    padding:13px 14px calc(13px + env(safe-area-inset-bottom));
+    background:#147FBE;
+    box-shadow:0 -8px 24px rgba(8,74,113,.24);
+  }
+  .nf-final-review-back,
+  .nf-final-review-place {
+    flex:1;
+    min-width:0;
+    padding:12px 10px;
+    font-size:13px;
+  }
+}
+
+
+/* REFINED PROFESSIONAL SCROLL REVEALS */
+.nf-animations-ready .nf-reveal {
+  opacity:0;
+  transform:translate3d(0,14px,0);
+  transition:
+    opacity .7s cubic-bezier(.22,1,.36,1) var(--nf-reveal-delay,0ms),
+    transform .7s cubic-bezier(.22,1,.36,1) var(--nf-reveal-delay,0ms);
+}
+.nf-animations-ready .nf-reveal.nf-reveal-visible {
+  opacity:1;
+  transform:translate3d(0,0,0);
+}
+
+.nf-animations-ready .nf-modern-hero-grid.nf-reveal {
+  opacity:0;
+  transform:translate3d(0,8px,0);
+  transition:
+    opacity 2.8s ease .15s,
+    transform 2.8s cubic-bezier(.22,1,.36,1) .15s;
+}
+.nf-animations-ready .nf-modern-hero-grid.nf-reveal.nf-reveal-visible {
+  opacity:1;
+  transform:translate3d(0,0,0);
+}
+
+.nf-animations-ready .nf-bundle-promo-card.nf-reveal {
+  opacity:0;
+  transform:translate3d(0,90px,0);
+  transition:
+    opacity 2.4s ease,
+    transform 3s cubic-bezier(.16,1,.3,1);
+}
+.nf-animations-ready .nf-drizzle-promo-card.nf-reveal {
+  opacity:0;
+  transform:translate3d(0,90px,0);
+  transition:
+    opacity 2.4s ease,
+    transform 3s cubic-bezier(.16,1,.3,1);
+}
+.nf-animations-ready .nf-bundle-promo-card.nf-reveal.nf-reveal-visible,
+.nf-animations-ready .nf-drizzle-promo-card.nf-reveal.nf-reveal-visible {
+  opacity:1;
+  transform:translate3d(0,0,0);
+}
+
+.nf-animations-ready .nf-about-image.nf-reveal,
+.nf-animations-ready .nf-top-card.nf-reveal,
+.nf-animations-ready .nf-pick-card.nf-reveal {
+  transform:translate3d(0,16px,0) scale(.99);
+}
+.nf-animations-ready .nf-about-image.nf-reveal.nf-reveal-visible,
+.nf-animations-ready .nf-top-card.nf-reveal.nf-reveal-visible,
+.nf-animations-ready .nf-pick-card.nf-reveal.nf-reveal-visible {
+  transform:translate3d(0,0,0) scale(1);
+}
+
+@media (max-width:700px) {
+  .nf-animations-ready .nf-bundle-promo-card.nf-reveal,
+  .nf-animations-ready .nf-drizzle-promo-card.nf-reveal {
+    transform:translate3d(0,52px,0);
+  }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .nf-animations-ready .nf-reveal,
+  .nf-animations-ready .nf-reveal.nf-reveal-visible {
+    opacity:1 !important;
+    transform:none !important;
+    transition:none !important;
+  }
+}
+
 @media (prefers-reduced-motion:reduce) { .nf * { transition:none !important; } }
 `;
 
@@ -1114,6 +2205,12 @@ export default function App() {
   const [pickSize, setPickSize] = useState("4oz");
   const [pickType, setPickType] = useState("regular");
   const [typeInfo, setTypeInfo] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [cartOpen, setCartOpen] = useState(true);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [bundleDemoFill, setBundleDemoFill] = useState(null);
+  const [continueAttemptKey, setContinueAttemptKey] = useState("");
+  const [continueHelp, setContinueHelp] = useState("");
   const [method, setMethod] = useState(null);
   const [zip, setZip] = useState("");
   const [slot, setSlot] = useState(null);
@@ -1267,6 +2364,127 @@ export default function App() {
   useEffect(() => { if (method === "ship" && !shipOK) { setMethod(null); setSlot(null); } }, [shipOK, method]);
   useEffect(() => { setSlot(method === "ship" ? { kind: "ship" } : null); }, [method, zone?.id]);
 
+  useEffect(() => {
+    if (view === "admin" || typeof window === "undefined") return undefined;
+    if (!("IntersectionObserver" in window)) return undefined;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined;
+
+    const root = document.querySelector(".nf");
+    if (!root) return undefined;
+
+    const selectors = [
+      ".nf-modern-hero-grid",
+      ".nf-modern-trust-item",
+      ".nf-promo-card",
+      ".nf-section-row",
+      ".nf-top-card",
+      ".nf-bundle-builder",
+      ".nf-pick-card",
+      ".nf-fulfillment-section",
+      "#order-details-section",
+      ".nf-about-image",
+      ".nf-about-copy",
+      ".nf-page-heading",
+      ".nf-find-card",
+      ".nf-help-card",
+    ];
+
+    root.classList.add("nf-animations-ready");
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add("nf-reveal-visible");
+          observer.unobserve(entry.target);
+        });
+      },
+      {
+        threshold: 0.08,
+        rootMargin: "0px 0px -4% 0px",
+      }
+    );
+
+    const elements = [...document.querySelectorAll(selectors.join(","))];
+
+    const timers = [];
+
+    elements.forEach((element, index) => {
+      element.classList.add("nf-reveal");
+      element.style.setProperty("--nf-reveal-delay", `${Math.min((index % 4) * 45, 135)}ms`);
+
+      const isHero = element.matches(".nf-modern-hero-grid");
+      const isPromo = element.matches(".nf-bundle-promo-card, .nf-drizzle-promo-card");
+
+      if (isHero) {
+        element.classList.remove("nf-reveal-visible");
+        const timer = window.setTimeout(() => {
+          window.requestAnimationFrame(() => element.classList.add("nf-reveal-visible"));
+        }, 120);
+        timers.push(timer);
+        return;
+      }
+
+      if (isPromo) {
+        element.classList.remove("nf-reveal-visible");
+        observer.observe(element);
+        return;
+      }
+
+      const rect = element.getBoundingClientRect();
+      if (rect.top < window.innerHeight * 0.92) {
+        element.classList.add("nf-reveal-visible");
+      } else {
+        observer.observe(element);
+      }
+    });
+
+    return () => {
+      timers.forEach((timer) => window.clearTimeout(timer));
+      observer.disconnect();
+      root.classList.remove("nf-animations-ready");
+    };
+  }, [view, cat, receipt]);
+
+  useEffect(() => {
+    if (view !== "shop" || !cat || typeof window === "undefined") return undefined;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined;
+
+    const section = document.querySelector(".nf-bundle-builder");
+    if (!section || section.dataset.bundleDemoPlayed === "true") return undefined;
+
+    let fillTimer;
+    let drainTimer;
+    let restoreTimer;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries.find((item) => item.isIntersecting);
+        if (!entry) return;
+
+        section.dataset.bundleDemoPlayed = "true";
+        observer.disconnect();
+
+        fillTimer = window.setTimeout(() => setBundleDemoFill(100), 250);
+        drainTimer = window.setTimeout(() => setBundleDemoFill(0), 1850);
+        restoreTimer = window.setTimeout(() => setBundleDemoFill(null), 3200);
+      },
+      {
+        threshold: 0.35,
+        rootMargin: "0px 0px -8% 0px",
+      }
+    );
+
+    observer.observe(section);
+
+    return () => {
+      observer.disconnect();
+      window.clearTimeout(fillTimer);
+      window.clearTimeout(drainTimer);
+      window.clearTimeout(restoreTimer);
+    };
+  }, [view, cat]);
+
   if (boot) {
     return <div className="nf"><style>{CSS}</style>
       <div className="nf-wrap" style={{ paddingTop: 80 }}>
@@ -1304,7 +2522,7 @@ export default function App() {
       const full = await api.getOrder(r.token);
       pushOrderUrl(r.token);   // survives a refresh, and it's what the email links to
       setReceipt({ ...full, token: r.token, email: cust.email, address: cust.address });
-      setCart([]); setSlot(null); setMethod(null); setZip(""); setCtaOff(false);
+      setCart([]); setSlot(null); setMethod(null); setZip(""); setCtaOff(false); setReviewOpen(false);
       reload();  // stock may have moved
     } catch (e) { setErr(e.message); }
     setBusy(false);
@@ -1328,20 +2546,152 @@ export default function App() {
     setBusy(false);
   }
 
-  const Header = ({ eyebrow, title, right, big }) => {
-    if (big) {
-      return (
-        <>
-          <header className="nf-modern-nav">
-            <div className="nf-wrap nf-modern-nav-inner">
-              <div className="nf-modern-brand">
-                <Logo size={52} />
-                <span>NectarFusions</span>
-              </div>
-              <div className="nf-modern-links">{right}</div>
-            </div>
-          </header>
+  const cartCount = cart.reduce((sum, item) => sum + Number(item.qty || 0), 0);
 
+  const scrollToOrderStep = (id) => {
+    setCartOpen(false);
+    window.requestAnimationFrame(() => {
+      document.getElementById(id)?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  };
+
+  const guideContinue = (key, sectionId, message) => {
+    if (continueAttemptKey === key) {
+      setContinueHelp(message);
+    } else {
+      setContinueAttemptKey(key);
+      setContinueHelp("");
+    }
+    scrollToOrderStep(sectionId);
+  };
+
+  const continueOrder = () => {
+    if (!method) {
+      guideContinue(
+        "method",
+        "order-method-section",
+        "Choose Market Pickup, Local Delivery, or Shipping to continue."
+      );
+      return;
+    }
+
+    if (!slot) {
+      guideContinue(
+        "slot",
+        "order-method-section",
+        method === "market"
+          ? "Select an available market and pickup date to continue."
+          : "Select an available delivery or shipping option to continue."
+      );
+      return;
+    }
+
+    if (belowMin) {
+      guideContinue(
+        "minimum",
+        "order-section",
+        "Add enough honey to meet the delivery minimum shown in your order total."
+      );
+      return;
+    }
+
+    if (missing.length) {
+      guideContinue(
+        "details",
+        "order-details-section",
+        "Complete the highlighted required contact fields to continue."
+      );
+      return;
+    }
+
+    setContinueAttemptKey("");
+    setContinueHelp("");
+    setCartOpen(false);
+    setReviewOpen(true);
+  };
+
+  const Header = ({ eyebrow, title, right, big }) => {
+    const brand = (
+      <button
+        type="button"
+        className="nf-modern-brand nf-modern-brand-button"
+        onClick={() => { setView("shop"); setMenuOpen(false); }}
+        aria-label="Return to NectarFusions shop"
+      >
+        <Logo size={50} />
+        <span className="nf-brand-copy">
+          <span className="nf-brand-wordmark">Nectar<span>Fusions</span></span>
+          <span className="nf-nav-tagline">Nature&rsquo;s Happiness | Honey Infused</span>
+        </span>
+      </button>
+    );
+
+    return (
+      <>
+        <header className="nf-modern-nav">
+          <div className="nf-wrap nf-modern-nav-inner">
+            {brand}
+
+            <div className="nf-nav-actions">
+              <button
+                type="button"
+                className="nf-menu-button"
+                onClick={() => setMenuOpen((open) => !open)}
+                aria-expanded={menuOpen}
+                aria-label="Open navigation menu"
+              >
+                <span />
+                <span />
+                <span />
+              </button>
+
+              <button
+                type="button"
+                className="nf-cart-button"
+                onClick={() => setCartOpen((open) => !open)}
+                aria-label={`Open cart with ${cartCount} item${cartCount === 1 ? "" : "s"}`}
+                title="Your cart"
+              >
+                <svg width="23" height="23" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M3 4h2l2.1 10.1a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 1.9-1.4L21 7H6"
+                    stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+                  <circle cx="10" cy="20" r="1.35" fill="currentColor" />
+                  <circle cx="18" cy="20" r="1.35" fill="currentColor" />
+                </svg>
+                {cartCount > 0 && <span className="nf-cart-badge">{cartCount}</span>}
+              </button>
+
+              <button
+                className="nf-admin-gear"
+                onClick={() => setView(isAdmin ? "admin" : "login")}
+                aria-label="Admin"
+                title="Admin"
+              >
+                ⚙
+              </button>
+            </div>
+
+            <div className={`nf-modern-links ${menuOpen ? "open" : ""}`} onClick={() => setMenuOpen(false)}>
+              {right}
+            </div>
+          </div>
+        </header>
+
+        {!big && (eyebrow || title) && (
+          <section className="nf-page-heading">
+            <div className="nf-wrap">
+              {eyebrow && <div className="nf-modern-kicker">{eyebrow}</div>}
+              <h1 className="nf-page-title">
+                {title || <>NECTAR<span>FUSIONS</span></>}
+              </h1>
+            </div>
+          </section>
+        )}
+
+        {big && (
           <section className="nf-modern-hero">
             <div className="nf-wrap nf-modern-hero-grid">
               <div>
@@ -1363,21 +2713,29 @@ export default function App() {
 
                 <div className="nf-modern-trust">
                   <div className="nf-modern-trust-item">
-                    <div className="nf-modern-trust-icon">✓</div>
+                    <div className="nf-modern-trust-icon-image" aria-hidden="true">
+                      <img src="/trust-raw-unfiltered.png" alt="" />
+                    </div>
                     <div>
                       <div className="nf-modern-trust-title">Raw &amp; Unfiltered</div>
                       <div className="nf-modern-trust-copy">Never heated</div>
                     </div>
                   </div>
+
                   <div className="nf-modern-trust-item">
-                    <div className="nf-modern-trust-icon">MI</div>
+                    <div className="nf-modern-trust-icon-image" aria-hidden="true">
+                      <img src="/trust-made-in-michigan.png" alt="" />
+                    </div>
                     <div>
-                      <div className="nf-modern-trust-title">Made in Michigan</div>
-                      <div className="nf-modern-trust-copy">Coleman made</div>
+                      <div className="nf-modern-trust-title">Local &amp; Made in MI</div>
+                      <div className="nf-modern-trust-copy">Coleman, Michigan</div>
                     </div>
                   </div>
+
                   <div className="nf-modern-trust-item">
-                    <div className="nf-modern-trust-icon">✦</div>
+                    <div className="nf-modern-trust-icon-image" aria-hidden="true">
+                      <img src="/trust-real-ingredients.png" alt="" />
+                    </div>
                     <div>
                       <div className="nf-modern-trust-title">Real Ingredients</div>
                       <div className="nf-modern-trust-copy">No artificial anything</div>
@@ -1393,39 +2751,6 @@ export default function App() {
               />
             </div>
           </section>
-        </>
-      );
-    }
-
-    return (
-      <>
-        <header className="nf-modern-nav">
-          <div className="nf-wrap nf-modern-nav-inner">
-            <button
-              type="button"
-              className="nf-modern-brand nf-modern-brand-button"
-              onClick={() => setView("shop")}
-              aria-label="Return to NectarFusions shop"
-            >
-              <Logo size={52} />
-              <span>NectarFusions</span>
-            </button>
-
-            <div className="nf-modern-links">
-              {right}
-            </div>
-          </div>
-        </header>
-
-        {(eyebrow || title) && (
-          <section className="nf-page-heading">
-            <div className="nf-wrap">
-              {eyebrow && <div className="nf-modern-kicker">{eyebrow}</div>}
-              <h1 className="nf-page-title">
-                {title || <>NECTAR<span>FUSIONS</span></>}
-              </h1>
-            </div>
-          </section>
         )}
       </>
     );
@@ -1433,25 +2758,11 @@ export default function App() {
 
   const nav = (
     <>
-      <button className="btn ghost" onClick={() => setView("subscribe")} style={{ padding: "6px 9px", fontSize: 11 }}>Honey Club</button>
-      <button className="btn ghost" onClick={() => setView("find")} style={{ padding: "6px 9px", fontSize: 11 }}>Find Us</button>
-      <button className="btn ghost" onClick={() => setView("help")} style={{ padding: "6px 9px", fontSize: 11 }}>Order Help</button>
-      <button className="btn ghost" onClick={() => setView("policy")} style={{ padding: "6px 9px", fontSize: 11 }}>Policies</button>
-      <button
-        className="btn ghost"
-        onClick={() => setView(isAdmin ? "admin" : "login")}
-        aria-label="Admin"
-        title="Admin"
-        style={{
-          padding: "5px 7px",
-          fontSize: 16,
-          lineHeight: 1,
-          opacity: .48,
-          minWidth: 30,
-        }}
-      >
-        ⚙
-      </button>
+      <button className="btn ghost" onClick={() => setView("about")}>About</button>
+      <button className="btn ghost" onClick={() => setView("subscribe")}>Honey Club</button>
+      <button className="btn ghost" onClick={() => setView("find")}>Find Us</button>
+      <button className="btn ghost" onClick={() => setView("help")}>Order Help</button>
+      <button className="btn ghost" onClick={() => setView("policy")}>Policies</button>
     </>
   );
 
@@ -1788,6 +3099,9 @@ export default function App() {
     );
   }
 
+  /* ================= ABOUT ================= */
+  if (view === "about") return <About Header={Header} onBack={() => setView("shop")} />;
+
   /* ================= POLICY ================= */
   if (view === "policy") return <Policy Header={Header} onBack={() => setView("shop")} shipOver={cat.shipFreeOver} minutes={cat.cancelMinutes} />;
 
@@ -1835,7 +3149,7 @@ export default function App() {
       <section className="nf-showcase">
         <div className="nf-wrap">
           <div className="nf-promo-grid">
-            <article className="nf-promo-card">
+            <article className="nf-promo-card nf-bundle-promo-card">
               <img src="/nf-bundles.png" alt="NectarFusions honey bundle" />
               <div className="nf-promo-copy">
                 <h2 className="nf-promo-title">Honey Bundles</h2>
@@ -1847,7 +3161,7 @@ export default function App() {
               </div>
             </article>
 
-            <article className="nf-promo-card">
+            <article className="nf-promo-card nf-drizzle-promo-card">
               <img src="/nf-drizzle.png" alt="Honey drizzling from a NectarFusions jar" />
               <div className="nf-promo-copy">
                 <h2 className="nf-promo-title">Drizzle on Something Good</h2>
@@ -1866,27 +3180,55 @@ export default function App() {
           </div>
 
           <div className="nf-top-grid">
-            {[
-              ["Blueberry", "/nf-top-blueberry.png", "Best Seller"],
-              ["Cinnamon", "/nf-top-cinnamon.png", "Warm & Cozy"],
-              ["Jalapeño Lime", "/nf-top-jalapeno-lime.png", "Bright & Bold"],
-              ["Hot Thai Pepper", "/nf-top-hot-thai.png", "Bring the Heat"],
-            ].map(([name, image, badge]) => {
-              const flavor = cat.flavors.find((item) => item.name.toLowerCase() === name.toLowerCase());
+            {(cat.topPicks?.length
+              ? cat.topPicks
+                  .filter((pick) => pick.active !== false && pick.flavor_id)
+                  .map((pick) => {
+                    const flavor = cat.flavors.find((item) => item.id === pick.flavor_id);
+                    return flavor ? { ...pick, flavor } : null;
+                  })
+                  .filter(Boolean)
+              : [
+                  ["Blueberry", "/nf-top-blueberry.png", "Best Seller"],
+                  ["Cinnamon", "/nf-top-cinnamon.png", "Warm & Cozy"],
+                  ["Jalapeño Lime", "/nf-top-jalapeno-lime.png", "Bright & Bold"],
+                  ["Hot Thai Pepper", "/nf-top-hot-thai.png", "Bring the Heat"],
+                ].map(([name, image_url, tagline]) => {
+                  const flavor = cat.flavors.find((item) => item.name.toLowerCase() === name.toLowerCase());
+                  return flavor ? { flavor, image_url, tagline, active: true } : null;
+                }).filter(Boolean)
+            ).map((pick) => {
+              const flavor = pick.flavor;
+              const image = pick.image_url || flavorImage(flavor);
+              const selected = cart.some((item) =>
+                item.flavor_id === flavor.id &&
+                item.size_id === pickSize &&
+                item.type === pickType &&
+                item.qty > 0
+              );
+              const available = api.inStock(flavor, pickSize, pickType);
+
               return (
                 <button
-                  key={name}
-                  className="nf-top-card"
+                  key={flavor.id}
+                  className={`nf-top-card ${selected ? "selected" : ""}`}
                   onClick={() => {
-                    if (flavor && api.inStock(flavor, pickSize, pickType)) addJar(flavor);
+                    if (available) addJar(flavor);
                     document.getElementById("order-section")?.scrollIntoView({ behavior: "smooth" });
                   }}
                 >
-                  <span className="nf-top-badge">{badge}</span>
-                  <img src={image} alt={`${name} infused honey`} />
-                  <div className="nf-top-name">{name}</div>
-                  <div className="nf-top-price">From {money(sizeOf("4oz").price)}</div>
-                  <span className="nf-top-add" aria-hidden="true">+</span>
+                  {image ? (
+                    <img src={image} alt={`${flavor.name} infused honey`} />
+                  ) : (
+                    <div className="nf-top-image-placeholder" style={{ background: flavor.hex }}>
+                      {flavor.name}
+                    </div>
+                  )}
+                  <div className="nf-top-name">{flavor.name}</div>
+                  <div className="nf-top-tagline">{pick.tagline || "Customer favorite"}</div>
+                  <div className="nf-top-price">
+                    {available ? `From ${money(sizeOf("4oz").price)}` : "Currently sold out"}
+                  </div>
                 </button>
               );
             })}
@@ -1919,8 +3261,15 @@ export default function App() {
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
           {TYPES.map((t) => (
-            <button key={t.id} className={`btn ${pickType === t.id ? "on" : ""}`} onClick={() => setPickType(t.id)}
-              style={{ padding: "13px 14px", textAlign: "left" }}>
+            <button
+              key={t.id}
+              className={`btn nf-type-choice ${pickType === t.id ? "on" : ""}`}
+              data-tip={t.id === "regular"
+                ? "Pourable raw honey for tea, drizzling, cooking, and drinks."
+                : "Smooth, spreadable honey for toast, biscuits, and bagels."}
+              onClick={() => setPickType(t.id)}
+              style={{ padding: "13px 14px", textAlign: "left" }}
+            >
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
                 <div>
                   <div className="display" style={{ fontSize: 24 }}>{t.name.toUpperCase()}</div>
@@ -1936,11 +3285,11 @@ export default function App() {
 
         <section className="nf-bundle-builder">
           <div className="nf-bundle-headline" aria-hidden="true">
-            <span className="nf-bundle-headline-main">Bundle ·</span>
+            <span className="nf-bundle-headline-main">4 oz Bundle ·</span>
             <span className="nf-bundle-headline-price">{B.count} for {money(B.price)}</span>
           </div>
 
-          <div className="nf-bundle-grid">
+          <div className={`nf-bundle-grid ${pickSize !== B.size ? "size-only" : ""}`}>
             <div className="nf-size-stack">
               {cat.sizes.map((s) => (
                 <button
@@ -1956,41 +3305,43 @@ export default function App() {
               ))}
             </div>
 
-            <div className="nf-bundle-visual">
-              <div className="nf-bundle-jar-stage">
-                <div
-                  className="nf-bundle-honey-fill"
-                  style={{
-                    height: pickSize === B.size
-                      ? `${Math.min(
-                          100,
-                          ((price.jars % B.count === 0 && price.jars > 0
-                            ? B.count
-                            : price.jars % B.count) / B.count) * 100
-                        )}%`
-                      : "0%"
-                  }}
-                />
-                <img
-                  src="/nf-empty-bundle-jar.png"
-                  alt="Honey jar showing bundle progress"
-                />
-              </div>
+            {pickSize === B.size ? (
+              <div className="nf-bundle-visual">
+                <div className="nf-bundle-jar-stage">
+                  <div
+                    className="nf-bundle-honey-fill"
+                    style={{
+                      height: `${bundleDemoFill ?? Math.min(
+                        100,
+                        ((price.jars % B.count === 0 && price.jars > 0
+                          ? B.count
+                          : price.jars % B.count) / B.count) * 100
+                      )}%`
+                    }}
+                  />
+                  <img
+                    src="/nf-empty-bundle-jar.png"
+                    alt="Honey jar showing 4 ounce bundle progress"
+                  />
+                </div>
 
-              <div className="nf-bundle-copy">
-                <strong>Mix any three jars</strong>
-                <p>Regular and Spun both count.</p>
-                <div className="nf-bundle-progress">
-                  {pickSize !== B.size ? (
-                    <>Choose <b>{sizeOf(B.size).label}</b> to build this bundle.</>
-                  ) : price.jars % B.count === 0 && price.jars > 0 ? (
-                    <><b>{price.bundles} bundle{price.bundles > 1 ? "s" : ""} complete.</b><br />Add another jar to begin the next one.</>
-                  ) : (
-                    <><b>{price.jars % B.count}/{B.count} jars added.</b><br />Add {B.count - (price.jars % B.count)} more to complete the bundle.</>
-                  )}
+                <div className="nf-bundle-copy">
+                  <strong>Mix any three 4 oz jars</strong>
+                  <p>Regular and Spun both count.</p>
+                  <div className="nf-bundle-progress">
+                    {price.jars % B.count === 0 && price.jars > 0 ? (
+                      <><b>{price.bundles} bundle{price.bundles > 1 ? "s" : ""} complete.</b><br />Add another jar to begin the next one.</>
+                    ) : (
+                      <><b>{price.jars % B.count}/{B.count} jars added.</b><br />Add {B.count - (price.jars % B.count)} more to complete the bundle.</>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="nf-nonbundle-note">
+                Bundle pricing applies only to 4 oz jars. Choose your size and continue to flavors below.
+              </div>
+            )}
           </div>
         </section>
 
@@ -2037,8 +3388,8 @@ export default function App() {
                       <span className="nf-top-badge">Best Seller</span>
                     )}
 
-                    {!stockAvailable && (
-                      <div className="nf-pick-overlay">Out of Stock</div>
+                    {(!stockAvailable || (limit !== null && quantityInCart >= limit)) && (
+                      <div className="nf-pick-overlay">Sold Out</div>
                     )}
                   </div>
 
@@ -2087,31 +3438,12 @@ export default function App() {
 
         {cart.length > 0 && (
           <>
-            <div className="eyebrow" style={{ margin: "32px 0 10px" }}>Your order</div>
-            <div className="card">
-              {cart.map((x, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 11, padding: "11px 13px",
-                  borderBottom: i < cart.length - 1 ? "1px solid #EFE6D8" : "none" }}>
-                  <span style={{ width: 9, height: 9, borderRadius: "50%", background: x.hex, flexShrink: 0 }} />
-                  <span style={{ flex: 1, fontSize: 14.5, minWidth: 0 }}>
-                    {x.flavor}
-                    <span style={{ display: "block", color: c.tan, fontSize: 12, fontWeight: 600, marginTop: 1 }}>
-                      {sizeOf(x.size_id).label} · {typeName(x.type)}
-                    </span>
-                  </span>
-                  <button className="btn" onClick={() => bump(i, -1)} style={{ width: 32, height: 32 }}>–</button>
-                  <span className="num" style={{ width: 20, textAlign: "center", fontSize: 18 }}>{x.qty}</span>
-                  <button className="btn" onClick={() => bump(i, 1)} style={{ width: 32, height: 32 }}>+</button>
-                </div>
-              ))}
-            </div>
-            {price.saved > 0 && (
-              <div style={{ fontSize: 12.5, fontWeight: 700, color: c.amber, marginTop: 7, textAlign: "right" }}>
-                Bundle savings −{money(price.saved)}
-              </div>
-            )}
-
-            <div className="eyebrow" style={{ margin: "32px 0 10px" }}>How do you want it?</div>
+            <section id="order-method-section" className="nf-fulfillment-section nf-order-anchor">
+              <div className="nf-modern-kicker">Choose your order method</div>
+              <h2 className="nf-fulfillment-title">Delivery &amp; Pickup Options</h2>
+              <p className="nf-fulfillment-intro">
+                Select how you would like to receive your NectarFusions order.
+              </p>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
               <button className={`btn ${method === "market" ? "on" : ""}`} onClick={() => setMethod("market")}
                 style={{ padding: "15px 13px", textAlign: "left" }}>
@@ -2221,6 +3553,8 @@ export default function App() {
               </div>
             )}
 
+            </section>
+
             {slot && (
               <>
                 {!ctaOff && method !== "market" && (
@@ -2241,7 +3575,7 @@ export default function App() {
                   </div>
                 )}
 
-                <div className="eyebrow" style={{ margin: "26px 0 10px" }}>Your details</div>
+            <div id="order-details-section" className="eyebrow nf-order-anchor" style={{ margin: "32px 0 10px" }}>Your details</div>
                 <div style={{ display: "grid", gap: 10 }}>
                   <Field placeholder="Name" value={cust.name} onChange={(e) => setCust({ ...cust, name: e.target.value })} />
                   <Field placeholder="Phone — we'll text to confirm" type="tel" value={cust.phone} onChange={(e) => setCust({ ...cust, phone: e.target.value })} />
@@ -2265,6 +3599,20 @@ export default function App() {
                 <div style={{ fontSize: 12.5, color: c.brown, marginTop: 12, lineHeight: 1.55 }}>
                   You&rsquo;ll get an order number and an email, and you can cancel free for {cat.cancelMinutes} minutes.
                 </div>
+
+                <button
+                  type="button"
+                  className="btn solid nf-details-continue"
+                  disabled={!canPlace}
+                  onClick={() => {
+                    setContinueAttemptKey("");
+                    setContinueHelp("");
+                    setCartOpen(false);
+                    setReviewOpen(true);
+                  }}
+                >
+                  Continue to review order
+                </button>
               </>
             )}
           </>
@@ -2310,49 +3658,219 @@ export default function App() {
         </footer>
       </div>
 
-      {cart.length > 0 && (
-        <div style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          zIndex: 40,
-          background: c.sky,
-          padding: "14px 18px",
-          borderTop: "1px solid rgba(255,255,255,.48)",
-          boxShadow: "0 -8px 24px rgba(18,89,132,.22)"
-        }}>
-          <div style={{ maxWidth: 720, margin: "0 auto", display: "flex", alignItems: "center", gap: 14 }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13.5, color: "#FFFFFF", fontWeight: 700, lineHeight: 1.45 }}>
-                <div>Merchandise subtotal: {money(price.sub)}</div>
-                {method === "delivery" && (
-                  <div>Delivery: {fee > 0 ? money(fee) : "Free"}</div>
-                )}
-                {method === "ship" && <div>Shipping: Free</div>}
+      {continueHelp && (
+        <div className="nf-continue-help" role="status" aria-live="polite">
+          <div>
+            <strong>Need a hand?</strong>
+            <span>{continueHelp}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setContinueHelp("")}
+            aria-label="Dismiss help"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {reviewOpen && cart.length > 0 && (
+        <div className="nf-final-review" role="dialog" aria-modal="true" aria-label="Review your order">
+          <div className="nf-final-review-shell">
+            <div className="nf-final-review-header">
+              <div>
+                <div className="nf-final-review-eyebrow">Your Order</div>
+                <h2>Review everything one last time</h2>
+                <p>Confirm your honey, fulfillment choice, and contact details before placing the order.</p>
               </div>
-              <div style={{ fontSize: 11.5, color: "rgba(255,255,255,.88)", marginTop: 5, textTransform: "uppercase",
-                letterSpacing: ".1em", fontWeight: 700 }}>
-                Order total
-              </div>
-              <div className="num" style={{ fontSize: 39, color: "#FFFFFF", lineHeight: 1.02,
-                textShadow: "0 2px 8px rgba(0,0,0,.14)" }}>{money(total)}</div>
+              <button
+                type="button"
+                className="nf-final-review-close"
+                onClick={() => setReviewOpen(false)}
+                aria-label="Close order review"
+              >
+                ×
+              </button>
             </div>
-            <button className="btn solid" disabled={!canPlace} onClick={submit}
-              style={{
-                padding: "14px 22px",
-                fontSize: 15.5,
-                flexShrink: 0,
-                background: canPlace ? "#FFF4CE" : "#D9EAF5",
-                color: canPlace ? c.darkBrown : "#66869A",
-                borderColor: canPlace ? "#FFFFFF" : "rgba(255,255,255,.35)",
-                boxShadow: canPlace ? "0 5px 14px rgba(17,81,119,.20)" : "none"
-              }}>
-              {busy ? "Placing…" : !method ? "Choose a way" : !slot ? "Choose a time"
-                : belowMin ? `Add ${money(zone.minimum - price.sub)} more` : missing.length ? `Add ${missing[0]}` : "Place order"}
-            </button>
+
+            {err && <div className="err" style={{ marginBottom: 16 }}>{err}</div>}
+
+            <div className="nf-final-review-grid">
+              <section className="nf-final-review-card">
+                <div className="nf-final-review-label">Honey selections</div>
+                <div className="nf-final-review-items">
+                  {cart.map((item, index) => (
+                    <div className="nf-final-review-item" key={`${item.flavor_id}-${item.size_id}-${item.type}`}>
+                      <span className="nf-final-review-dot" style={{ background: item.hex }} />
+                      <div>
+                        <strong>{item.flavor}</strong>
+                        <span>{sizeOf(item.size_id).label} · {typeName(item.type)}</span>
+                      </div>
+                      <div className="nf-final-review-quantity">
+                        <button type="button" onClick={() => bump(index, -1)} aria-label={`Remove one ${item.flavor}`}>−</button>
+                        <b>{item.qty}</b>
+                        <button type="button" onClick={() => bump(index, 1)} aria-label={`Add another ${item.flavor}`}>+</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {price.saved > 0 && (
+                  <div className="nf-final-review-savings">Bundle savings −{money(price.saved)}</div>
+                )}
+              </section>
+
+              <section className="nf-final-review-card">
+                <div className="nf-final-review-label">Fulfillment</div>
+                <div className="nf-final-review-detail">
+                  <strong>
+                    {method === "market" ? "Market Pickup" : method === "delivery" ? "Local Delivery" : "Shipping"}
+                  </strong>
+                  {slot?.kind === "market" && (
+                    <span>{slot.m.venue?.name || "Selected market"} · {fmt(parseDay(slot.m.day))}</span>
+                  )}
+                  {slot?.kind === "delivery" && (
+                    <span>{fmt(slot.date)}{zone?.window_label ? ` · ${zone.window_label}` : ""}</span>
+                  )}
+                  {slot?.kind === "ship" && <span>Ships to the address below</span>}
+                </div>
+
+                <button
+                  type="button"
+                  className="nf-final-review-edit"
+                  onClick={() => {
+                    setReviewOpen(false);
+                    scrollToOrderStep("order-method-section");
+                  }}
+                >
+                  Edit fulfillment
+                </button>
+              </section>
+
+              <section className="nf-final-review-card">
+                <div className="nf-final-review-label">Your details</div>
+                <div className="nf-final-review-detail">
+                  <strong>{cust.name}</strong>
+                  <span>{cust.phone}</span>
+                  <span>{cust.email}</span>
+                  {method !== "market" && <span>{cust.address}</span>}
+                  {cust.notes && <span className="nf-final-review-notes">Note: {cust.notes}</span>}
+                </div>
+
+                <button
+                  type="button"
+                  className="nf-final-review-edit"
+                  onClick={() => {
+                    setReviewOpen(false);
+                    scrollToOrderStep("order-details-section");
+                  }}
+                >
+                  Edit details
+                </button>
+              </section>
+
+              <section className="nf-final-review-card nf-final-review-total-card">
+                <div className="nf-final-review-label">Order total</div>
+                <div className="nf-final-review-price-row">
+                  <span>Merchandise</span>
+                  <strong>{money(price.sub)}</strong>
+                </div>
+                {method === "delivery" && (
+                  <div className="nf-final-review-price-row">
+                    <span>Delivery</span>
+                    <strong>{fee > 0 ? money(fee) : "Free"}</strong>
+                  </div>
+                )}
+                {method === "ship" && (
+                  <div className="nf-final-review-price-row">
+                    <span>Shipping</span>
+                    <strong>Free</strong>
+                  </div>
+                )}
+                <div className="nf-final-review-grand-total">
+                  <span>Total</span>
+                  <strong>{money(total)}</strong>
+                </div>
+              </section>
+            </div>
+
+            <div className="nf-final-review-actions">
+              <button type="button" className="nf-final-review-back" onClick={() => setReviewOpen(false)}>
+                Back to edit
+              </button>
+              <button
+                type="button"
+                className="nf-final-review-place"
+                disabled={busy || !canPlace}
+                onClick={submit}
+              >
+                {busy ? "Placing order…" : "Place order"}
+              </button>
+            </div>
           </div>
         </div>
+      )}
+
+      {cart.length > 0 && (
+        <aside className={`nf-cart-tray ${cartOpen ? "open" : ""}`} aria-label="Your order">
+          <div className="nf-cart-tray-inner">
+            <button
+              type="button"
+              className="nf-cart-tray-toggle"
+              onClick={() => setCartOpen((open) => !open)}
+              aria-expanded={cartOpen}
+            >
+              <span className="nf-cart-tray-label">
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M3 4h2l2.1 10.1a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 1.9-1.4L21 7H6"
+                    stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+                  <circle cx="10" cy="20" r="1.35" fill="currentColor" />
+                  <circle cx="18" cy="20" r="1.35" fill="currentColor" />
+                </svg>
+                Your Order
+                <span className="nf-cart-tray-count">{cartCount}</span>
+              </span>
+              <span>{cartOpen ? "Hide" : "Review order items"}</span>
+            </button>
+
+            {cartOpen && (
+              <div className="nf-cart-items">
+                {cart.map((item, index) => (
+                  <div className="nf-cart-item" key={`${item.flavor_id}-${item.size_id}-${item.type}`}>
+                    <span className="nf-cart-item-dot" style={{ background: item.hex }} />
+                    <span className="nf-cart-item-name">
+                      <strong>{item.flavor}</strong>
+                      <small>{sizeOf(item.size_id).label} · {typeName(item.type)}</small>
+                    </span>
+                    <button type="button" onClick={() => bump(index, -1)} aria-label={`Remove one ${item.flavor}`}>−</button>
+                    <span className="nf-cart-item-qty">{item.qty}</span>
+                    <button type="button" onClick={() => bump(index, 1)} aria-label={`Add another ${item.flavor}`}>+</button>
+                  </div>
+                ))}
+                {price.saved > 0 && (
+                  <div className="nf-cart-savings">Bundle savings −{money(price.saved)}</div>
+                )}
+              </div>
+            )}
+
+            <div className="nf-cart-summary">
+              <div className="nf-cart-totals">
+                <div>Merchandise subtotal: {money(price.sub)}</div>
+                {method === "delivery" && <div>Delivery: {fee > 0 ? money(fee) : "Free"}</div>}
+                {method === "ship" && <div>Shipping: Free</div>}
+                <span>Order total</span>
+                <strong>{money(total)}</strong>
+              </div>
+
+              <button
+                className="btn solid nf-guided-order-button"
+                disabled={busy}
+                onClick={continueOrder}
+              >
+                {canPlace ? "Review order" : "Continue"}
+              </button>
+            </div>
+          </div>
+        </aside>
       )}
     </div>
   );
@@ -2828,6 +4346,8 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
   const [orderView, setOrderView] = useState("active");
   const [subView, setSubView] = useState("active");
   const [openFlavor, setOpenFlavor] = useState(null);
+  const [topPickDrafts, setTopPickDrafts] = useState([]);
+  const [topPickUploading, setTopPickUploading] = useState(null);
   const [newDay, setNewDay] = useState("");
   const [blockDay, setBlockDay] = useState("");
   const [err, setErr] = useState(null);
@@ -2850,6 +4370,17 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
   }, []);
   useEffect(() => { pull(); }, [pull]);
 
+  useEffect(() => {
+    const existing = Array.isArray(cat?.topPicks) ? cat.topPicks : [];
+    const defaults = [
+      { flavor_id: cat?.flavors?.find((f) => f.name === "Blueberry")?.id || null, tagline: "Best Seller", image_url: "/nf-top-blueberry.png", active: true },
+      { flavor_id: cat?.flavors?.find((f) => f.name === "Cinnamon")?.id || null, tagline: "Warm & Cozy", image_url: "/nf-top-cinnamon.png", active: true },
+      { flavor_id: cat?.flavors?.find((f) => f.name === "Jalapeño Lime")?.id || null, tagline: "Bright & Bold", image_url: "/nf-top-jalapeno-lime.png", active: true },
+      { flavor_id: cat?.flavors?.find((f) => f.name === "Hot Thai Pepper")?.id || null, tagline: "Bring the Heat", image_url: "/nf-top-hot-thai.png", active: true },
+    ];
+    setTopPickDrafts((existing.length ? existing : defaults).map((pick) => ({ ...pick })));
+  }, [cat?.topPicks, cat?.flavors]);
+
   const guard = async (fn) => {
     try {
       await fn();
@@ -2859,12 +4390,43 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
     } catch (e) { setErr(e.message); }
   };
 
+  const updateTopPick = (index, patch) => {
+    setTopPickDrafts((current) =>
+      current.map((pick, i) => i === index ? { ...pick, ...patch } : pick)
+    );
+  };
+
+  const moveTopPick = (index, direction) => {
+    setTopPickDrafts((current) => {
+      const nextIndex = index + direction;
+      if (nextIndex < 0 || nextIndex >= current.length) return current;
+      const next = [...current];
+      [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
+      return next;
+    });
+  };
+
+  const addTopPickSlot = () => {
+    setTopPickDrafts((current) => [
+      ...current,
+      { flavor_id: null, tagline: "", image_url: "", active: true },
+    ].slice(0, 8));
+  };
+
   const activeOrders = orders.filter((o) => !o.archived_at);
   const archivedOrders = orders.filter((o) => !!o.archived_at);
-  const orderPool = orderView === "archived" ? archivedOrders : activeOrders;
+  const standardActiveOrders = activeOrders.filter((o) => o.method !== "market");
+  const standardArchivedOrders = archivedOrders.filter((o) => o.method !== "market");
+  const marketPickupOrders = activeOrders.filter((o) => o.method === "market");
+  const orderPool = orderView === "archived" ? standardArchivedOrders : standardActiveOrders;
   const shownOrders = orderPool.filter((o) => !q ||
     o.order_no.includes(q.trim()) || o.name.toLowerCase().includes(q.trim().toLowerCase()));
-  const openCount = activeOrders.filter((o) => o.status === "open").length;
+  const shownMarketPickups = marketPickupOrders.filter((o) => !q ||
+    o.order_no.includes(q.trim()) ||
+    o.name.toLowerCase().includes(q.trim().toLowerCase()) ||
+    String(o.market_dates?.venues?.name || "").toLowerCase().includes(q.trim().toLowerCase()));
+  const openCount = standardActiveOrders.filter((o) => o.status === "open").length;
+  const marketOpenCount = marketPickupOrders.filter((o) => !["done", "cancelled"].includes(o.status)).length;
 
   const activeSubs = subs.filter((s) => !s.archived_at);
   const archivedSubs = subs.filter((s) => !!s.archived_at);
@@ -2878,13 +4440,19 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
 
   const today = api.today();
   const tabs = [
-    ["orders", `Orders (${activeOrders.length})`],
-    ["subscriptions", `Honey Club (${activeSubs.length})`],
-    ["markets", "Markets"],
-    ["retail", `Retailers (${retailLocations.filter((r) => r.active).length})`],
-    ["requests", `Order Help (${newRequestCount})`],
     ["inventory", "Flavors & Inventory"],
-  ];
+    ["subscriptions", `Honey Club (${activeSubs.length})`],
+    ["marketPickups", `Market Pickups (${marketOpenCount})`],
+    ["markets", "Market Schedule"],
+    ["requests", `Order Help (${newRequestCount})`],
+    ["orders", `Orders (${standardActiveOrders.length})`],
+    ["retail", `Retailers (${retailLocations.filter((r) => r.active).length})`],
+    ["topPicks", "Top Picks"],
+  ].sort((a, b) =>
+    a[1]
+      .replace(/\s*\(\d+\)$/, "")
+      .localeCompare(b[1].replace(/\s*\(\d+\)$/, ""))
+  );
 
   return (
     <div className="nf"><style>{CSS}</style>
@@ -2917,12 +4485,12 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
               <button className={`btn ${orderView === "active" ? "on" : ""}`}
                 style={{ padding: 10, fontSize: 13 }}
                 onClick={() => { setOrderView("active"); setQ(""); }}>
-                Active · {activeOrders.length}
+                Active · {standardActiveOrders.length}
               </button>
               <button className={`btn ${orderView === "archived" ? "on" : ""}`}
                 style={{ padding: 10, fontSize: 13 }}
                 onClick={() => { setOrderView("archived"); setQ(""); }}>
-                Archived · {archivedOrders.length}
+                Archived · {standardArchivedOrders.length}
               </button>
             </div>
 
@@ -2997,6 +4565,207 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                   </div>
                 );
               })}
+            </div>
+          </>
+        )}
+
+        {adminTab === "marketPickups" && (
+          <>
+            <div className="eyebrow" style={{ marginBottom: 8 }}>
+              Market Pickups · {marketOpenCount} awaiting pickup
+            </div>
+            <input placeholder="Order #, customer, or market" value={q} onChange={(e) => setQ(e.target.value)} />
+
+            <div style={{ marginTop: 10, marginBottom: 32 }}>
+              {shownMarketPickups.length === 0 && (
+                <div className="card" style={{ padding: 20, textAlign: "center", color: c.tan, fontSize: 14 }}>
+                  {q ? "Nothing matches." : "No active market pickup orders."}
+                </div>
+              )}
+
+              {shownMarketPickups.map((o) => {
+                const pickedUp = o.status === "done";
+                const cancelled = o.status === "cancelled";
+                const missed = Number(o.no_show_count || 0);
+                const marketName = o.market_dates?.venues?.name || "Market pickup";
+                const marketDay = o.market_dates?.day ? fmt(parseDay(o.market_dates.day)) : "Date unavailable";
+
+                return (
+                  <div key={o.id} className="card nf-market-pickup-card" style={{
+                    padding: 16, marginBottom: 10, opacity: cancelled ? .52 : 1,
+                    borderColor: missed >= 2 ? c.red : pickedUp ? "#7D9A68" : "#4F91C6",
+                  }}>
+                    <div className="nf-market-pickup-banner">MARKET PICKUP</div>
+
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 9, marginTop: 10 }}>
+                      <span className="num" style={{ fontSize: 28, color: c.darkBrown }}>#{o.order_no}</span>
+                      <span style={{ fontWeight: 750, fontSize: 15, flex: 1 }}>{o.name}</span>
+                      <span className="num" style={{ fontSize: 20, color: c.brown }}>{money(o.total_cents / 100)}</span>
+                    </div>
+
+                    <div className="nf-market-location">
+                      <strong>{marketName}</strong>
+                      <span>{marketDay}{o.market_dates?.venues?.hours ? ` · ${o.market_dates.venues.hours}` : ""}</span>
+                    </div>
+
+                    <div style={{ fontSize: 12.5, color: c.tan, marginTop: 7 }}>{o.phone} · {o.email}</div>
+
+                    <div style={{ fontSize: 13, marginTop: 10, lineHeight: 1.55 }}>
+                      {o.order_items?.map((item) => (
+                        <div key={item.id}>
+                          {item.qty}× {item.size_label} <strong>{item.type === "spun" ? "Spun" : "Regular"}</strong> — {item.flavor_name}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className={`nf-noshow-status ${missed >= 2 ? "final" : missed === 1 ? "warning" : ""}`}>
+                      {missed === 0 && "No missed pickups"}
+                      {missed === 1 && "First pickup missed · Order remains reserved"}
+                      {missed >= 2 && "Second pickup missed · Inventory returned"}
+                    </div>
+
+                    {!cancelled && !pickedUp && (
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7, marginTop: 11 }}>
+                        <button className="btn on" style={{ padding: "10px 9px", fontSize: 12.5 }}
+                          onClick={() => confirm(`Mark order #${o.order_no} as picked up?`) &&
+                            guard(() => api.marketOrderAction(o.id, "picked_up"))}>
+                          Mark picked up
+                        </button>
+                        <button className="btn" disabled={missed >= 2}
+                          style={{ padding: "10px 9px", fontSize: 12.5, borderColor: missed ? c.red : undefined }}
+                          onClick={() => {
+                            const wording = missed === 0
+                              ? `Mark the first missed pickup for order #${o.order_no}? The customer will receive an email.`
+                              : `Mark the second missed pickup for order #${o.order_no}? The customer will receive the final email and the honey will return to inventory.`;
+                            if (confirm(wording)) guard(() => api.marketOrderAction(o.id, "no_show"));
+                          }}>
+                          {missed === 0 ? "First no-show" : missed === 1 ? "Second no-show" : "No-show complete"}
+                        </button>
+                      </div>
+                    )}
+
+                    {pickedUp && (
+                      <div style={{ marginTop: 11, padding: 10, borderRadius: 10, background: "#EEF6E9", color: "#49633A", fontWeight: 750, textAlign: "center", fontSize: 13 }}>
+                        Picked up ✓
+                      </div>
+                    )}
+
+                    <button className="btn ghost" style={{ width: "100%", padding: "9px 12px", marginTop: 7, fontSize: 12.5 }}
+                      onClick={() => confirm(`Archive order #${o.order_no}?`) && guard(() => api.archiveOrder(o.id))}>
+                      Archive order
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {adminTab === "topPicks" && (
+          <>
+            <div className="eyebrow" style={{ marginBottom: 6 }}>Storefront Top Picks</div>
+            <p style={{ fontSize: 13, color: c.brown, margin: "0 0 14px", lineHeight: 1.6 }}>
+              Choose the flavors, promotional wording, images, and display order shown in the homepage Top Picks section.
+            </p>
+
+            <div className="nf-admin-top-picks-list">
+              {topPickDrafts.map((pick, index) => {
+                const flavor = cat.flavors.find((item) => item.id === pick.flavor_id);
+                const preview = pick.image_url || (flavor ? flavorImage(flavor) : "");
+
+                return (
+                  <div key={`${pick.flavor_id || "empty"}-${index}`} className="card nf-admin-top-pick-card">
+                    <div className="nf-admin-top-pick-order">
+                      <span className="num">#{index + 1}</span>
+                      <div>
+                        <button className="btn ghost" disabled={index === 0}
+                          onClick={() => moveTopPick(index, -1)} aria-label="Move Top Pick up">↑</button>
+                        <button className="btn ghost" disabled={index === topPickDrafts.length - 1}
+                          onClick={() => moveTopPick(index, 1)} aria-label="Move Top Pick down">↓</button>
+                      </div>
+                    </div>
+
+                    <div className="nf-admin-top-pick-preview">
+                      {preview ? (
+                        <img src={preview} alt={flavor ? `${flavor.name} Top Pick` : "Top Pick preview"} />
+                      ) : (
+                        <span>No image</span>
+                      )}
+                    </div>
+
+                    <div className="nf-admin-top-pick-fields">
+                      <label>
+                        <span>Flavor</span>
+                        <select value={pick.flavor_id || ""}
+                          onChange={(e) => updateTopPick(index, { flavor_id: e.target.value || null })}>
+                          <option value="">Choose a flavor</option>
+                          {cat.flavors.filter((f) => f.active !== false).map((f) => (
+                            <option key={f.id} value={f.id}>{f.name}</option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <label>
+                        <span>Promotional line</span>
+                        <input value={pick.tagline || ""} maxLength={60}
+                          placeholder="Customer favorite"
+                          onChange={(e) => updateTopPick(index, { tagline: e.target.value })} />
+                      </label>
+
+                      <label className="nf-admin-top-pick-upload">
+                        <span>Custom image</span>
+                        <input type="file" accept="image/png,image/jpeg,image/webp"
+                          disabled={topPickUploading === index}
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            try {
+                              setTopPickUploading(index);
+                              const imageUrl = await api.uploadTopPickImage(file);
+                              updateTopPick(index, { image_url: imageUrl });
+                              setErr(null);
+                            } catch (error) {
+                              setErr(error.message);
+                            } finally {
+                              setTopPickUploading(null);
+                              e.target.value = "";
+                            }
+                          }} />
+                        <small>{topPickUploading === index ? "Uploading…" : "Leave empty to use the flavor’s normal image."}</small>
+                      </label>
+
+                      <label className="nf-admin-top-pick-toggle">
+                        <input type="checkbox" checked={pick.active !== false}
+                          onChange={(e) => updateTopPick(index, { active: e.target.checked })} />
+                        <span>Show this Top Pick</span>
+                      </label>
+
+                      <div className="nf-admin-top-pick-actions">
+                        {pick.image_url && (
+                          <button className="btn ghost"
+                            onClick={() => updateTopPick(index, { image_url: "" })}>
+                            Use flavor image
+                          </button>
+                        )}
+                        <button className="btn danger"
+                          onClick={() => setTopPickDrafts((current) => current.filter((_, i) => i !== index))}>
+                          Remove slot
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="nf-admin-top-pick-footer">
+              <button className="btn" disabled={topPickDrafts.length >= 8} onClick={addTopPickSlot}>
+                Add Top Pick
+              </button>
+              <button className="btn solid"
+                onClick={() => guard(() => api.setTopPicks(topPickDrafts))}>
+                Save Top Picks
+              </button>
             </div>
           </>
         )}
@@ -3560,6 +5329,68 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
 /* ============================================================
    POLICY
    ============================================================ */
+function About({ Header, onBack }) {
+  return (
+    <div className="nf"><style>{CSS}</style>
+      <Header eyebrow="Our Story" title="Nature’s Happiness, Honey Infused." right={
+        <button className="btn ghost" onClick={onBack}>Back to shop</button>
+      } />
+
+      <main className="nf-wrap nf-about">
+        <figure className="nf-about-image">
+          <img
+            src="/nf-founders.png"
+            alt="The founders of NectarFusions wearing beekeeping suits and holding jars of honey"
+          />
+          <figcaption>Rooted in Michigan. Made together.</figcaption>
+        </figure>
+
+        <article className="nf-about-copy">
+          <div className="nf-modern-kicker">From hive to home</div>
+          <h2>Nature&rsquo;s Happiness, made with intention.</h2>
+
+          <p>NectarFusions began with a wild honeybee swarm, a curious garden, and a deep respect for nature.</p>
+          <p>
+            When bees settled in our yard, our organic garden flourished in a way we had never seen before.
+            It quickly became clear that the bees were not just passing through. They were part of something bigger.
+          </p>
+          <p>
+            With guidance from trusted beekeeping friends, we began tending our own hives and learning the craft
+            hands on. What started as curiosity grew into a family centered practice rooted in care,
+            responsibility, and respect for the bees.
+          </p>
+          <p>
+            Today, NectarFusions is built around raw, unfiltered Michigan honey from our own hives and, as we grow,
+            from trusted Michigan beekeepers who share our values. We do not cut or blend our honey with imported
+            honey. Supporting local beekeeping matters to us because it supports pollination, farming, and the
+            health of our agricultural communities.
+          </p>
+          <p>
+            Our approach is intentionally small scale and thoughtful. We harvest seasonally, care for each hive
+            individually, and make choices that protect colony strength and bee health.
+          </p>
+          <p>
+            Our infused honeys were created as a way to bring more creativity, flavor, and everyday use to real
+            honey. We use organic fruits, herbs, and spices only. No artificial flavorings. No extracts. Our cold
+            infusion process takes time, but it allows us to preserve the integrity of raw honey while creating
+            unique flavors people can enjoy in tea, coffee, toast, yogurt, pizza, marinades, baking, and more.
+          </p>
+          <p>
+            Every jar is made with care, from hive to home, with help from family who share in the work and joy
+            of the process.
+          </p>
+          <p className="nf-about-closing">
+            NectarFusions is rooted in Michigan, made with intention, and created to bring a little more
+            Nature&rsquo;s Happiness into everyday life.
+          </p>
+
+          <button className="nf-modern-primary" onClick={onBack}>Shop the honey</button>
+        </article>
+      </main>
+    </div>
+  );
+}
+
 function Policy({ Header, onBack, shipOver, minutes }) {
   return (
     <div className="nf"><style>{CSS}</style>

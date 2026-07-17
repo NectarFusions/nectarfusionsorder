@@ -46,6 +46,15 @@ export async function getCatalog() {
     blockedDates: blocked.map((b) => b.day),
     plans: plans.map((p) => ({ ...p, price: p.price_cents / 100 })),
     bestSeller: cfg.best_seller ?? "",
+    topPicks: Array.isArray(cfg.top_picks)
+      ? cfg.top_picks.map((pick, index) => ({
+          flavor_id: pick?.flavor_id ?? null,
+          tagline: String(pick?.tagline || ""),
+          image_url: String(pick?.image_url || ""),
+          active: pick?.active !== false,
+          sort: index,
+        }))
+      : [],
     bundle: {
       size: cfg.bundle?.size_id ?? "4oz",
       count: cfg.bundle?.count ?? 3,
@@ -148,13 +157,32 @@ export async function amAdmin() {
 
 export const listOrders = () =>
   supabase.from("orders")
-    .select("*, order_items(*), customers(flagged, consecutive_noshows)")
+    .select("*, order_items(*), customers(flagged, consecutive_noshows), market_dates(day, venues(name, hours))")
     .order("placed_at", { ascending: false })
     .limit(200)
     .then(throwIf);
 
 export const setOrderStatus = (id, status) =>
   supabase.from("orders").update({ status, updated_at: new Date().toISOString() }).eq("id", id).then(throwIf);
+
+export async function marketOrderAction(orderId, action) {
+  const { data } = await supabase.auth.getSession();
+  const token = data?.session?.access_token;
+  if (!token) throw new Error("Not signed in.");
+
+  const response = await fetch("/.netlify/functions/market-order-action", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ orderId, action }),
+  });
+
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || "The market order could not be updated.");
+  return result;
+}
 
 export async function archiveOrder(id) {
   const { error } = await supabase.rpc("archive_order_admin", { p_order_id: id });
@@ -273,6 +301,50 @@ export const restoreFlavor = (id) =>
 
 export const setBestSeller = (name) =>
   supabase.from("settings").update({ value: name }).eq("key", "best_seller").then(throwIf);
+
+export const setTopPicks = async (picks) => {
+  const clean = (Array.isArray(picks) ? picks : []).slice(0, 8).map((pick) => ({
+    flavor_id: pick.flavor_id || null,
+    tagline: String(pick.tagline || "").trim().slice(0, 60),
+    image_url: String(pick.image_url || "").trim(),
+    active: pick.active !== false,
+  }));
+
+  const { data, error } = await supabase
+    .from("settings")
+    .upsert({ key: "top_picks", value: clean }, { onConflict: "key" })
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+};
+
+export async function uploadTopPickImage(file) {
+  if (!file) throw new Error("Choose an image first.");
+
+  const extension = (file.name.split(".").pop() || "png").toLowerCase();
+  const safeExtension = ["png", "jpg", "jpeg", "webp"].includes(extension)
+    ? extension
+    : "png";
+  const path = `top-picks/top-pick-${Date.now()}.${safeExtension}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("flavor-images")
+    .upload(path, file, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: file.type || undefined,
+    });
+
+  if (uploadError) throw new Error(uploadError.message);
+
+  const { data } = supabase.storage
+    .from("flavor-images")
+    .getPublicUrl(path);
+
+  return data.publicUrl;
+}
 
 export const addVenue = (v) =>
   supabase.from("venues").insert(v).select().single().then(throwIf);
