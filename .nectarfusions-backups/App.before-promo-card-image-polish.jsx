@@ -551,33 +551,6 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
   display:flex; align-items:center; gap:11px; color:#F6D784;
   font-family:Georgia,"Times New Roman",serif; font-size:28px; white-space:nowrap;
 }
-.nf-modern-brand-button {
-  border:0;
-  background:transparent;
-  padding:0;
-  cursor:pointer;
-  text-align:left;
-}
-.nf-modern-brand-button:hover {
-  opacity:.92;
-}
-.nf-page-heading {
-  padding:34px 0 26px;
-  background:#FFFFFF;
-  border-bottom:1px solid #EEE7DF;
-}
-.nf-page-title {
-  margin:8px 0 0;
-  font-family:'Bebas Neue',Impact,sans-serif;
-  font-size:48px;
-  line-height:.95;
-  letter-spacing:.02em;
-  color:#17120E;
-}
-.nf-page-title span {
-  color:#D88D00;
-}
-
 .nf-modern-links {
   display:flex; align-items:center; justify-content:flex-end;
   gap:6px; flex-wrap:wrap;
@@ -637,35 +610,27 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
 .nf-showcase { padding:18px 0 42px; }
 .nf-promo-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
 .nf-promo-card {
-  min-height:240px;
+  min-height:230px;
   display:grid;
-  grid-template-columns:47% 53%;
-  align-items:stretch;
+  grid-template-columns:48% 52%;
+  align-items:center;
   overflow:hidden;
-  border:1px solid #E7E1DA;
+  border:1px solid #ECE7E1;
   border-radius:24px;
   background:#FFFFFF;
-  box-shadow:0 18px 42px rgba(49,35,24,.14);
+  box-shadow:0 16px 36px rgba(49,35,24,.13);
 }
 .nf-promo-card img {
   width:100%;
-  height:100%;
-  min-height:240px;
+  height:230px;
   object-fit:contain;
-  object-position:center bottom;
-  align-self:stretch;
-  padding:14px 10px 8px;
-  background:
-    radial-gradient(circle at 50% 54%,rgba(247,196,28,.18),transparent 44%),
-    linear-gradient(145deg,#FBF7F1,#F2ECE4);
-  border-right:1px solid #EAE2D8;
-  filter:none;
+  object-position:center;
+  align-self:end;
+  padding:4px 0 0 4px;
+  filter:drop-shadow(0 16px 18px rgba(45,31,20,.14));
 }
 .nf-promo-copy {
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  padding:30px 28px;
+  padding:28px 26px 28px 8px;
 }
 .nf-promo-title {
   font-family:'Bebas Neue',Impact,sans-serif; font-size:35px;
@@ -676,19 +641,13 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
 }
 .nf-promo-action {
   margin-top:17px;
-  border:1px solid #4F91C6;
+  border:1px solid #E6DED5;
   border-radius:12px;
-  background:linear-gradient(145deg,#6FA9D3,#4F91C6);
-  color:#FFFFFF;
-  padding:11px 16px;
+  background:#FFF;
+  padding:11px 15px;
   font-weight:800;
   cursor:pointer;
-  box-shadow:0 9px 20px rgba(79,145,198,.24);
-}
-.nf-promo-action:hover {
-  background:linear-gradient(145deg,#7BB4DC,#5598CD);
-  border-color:#4584B7;
-  transform:translateY(-1px);
+  box-shadow:0 8px 20px rgba(56,38,24,.12);
 }
 .nf-section-row {
   display:flex; justify-content:space-between; align-items:end;
@@ -1064,9 +1023,6 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
 @media (max-width:640px) {
   .nf-modern-nav-inner { min-height:66px; gap:10px; }
   .nf-modern-brand { font-size:21px; }
-  .nf-page-heading { padding:25px 0 20px; }
-  .nf-page-title { font-size:38px; }
-
   .nf-modern-brand img { width:43px !important; height:43px !important; }
   .nf-modern-links { max-width:58%; gap:0; }
   .nf-modern-links .btn.ghost { font-size:10px !important; padding:6px 7px !important; }
@@ -1079,18 +1035,8 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
   .nf-modern-trust-copy { display:none; }
   .nf-modern-hero-image { max-height:310px; }
   .nf-promo-grid { grid-template-columns:1fr; }
-  .nf-promo-card {
-    min-height:210px;
-    grid-template-columns:45% 55%;
-  }
-  .nf-promo-card img {
-    min-height:210px;
-    height:100%;
-    padding:10px 6px 6px;
-  }
-  .nf-promo-copy {
-    padding:22px 18px;
-  }
+  .nf-promo-card { min-height:190px; grid-template-columns:46% 54%; }
+  .nf-promo-card img { height:190px; padding-left:0; }
   .nf-promo-title { font-size:29px; }
   .nf-top-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .nf-all-flavors { grid-template-columns:repeat(2,minmax(0,1fr)); }
@@ -1398,41 +1344,31 @@ export default function App() {
     }
 
     return (
-      <>
-        <header className="nf-modern-nav">
-          <div className="nf-wrap nf-modern-nav-inner">
-            <button
-              type="button"
-              className="nf-modern-brand nf-modern-brand-button"
-              onClick={() => setView("shop")}
-              aria-label="Return to NectarFusions shop"
-            >
-              <Logo size={52} />
-              <span>NectarFusions</span>
-            </button>
-
-            <div className="nf-modern-links">
-              {right}
-            </div>
+      <div className="head">
+        <div className="nf-wrap" style={{ paddingTop: 17, paddingBottom: 17, position: "relative", zIndex: 1 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+            <div className="eyebrow nf-brand-location">Coleman, Michigan · Raw infused honey</div>
+            <div style={{ display: "flex", gap: 2, flexWrap: "wrap", justifyContent: "flex-end" }}>{right}</div>
           </div>
-        </header>
-
-        {(eyebrow || title) && (
-          <section className="nf-page-heading">
-            <div className="nf-wrap">
-              {eyebrow && <div className="nf-modern-kicker">{eyebrow}</div>}
-              <h1 className="nf-page-title">
-                {title || <>NECTAR<span>FUSIONS</span></>}
+          <div className="nf-brand-lockup" style={{ marginTop: 13 }}>
+            <div className="nf-brand-mark small">
+              <Logo size={38} />
+            </div>
+            <div style={{ minWidth: 0 }}>
+              {eyebrow && <div className="eyebrow" style={{ color: c.gold, marginBottom: 3 }}>{eyebrow}</div>}
+              <h1 className="display nf-brand-title" style={{ fontSize: 31 }}>
+                {title || <>NECTAR<span style={{ color: c.gold }}>FUSIONS</span></>}
               </h1>
             </div>
-          </section>
-        )}
-      </>
+          </div>
+        </div>
+      </div>
     );
   };
 
   const nav = (
     <>
+      <button className="btn ghost" onClick={() => setView("shop")} style={{ padding: "6px 9px", fontSize: 11 }}>Shop</button>
       <button className="btn ghost" onClick={() => setView("subscribe")} style={{ padding: "6px 9px", fontSize: 11 }}>Honey Club</button>
       <button className="btn ghost" onClick={() => setView("find")} style={{ padding: "6px 9px", fontSize: 11 }}>Find Us</button>
       <button className="btn ghost" onClick={() => setView("help")} style={{ padding: "6px 9px", fontSize: 11 }}>Order Help</button>

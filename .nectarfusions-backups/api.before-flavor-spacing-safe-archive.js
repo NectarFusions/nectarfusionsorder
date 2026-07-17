@@ -260,16 +260,7 @@ export async function uploadFlavorImage(flavorId, file) {
 }
 
 export const deleteFlavor = (id) =>
-  supabase.from("flavors")
-    .update({ active: false })
-    .eq("id", id)
-    .then(throwIf);
-
-export const restoreFlavor = (id) =>
-  supabase.from("flavors")
-    .update({ active: true })
-    .eq("id", id)
-    .then(throwIf);
+  supabase.from("flavors").delete().eq("id", id).then(throwIf);
 
 export const setBestSeller = (name) =>
   supabase.from("settings").update({ value: name }).eq("key", "best_seller").then(throwIf);

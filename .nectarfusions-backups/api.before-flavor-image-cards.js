@@ -231,45 +231,8 @@ export const addFlavor = (name, hex) =>
 export const updateFlavor = (id, patch) =>
   supabase.from("flavors").update(patch).eq("id", id).then(throwIf);
 
-export async function uploadFlavorImage(flavorId, file) {
-  if (!file) throw new Error("Choose an image first.");
-
-  const extension = (file.name.split(".").pop() || "png").toLowerCase();
-  const safeExtension = ["png", "jpg", "jpeg", "webp"].includes(extension)
-    ? extension
-    : "png";
-  const path = `${flavorId}/lid-${Date.now()}.${safeExtension}`;
-
-  const { error: uploadError } = await supabase.storage
-    .from("flavor-images")
-    .upload(path, file, {
-      cacheControl: "3600",
-      upsert: false,
-      contentType: file.type || undefined,
-    });
-
-  if (uploadError) throw new Error(uploadError.message);
-
-  const { data } = supabase.storage
-    .from("flavor-images")
-    .getPublicUrl(path);
-
-  const imageUrl = data.publicUrl;
-  await updateFlavor(flavorId, { image_url: imageUrl });
-  return imageUrl;
-}
-
 export const deleteFlavor = (id) =>
-  supabase.from("flavors")
-    .update({ active: false })
-    .eq("id", id)
-    .then(throwIf);
-
-export const restoreFlavor = (id) =>
-  supabase.from("flavors")
-    .update({ active: true })
-    .eq("id", id)
-    .then(throwIf);
+  supabase.from("flavors").delete().eq("id", id).then(throwIf);
 
 export const setBestSeller = (name) =>
   supabase.from("settings").update({ value: name }).eq("key", "best_seller").then(throwIf);

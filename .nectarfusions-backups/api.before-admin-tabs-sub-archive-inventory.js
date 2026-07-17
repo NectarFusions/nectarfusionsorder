@@ -23,10 +23,7 @@ export async function getCatalog() {
 
   const byFlavor = {};
   for (const s of stock) {
-    (byFlavor[s.flavor_id] ??= {})[stockKey(s.size_id, s.type)] = {
-      in_stock: s.in_stock,
-      on_hand: s.on_hand,
-    };
+    (byFlavor[s.flavor_id] ??= {})[stockKey(s.size_id, s.type)] = s.in_stock;
   }
 
   const cfg = Object.fromEntries(settings.map((s) => [s.key, s.value]));
@@ -56,17 +53,7 @@ export async function getCatalog() {
   };
 }
 
-export const inStock = (flavor, sizeId, type) => {
-  const row = flavor.stock?.[stockKey(sizeId, type)];
-  if (typeof row === "boolean") return row;
-  return row?.in_stock !== false;
-};
-
-export const stockCount = (flavor, sizeId, type) => {
-  const row = flavor.stock?.[stockKey(sizeId, type)];
-  if (!row || typeof row === "boolean") return "";
-  return row.on_hand ?? "";
-};
+export const inStock = (flavor, sizeId, type) => flavor.stock?.[stockKey(sizeId, type)] !== false;
 
 /* ---------- ordering (anonymous, via security-definer RPCs) ---------- */
 
@@ -97,33 +84,6 @@ export async function getOrder(token) {
 export async function cancelOrder(token) {
   const { error } = await supabase.rpc("cancel_order", { p_token: token });
   if (error) throw new Error(error.message);
-}
-
-/* ---------- retail locator ---------- */
-
-export async function findRetailLocations(zip) {
-  const { data, error } = await supabase.rpc("find_retail_locations", {
-    p_zip: zip,
-  });
-  if (error) throw new Error(error.message);
-  return data ?? [];
-}
-
-/* ---------- customer help ---------- */
-
-export async function submitCustomerRequest(request) {
-  const response = await fetch("/.netlify/functions/customer-request", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(request),
-  });
-
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.error || "Your request could not be sent.");
-  }
-
-  return data;
 }
 
 /* ---------- auth ---------- */
@@ -193,34 +153,9 @@ export async function subAction(subId, action) {   // 'pause' | 'resume' | 'canc
   return j;
 }
 
-export async function archiveSubscription(id) {
-  const { error } = await supabase.rpc("archive_subscription_admin", { p_subscription_id: id });
-  if (error) throw new Error(error.message);
-}
-
-export async function restoreSubscription(id) {
-  const { error } = await supabase.rpc("restore_subscription_admin", { p_subscription_id: id });
-  if (error) throw new Error(error.message);
-}
-
-export async function deleteArchivedSubscription(id) {
-  const { error } = await supabase.rpc("delete_archived_subscription_admin", { p_subscription_id: id });
-  if (error) throw new Error(error.message);
-}
-
 export const setStock = (flavorId, sizeId, type, on) =>
   supabase.from("stock").update({ in_stock: on })
     .eq("flavor_id", flavorId).eq("size_id", sizeId).eq("type", type).then(throwIf);
-
-export const setStockCount = (flavorId, sizeId, type, count) => {
-  const safeCount = Math.max(0, Number.parseInt(count, 10) || 0);
-  return supabase.from("stock")
-    .update({ on_hand: safeCount, in_stock: safeCount > 0 })
-    .eq("flavor_id", flavorId)
-    .eq("size_id", sizeId)
-    .eq("type", type)
-    .then(throwIf);
-};
 
 export const setFlavorStockAll = async (flavorId, on) =>
   supabase.from("stock").update({ in_stock: on }).eq("flavor_id", flavorId).then(throwIf);
@@ -231,45 +166,8 @@ export const addFlavor = (name, hex) =>
 export const updateFlavor = (id, patch) =>
   supabase.from("flavors").update(patch).eq("id", id).then(throwIf);
 
-export async function uploadFlavorImage(flavorId, file) {
-  if (!file) throw new Error("Choose an image first.");
-
-  const extension = (file.name.split(".").pop() || "png").toLowerCase();
-  const safeExtension = ["png", "jpg", "jpeg", "webp"].includes(extension)
-    ? extension
-    : "png";
-  const path = `${flavorId}/lid-${Date.now()}.${safeExtension}`;
-
-  const { error: uploadError } = await supabase.storage
-    .from("flavor-images")
-    .upload(path, file, {
-      cacheControl: "3600",
-      upsert: false,
-      contentType: file.type || undefined,
-    });
-
-  if (uploadError) throw new Error(uploadError.message);
-
-  const { data } = supabase.storage
-    .from("flavor-images")
-    .getPublicUrl(path);
-
-  const imageUrl = data.publicUrl;
-  await updateFlavor(flavorId, { image_url: imageUrl });
-  return imageUrl;
-}
-
 export const deleteFlavor = (id) =>
-  supabase.from("flavors")
-    .update({ active: false })
-    .eq("id", id)
-    .then(throwIf);
-
-export const restoreFlavor = (id) =>
-  supabase.from("flavors")
-    .update({ active: true })
-    .eq("id", id)
-    .then(throwIf);
+  supabase.from("flavors").delete().eq("id", id).then(throwIf);
 
 export const setBestSeller = (name) =>
   supabase.from("settings").update({ value: name }).eq("key", "best_seller").then(throwIf);
@@ -297,51 +195,6 @@ export const blockDay = (day) =>
 
 export const unblockDay = (day) =>
   supabase.from("blocked_dates").delete().eq("day", day).then(throwIf);
-
-export const listRetailLocations = () =>
-  supabase.from("retail_locations")
-    .select("*")
-    .order("active", { ascending: false })
-    .order("sort")
-    .order("name")
-    .then(throwIf);
-
-export const addRetailLocation = (location) =>
-  supabase.from("retail_locations")
-    .insert(location)
-    .select()
-    .single()
-    .then(throwIf);
-
-export const updateRetailLocation = (id, patch) =>
-  supabase.from("retail_locations")
-    .update(patch)
-    .eq("id", id)
-    .then(throwIf);
-
-export const deleteRetailLocation = (id) =>
-  supabase.from("retail_locations")
-    .delete()
-    .eq("id", id)
-    .then(throwIf);
-
-export const listCustomerRequests = () =>
-  supabase.from("customer_requests")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .then(throwIf);
-
-export const updateCustomerRequest = (id, patch) =>
-  supabase.from("customer_requests")
-    .update(patch)
-    .eq("id", id)
-    .then(throwIf);
-
-export const deleteCustomerRequest = (id) =>
-  supabase.from("customer_requests")
-    .delete()
-    .eq("id", id)
-    .then(throwIf);
 
 /* ---------- subscriptions (enrolment only; Square does the billing) ---------- */
 

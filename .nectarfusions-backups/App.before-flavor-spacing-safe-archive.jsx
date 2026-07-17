@@ -551,33 +551,6 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
   display:flex; align-items:center; gap:11px; color:#F6D784;
   font-family:Georgia,"Times New Roman",serif; font-size:28px; white-space:nowrap;
 }
-.nf-modern-brand-button {
-  border:0;
-  background:transparent;
-  padding:0;
-  cursor:pointer;
-  text-align:left;
-}
-.nf-modern-brand-button:hover {
-  opacity:.92;
-}
-.nf-page-heading {
-  padding:34px 0 26px;
-  background:#FFFFFF;
-  border-bottom:1px solid #EEE7DF;
-}
-.nf-page-title {
-  margin:8px 0 0;
-  font-family:'Bebas Neue',Impact,sans-serif;
-  font-size:48px;
-  line-height:.95;
-  letter-spacing:.02em;
-  color:#17120E;
-}
-.nf-page-title span {
-  color:#D88D00;
-}
-
 .nf-modern-links {
   display:flex; align-items:center; justify-content:flex-end;
   gap:6px; flex-wrap:wrap;
@@ -637,36 +610,15 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
 .nf-showcase { padding:18px 0 42px; }
 .nf-promo-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
 .nf-promo-card {
-  min-height:240px;
-  display:grid;
-  grid-template-columns:47% 53%;
-  align-items:stretch;
-  overflow:hidden;
-  border:1px solid #E7E1DA;
-  border-radius:24px;
-  background:#FFFFFF;
-  box-shadow:0 18px 42px rgba(49,35,24,.14);
+  min-height:215px; display:grid; grid-template-columns:42% 58%;
+  align-items:center; overflow:hidden; border:1px solid #EFE7DE;
+  border-radius:24px; background:linear-gradient(135deg,#FFF8E7,#FFF1DE);
+  box-shadow:0 10px 30px rgba(63,44,29,.08);
 }
 .nf-promo-card img {
-  width:100%;
-  height:100%;
-  min-height:240px;
-  object-fit:contain;
-  object-position:center bottom;
-  align-self:stretch;
-  padding:14px 10px 8px;
-  background:
-    radial-gradient(circle at 50% 54%,rgba(247,196,28,.18),transparent 44%),
-    linear-gradient(145deg,#FBF7F1,#F2ECE4);
-  border-right:1px solid #EAE2D8;
-  filter:none;
+  width:100%; height:215px; object-fit:contain; align-self:end;
 }
-.nf-promo-copy {
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  padding:30px 28px;
-}
+.nf-promo-copy { padding:26px 24px 26px 10px; }
 .nf-promo-title {
   font-family:'Bebas Neue',Impact,sans-serif; font-size:35px;
   line-height:.96; margin:0;
@@ -675,20 +627,9 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
   margin:10px 0 0; color:#5D5148; font-size:14px; line-height:1.5;
 }
 .nf-promo-action {
-  margin-top:17px;
-  border:1px solid #4F91C6;
-  border-radius:12px;
-  background:linear-gradient(145deg,#6FA9D3,#4F91C6);
-  color:#FFFFFF;
-  padding:11px 16px;
-  font-weight:800;
-  cursor:pointer;
-  box-shadow:0 9px 20px rgba(79,145,198,.24);
-}
-.nf-promo-action:hover {
-  background:linear-gradient(145deg,#7BB4DC,#5598CD);
-  border-color:#4584B7;
-  transform:translateY(-1px);
+  margin-top:17px; border:1px solid #E8DDD0; border-radius:11px;
+  background:#FFF; padding:11px 15px; font-weight:800; cursor:pointer;
+  box-shadow:0 6px 16px rgba(56,38,24,.08);
 }
 .nf-section-row {
   display:flex; justify-content:space-between; align-items:end;
@@ -795,12 +736,7 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
   text-align:center;
   padding:9px;
 }
-.nf-pick-body {
-  display:flex;
-  flex-direction:column;
-  min-height:142px;
-  padding:15px 14px 14px;
-}
+.nf-pick-body { padding:12px 12px 13px; }
 .nf-pick-name {
   min-height:38px;
   font-size:13px;
@@ -812,7 +748,7 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
   align-items:center;
   justify-content:space-between;
   gap:7px;
-  margin-top:auto;
+  margin-top:9px;
 }
 .nf-pick-add,.nf-pick-qty-btn {
   border:none;
@@ -824,8 +760,7 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
 }
 .nf-pick-add {
   width:100%;
-  margin-top:auto;
-  padding:11px 9px;
+  padding:10px 9px;
   border-radius:11px;
 }
 .nf-pick-qty-btn {
@@ -840,13 +775,9 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
   font-weight:850;
 }
 .nf-pick-stock {
-  min-height:22px;
-  margin-top:8px;
-  margin-bottom:12px;
-  font-size:12.5px;
-  line-height:1.45;
-  font-weight:600;
-  color:#74685F;
+  font-size:10.5px;
+  color:#786B61;
+  margin-top:5px;
 }
 .nf-pick-overlay {
   position:absolute;
@@ -886,174 +817,6 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
   box-shadow:0 12px 34px rgba(46,33,23,.09);
 }
 .nf-club-card { display:none !important; }
-.nf-bundle-builder {
-  position:relative;
-  margin-top:26px;
-  padding:26px;
-  overflow:hidden;
-  border:1px solid #E9E2D9;
-  border-radius:24px;
-  background:#FFF;
-  box-shadow:0 12px 30px rgba(45,31,20,.08);
-}
-.nf-bundle-headline {
-  position:absolute;
-  top:20px;
-  left:24px;
-  right:24px;
-  z-index:0;
-  display:flex;
-  flex-wrap:wrap;
-  align-items:baseline;
-  gap:12px;
-  font-family:'Bebas Neue',Impact,sans-serif;
-  font-size:clamp(52px,7vw,102px);
-  line-height:.84;
-  letter-spacing:.01em;
-  pointer-events:none;
-}
-.nf-bundle-headline-main { color:#082C5C; }
-.nf-bundle-headline-price { color:#5A9BCB; }
-.nf-bundle-grid {
-  position:relative;
-  z-index:2;
-  display:grid;
-  grid-template-columns:minmax(190px,.72fr) minmax(300px,1.28fr);
-  align-items:end;
-  gap:28px;
-  padding-top:118px;
-}
-.nf-size-stack {
-  display:grid;
-  gap:10px;
-  align-self:center;
-}
-.nf-size-stack .btn {
-  min-height:72px;
-  padding:13px 18px;
-  text-align:left;
-  border-radius:16px;
-  background:#FFF;
-  box-shadow:0 8px 20px rgba(45,31,20,.08);
-}
-.nf-size-stack .btn.on {
-  background:linear-gradient(145deg,#FFD75A,#F2AA00);
-}
-.nf-bundle-visual {
-  position:relative;
-  min-height:350px;
-  display:grid;
-  grid-template-columns:minmax(200px,1fr) minmax(150px,.55fr);
-  align-items:end;
-  gap:8px;
-}
-.nf-bundle-jar-stage {
-  position:relative;
-  width:min(100%,360px);
-  justify-self:center;
-  aspect-ratio:.86 / 1;
-}
-.nf-bundle-jar-stage img {
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  object-fit:contain;
-  z-index:2;
-  pointer-events:none;
-}
-.nf-bundle-honey-fill {
-  position:absolute;
-  left:19.5%;
-  right:19.5%;
-  bottom:13%;
-  max-height:57%;
-  min-height:0;
-  border-radius:8px 8px 22px 22px;
-  background:linear-gradient(180deg,#FFCB36 0%,#E69700 100%);
-  opacity:.84;
-  mix-blend-mode:multiply;
-  transition:height .35s ease;
-  z-index:3;
-  pointer-events:none;
-}
-.nf-bundle-honey-fill::before {
-  content:"";
-  position:absolute;
-  top:-5px;
-  left:0;
-  right:0;
-  height:12px;
-  border-radius:50%;
-  background:#FFD85C;
-  opacity:.92;
-}
-.nf-bundle-copy {
-  align-self:center;
-  padding:16px 0 24px;
-  color:#082C5C;
-}
-.nf-bundle-copy strong {
-  display:block;
-  font-family:'Bebas Neue',Impact,sans-serif;
-  font-size:34px;
-  line-height:.96;
-  letter-spacing:.02em;
-}
-.nf-bundle-copy p {
-  margin:12px 0 0;
-  font-size:15px;
-  line-height:1.55;
-  font-weight:700;
-}
-.nf-bundle-progress {
-  margin-top:15px;
-  font-size:13px;
-  line-height:1.45;
-  color:#5C7088;
-}
-.nf-bundle-progress b { color:#082C5C; }
-@media (max-width:780px) {
-  .nf-bundle-builder { padding:20px 16px; }
-  .nf-bundle-headline {
-    position:relative;
-    top:auto;
-    left:auto;
-    right:auto;
-    font-size:56px;
-    margin-bottom:18px;
-  }
-  .nf-bundle-grid {
-    grid-template-columns:1fr;
-    padding-top:0;
-    gap:18px;
-  }
-  .nf-size-stack {
-    grid-template-columns:repeat(3,minmax(0,1fr));
-  }
-  .nf-size-stack .btn {
-    min-height:66px;
-    padding:11px 10px;
-  }
-  .nf-bundle-visual {
-    min-height:300px;
-    grid-template-columns:minmax(180px,1fr) minmax(130px,.6fr);
-  }
-}
-@media (max-width:520px) {
-  .nf-bundle-headline { font-size:45px; }
-  .nf-size-stack { grid-template-columns:1fr; }
-  .nf-bundle-visual {
-    min-height:430px;
-    grid-template-columns:1fr;
-  }
-  .nf-bundle-copy {
-    text-align:center;
-    padding-top:0;
-  }
-  .nf-bundle-jar-stage { width:min(100%,290px); }
-}
-
 
 @media (max-width:900px) {
   .nf-modern-hero-grid { grid-template-columns:1fr; }
@@ -1064,9 +827,6 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
 @media (max-width:640px) {
   .nf-modern-nav-inner { min-height:66px; gap:10px; }
   .nf-modern-brand { font-size:21px; }
-  .nf-page-heading { padding:25px 0 20px; }
-  .nf-page-title { font-size:38px; }
-
   .nf-modern-brand img { width:43px !important; height:43px !important; }
   .nf-modern-links { max-width:58%; gap:0; }
   .nf-modern-links .btn.ghost { font-size:10px !important; padding:6px 7px !important; }
@@ -1079,18 +839,8 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
   .nf-modern-trust-copy { display:none; }
   .nf-modern-hero-image { max-height:310px; }
   .nf-promo-grid { grid-template-columns:1fr; }
-  .nf-promo-card {
-    min-height:210px;
-    grid-template-columns:45% 55%;
-  }
-  .nf-promo-card img {
-    min-height:210px;
-    height:100%;
-    padding:10px 6px 6px;
-  }
-  .nf-promo-copy {
-    padding:22px 18px;
-  }
+  .nf-promo-card { min-height:170px; }
+  .nf-promo-card img { height:170px; }
   .nf-promo-title { font-size:29px; }
   .nf-top-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .nf-all-flavors { grid-template-columns:repeat(2,minmax(0,1fr)); }
@@ -1182,9 +932,8 @@ export default function App() {
   const shelf = useMemo(() => {
     if (!cat) return [];
 
-    const publicFlavors = cat.flavors.filter((f) => f.active !== false);
-    const available = publicFlavors.filter((f) => api.inStock(f, pickSize, pickType));
-    const unavailable = publicFlavors.filter((f) => !api.inStock(f, pickSize, pickType));
+    const available = cat.flavors.filter((f) => api.inStock(f, pickSize, pickType));
+    const unavailable = cat.flavors.filter((f) => !api.inStock(f, pickSize, pickType));
 
     const best = available.find((f) => f.name === cat.bestSeller);
     const orderedAvailable = best
@@ -1398,41 +1147,31 @@ export default function App() {
     }
 
     return (
-      <>
-        <header className="nf-modern-nav">
-          <div className="nf-wrap nf-modern-nav-inner">
-            <button
-              type="button"
-              className="nf-modern-brand nf-modern-brand-button"
-              onClick={() => setView("shop")}
-              aria-label="Return to NectarFusions shop"
-            >
-              <Logo size={52} />
-              <span>NectarFusions</span>
-            </button>
-
-            <div className="nf-modern-links">
-              {right}
-            </div>
+      <div className="head">
+        <div className="nf-wrap" style={{ paddingTop: 17, paddingBottom: 17, position: "relative", zIndex: 1 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+            <div className="eyebrow nf-brand-location">Coleman, Michigan · Raw infused honey</div>
+            <div style={{ display: "flex", gap: 2, flexWrap: "wrap", justifyContent: "flex-end" }}>{right}</div>
           </div>
-        </header>
-
-        {(eyebrow || title) && (
-          <section className="nf-page-heading">
-            <div className="nf-wrap">
-              {eyebrow && <div className="nf-modern-kicker">{eyebrow}</div>}
-              <h1 className="nf-page-title">
-                {title || <>NECTAR<span>FUSIONS</span></>}
+          <div className="nf-brand-lockup" style={{ marginTop: 13 }}>
+            <div className="nf-brand-mark small">
+              <Logo size={38} />
+            </div>
+            <div style={{ minWidth: 0 }}>
+              {eyebrow && <div className="eyebrow" style={{ color: c.gold, marginBottom: 3 }}>{eyebrow}</div>}
+              <h1 className="display nf-brand-title" style={{ fontSize: 31 }}>
+                {title || <>NECTAR<span style={{ color: c.gold }}>FUSIONS</span></>}
               </h1>
             </div>
-          </section>
-        )}
-      </>
+          </div>
+        </div>
+      </div>
     );
   };
 
   const nav = (
     <>
+      <button className="btn ghost" onClick={() => setView("shop")} style={{ padding: "6px 9px", fontSize: 11 }}>Shop</button>
       <button className="btn ghost" onClick={() => setView("subscribe")} style={{ padding: "6px 9px", fontSize: 11 }}>Honey Club</button>
       <button className="btn ghost" onClick={() => setView("find")} style={{ padding: "6px 9px", fontSize: 11 }}>Find Us</button>
       <button className="btn ghost" onClick={() => setView("help")} style={{ padding: "6px 9px", fontSize: 11 }}>Order Help</button>
@@ -1853,8 +1592,8 @@ export default function App() {
                 <h2 className="nf-promo-title">Drizzle on Something Good</h2>
                 <p className="nf-promo-text">From toast to tea—honey makes it better.</p>
                 <button className="nf-promo-action"
-                  onClick={() => setView("subscribe")}>
-                  Join the Honey Club →
+                  onClick={() => document.getElementById("order-section")?.scrollIntoView({ behavior: "smooth" })}>
+                  Get Inspired →
                 </button>
               </div>
             </article>
@@ -1934,65 +1673,97 @@ export default function App() {
           ))}
         </div>
 
-        <section className="nf-bundle-builder">
-          <div className="nf-bundle-headline" aria-hidden="true">
-            <span className="nf-bundle-headline-main">Bundle ·</span>
-            <span className="nf-bundle-headline-price">{B.count} for {money(B.price)}</span>
-          </div>
+        <div className="eyebrow" style={{ margin: "24px 0 10px" }}>Choose a size</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8 }}>
+          {cat.sizes.map((s) => (
+            <button key={s.id} className={`btn ${pickSize === s.id ? "on" : ""}`} onClick={() => setPickSize(s.id)}
+              style={{ padding: "13px 10px", textAlign: "left" }}>
+              <div className="display" style={{ fontSize: 26 }}>{s.label}</div>
+              <div style={{ fontSize: 12.5, fontWeight: 600, opacity: .7 }}>{money(s.price)}</div>
+            </button>
+          ))}
+        </div>
 
-          <div className="nf-bundle-grid">
-            <div className="nf-size-stack">
-              {cat.sizes.map((s) => (
-                <button
-                  key={s.id}
-                  className={`btn ${pickSize === s.id ? "on" : ""}`}
-                  onClick={() => setPickSize(s.id)}
-                >
-                  <div className="display" style={{ fontSize: 29 }}>{s.label}</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, opacity: .72 }}>
-                    {money(s.price)}
-                  </div>
-                </button>
-              ))}
-            </div>
+        {pickSize === B.size && (
+          <div className="card" style={{
+            padding: "14px 16px",
+            marginTop: 14,
+            background: "linear-gradient(145deg, #24A0ED 0%, #167DBB 100%)",
+            borderColor: "#1475AE",
+            boxShadow: "0 8px 20px rgba(36,160,237,.18)"
+          }}>
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 14
+            }}>
+              <HoneyJarProgress
+                filled={price.jars % B.count === 0 && price.jars > 0 ? B.count : price.jars % B.count}
+                total={B.count}
+                size={68}
+              />
 
-            <div className="nf-bundle-visual">
-              <div className="nf-bundle-jar-stage">
-                <div
-                  className="nf-bundle-honey-fill"
-                  style={{
-                    height: pickSize === B.size
-                      ? `${Math.min(
-                          100,
-                          ((price.jars % B.count === 0 && price.jars > 0
-                            ? B.count
-                            : price.jars % B.count) / B.count) * 100
-                        )}%`
-                      : "0%"
-                  }}
-                />
-                <img
-                  src="/nf-empty-bundle-jar.png"
-                  alt="Honey jar showing bundle progress"
-                />
-              </div>
+              <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
+                <div className="display" style={{
+                  color: "#FFFFFF",
+                  fontSize: 27,
+                  fontWeight: 800,
+                  letterSpacing: ".025em",
+                  lineHeight: 1
+                }}>
+                  Bundle · {B.count} for {money(B.price)}
+                </div>
 
-              <div className="nf-bundle-copy">
-                <strong>Mix any three jars</strong>
-                <p>Regular and Spun both count.</p>
-                <div className="nf-bundle-progress">
-                  {pickSize !== B.size ? (
-                    <>Choose <b>{sizeOf(B.size).label}</b> to build this bundle.</>
-                  ) : price.jars % B.count === 0 && price.jars > 0 ? (
-                    <><b>{price.bundles} bundle{price.bundles > 1 ? "s" : ""} complete.</b><br />Add another jar to begin the next one.</>
-                  ) : (
-                    <><b>{price.jars % B.count}/{B.count} jars added.</b><br />Add {B.count - (price.jars % B.count)} more to complete the bundle.</>
+                <div style={{
+                  fontSize: 14.5,
+                  fontWeight: 700,
+                  lineHeight: 1.5,
+                  color: "#FFFFFF",
+                  marginTop: 6
+                }}>
+                  <div>Mix any three 4 oz jars</div>
+
+                  {price.jars % B.count === 0 && price.bundles === 0 && (
+                    <div style={{ marginTop: 1 }}>Regular and Spun both count.</div>
+                  )}
+
+                  {price.jars % B.count > 0 && (
+                    <div style={{ marginTop: 1 }}>
+                      <strong>{B.count - (price.jars % B.count)} more</strong> 4 oz to complete the next bundle.
+                    </div>
+                  )}
+
+                  {price.jars % B.count === 0 && price.bundles > 0 && (
+                    <div style={{ marginTop: 1, color: "#FFF4B8" }}>
+                      Add another 4 oz jar to start the next bundle.
+                    </div>
                   )}
                 </div>
               </div>
+
+              {price.bundles > 0 && (
+                <div style={{
+                  flexShrink: 0,
+                  width: 94,
+                  textAlign: "center",
+                  paddingLeft: 12,
+                  borderLeft: "1px solid rgba(255,255,255,.28)"
+                }}>
+                  <LockedBundleIcon size={60} />
+                  <div style={{
+                    color: "#FFF4B8",
+                    fontSize: 13,
+                    fontWeight: 800,
+                    lineHeight: 1.3,
+                    marginTop: 2
+                  }}>
+                    {price.bundles} bundle{price.bundles > 1 ? "s" : ""} locked in.
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-        </section>
+        )}
 
         <div className="nf-section-row" style={{ marginTop: 30 }}>
           <div>
@@ -3465,7 +3236,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                     <span style={{ color: c.tan, fontSize: 13 }}>{open ? "▾" : "▸"}</span>
                     <button className="btn ghost" aria-label="Delete" style={{ width: 26, color: c.tan, padding: 2 }}
                       onClick={() => confirm(`Delete ${f.name}? Past orders keep their record.`) &&
-                        guard(() => f.active === false ? api.restoreFlavor(f.id) : api.deleteFlavor(f.id))}>×</button>
+                        guard(() => api.deleteFlavor(f.id))}>×</button>
                   </div>
 
                   {open && (

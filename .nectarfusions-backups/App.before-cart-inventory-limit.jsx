@@ -23,7 +23,7 @@ const CADENCES = [
   { id: "1mo", label: "Every month", note: "For heavy users" },
 ];
 
-const CONTACT = { email: "info@nectar-fusions.com", phone: "(989) 941-6385" };
+const CONTACT = { email: "info@nectar-fusions.com", phone: "(989) 555-0100" };
 
 const c = {
   gold: "#F7C41C", amber: "#E69B00", black: "#111111", white: "#F5EFE7",
@@ -32,42 +32,6 @@ const c = {
 };
 
 const money = (n) => `$${Number(n).toFixed(2)}`;
-
-const FLAVOR_IMAGE_FALLBACKS = {
-  "blueberry": "/flavors/blueberry.png",
-  "cinnamon": "/flavors/cinnamon.png",
-  "cranberry": "/flavors/cranberry.png",
-  "wild cranberry": "/flavors/cranberry.png",
-  "dragon fruit": "/flavors/dragon-fruit.png",
-  "dragonfruit": "/flavors/dragon-fruit.png",
-  "elderberry": "/flavors/elderberry.png",
-  "jalapeño lime": "/flavors/jalapeno-lime.png",
-  "jalapeno lime": "/flavors/jalapeno-lime.png",
-  "lime jalapeño": "/flavors/jalapeno-lime.png",
-  "lime jalapeno": "/flavors/jalapeno-lime.png",
-  "lemon": "/flavors/lemon.png",
-  "madagascar vanilla": "/flavors/madagascar-vanilla.png",
-  "natural raw": "/flavors/natural-raw.png",
-  "raw": "/flavors/natural-raw.png",
-  "passion fruit": "/flavors/passion-fruit.png",
-  "passionfruit": "/flavors/passion-fruit.png",
-  "peach": "/flavors/peach.png",
-  "peaches": "/flavors/peach.png",
-  "pomegranate": "/flavors/pomegranate.png",
-  "raspberry": "/flavors/raspberry.png",
-  "smokey chipotle": "/flavors/smokey-chipotle.png",
-  "smoky chipotle": "/flavors/smokey-chipotle.png",
-  "smoked chipotle": "/flavors/smokey-chipotle.png",
-  "strawberry": "/flavors/strawberry.png",
-  "thai hot pepper": "/flavors/thai-hot-pepper.png",
-  "hot thai pepper": "/flavors/thai-hot-pepper.png",
-};
-
-const flavorImage = (flavor) =>
-  flavor.image_url ||
-  FLAVOR_IMAGE_FALLBACKS[String(flavor.name || "").trim().toLowerCase()] ||
-  null;
-
 const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const parseDay = (s) => { const [y,m,d] = s.split("-").map(Number); return new Date(y, m-1, d); };
@@ -92,65 +56,6 @@ const Logo = ({ size = 72 }) => (
   <img src="/logo.png" alt="NectarFusions" width={size} height={size}
     style={{ width: size, height: size, objectFit: "contain", flexShrink: 0, display: "block" }} />
 );
-
-
-const SocialLinks = ({ compact = false }) => {
-  const iconSize = compact ? 18 : 21;
-  const buttonSize = compact ? 38 : 44;
-
-  const links = [
-    {
-      name: "Facebook",
-      href: "https://www.facebook.com/NectarFusions/",
-      icon: (
-        <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M13.5 22v-8h2.8l.42-3.2H13.5V8.75c0-.93.26-1.56 1.6-1.56h1.72V4.33c-.3-.04-1.32-.13-2.5-.13-2.47 0-4.16 1.51-4.16 4.28v2.32H7.36V14h2.8v8h3.34Z" />
-        </svg>
-      ),
-    },
-    {
-      name: "Instagram",
-      href: "https://www.instagram.com/nectarfusions_honey/",
-      icon: (
-        <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="2" />
-          <circle cx="12" cy="12" r="4.25" stroke="currentColor" strokeWidth="2" />
-          <circle cx="17.4" cy="6.7" r="1.15" fill="currentColor" />
-        </svg>
-      ),
-    },
-  ];
-
-  return (
-    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 9 }}>
-      {links.map((link) => (
-        <a
-          key={link.name}
-          href={link.href}
-          target="_blank"
-          rel="noreferrer"
-          aria-label={`Follow NectarFusions on ${link.name}`}
-          title={link.name}
-          style={{
-            width: buttonSize,
-            height: buttonSize,
-            borderRadius: "50%",
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: c.darkBrown,
-            background: "#FFF9ED",
-            border: "1px solid #DDBB73",
-            boxShadow: "0 5px 14px rgba(74,51,19,.10)",
-            textDecoration: "none",
-          }}
-        >
-          {link.icon}
-        </a>
-      ))}
-    </div>
-  );
-};
 
 const PourIcon = ({ size = 30, color = "#A86708" }) => (
   <svg width={size} height={size} viewBox="0 0 64 64" fill="none" aria-hidden="true">
@@ -482,7 +387,7 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
   .nf-hero-brand { gap:8px; }
   .nf-hero-brand > img { width:48px !important; height:48px !important; }
   .nf-hero-wordmark { font-size:22px; }
-  .nf-hero-nav { max-width:305px; }
+  .nf-hero-nav { max-width:190px; }
   .nf-hero-nav .btn { padding:5px 7px !important; font-size:10px !important; }
   .nf-hero-copy { margin-top:62px; max-width:310px; }
   .nf-hero-title { font-size:42px; line-height:1.04; }
@@ -531,570 +436,6 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
     padding: 7px 8px;
     border-radius: 14px;
   }
-}
-
-
-/* MODERN ORDERING HOMEPAGE - PHASE 1 */
-.nf { background:#FFFFFF; color:#17120E; }
-.nf-wrap { max-width:1180px; }
-.nf-modern-nav {
-  position:sticky; top:0; z-index:110;
-  background:rgba(31,20,12,.97);
-  border-bottom:1px solid rgba(255,255,255,.08);
-  box-shadow:0 8px 26px rgba(20,12,7,.16);
-}
-.nf-modern-nav-inner {
-  min-height:76px; display:flex; align-items:center;
-  justify-content:space-between; gap:24px;
-}
-.nf-modern-brand {
-  display:flex; align-items:center; gap:11px; color:#F6D784;
-  font-family:Georgia,"Times New Roman",serif; font-size:28px; white-space:nowrap;
-}
-.nf-modern-brand-button {
-  border:0;
-  background:transparent;
-  padding:0;
-  cursor:pointer;
-  text-align:left;
-}
-.nf-modern-brand-button:hover {
-  opacity:.92;
-}
-.nf-page-heading {
-  padding:34px 0 26px;
-  background:#FFFFFF;
-  border-bottom:1px solid #EEE7DF;
-}
-.nf-page-title {
-  margin:8px 0 0;
-  font-family:'Bebas Neue',Impact,sans-serif;
-  font-size:48px;
-  line-height:.95;
-  letter-spacing:.02em;
-  color:#17120E;
-}
-.nf-page-title span {
-  color:#D88D00;
-}
-
-.nf-modern-links {
-  display:flex; align-items:center; justify-content:flex-end;
-  gap:6px; flex-wrap:wrap;
-}
-.nf-modern-links .btn.ghost {
-  color:#FFF8E8 !important; font-size:13px !important;
-  padding:9px 12px !important; border-radius:10px;
-}
-.nf-modern-links .btn.ghost:hover { background:rgba(255,255,255,.08); }
-.nf-modern-hero { background:#FFFFFF; padding:54px 0 34px; }
-.nf-modern-hero-grid {
-  display:grid; grid-template-columns:minmax(0,.9fr) minmax(420px,1.1fr);
-  align-items:center; gap:36px;
-}
-.nf-modern-kicker {
-  color:#C98500; font-size:12px; font-weight:800;
-  letter-spacing:.16em; text-transform:uppercase;
-}
-.nf-modern-title {
-  margin:12px 0 0; font-family:'Bebas Neue',Impact,sans-serif;
-  font-size:74px; line-height:.9; letter-spacing:.01em; color:#17120E;
-}
-.nf-modern-title span { color:#D88D00; }
-.nf-modern-subtitle {
-  margin:18px 0 0; max-width:520px; font-size:18px;
-  line-height:1.55; color:#51463D;
-}
-.nf-modern-primary {
-  margin-top:24px; border:none; border-radius:14px;
-  background:linear-gradient(135deg,#FFD447,#F2AA00);
-  color:#17120E; font-weight:800; font-size:15px;
-  padding:15px 24px; box-shadow:0 10px 24px rgba(226,153,0,.24);
-  cursor:pointer;
-}
-.nf-modern-trust {
-  display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:14px; margin-top:28px; max-width:580px;
-}
-.nf-modern-trust-item {
-  display:flex; align-items:flex-start; gap:9px; padding-right:12px;
-  border-right:1px solid #E9E3DC;
-}
-.nf-modern-trust-item:last-child { border-right:none; }
-.nf-modern-trust-icon {
-  width:30px; height:30px; border-radius:50%; display:grid;
-  place-items:center; background:#FFF4CE; color:#B97300;
-  flex:0 0 30px; font-weight:800;
-}
-.nf-modern-trust-title {
-  font-size:11px; font-weight:800; text-transform:uppercase; line-height:1.25;
-}
-.nf-modern-trust-copy { margin-top:2px; font-size:11px; color:#6F6258; }
-.nf-modern-hero-image {
-  width:100%; max-height:540px; object-fit:contain;
-  filter:drop-shadow(0 24px 28px rgba(88,49,14,.16));
-}
-.nf-showcase { padding:18px 0 42px; }
-.nf-promo-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
-.nf-promo-card {
-  min-height:240px;
-  display:grid;
-  grid-template-columns:47% 53%;
-  align-items:stretch;
-  overflow:hidden;
-  border:1px solid #E7E1DA;
-  border-radius:24px;
-  background:#FFFFFF;
-  box-shadow:0 18px 42px rgba(49,35,24,.14);
-}
-.nf-promo-card img {
-  width:100%;
-  height:100%;
-  min-height:240px;
-  object-fit:contain;
-  object-position:center bottom;
-  align-self:stretch;
-  padding:14px 10px 8px;
-  background:
-    radial-gradient(circle at 50% 54%,rgba(247,196,28,.18),transparent 44%),
-    linear-gradient(145deg,#FBF7F1,#F2ECE4);
-  border-right:1px solid #EAE2D8;
-  filter:none;
-}
-.nf-promo-copy {
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  padding:30px 28px;
-}
-.nf-promo-title {
-  font-family:'Bebas Neue',Impact,sans-serif; font-size:35px;
-  line-height:.96; margin:0;
-}
-.nf-promo-text {
-  margin:10px 0 0; color:#5D5148; font-size:14px; line-height:1.5;
-}
-.nf-promo-action {
-  margin-top:17px;
-  border:1px solid #4F91C6;
-  border-radius:12px;
-  background:linear-gradient(145deg,#6FA9D3,#4F91C6);
-  color:#FFFFFF;
-  padding:11px 16px;
-  font-weight:800;
-  cursor:pointer;
-  box-shadow:0 9px 20px rgba(79,145,198,.24);
-}
-.nf-promo-action:hover {
-  background:linear-gradient(145deg,#7BB4DC,#5598CD);
-  border-color:#4584B7;
-  transform:translateY(-1px);
-}
-.nf-section-row {
-  display:flex; justify-content:space-between; align-items:end;
-  gap:16px; margin:34px 0 14px;
-}
-.nf-section-title {
-  margin:0; font-family:'Bebas Neue',Impact,sans-serif;
-  font-size:38px; letter-spacing:.02em;
-}
-.nf-section-note { color:#8C7C70; font-size:13px; }
-.nf-top-grid {
-  display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px;
-}
-.nf-top-card,.nf-flavor-preview {
-  border:1px solid #ECE6DF; background:#FFF; border-radius:18px;
-  box-shadow:0 8px 22px rgba(46,33,23,.08); overflow:hidden;
-}
-.nf-top-card {
-  position:relative; padding:14px 14px 16px; cursor:pointer; text-align:left;
-}
-.nf-top-card:hover,.nf-flavor-preview:hover {
-  transform:translateY(-2px);
-  box-shadow:0 12px 28px rgba(46,33,23,.12);
-}
-.nf-top-badge {
-  position:absolute; top:12px; left:12px; z-index:2;
-  border-radius:999px; background:#FFD24A; padding:5px 8px;
-  font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.06em;
-}
-.nf-top-card img {
-  width:100%; aspect-ratio:1/1; object-fit:contain;
-  filter:drop-shadow(0 13px 13px rgba(59,37,17,.16));
-}
-.nf-top-name { font-size:16px; font-weight:800; }
-.nf-top-price { margin-top:4px; color:#6F6258; font-size:13px; }
-.nf-top-add {
-  position:absolute; right:13px; bottom:13px; width:34px; height:34px;
-  border-radius:50%; border:none; background:#F2AA00; color:#FFF;
-  font-size:24px; line-height:1; cursor:pointer;
-}
-.nf-all-flavors {
-  display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:14px;
-}
-.nf-flavor-preview { padding:12px; cursor:pointer; text-align:center; }
-.nf-flavor-preview-art {
-  height:116px; display:grid; place-items:center; border-radius:14px;
-  background:linear-gradient(145deg,#FFF9E9,#FFF);
-}
-.nf-flavor-preview-dot {
-  width:72px; height:72px; border-radius:50%; display:grid; place-items:center;
-  color:#FFF; font-family:'Bebas Neue',Impact,sans-serif; font-size:17px;
-  letter-spacing:.03em; box-shadow:0 10px 18px rgba(0,0,0,.12);
-  border:5px solid #1E140D; padding:5px;
-}
-.nf-flavor-preview-name { margin-top:10px; font-size:13px; font-weight:750; }
-.nf-pick-grid {
-  display:grid;
-  grid-template-columns:repeat(5,minmax(0,1fr));
-  gap:14px;
-}
-.nf-pick-card {
-  position:relative;
-  min-width:0;
-  border:1px solid #ECE6DF;
-  background:#FFF;
-  border-radius:18px;
-  box-shadow:0 8px 22px rgba(46,33,23,.08);
-  overflow:hidden;
-  transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease;
-}
-.nf-pick-card:hover {
-  transform:translateY(-2px);
-  box-shadow:0 12px 28px rgba(46,33,23,.12);
-}
-.nf-pick-card.selected {
-  border-color:#E2A000;
-  box-shadow:0 0 0 3px rgba(247,196,28,.22),0 12px 28px rgba(46,33,23,.11);
-}
-.nf-pick-image-wrap {
-  position:relative;
-  height:164px;
-  display:grid;
-  place-items:center;
-  background:linear-gradient(145deg,#FFF,#FFF9EC);
-  overflow:hidden;
-}
-.nf-pick-image {
-  width:100%;
-  height:100%;
-  object-fit:contain;
-  padding:8px;
-  filter:drop-shadow(0 12px 12px rgba(33,22,12,.14));
-}
-.nf-pick-placeholder {
-  width:92px;
-  height:92px;
-  border-radius:50%;
-  display:grid;
-  place-items:center;
-  border:7px solid #1D140D;
-  color:#FFF;
-  font-family:'Bebas Neue',Impact,sans-serif;
-  font-size:20px;
-  text-align:center;
-  padding:9px;
-}
-.nf-pick-body {
-  display:flex;
-  flex-direction:column;
-  min-height:142px;
-  padding:15px 14px 14px;
-}
-.nf-pick-name {
-  min-height:38px;
-  font-size:13px;
-  line-height:1.35;
-  font-weight:800;
-}
-.nf-pick-controls {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:7px;
-  margin-top:auto;
-}
-.nf-pick-add,.nf-pick-qty-btn {
-  border:none;
-  background:#F2AA00;
-  color:#17120E;
-  font-weight:900;
-  cursor:pointer;
-  box-shadow:0 5px 12px rgba(226,153,0,.2);
-}
-.nf-pick-add {
-  width:100%;
-  margin-top:auto;
-  padding:11px 9px;
-  border-radius:11px;
-}
-.nf-pick-qty-btn {
-  width:32px;
-  height:32px;
-  border-radius:50%;
-  font-size:18px;
-}
-.nf-pick-qty {
-  flex:1;
-  text-align:center;
-  font-weight:850;
-}
-.nf-pick-stock {
-  min-height:22px;
-  margin-top:8px;
-  margin-bottom:12px;
-  font-size:12.5px;
-  line-height:1.45;
-  font-weight:600;
-  color:#74685F;
-}
-.nf-pick-overlay {
-  position:absolute;
-  inset:0;
-  display:grid;
-  place-items:center;
-  padding:12px;
-  background:rgba(24,16,10,.82);
-  color:#FFF;
-  font-size:11px;
-  font-weight:850;
-  letter-spacing:.12em;
-  text-transform:uppercase;
-  text-align:center;
-  z-index:3;
-}
-.nf-admin-flavor-image {
-  width:74px;
-  height:74px;
-  border-radius:14px;
-  object-fit:contain;
-  background:#FFF;
-  border:1px solid #E5DACB;
-  box-shadow:0 5px 12px rgba(50,34,20,.07);
-}
-@media (max-width:900px) {
-  .nf-pick-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
-}
-@media (max-width:640px) {
-  .nf-pick-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
-  .nf-pick-image-wrap { height:145px; }
-}
-
-.nf-order-shell { margin-top:0 !important; padding-top:14px !important; }
-.nf-order-panel {
-  border-radius:24px; border:1px solid #ECE6DF; background:#FFFFFF;
-  box-shadow:0 12px 34px rgba(46,33,23,.09);
-}
-.nf-club-card { display:none !important; }
-.nf-bundle-builder {
-  position:relative;
-  margin-top:26px;
-  padding:26px;
-  overflow:hidden;
-  border:1px solid #E9E2D9;
-  border-radius:24px;
-  background:#FFF;
-  box-shadow:0 12px 30px rgba(45,31,20,.08);
-}
-.nf-bundle-headline {
-  position:absolute;
-  top:20px;
-  left:24px;
-  right:24px;
-  z-index:0;
-  display:flex;
-  flex-wrap:wrap;
-  align-items:baseline;
-  gap:12px;
-  font-family:'Bebas Neue',Impact,sans-serif;
-  font-size:clamp(52px,7vw,102px);
-  line-height:.84;
-  letter-spacing:.01em;
-  pointer-events:none;
-}
-.nf-bundle-headline-main { color:#082C5C; }
-.nf-bundle-headline-price { color:#5A9BCB; }
-.nf-bundle-grid {
-  position:relative;
-  z-index:2;
-  display:grid;
-  grid-template-columns:minmax(190px,.72fr) minmax(300px,1.28fr);
-  align-items:end;
-  gap:28px;
-  padding-top:118px;
-}
-.nf-size-stack {
-  display:grid;
-  gap:10px;
-  align-self:center;
-}
-.nf-size-stack .btn {
-  min-height:72px;
-  padding:13px 18px;
-  text-align:left;
-  border-radius:16px;
-  background:#FFF;
-  box-shadow:0 8px 20px rgba(45,31,20,.08);
-}
-.nf-size-stack .btn.on {
-  background:linear-gradient(145deg,#FFD75A,#F2AA00);
-}
-.nf-bundle-visual {
-  position:relative;
-  min-height:350px;
-  display:grid;
-  grid-template-columns:minmax(200px,1fr) minmax(150px,.55fr);
-  align-items:end;
-  gap:8px;
-}
-.nf-bundle-jar-stage {
-  position:relative;
-  width:min(100%,360px);
-  justify-self:center;
-  aspect-ratio:.86 / 1;
-}
-.nf-bundle-jar-stage img {
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  object-fit:contain;
-  z-index:2;
-  pointer-events:none;
-}
-.nf-bundle-honey-fill {
-  position:absolute;
-  left:19.5%;
-  right:19.5%;
-  bottom:13%;
-  max-height:57%;
-  min-height:0;
-  border-radius:8px 8px 22px 22px;
-  background:linear-gradient(180deg,#FFCB36 0%,#E69700 100%);
-  opacity:.84;
-  mix-blend-mode:multiply;
-  transition:height .35s ease;
-  z-index:3;
-  pointer-events:none;
-}
-.nf-bundle-honey-fill::before {
-  content:"";
-  position:absolute;
-  top:-5px;
-  left:0;
-  right:0;
-  height:12px;
-  border-radius:50%;
-  background:#FFD85C;
-  opacity:.92;
-}
-.nf-bundle-copy {
-  align-self:center;
-  padding:16px 0 24px;
-  color:#082C5C;
-}
-.nf-bundle-copy strong {
-  display:block;
-  font-family:'Bebas Neue',Impact,sans-serif;
-  font-size:34px;
-  line-height:.96;
-  letter-spacing:.02em;
-}
-.nf-bundle-copy p {
-  margin:12px 0 0;
-  font-size:15px;
-  line-height:1.55;
-  font-weight:700;
-}
-.nf-bundle-progress {
-  margin-top:15px;
-  font-size:13px;
-  line-height:1.45;
-  color:#5C7088;
-}
-.nf-bundle-progress b { color:#082C5C; }
-@media (max-width:780px) {
-  .nf-bundle-builder { padding:20px 16px; }
-  .nf-bundle-headline {
-    position:relative;
-    top:auto;
-    left:auto;
-    right:auto;
-    font-size:56px;
-    margin-bottom:18px;
-  }
-  .nf-bundle-grid {
-    grid-template-columns:1fr;
-    padding-top:0;
-    gap:18px;
-  }
-  .nf-size-stack {
-    grid-template-columns:repeat(3,minmax(0,1fr));
-  }
-  .nf-size-stack .btn {
-    min-height:66px;
-    padding:11px 10px;
-  }
-  .nf-bundle-visual {
-    min-height:300px;
-    grid-template-columns:minmax(180px,1fr) minmax(130px,.6fr);
-  }
-}
-@media (max-width:520px) {
-  .nf-bundle-headline { font-size:45px; }
-  .nf-size-stack { grid-template-columns:1fr; }
-  .nf-bundle-visual {
-    min-height:430px;
-    grid-template-columns:1fr;
-  }
-  .nf-bundle-copy {
-    text-align:center;
-    padding-top:0;
-  }
-  .nf-bundle-jar-stage { width:min(100%,290px); }
-}
-
-
-@media (max-width:900px) {
-  .nf-modern-hero-grid { grid-template-columns:1fr; }
-  .nf-modern-hero-image { max-height:420px; }
-  .nf-top-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
-  .nf-all-flavors { grid-template-columns:repeat(3,minmax(0,1fr)); }
-}
-@media (max-width:640px) {
-  .nf-modern-nav-inner { min-height:66px; gap:10px; }
-  .nf-modern-brand { font-size:21px; }
-  .nf-page-heading { padding:25px 0 20px; }
-  .nf-page-title { font-size:38px; }
-
-  .nf-modern-brand img { width:43px !important; height:43px !important; }
-  .nf-modern-links { max-width:58%; gap:0; }
-  .nf-modern-links .btn.ghost { font-size:10px !important; padding:6px 7px !important; }
-  .nf-modern-hero { padding:34px 0 22px; }
-  .nf-modern-hero-grid { gap:18px; }
-  .nf-modern-title { font-size:50px; }
-  .nf-modern-subtitle { font-size:15px; }
-  .nf-modern-trust { gap:8px; }
-  .nf-modern-trust-item { display:block; border-right:none; padding-right:0; }
-  .nf-modern-trust-copy { display:none; }
-  .nf-modern-hero-image { max-height:310px; }
-  .nf-promo-grid { grid-template-columns:1fr; }
-  .nf-promo-card {
-    min-height:210px;
-    grid-template-columns:45% 55%;
-  }
-  .nf-promo-card img {
-    min-height:210px;
-    height:100%;
-    padding:10px 6px 6px;
-  }
-  .nf-promo-copy {
-    padding:22px 18px;
-  }
-  .nf-promo-title { font-size:29px; }
-  .nf-top-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
-  .nf-all-flavors { grid-template-columns:repeat(2,minmax(0,1fr)); }
-  .nf-section-title { font-size:32px; }
 }
 
 @media (prefers-reduced-motion:reduce) { .nf * { transition:none !important; } }
@@ -1182,9 +523,8 @@ export default function App() {
   const shelf = useMemo(() => {
     if (!cat) return [];
 
-    const publicFlavors = cat.flavors.filter((f) => f.active !== false);
-    const available = publicFlavors.filter((f) => api.inStock(f, pickSize, pickType));
-    const unavailable = publicFlavors.filter((f) => !api.inStock(f, pickSize, pickType));
+    const available = cat.flavors.filter((f) => api.inStock(f, pickSize, pickType));
+    const unavailable = cat.flavors.filter((f) => !api.inStock(f, pickSize, pickType));
 
     const best = available.find((f) => f.name === cat.bestSeller);
     const orderedAvailable = best
@@ -1194,53 +534,12 @@ export default function App() {
     return [...orderedAvailable, ...unavailable];
   }, [cat, pickSize, pickType]);
 
-  const inventoryLimit = (flavorId, sizeId, type) => {
-    const flavor = cat?.flavors?.find((f) => f.id === flavorId);
-    if (!flavor) return null;
-
-    const raw = api.stockCount(flavor, sizeId, type);
-    if (raw === "" || raw === null || raw === undefined) return null;
-
-    const count = Number(raw);
-    return Number.isFinite(count) ? Math.max(0, count) : null;
-  };
-
   const addJar = (f) => setCart((cc) => {
     const i = cc.findIndex((x) => x.flavor_id === f.id && x.size_id === pickSize && x.type === pickType);
-    const limit = inventoryLimit(f.id, pickSize, pickType);
-    const current = i > -1 ? cc[i].qty : 0;
-
-    if (limit !== null && current >= limit) return cc;
-
-    if (i > -1) {
-      const n = [...cc];
-      n[i] = { ...n[i], qty: n[i].qty + 1 };
-      return n;
-    }
-
-    return [...cc, {
-      flavor_id: f.id,
-      flavor: f.name,
-      hex: f.hex,
-      size_id: pickSize,
-      type: pickType,
-      qty: 1
-    }];
+    if (i > -1) { const n = [...cc]; n[i] = { ...n[i], qty: n[i].qty + 1 }; return n; }
+    return [...cc, { flavor_id: f.id, flavor: f.name, hex: f.hex, size_id: pickSize, type: pickType, qty: 1 }];
   });
-
-  const bump = (i, d) => setCart((cc) => {
-    const item = cc[i];
-    if (!item) return cc;
-
-    const limit = inventoryLimit(item.flavor_id, item.size_id, item.type);
-    const nextQty = item.qty + d;
-
-    if (d > 0 && limit !== null && nextQty > limit) return cc;
-
-    return cc
-      .map((x, j) => j === i ? { ...x, qty: nextQty } : x)
-      .filter((x) => x.qty > 0);
-  });
+  const bump = (i, d) => setCart((cc) => cc.map((x, j) => j === i ? { ...x, qty: x.qty + d } : x).filter((x) => x.qty > 0));
 
   /* Preview only. place_order recomputes this server-side and its answer wins. */
   const price = useMemo(() => {
@@ -1331,139 +630,73 @@ export default function App() {
   const Header = ({ eyebrow, title, right, big }) => {
     if (big) {
       return (
-        <>
-          <header className="nf-modern-nav">
-            <div className="nf-wrap nf-modern-nav-inner">
-              <div className="nf-modern-brand">
-                <Logo size={52} />
-                <span>NectarFusions</span>
-              </div>
-              <div className="nf-modern-links">{right}</div>
-            </div>
-          </header>
-
-          <section className="nf-modern-hero">
-            <div className="nf-wrap nf-modern-hero-grid">
-              <div>
-                <div className="nf-modern-kicker">Coleman, Michigan</div>
-                <h1 className="nf-modern-title">
-                  Raw Michigan<br />
-                  Honey,<br />
-                  <span>Naturally Infused</span>
-                </h1>
-                <p className="nf-modern-subtitle">
-                  Made with organic fruit, herbs, and spice.
-                </p>
-                <button
-                  className="nf-modern-primary"
-                  onClick={() => document.getElementById("order-section")?.scrollIntoView({ behavior: "smooth" })}
-                >
-                  Start Your Order
-                </button>
-
-                <div className="nf-modern-trust">
-                  <div className="nf-modern-trust-item">
-                    <div className="nf-modern-trust-icon">✓</div>
-                    <div>
-                      <div className="nf-modern-trust-title">Raw &amp; Unfiltered</div>
-                      <div className="nf-modern-trust-copy">Never heated</div>
-                    </div>
-                  </div>
-                  <div className="nf-modern-trust-item">
-                    <div className="nf-modern-trust-icon">MI</div>
-                    <div>
-                      <div className="nf-modern-trust-title">Made in Michigan</div>
-                      <div className="nf-modern-trust-copy">Coleman made</div>
-                    </div>
-                  </div>
-                  <div className="nf-modern-trust-item">
-                    <div className="nf-modern-trust-icon">✦</div>
-                    <div>
-                      <div className="nf-modern-trust-title">Real Ingredients</div>
-                      <div className="nf-modern-trust-copy">No artificial anything</div>
-                    </div>
-                  </div>
+        <header className="head nf-hero-head">
+          <div className="nf-hero-overlay" />
+          <div className="nf-wrap nf-hero-inner">
+            <div className="nf-hero-top">
+              <div className="nf-hero-brand">
+                <Logo size={58} />
+                <div className="nf-hero-wordmark">
+                  Nectar<span>Fusions</span>
                 </div>
               </div>
-
-              <img
-                className="nf-modern-hero-image"
-                src="/nf-hero-product.png"
-                alt="NectarFusions raw Michigan honey jars"
-              />
+              <div className="nf-hero-nav">{right}</div>
             </div>
-          </section>
-        </>
+
+            <div className="nf-hero-copy">
+              <div className="eyebrow" style={{ color: "#F4DFC0", marginBottom: 10 }}>
+                Coleman, Michigan · Raw infused honey
+              </div>
+              <h1 className="nf-hero-title">
+                Raw Michigan<br />
+                Honey,<br />
+                <span>Naturally Infused</span>
+              </h1>
+              <p className="nf-hero-subtitle">Made with organic fruit, herbs, and spice.</p>
+              <button
+                className="btn solid nf-hero-cta"
+                onClick={() => setView("subscribe")}
+              >
+                Join the Honey Club <span aria-hidden="true">→</span>
+              </button>
+            </div>
+          </div>
+        </header>
       );
     }
 
     return (
-      <>
-        <header className="nf-modern-nav">
-          <div className="nf-wrap nf-modern-nav-inner">
-            <button
-              type="button"
-              className="nf-modern-brand nf-modern-brand-button"
-              onClick={() => setView("shop")}
-              aria-label="Return to NectarFusions shop"
-            >
-              <Logo size={52} />
-              <span>NectarFusions</span>
-            </button>
-
-            <div className="nf-modern-links">
-              {right}
-            </div>
+      <div className="head">
+        <div className="nf-wrap" style={{ paddingTop: 17, paddingBottom: 17, position: "relative", zIndex: 1 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+            <div className="eyebrow nf-brand-location">Coleman, Michigan · Raw infused honey</div>
+            <div style={{ display: "flex", gap: 2, flexWrap: "wrap", justifyContent: "flex-end" }}>{right}</div>
           </div>
-        </header>
-
-        {(eyebrow || title) && (
-          <section className="nf-page-heading">
-            <div className="nf-wrap">
-              {eyebrow && <div className="nf-modern-kicker">{eyebrow}</div>}
-              <h1 className="nf-page-title">
-                {title || <>NECTAR<span>FUSIONS</span></>}
+          <div className="nf-brand-lockup" style={{ marginTop: 13 }}>
+            <div className="nf-brand-mark small">
+              <Logo size={38} />
+            </div>
+            <div style={{ minWidth: 0 }}>
+              {eyebrow && <div className="eyebrow" style={{ color: c.gold, marginBottom: 3 }}>{eyebrow}</div>}
+              <h1 className="display nf-brand-title" style={{ fontSize: 31 }}>
+                {title || <>NECTAR<span style={{ color: c.gold }}>FUSIONS</span></>}
               </h1>
             </div>
-          </section>
-        )}
-      </>
+          </div>
+        </div>
+      </div>
     );
   };
 
   const nav = (
     <>
+      <button className="btn ghost" onClick={() => setView("shop")} style={{ padding: "6px 9px", fontSize: 11 }}>Shop</button>
       <button className="btn ghost" onClick={() => setView("subscribe")} style={{ padding: "6px 9px", fontSize: 11 }}>Honey Club</button>
-      <button className="btn ghost" onClick={() => setView("find")} style={{ padding: "6px 9px", fontSize: 11 }}>Find Us</button>
-      <button className="btn ghost" onClick={() => setView("help")} style={{ padding: "6px 9px", fontSize: 11 }}>Order Help</button>
       <button className="btn ghost" onClick={() => setView("policy")} style={{ padding: "6px 9px", fontSize: 11 }}>Policies</button>
-      <button
-        className="btn ghost"
-        onClick={() => setView(isAdmin ? "admin" : "login")}
-        aria-label="Admin"
-        title="Admin"
-        style={{
-          padding: "5px 7px",
-          fontSize: 16,
-          lineHeight: 1,
-          opacity: .48,
-          minWidth: 30,
-        }}
-      >
-        ⚙
-      </button>
+      <button className="btn ghost" onClick={() => setView(isAdmin ? "admin" : "login")}
+        style={{ padding: "6px 9px", fontSize: 11, opacity: .76 }}>Admin</button>
     </>
   );
-
-  /* ================= FIND NECTARFUSIONS ================= */
-  if (view === "find") {
-    return <FindNectarFusions Header={Header} onBack={() => setView("shop")} />;
-  }
-
-  /* ================= ORDER HELP ================= */
-  if (view === "help") {
-    return <OrderHelp Header={Header} onBack={() => setView("shop")} />;
-  }
 
   /* ================= LOGIN ================= */
   if (view === "login") return <Login onDone={() => setView("admin")} onBack={() => setView("shop")} Header={Header} />;
@@ -1832,69 +1065,6 @@ export default function App() {
         </div>
       )}
 
-      <section className="nf-showcase">
-        <div className="nf-wrap">
-          <div className="nf-promo-grid">
-            <article className="nf-promo-card">
-              <img src="/nf-bundles.png" alt="NectarFusions honey bundle" />
-              <div className="nf-promo-copy">
-                <h2 className="nf-promo-title">Honey Bundles</h2>
-                <p className="nf-promo-text">More jars. More flavor. More to love.</p>
-                <button className="nf-promo-action"
-                  onClick={() => document.getElementById("order-section")?.scrollIntoView({ behavior: "smooth" })}>
-                  Shop Bundles →
-                </button>
-              </div>
-            </article>
-
-            <article className="nf-promo-card">
-              <img src="/nf-drizzle.png" alt="Honey drizzling from a NectarFusions jar" />
-              <div className="nf-promo-copy">
-                <h2 className="nf-promo-title">Drizzle on Something Good</h2>
-                <p className="nf-promo-text">From toast to tea—honey makes it better.</p>
-                <button className="nf-promo-action"
-                  onClick={() => setView("subscribe")}>
-                  Join the Honey Club →
-                </button>
-              </div>
-            </article>
-          </div>
-
-          <div className="nf-section-row">
-            <h2 className="nf-section-title">Top Picks</h2>
-            <div className="nf-section-note">Customer favorites</div>
-          </div>
-
-          <div className="nf-top-grid">
-            {[
-              ["Blueberry", "/nf-top-blueberry.png", "Best Seller"],
-              ["Cinnamon", "/nf-top-cinnamon.png", "Warm & Cozy"],
-              ["Jalapeño Lime", "/nf-top-jalapeno-lime.png", "Bright & Bold"],
-              ["Hot Thai Pepper", "/nf-top-hot-thai.png", "Bring the Heat"],
-            ].map(([name, image, badge]) => {
-              const flavor = cat.flavors.find((item) => item.name.toLowerCase() === name.toLowerCase());
-              return (
-                <button
-                  key={name}
-                  className="nf-top-card"
-                  onClick={() => {
-                    if (flavor && api.inStock(flavor, pickSize, pickType)) addJar(flavor);
-                    document.getElementById("order-section")?.scrollIntoView({ behavior: "smooth" });
-                  }}
-                >
-                  <span className="nf-top-badge">{badge}</span>
-                  <img src={image} alt={`${name} infused honey`} />
-                  <div className="nf-top-name">{name}</div>
-                  <div className="nf-top-price">From {money(sizeOf("4oz").price)}</div>
-                  <span className="nf-top-add" aria-hidden="true">+</span>
-                </button>
-              );
-            })}
-          </div>
-
-        </div>
-      </section>
-
       <div className="nf-wrap nf-order-shell" id="order-section">
         <div className="nf-order-panel">
           {err && <div className="err" style={{ marginBottom: 16 }}>{err}</div>}
@@ -1934,152 +1104,168 @@ export default function App() {
           ))}
         </div>
 
-        <section className="nf-bundle-builder">
-          <div className="nf-bundle-headline" aria-hidden="true">
-            <span className="nf-bundle-headline-main">Bundle ·</span>
-            <span className="nf-bundle-headline-price">{B.count} for {money(B.price)}</span>
-          </div>
+        <div className="eyebrow" style={{ margin: "24px 0 10px" }}>Choose a size</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8 }}>
+          {cat.sizes.map((s) => (
+            <button key={s.id} className={`btn ${pickSize === s.id ? "on" : ""}`} onClick={() => setPickSize(s.id)}
+              style={{ padding: "13px 10px", textAlign: "left" }}>
+              <div className="display" style={{ fontSize: 26 }}>{s.label}</div>
+              <div style={{ fontSize: 12.5, fontWeight: 600, opacity: .7 }}>{money(s.price)}</div>
+            </button>
+          ))}
+        </div>
 
-          <div className="nf-bundle-grid">
-            <div className="nf-size-stack">
-              {cat.sizes.map((s) => (
-                <button
-                  key={s.id}
-                  className={`btn ${pickSize === s.id ? "on" : ""}`}
-                  onClick={() => setPickSize(s.id)}
-                >
-                  <div className="display" style={{ fontSize: 29 }}>{s.label}</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, opacity: .72 }}>
-                    {money(s.price)}
-                  </div>
-                </button>
-              ))}
-            </div>
+        {pickSize === B.size && (
+          <div className="card" style={{
+            padding: "14px 16px",
+            marginTop: 14,
+            background: "linear-gradient(145deg, #24A0ED 0%, #167DBB 100%)",
+            borderColor: "#1475AE",
+            boxShadow: "0 8px 20px rgba(36,160,237,.18)"
+          }}>
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 14
+            }}>
+              <HoneyJarProgress
+                filled={price.jars % B.count === 0 && price.jars > 0 ? B.count : price.jars % B.count}
+                total={B.count}
+                size={68}
+              />
 
-            <div className="nf-bundle-visual">
-              <div className="nf-bundle-jar-stage">
-                <div
-                  className="nf-bundle-honey-fill"
-                  style={{
-                    height: pickSize === B.size
-                      ? `${Math.min(
-                          100,
-                          ((price.jars % B.count === 0 && price.jars > 0
-                            ? B.count
-                            : price.jars % B.count) / B.count) * 100
-                        )}%`
-                      : "0%"
-                  }}
-                />
-                <img
-                  src="/nf-empty-bundle-jar.png"
-                  alt="Honey jar showing bundle progress"
-                />
-              </div>
+              <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
+                <div className="display" style={{
+                  color: "#FFFFFF",
+                  fontSize: 27,
+                  fontWeight: 800,
+                  letterSpacing: ".025em",
+                  lineHeight: 1
+                }}>
+                  Bundle · {B.count} for {money(B.price)}
+                </div>
 
-              <div className="nf-bundle-copy">
-                <strong>Mix any three jars</strong>
-                <p>Regular and Spun both count.</p>
-                <div className="nf-bundle-progress">
-                  {pickSize !== B.size ? (
-                    <>Choose <b>{sizeOf(B.size).label}</b> to build this bundle.</>
-                  ) : price.jars % B.count === 0 && price.jars > 0 ? (
-                    <><b>{price.bundles} bundle{price.bundles > 1 ? "s" : ""} complete.</b><br />Add another jar to begin the next one.</>
-                  ) : (
-                    <><b>{price.jars % B.count}/{B.count} jars added.</b><br />Add {B.count - (price.jars % B.count)} more to complete the bundle.</>
+                <div style={{
+                  fontSize: 14.5,
+                  fontWeight: 700,
+                  lineHeight: 1.5,
+                  color: "#FFFFFF",
+                  marginTop: 6
+                }}>
+                  <div>Mix any three 4 oz jars</div>
+
+                  {price.jars % B.count === 0 && price.bundles === 0 && (
+                    <div style={{ marginTop: 1 }}>Regular and Spun both count.</div>
+                  )}
+
+                  {price.jars % B.count > 0 && (
+                    <div style={{ marginTop: 1 }}>
+                      <strong>{B.count - (price.jars % B.count)} more</strong> 4 oz to complete the next bundle.
+                    </div>
+                  )}
+
+                  {price.jars % B.count === 0 && price.bundles > 0 && (
+                    <div style={{ marginTop: 1, color: "#FFF4B8" }}>
+                      Add another 4 oz jar to start the next bundle.
+                    </div>
                   )}
                 </div>
               </div>
-            </div>
-          </div>
-        </section>
 
-        <div className="nf-section-row" style={{ marginTop: 30 }}>
-          <div>
-            <h2 className="nf-section-title">Pick Your Flavors</h2>
-            <div className="nf-section-note" style={{ marginTop: 4 }}>
-              Adding {sizeOf(pickSize).label} · {typeName(pickType)}
+              {price.bundles > 0 && (
+                <div style={{
+                  flexShrink: 0,
+                  width: 94,
+                  textAlign: "center",
+                  paddingLeft: 12,
+                  borderLeft: "1px solid rgba(255,255,255,.28)"
+                }}>
+                  <LockedBundleIcon size={60} />
+                  <div style={{
+                    color: "#FFF4B8",
+                    fontSize: 13,
+                    fontWeight: 800,
+                    lineHeight: 1.3,
+                    marginTop: 2
+                  }}>
+                    {price.bundles} bundle{price.bundles > 1 ? "s" : ""} locked in.
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-          <div className="nf-section-note">{shelf.length} flavors</div>
+        )}
+
+        <div className="eyebrow" style={{ margin: "26px 0 10px" }}>
+          Pick your flavors · adding {sizeOf(pickSize).label} <span style={{ color: c.amber }}>{typeName(pickType)}</span>
         </div>
-
         {shelf.length === 0 ? (
           <div className="card" style={{ padding: 22, textAlign: "center", color: c.tan, fontSize: 14 }}>
             No flavors are available right now.
           </div>
         ) : (
-          <div className="nf-pick-grid">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(158px,1fr))", gap: 7 }}>
             {shelf.map((f) => {
-              const cartIndex = cart.findIndex(
-                (x) => x.flavor_id === f.id && x.size_id === pickSize && x.type === pickType
-              );
-              const inCart = cartIndex > -1 ? cart[cartIndex] : null;
-              const limit = inventoryLimit(f.id, pickSize, pickType);
-              const quantityInCart = inCart?.qty ?? 0;
-              const stockAvailable = api.inStock(f, pickSize, pickType);
-              const canAdd = stockAvailable && (limit === null || quantityInCart < limit);
-              const image = flavorImage(f);
+              const available = api.inStock(f, pickSize, pickType);
+              const inCart = cart.find((x) => x.flavor_id === f.id && x.size_id === pickSize && x.type === pickType);
               const best = cat.bestSeller === f.name;
 
               return (
-                <article key={f.id} className={`nf-pick-card ${inCart ? "selected" : ""}`}>
-                  <div className="nf-pick-image-wrap">
-                    {image ? (
-                      <img className="nf-pick-image" src={image} alt={`${f.name} lid label`} />
-                    ) : (
-                      <div className="nf-pick-placeholder" style={{ background: f.hex || "#C98C16" }}>
-                        {f.name}
-                      </div>
-                    )}
+                <button
+                  key={f.id}
+                  className={`btn ${inCart ? "on" : ""}`}
+                  disabled={!available}
+                  onClick={() => available && addJar(f)}
+                  aria-label={available ? `Add ${f.name}` : `${f.name} is out of stock`}
+                  style={{
+                    position: "relative",
+                    overflow: "hidden",
+                    minHeight: 52,
+                    padding: "11px 12px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 9,
+                    textAlign: "left",
+                    borderColor: available && best && !inCart ? c.orange : undefined,
+                    opacity: available ? 1 : .78,
+                    cursor: available ? "pointer" : "not-allowed",
+                  }}
+                >
+                  <span style={{
+                    width: 11,
+                    height: 11,
+                    borderRadius: "50%",
+                    background: f.hex,
+                    flexShrink: 0,
+                    border: "1px solid rgba(0,0,0,.12)"
+                  }} />
+                  <span style={{ fontSize: 13.5, fontWeight: 600, flex: 1, minWidth: 0 }}>
+                    {f.name}
+                    {best && available && <span className="tag" style={{ marginLeft: 5 }}>Best seller</span>}
+                  </span>
+                  {inCart && available && <span className="num" style={{ fontSize: 17 }}>×{inCart.qty}</span>}
 
-                    {best && stockAvailable && (
-                      <span className="nf-top-badge">Best Seller</span>
-                    )}
-
-                    {!stockAvailable && (
-                      <div className="nf-pick-overlay">Out of Stock</div>
-                    )}
-                  </div>
-
-                  <div className="nf-pick-body">
-                    <div className="nf-pick-name">{f.name}</div>
-                    <div className="nf-pick-stock">
-                      {limit === null
-                        ? `${sizeOf(pickSize).label} · ${typeName(pickType)}`
-                        : `${Math.max(0, limit - quantityInCart)} available`}
-                    </div>
-
-                    {!inCart ? (
-                      <button
-                        className="nf-pick-add"
-                        disabled={!canAdd}
-                        onClick={() => canAdd && addJar(f)}
-                      >
-                        {canAdd ? "Add +" : "Unavailable"}
-                      </button>
-                    ) : (
-                      <div className="nf-pick-controls">
-                        <button
-                          className="nf-pick-qty-btn"
-                          aria-label={`Remove one ${f.name}`}
-                          onClick={() => bump(cartIndex, -1)}
-                        >
-                          −
-                        </button>
-                        <div className="nf-pick-qty">{quantityInCart}</div>
-                        <button
-                          className="nf-pick-qty-btn"
-                          aria-label={`Add another ${f.name}`}
-                          disabled={!canAdd}
-                          onClick={() => canAdd && bump(cartIndex, 1)}
-                        >
-                          +
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </article>
+                  {!available && (
+                    <span style={{
+                      position: "absolute",
+                      inset: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "6px 10px",
+                      background: "rgba(27,16,5,.82)",
+                      color: "#FFFFFF",
+                      fontSize: 11.5,
+                      fontWeight: 800,
+                      letterSpacing: ".12em",
+                      textTransform: "uppercase",
+                      textAlign: "center",
+                      pointerEvents: "none",
+                    }}>
+                      Out of stock
+                    </span>
+                  )}
+                </button>
               );
             })}
           </div>
@@ -2284,30 +1470,6 @@ export default function App() {
             Shipping, delivery, bulk &amp; return policies
           </button>
         </div>
-
-        <footer style={{
-          marginTop: 18,
-          padding: "22px 16px",
-          borderRadius: 16,
-          background: "linear-gradient(145deg,#FFFDF6 0%,#FFF7DD 100%)",
-          border: "1px solid #E8C96C",
-          textAlign: "center",
-          boxShadow: "0 7px 22px rgba(74,51,19,.07)",
-        }}>
-          <div className="eyebrow" style={{ marginBottom: 10 }}>Follow NectarFusions</div>
-          <SocialLinks />
-          <div style={{ fontSize: 12.5, lineHeight: 1.65, color: c.brown, marginTop: 13 }}>
-            <a href={`tel:${CONTACT.phone.replace(/\D/g, "")}`}
-              style={{ color: c.darkBrown, fontWeight: 700, textDecoration: "none" }}>
-              {CONTACT.phone}
-            </a>
-            <span aria-hidden="true"> · </span>
-            <a href={`mailto:${CONTACT.email}`}
-              style={{ color: c.darkBrown, fontWeight: 700, textDecoration: "none" }}>
-              {CONTACT.email}
-            </a>
-          </div>
-        </footer>
       </div>
 
       {cart.length > 0 && (
@@ -2354,420 +1516,6 @@ export default function App() {
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-/* ============================================================
-   FIND NECTARFUSIONS
-   ============================================================ */
-function FindNectarFusions({ Header, onBack }) {
-  const [zip, setZip] = useState("");
-  const [searched, setSearched] = useState(false);
-  const [locations, setLocations] = useState([]);
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState(null);
-
-  const search = async () => {
-    if (zip.length !== 5) return;
-    setBusy(true);
-    setErr(null);
-
-    try {
-      setLocations(await api.findRetailLocations(zip));
-      setSearched(true);
-    } catch (e) {
-      setErr(e.message);
-    }
-
-    setBusy(false);
-  };
-
-  const directionsUrl = (location) => {
-    const address = [
-      location.address_line_1,
-      location.address_line_2,
-      location.city,
-      location.state,
-      location.zip,
-    ].filter(Boolean).join(", ");
-
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
-  };
-
-  return (
-    <div className="nf"><style>{CSS}</style>
-      <Header eyebrow="Shop local" title="FIND NECTARFUSIONS"
-        right={<button className="btn solid" onClick={onBack}
-          style={{ padding: "8px 14px", fontSize: 12 }}>Back to shop</button>} />
-
-      <div className="nf-wrap" style={{ paddingTop: 26 }}>
-        <div className="card" style={{ padding: 20, background: "#FFFBF0", borderColor: c.gold }}>
-          <div className="display" style={{ fontSize: 31, color: c.darkBrown }}>
-            FIND HONEY NEAR YOU
-          </div>
-          <p style={{ margin: "8px 0 16px", fontSize: 14.5, lineHeight: 1.65, color: c.brown }}>
-            Enter your ZIP code to find shops carrying NectarFusions.
-          </p>
-
-          <div style={{ display: "flex", gap: 8 }}>
-            <input
-              value={zip}
-              maxLength={5}
-              inputMode="numeric"
-              placeholder="ZIP code"
-              aria-label="ZIP code"
-              onChange={(e) => {
-                setZip(e.target.value.replace(/\D/g, ""));
-                setSearched(false);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && zip.length === 5) search();
-              }}
-            />
-            <button className="btn solid" disabled={zip.length !== 5 || busy}
-              style={{ padding: "0 20px", flexShrink: 0 }}
-              onClick={search}>
-              {busy ? "Searching…" : "Search"}
-            </button>
-          </div>
-        </div>
-
-        {err && <div className="err" style={{ marginTop: 14 }}>{err}</div>}
-
-        {searched && locations.length === 0 && (
-          <div className="card" style={{ padding: 24, marginTop: 16, textAlign: "center" }}>
-            <div className="display" style={{ fontSize: 28, color: c.darkBrown }}>BUMMER!</div>
-            <p style={{ fontSize: 14.5, lineHeight: 1.65, color: c.brown, margin: "8px 0 0" }}>
-              No stores near you yet! We&rsquo;re growing our retail family.
-              You can still order directly from us online.
-            </p>
-            <button className="btn solid" style={{ padding: "11px 18px", marginTop: 14 }}
-              onClick={onBack}>
-              Shop online
-            </button>
-          </div>
-        )}
-
-        {locations.length > 0 && (
-          <div style={{ marginTop: 18 }}>
-            <div className="eyebrow" style={{ marginBottom: 10 }}>
-              {locations.length} location{locations.length === 1 ? "" : "s"} near {zip}
-            </div>
-
-            {locations.map((location) => (
-              <div key={location.id} className="card"
-                style={{ padding: 17, marginBottom: 10, borderColor: "#DDBB73" }}>
-                <div className="display" style={{ fontSize: 27, color: c.darkBrown }}>
-                  {location.name}
-                </div>
-
-                <div style={{ fontSize: 14, lineHeight: 1.65, color: c.brown, marginTop: 7 }}>
-                  <div>{location.address_line_1}</div>
-                  {location.address_line_2 && <div>{location.address_line_2}</div>}
-                  <div>{location.city}, {location.state} {location.zip}</div>
-                </div>
-
-                {(location.phone || location.email) && (
-                  <div style={{ fontSize: 13, lineHeight: 1.6, color: c.tan, marginTop: 7 }}>
-                    {location.phone && <div>{location.phone}</div>}
-                    {location.email && <div>{location.email}</div>}
-                  </div>
-                )}
-
-                {location.notes && (
-                  <div style={{ fontSize: 13, lineHeight: 1.55, marginTop: 8 }}>
-                    {location.notes}
-                  </div>
-                )}
-
-                <div style={{ display: "flex", gap: 8, marginTop: 13, flexWrap: "wrap" }}>
-                  <a className="btn solid"
-                    href={directionsUrl(location)}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ padding: "10px 14px", fontSize: 12.5, textDecoration: "none" }}>
-                    Directions
-                  </a>
-
-                  {location.website && (
-                    <a className="btn"
-                      href={location.website.startsWith("http") ? location.website : `https://${location.website}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      style={{ padding: "10px 14px", fontSize: 12.5, textDecoration: "none" }}>
-                      Visit website
-                    </a>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ============================================================
-   ORDER HELP
-   ============================================================ */
-function OrderHelp({ Header, onBack }) {
-  const options = [
-    {
-      id: "skip_next_box",
-      label: "Skip my next box",
-      note: "Send us the request and we’ll confirm the skipped Honey Club box.",
-      accountKind: "subscription",
-    },
-    {
-      id: "continue_with_cancellation",
-      label: "Continue with cancellation",
-      note: "Tell us which Honey Club membership you want cancelled.",
-      accountKind: "subscription",
-    },
-    {
-      id: "special_request",
-      label: "Special request",
-      note: "Changes, gifting, delivery details, custom needs, or anything unusual.",
-      accountKind: "general",
-    },
-    {
-      id: "other",
-      label: "Other",
-      note: "Tell us what you need and we’ll point you in the right direction.",
-      accountKind: "general",
-    },
-  ];
-
-  const [requestKind, setRequestKind] = useState("");
-  const [accountKind, setAccountKind] = useState("subscription");
-  const [accountNumber, setAccountNumber] = useState("");
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    details: "",
-  });
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState(null);
-  const [done, setDone] = useState(false);
-  const [website, setWebsite] = useState("");
-  const [formStartedAt] = useState(() => Date.now());
-
-  const selectOption = (option) => {
-    setRequestKind(option.id);
-    setAccountKind(option.accountKind);
-    setErr(null);
-  };
-
-  const chosen = options.find((option) => option.id === requestKind);
-  const detailsRequired = ["special_request", "other"].includes(requestKind);
-  const canSubmit =
-    requestKind &&
-    form.name.trim() &&
-    form.email.trim() &&
-    (!detailsRequired || form.details.trim()) &&
-    !busy;
-
-  const submit = async () => {
-    if (!canSubmit) return;
-
-    setBusy(true);
-    setErr(null);
-
-    try {
-      await api.submitCustomerRequest({
-        requestKind,
-        accountKind,
-        accountNumber: accountNumber.trim(),
-        name: form.name.trim(),
-        email: form.email.trim(),
-        phone: form.phone.trim(),
-        details: form.details.trim(),
-        website,
-        formStartedAt,
-      });
-      setDone(true);
-    } catch (e) {
-      setErr(e.message);
-    }
-
-    setBusy(false);
-  };
-
-  if (done) {
-    return (
-      <div className="nf"><style>{CSS}</style>
-        <Header eyebrow="Customer care" title="REQUEST RECEIVED"
-          right={<button className="btn solid" onClick={onBack}
-            style={{ padding: "8px 14px", fontSize: 12 }}>Back to shop</button>} />
-
-        <div className="nf-wrap" style={{ paddingTop: 30 }}>
-          <div className="card"
-            style={{ padding: 24, textAlign: "center", borderColor: c.gold, background: "#FFFBF0" }}>
-            <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
-              <Logo size={64} />
-            </div>
-            <div className="display" style={{ fontSize: 34, color: c.darkBrown }}>
-              WE’VE GOT IT
-            </div>
-            <p style={{ fontSize: 14.5, lineHeight: 1.7, color: c.brown, margin: "10px 0 0" }}>
-              Your request was sent to NectarFusions. We’ll review it and contact you using the information provided.
-            </p>
-          </div>
-
-          <button className="btn ghost"
-            style={{ width: "100%", padding: 14, marginTop: 12 }}
-            onClick={() => {
-              setDone(false);
-              setRequestKind("");
-              setAccountKind("subscription");
-              setAccountNumber("");
-              setWebsite("");
-              setForm({ name: "", email: "", phone: "", details: "" });
-            }}>
-            Submit another request
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="nf"><style>{CSS}</style>
-      <Header eyebrow="Customer care" title="ORDER HELP"
-        right={<button className="btn solid" onClick={onBack}
-          style={{ padding: "8px 14px", fontSize: 12 }}>Back to shop</button>} />
-
-      <div className="nf-wrap" style={{ paddingTop: 26 }}>
-        <div className="card" style={{ padding: 20, background: "#FFFBF0", borderColor: c.gold }}>
-          <div className="display" style={{ fontSize: 31, color: c.darkBrown }}>
-            HOW CAN WE HELP?
-          </div>
-          <p style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.65, color: c.brown }}>
-            Choose the request that best matches what you need. This sends it directly to the NectarFusions Admin inbox.
-          </p>
-        </div>
-
-        <div style={{ display: "grid", gap: 9, marginTop: 14 }}>
-          {options.map((option) => (
-            <button key={option.id}
-              className={`btn ${requestKind === option.id ? "on" : ""}`}
-              onClick={() => selectOption(option)}
-              style={{ padding: 15, textAlign: "left" }}>
-              <div style={{ fontSize: 14.5, fontWeight: 750 }}>{option.label}</div>
-              <div style={{ fontSize: 12.5, lineHeight: 1.5, color: c.brown, marginTop: 3 }}>
-                {option.note}
-              </div>
-            </button>
-          ))}
-        </div>
-
-        {chosen && (
-          <div className="card" style={{ padding: 17, marginTop: 15 }}>
-            <div className="eyebrow" style={{ marginBottom: 10 }}>Your information</div>
-
-            <div style={{ display: "grid", gap: 9 }}>
-              <div
-                aria-hidden="true"
-                style={{
-                  position: "absolute",
-                  left: "-10000px",
-                  width: 1,
-                  height: 1,
-                  overflow: "hidden",
-                }}
-              >
-                <label>
-                  Website
-                  <input
-                    tabIndex={-1}
-                    autoComplete="off"
-                    value={website}
-                    onChange={(e) => setWebsite(e.target.value)}
-                  />
-                </label>
-              </div>
-
-              <Field
-                value={form.name}
-                placeholder="Name"
-                onChange={(e) => setForm((current) => ({ ...current, name: e.target.value }))}
-              />
-              <Field
-                value={form.email}
-                type="email"
-                placeholder="Email"
-                onChange={(e) => setForm((current) => ({ ...current, email: e.target.value }))}
-              />
-              <Field
-                value={form.phone}
-                type="tel"
-                required={false}
-                placeholder="Phone (optional)"
-                onChange={(e) => setForm((current) => ({ ...current, phone: e.target.value }))}
-              />
-
-              <div>
-                <div className="eyebrow" style={{ marginBottom: 7 }}>This is about</div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 7 }}>
-                  {[
-                    ["subscription", "Honey Club"],
-                    ["order", "Order"],
-                    ["general", "General"],
-                  ].map(([id, label]) => (
-                    <button key={id}
-                      className={`btn ${accountKind === id ? "on" : ""}`}
-                      style={{ padding: "10px 6px", fontSize: 11.5 }}
-                      onClick={() => setAccountKind(id)}>
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {accountKind !== "general" && (
-                <Field
-                  value={accountNumber}
-                  required={false}
-                  placeholder={accountKind === "subscription"
-                    ? "Honey Club membership number (optional)"
-                    : "Order number (optional)"}
-                  onChange={(e) => setAccountNumber(e.target.value)}
-                />
-              )}
-
-              <Field
-                value={form.details}
-                rows={4}
-                required={detailsRequired}
-                placeholder={
-                  requestKind === "skip_next_box"
-                    ? "Anything we should know? (optional)"
-                    : requestKind === "continue_with_cancellation"
-                      ? "Anything we should know about the cancellation? (optional)"
-                      : "Please tell us what you need"
-                }
-                onChange={(e) => setForm((current) => ({ ...current, details: e.target.value }))}
-              />
-            </div>
-
-            {err && <div className="err" style={{ marginTop: 12 }}>{err}</div>}
-
-            <button className="btn solid"
-              style={{ width: "100%", padding: 14, marginTop: 12 }}
-              disabled={!canSubmit}
-              onClick={submit}>
-              {busy ? "Sending…" : "Send request"}
-            </button>
-
-            <div style={{ fontSize: 11.5, lineHeight: 1.55, color: c.tan, textAlign: "center", marginTop: 9 }}>
-              This form does not immediately change or cancel an order or subscription. NectarFusions will review the request.
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   );
 }
@@ -2820,9 +1568,6 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
   const [orders, setOrders] = useState([]);
   const [subs, setSubs] = useState([]);
   const [dates, setDates] = useState([]);
-  const [retailLocations, setRetailLocations] = useState([]);
-  const [customerRequests, setCustomerRequests] = useState([]);
-  const [requestView, setRequestView] = useState("open");
   const [adminTab, setAdminTab] = useState("orders");
   const [q, setQ] = useState("");
   const [orderView, setOrderView] = useState("active");
@@ -2834,18 +1579,8 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
 
   const pull = useCallback(async () => {
     try {
-      const [o, s, d, r, cr] = await Promise.all([
-        api.listOrders(),
-        api.listSubs(),
-        api.listAllMarketDates(),
-        api.listRetailLocations(),
-        api.listCustomerRequests(),
-      ]);
-      setOrders(o);
-      setSubs(s);
-      setDates(d);
-      setRetailLocations(r);
-      setCustomerRequests(cr);
+      const [o, s, d] = await Promise.all([api.listOrders(), api.listSubs(), api.listAllMarketDates()]);
+      setOrders(o); setSubs(s); setDates(d);
     } catch (e) { setErr(e.message); }
   }, []);
   useEffect(() => { pull(); }, [pull]);
@@ -2871,18 +1606,11 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
   const shownSubs = subView === "archived" ? archivedSubs : activeSubs;
   const activeSubCount = activeSubs.filter((s) => s.status === "active").length;
 
-  const openRequests = customerRequests.filter((request) => request.status !== "resolved");
-  const resolvedRequests = customerRequests.filter((request) => request.status === "resolved");
-  const shownRequests = requestView === "resolved" ? resolvedRequests : openRequests;
-  const newRequestCount = customerRequests.filter((request) => request.status === "new").length;
-
   const today = api.today();
   const tabs = [
     ["orders", `Orders (${activeOrders.length})`],
     ["subscriptions", `Honey Club (${activeSubs.length})`],
     ["markets", "Markets"],
-    ["retail", `Retailers (${retailLocations.filter((r) => r.active).length})`],
-    ["requests", `Order Help (${newRequestCount})`],
     ["inventory", "Flavors & Inventory"],
   ];
 
@@ -3160,284 +1888,6 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
           </>
         )}
 
-        {adminTab === "retail" && (
-          <>
-            <div className="eyebrow" style={{ marginBottom: 6 }}>Retail locations</div>
-            <p style={{ fontSize: 13, color: c.brown, margin: "0 0 12px", lineHeight: 1.55 }}>
-              Active stores appear in customer ZIP searches. Search ZIPs can include nearby areas a store serves.
-            </p>
-
-            {retailLocations.map((location) => (
-              <div key={location.id} className="card"
-                style={{
-                  padding: 12,
-                  marginBottom: 9,
-                  opacity: location.active ? 1 : .62,
-                  borderColor: location.active ? c.amber : "#D8CCBA"
-                }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                  <div style={{ flex: 1, fontWeight: 700, color: c.darkBrown }}>
-                    {location.name || "New retailer"}
-                  </div>
-                  <button className={`btn ${location.active ? "on" : ""}`}
-                    style={{ padding: "7px 10px", fontSize: 11 }}
-                    onClick={() => guard(() =>
-                      api.updateRetailLocation(location.id, { active: !location.active })
-                    )}>
-                    {location.active ? "Active ✓" : "Hidden"}
-                  </button>
-                </div>
-
-                <div style={{ display: "grid", gap: 7 }}>
-                  <input defaultValue={location.name || ""} placeholder="Business name"
-                    onBlur={(e) => e.target.value !== (location.name || "") &&
-                      guard(() => api.updateRetailLocation(location.id, { name: e.target.value }))} />
-
-                  <input defaultValue={location.address_line_1 || ""} placeholder="Street address"
-                    onBlur={(e) => e.target.value !== (location.address_line_1 || "") &&
-                      guard(() => api.updateRetailLocation(location.id, { address_line_1: e.target.value }))} />
-
-                  <input defaultValue={location.address_line_2 || ""} placeholder="Suite, booth, or building (optional)"
-                    onBlur={(e) => e.target.value !== (location.address_line_2 || "") &&
-                      guard(() => api.updateRetailLocation(location.id, { address_line_2: e.target.value || null }))} />
-
-                  <div style={{ display: "grid", gridTemplateColumns: "1.4fr .65fr .8fr", gap: 7 }}>
-                    <input defaultValue={location.city || ""} placeholder="City"
-                      onBlur={(e) => e.target.value !== (location.city || "") &&
-                        guard(() => api.updateRetailLocation(location.id, { city: e.target.value }))} />
-                    <input defaultValue={location.state || "MI"} maxLength={2} placeholder="MI"
-                      onBlur={(e) => guard(() =>
-                        api.updateRetailLocation(location.id, { state: e.target.value.toUpperCase() || "MI" })
-                      )} />
-                    <input defaultValue={location.zip || ""} maxLength={5} inputMode="numeric" placeholder="ZIP"
-                      onBlur={(e) => e.target.value !== (location.zip || "") &&
-                        guard(() => api.updateRetailLocation(location.id, { zip: e.target.value.replace(/\D/g, "") }))} />
-                  </div>
-
-                  <input
-                    defaultValue={(location.search_zips || []).join(", ")}
-                    placeholder="Nearby search ZIPs — comma separated"
-                    onBlur={(e) => {
-                      const search_zips = e.target.value
-                        .split(",")
-                        .map((z) => z.trim().replace(/\D/g, ""))
-                        .filter((z) => z.length === 5);
-
-                      guard(() => api.updateRetailLocation(location.id, { search_zips }));
-                    }}
-                  />
-
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7 }}>
-                    <input defaultValue={location.phone || ""} placeholder="Phone"
-                      onBlur={(e) => e.target.value !== (location.phone || "") &&
-                        guard(() => api.updateRetailLocation(location.id, { phone: e.target.value || null }))} />
-                    <input defaultValue={location.email || ""} placeholder="Email"
-                      onBlur={(e) => e.target.value !== (location.email || "") &&
-                        guard(() => api.updateRetailLocation(location.id, { email: e.target.value || null }))} />
-                  </div>
-
-                  <input defaultValue={location.website || ""} placeholder="Website"
-                    onBlur={(e) => e.target.value !== (location.website || "") &&
-                      guard(() => api.updateRetailLocation(location.id, { website: e.target.value || null }))} />
-
-                  <textarea defaultValue={location.notes || ""} rows={2}
-                    placeholder="Customer-facing note (optional)"
-                    onBlur={(e) => e.target.value !== (location.notes || "") &&
-                      guard(() => api.updateRetailLocation(location.id, { notes: e.target.value || null }))} />
-                </div>
-
-                <button className="btn danger"
-                  style={{ width: "100%", padding: 9, marginTop: 9, fontSize: 12 }}
-                  onClick={() =>
-                    confirm(`Permanently delete ${location.name || "this retailer"}?`) &&
-                    guard(() => api.deleteRetailLocation(location.id))
-                  }>
-                  Delete retailer
-                </button>
-              </div>
-            ))}
-
-            <button className="btn solid"
-              style={{ width: "100%", padding: 12, marginTop: 5, marginBottom: 40 }}
-              onClick={() => guard(() => api.addRetailLocation({
-                name: "New retailer",
-                address_line_1: "",
-                city: "",
-                state: "MI",
-                zip: "",
-                search_zips: [],
-                active: false,
-                sort: retailLocations.length,
-              }))}>
-              + Add retailer
-            </button>
-          </>
-        )}
-
-        {adminTab === "requests" && (
-          <>
-            <div className="eyebrow" style={{ marginBottom: 7 }}>
-              Customer requests · {newRequestCount} new
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
-              <button className={`btn ${requestView === "open" ? "on" : ""}`}
-                style={{ padding: 10, fontSize: 13 }}
-                onClick={() => setRequestView("open")}>
-                Open · {openRequests.length}
-              </button>
-              <button className={`btn ${requestView === "resolved" ? "on" : ""}`}
-                style={{ padding: 10, fontSize: 13 }}
-                onClick={() => setRequestView("resolved")}>
-                Resolved · {resolvedRequests.length}
-              </button>
-            </div>
-
-            {shownRequests.length === 0 && (
-              <div className="card"
-                style={{ padding: 22, textAlign: "center", color: c.tan, fontSize: 14, marginBottom: 35 }}>
-                {requestView === "resolved"
-                  ? "No resolved customer requests."
-                  : "No open customer requests."}
-              </div>
-            )}
-
-            {shownRequests.map((request) => {
-              const kindLabels = {
-                skip_next_box: "Skip my next box",
-                continue_with_cancellation: "Continue with cancellation",
-                special_request: "Special request",
-                other: "Other",
-              };
-
-              const statusLabels = {
-                new: "New",
-                in_progress: "In Progress",
-                resolved: "Resolved",
-              };
-
-              return (
-                <div key={request.id} className="card"
-                  style={{
-                    padding: 14,
-                    marginBottom: 9,
-                    borderColor:
-                      request.status === "new"
-                        ? c.amber
-                        : request.status === "in_progress"
-                          ? c.sky
-                          : "#8FA97B",
-                  }}>
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div className="display" style={{ fontSize: 24, color: c.darkBrown }}>
-                        {kindLabels[request.request_kind] || request.request_kind}
-                      </div>
-                      <div style={{ fontSize: 12, color: c.tan, marginTop: 3 }}>
-                        {new Date(request.created_at).toLocaleString()}
-                      </div>
-                    </div>
-                    <span className="tag"
-                      style={{
-                        background:
-                          request.status === "new"
-                            ? c.orange
-                            : request.status === "in_progress"
-                              ? c.sky
-                              : "#6E8C58",
-                      }}>
-                      {statusLabels[request.status] || request.status}
-                    </span>
-                  </div>
-
-                  <div style={{ fontSize: 13.5, lineHeight: 1.6, marginTop: 10 }}>
-                    <div><strong>{request.name}</strong></div>
-                    <div>{request.email}</div>
-                    {request.phone && <div>{request.phone}</div>}
-                    <div style={{ marginTop: 6, color: c.brown }}>
-                      {request.account_kind === "subscription"
-                        ? "Honey Club"
-                        : request.account_kind === "order"
-                          ? "Order"
-                          : "General"}
-                      {request.order_or_subscription_no
-                        ? ` · #${request.order_or_subscription_no.replace(/^#/, "")}`
-                        : ""}
-                    </div>
-                  </div>
-
-                  {request.details && (
-                    <div style={{
-                      marginTop: 10,
-                      padding: 11,
-                      borderRadius: 10,
-                      background: "#FBF7F1",
-                      fontSize: 13.5,
-                      lineHeight: 1.6,
-                      minWidth: 0,
-                      maxWidth: "100%",
-                      whiteSpace: "pre-wrap",
-                      overflowWrap: "anywhere",
-                      wordBreak: "break-word",
-                    }}>
-                      {request.details}
-                    </div>
-                  )}
-
-                  <div className="eyebrow" style={{ marginTop: 12, marginBottom: 7 }}>
-                    Status
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 7 }}>
-                    {[
-                      ["new", "New"],
-                      ["in_progress", "In Progress"],
-                      ["resolved", "Resolved"],
-                    ].map(([status, label]) => (
-                      <button key={status}
-                        className={`btn ${request.status === status ? "on" : ""}`}
-                        style={{ padding: "9px 5px", fontSize: 11 }}
-                        onClick={() => guard(() =>
-                          api.updateCustomerRequest(request.id, { status })
-                        )}>
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="eyebrow" style={{ marginTop: 12, marginBottom: 7 }}>
-                    Admin notes
-                  </div>
-                  <textarea
-                    defaultValue={request.admin_notes || ""}
-                    rows={3}
-                    placeholder="Private notes, follow-up details, or what was completed"
-                    onBlur={(e) => {
-                      if (e.target.value !== (request.admin_notes || "")) {
-                        guard(() => api.updateCustomerRequest(request.id, {
-                          admin_notes: e.target.value || null,
-                        }));
-                      }
-                    }}
-                  />
-
-                  {request.status === "resolved" && (
-                    <button className="btn danger"
-                      style={{ width: "100%", padding: 9, marginTop: 9, fontSize: 12 }}
-                      onClick={() =>
-                        confirm("Permanently delete this resolved request?") &&
-                        guard(() => api.deleteCustomerRequest(request.id))
-                      }>
-                      Delete resolved request
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-
-            <div style={{ height: 30 }} />
-          </>
-        )}
-
         {adminTab === "inventory" && (
           <>
             <div className="eyebrow" style={{ marginBottom: 6 }}>Flavors &amp; inventory</div>
@@ -3465,47 +1915,11 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                     <span style={{ color: c.tan, fontSize: 13 }}>{open ? "▾" : "▸"}</span>
                     <button className="btn ghost" aria-label="Delete" style={{ width: 26, color: c.tan, padding: 2 }}
                       onClick={() => confirm(`Delete ${f.name}? Past orders keep their record.`) &&
-                        guard(() => f.active === false ? api.restoreFlavor(f.id) : api.deleteFlavor(f.id))}>×</button>
+                        guard(() => api.deleteFlavor(f.id))}>×</button>
                   </div>
 
                   {open && (
                     <div style={{ padding: "0 10px 12px" }}>
-                      <div className="card" style={{ padding: 10, marginTop: 8, boxShadow: "none" }}>
-                        <div className="eyebrow" style={{ marginBottom: 8 }}>Storefront lid image</div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                          {flavorImage(f) ? (
-                            <img className="nf-admin-flavor-image" src={flavorImage(f)} alt={`${f.name} lid`} />
-                          ) : (
-                            <div className="nf-admin-flavor-image" style={{
-                              display: "grid",
-                              placeItems: "center",
-                              color: c.tan,
-                              fontSize: 11,
-                              textAlign: "center",
-                              padding: 6,
-                            }}>
-                              No image
-                            </div>
-                          )}
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <input
-                              type="file"
-                              accept="image/png,image/jpeg,image/webp"
-                              style={{ fontSize: 12, padding: 9 }}
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (!file) return;
-                                guard(() => api.uploadFlavorImage(f.id, file));
-                                e.target.value = "";
-                              }}
-                            />
-                            <div style={{ fontSize: 11, color: c.tan, marginTop: 5, lineHeight: 1.4 }}>
-                              PNG, JPG, or WebP. A new upload replaces the storefront image for every size and texture.
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
                       {TYPES.map((t) => (
                         <div key={t.id} style={{ marginTop: 10 }}>
                           <div style={{ fontSize: 11.5, fontWeight: 700, color: c.brown, marginBottom: 6 }}>

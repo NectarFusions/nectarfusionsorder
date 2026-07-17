@@ -88,24 +88,13 @@ export default async (req) => {
   }
 
   if (action === "cancel") {
-    let alreadyScheduled = false;
-    let pendingCancelDate = null;
-
     try {
       await square(`/v2/subscriptions/${sqId}/cancel`, {
         method: "POST",
       });
     } catch (e) {
-      const message = String(e?.message || e);
-
-      if (/already has a pending cancel date/i.test(message)) {
-        alreadyScheduled = true;
-        pendingCancelDate =
-          message.match(/pending cancel date of [`'"]?([0-9]{4}-[0-9]{2}-[0-9]{2})/i)?.[1] ?? null;
-      } else {
-        console.error("Square cancellation failed:", message);
-        return bad(`Square refused: ${message}. Nothing was changed.`, 502);
-      }
+      console.error("Square cancellation failed:", e.message);
+      return bad(`Square refused: ${e.message}. Nothing was changed.`, 502);
     }
 
     const { error: updateError } = await supa
@@ -118,30 +107,16 @@ export default async (req) => {
       .eq("id", subId);
 
     if (updateError) {
-      console.error(
-        alreadyScheduled
-          ? "Square cancellation was already scheduled but Supabase update failed:"
-          : "Square cancelled but Supabase update failed:",
-        updateError.message
-      );
-
+      console.error("Square cancelled but Supabase update failed:", updateError.message);
       return bad(
-        alreadyScheduled
-          ? "Square already scheduled this cancellation, but the Admin record did not update."
-          : "Square accepted the cancellation, but the Admin record did not update.",
+        "Square accepted the cancellation, but the Admin record did not update.",
         500
       );
     }
 
     return ok({
       status: "cancelled",
-      already_scheduled: alreadyScheduled,
-      cancel_date: pendingCancelDate,
-      note: alreadyScheduled
-        ? pendingCancelDate
-          ? `Square already scheduled cancellation for ${pendingCancelDate}.`
-          : "Square already scheduled this cancellation."
-        : "Square will stop billing at the end of the paid period.",
+      note: "Square will stop billing at the end of the paid period.",
     });
   }
 
