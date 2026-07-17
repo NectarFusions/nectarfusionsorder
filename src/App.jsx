@@ -1092,6 +1092,20 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
   z-index:3;
   pointer-events:none;
 }
+@keyframes nfBundleDemoFill {
+  0% { transform:scaleY(0); }
+  42% { transform:scaleY(1); }
+  58% { transform:scaleY(1); }
+  100% { transform:scaleY(0); }
+}
+.nf-bundle-honey-fill.nf-bundle-demo {
+  height:57% !important;
+  transform-origin:center bottom;
+  animation:nfBundleDemoFill 3.2s cubic-bezier(.22,1,.36,1) both;
+  transition:none !important;
+  will-change:transform;
+}
+
 .nf-bundle-honey-fill::before {
   content:"";
   position:absolute;
@@ -1176,6 +1190,15 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
   .nf-top-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .nf-all-flavors { grid-template-columns:repeat(3,minmax(0,1fr)); }
 }
+@media (max-width:640px) {
+  .nf-cart-tray {
+    contain:layout paint;
+  }
+  .nf-cart-tray:not(.open) .nf-cart-tray-inner {
+    min-height:64px;
+  }
+}
+
 @media (max-width:640px) {
   .nf-modern-nav-inner { min-height:66px; gap:10px; }
   .nf-modern-brand { font-size:19px; gap:8px; }
@@ -2116,6 +2139,48 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
 }
 
 
+/* MOBILE HORIZONTAL PAGE LOCK */
+html,
+body,
+#root {
+  width:100%;
+  max-width:100%;
+  overflow-x:hidden;
+  overscroll-behavior-x:none;
+}
+
+@supports (overflow:clip) {
+  html,
+  body,
+  #root {
+    overflow-x:clip;
+  }
+}
+
+body {
+  margin:0;
+}
+
+.nf {
+  width:100%;
+  max-width:100%;
+  overflow-x:hidden;
+  touch-action:pan-y;
+}
+
+@supports (overflow:clip) {
+  .nf {
+    overflow-x:clip;
+  }
+}
+
+.nf img,
+.nf svg,
+.nf video,
+.nf canvas {
+  max-width:100%;
+}
+
 /* CLICK + LAYOUT STABILITY */
 html {
   overflow-y:scroll;
@@ -2227,7 +2292,6 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(true);
   const [reviewOpen, setReviewOpen] = useState(false);
-  const [bundleDemoFill, setBundleDemoFill] = useState(null);
   const [continueAttemptKey, setContinueAttemptKey] = useState("");
   const [continueHelp, setContinueHelp] = useState("");
   const [method, setMethod] = useState(null);
@@ -2321,7 +2385,9 @@ export default function App() {
     return Number.isFinite(count) ? Math.max(0, count) : null;
   };
 
-  const addJar = (f) => setCart((cc) => {
+  const addJar = (f) => {
+    setCartOpen(false);
+    setCart((cc) => {
     const i = cc.findIndex((x) => x.flavor_id === f.id && x.size_id === pickSize && x.type === pickType);
     const limit = inventoryLimit(f.id, pickSize, pickType);
     const current = i > -1 ? cc[i].qty : 0;
@@ -2342,7 +2408,8 @@ export default function App() {
       type: pickType,
       qty: 1
     }];
-  });
+    });
+  };
 
   const bump = (i, d) => setCart((cc) => {
     const item = cc[i];
@@ -2477,11 +2544,8 @@ export default function App() {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined;
 
     const section = document.querySelector(".nf-bundle-builder");
-    if (!section || section.dataset.bundleDemoPlayed === "true") return undefined;
-
-    let fillTimer;
-    let drainTimer;
-    let restoreTimer;
+    const fill = section?.querySelector(".nf-bundle-honey-fill");
+    if (!section || !fill || section.dataset.bundleDemoPlayed === "true") return undefined;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -2491,9 +2555,16 @@ export default function App() {
         section.dataset.bundleDemoPlayed = "true";
         observer.disconnect();
 
-        fillTimer = window.setTimeout(() => setBundleDemoFill(100), 250);
-        drainTimer = window.setTimeout(() => setBundleDemoFill(0), 1850);
-        restoreTimer = window.setTimeout(() => setBundleDemoFill(null), 3200);
+        fill.classList.remove("nf-bundle-demo");
+        void fill.offsetWidth;
+        fill.classList.add("nf-bundle-demo");
+
+        const finish = () => {
+          fill.classList.remove("nf-bundle-demo");
+          fill.removeEventListener("animationend", finish);
+        };
+
+        fill.addEventListener("animationend", finish);
       },
       {
         threshold: 0.35,
@@ -2505,11 +2576,9 @@ export default function App() {
 
     return () => {
       observer.disconnect();
-      window.clearTimeout(fillTimer);
-      window.clearTimeout(drainTimer);
-      window.clearTimeout(restoreTimer);
+      fill.classList.remove("nf-bundle-demo");
     };
-  }, [view, cat]);
+  }, [view, Boolean(cat)]);
 
   if (boot) {
     return <div className="nf"><style>{CSS}</style>
@@ -3337,7 +3406,7 @@ export default function App() {
                   <div
                     className="nf-bundle-honey-fill"
                     style={{
-                      height: `${bundleDemoFill ?? Math.min(
+                      height: `${Math.min(
                         100,
                         ((price.jars % B.count === 0 && price.jars > 0
                           ? B.count
@@ -3440,7 +3509,10 @@ export default function App() {
                         <button
                           className="nf-pick-qty-btn"
                           aria-label={`Remove one ${f.name}`}
-                          onClick={() => bump(cartIndex, -1)}
+                          onClick={() => {
+                            setCartOpen(false);
+                            bump(cartIndex, -1);
+                          }}
                         >
                           −
                         </button>
@@ -3449,7 +3521,10 @@ export default function App() {
                           className="nf-pick-qty-btn"
                           aria-label={`Add another ${f.name}`}
                           disabled={!canAdd}
-                          onClick={() => canAdd && bump(cartIndex, 1)}
+                          onClick={() => {
+                            setCartOpen(false);
+                            if (canAdd) bump(cartIndex, 1);
+                          }}
                         >
                           +
                         </button>
