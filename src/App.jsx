@@ -2116,6 +2116,25 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
 }
 
 
+/* CLICK + LAYOUT STABILITY */
+html {
+  overflow-y:scroll;
+}
+.nf,
+.nf-order-panel,
+.nf-bundle-builder,
+.nf-pick-card,
+.nf-top-card,
+.nf-cart-tray {
+  overflow-anchor:none;
+}
+.nf button {
+  touch-action:manipulation;
+}
+.nf-reveal-visible {
+  will-change:auto !important;
+}
+
 /* REFINED PROFESSIONAL SCROLL REVEALS */
 .nf-animations-ready .nf-reveal {
   opacity:0;
@@ -2391,11 +2410,17 @@ export default function App() {
 
     root.classList.add("nf-animations-ready");
 
+    const revealOnce = (element) => {
+      if (element.dataset.nfRevealComplete === "true") return;
+      element.classList.add("nf-reveal-visible");
+      element.dataset.nfRevealComplete = "true";
+    };
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (!entry.isIntersecting) return;
-          entry.target.classList.add("nf-reveal-visible");
+          revealOnce(entry.target);
           observer.unobserve(entry.target);
         });
       },
@@ -2406,34 +2431,36 @@ export default function App() {
     );
 
     const elements = [...document.querySelectorAll(selectors.join(","))];
-
     const timers = [];
 
     elements.forEach((element, index) => {
       element.classList.add("nf-reveal");
       element.style.setProperty("--nf-reveal-delay", `${Math.min((index % 4) * 45, 135)}ms`);
 
+      if (element.dataset.nfRevealComplete === "true") {
+        element.classList.add("nf-reveal-visible");
+        return;
+      }
+
       const isHero = element.matches(".nf-modern-hero-grid");
       const isPromo = element.matches(".nf-bundle-promo-card, .nf-drizzle-promo-card");
 
       if (isHero) {
-        element.classList.remove("nf-reveal-visible");
         const timer = window.setTimeout(() => {
-          window.requestAnimationFrame(() => element.classList.add("nf-reveal-visible"));
+          window.requestAnimationFrame(() => revealOnce(element));
         }, 120);
         timers.push(timer);
         return;
       }
 
       if (isPromo) {
-        element.classList.remove("nf-reveal-visible");
         observer.observe(element);
         return;
       }
 
       const rect = element.getBoundingClientRect();
       if (rect.top < window.innerHeight * 0.92) {
-        element.classList.add("nf-reveal-visible");
+        revealOnce(element);
       } else {
         observer.observe(element);
       }
@@ -2442,9 +2469,8 @@ export default function App() {
     return () => {
       timers.forEach((timer) => window.clearTimeout(timer));
       observer.disconnect();
-      root.classList.remove("nf-animations-ready");
     };
-  }, [view, cat, receipt]);
+  }, [view, Boolean(cat), Boolean(receipt)]);
 
   useEffect(() => {
     if (view !== "shop" || !cat || typeof window === "undefined") return undefined;
