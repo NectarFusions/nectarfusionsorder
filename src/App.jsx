@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import * as api from "./lib/api";
 
 /* ============================================================
@@ -24,6 +24,8 @@ const CADENCES = [
 ];
 
 const CONTACT = { email: "info@nectar-fusions.com", phone: "(989) 941-6385" };
+/* Replace public/nf-hero-product.png whenever you want to update the homepage hero image. */
+const HERO_IMAGE = "/nf-hero-product.png";
 
 const c = {
   gold: "#F7C41C", amber: "#E69B00", black: "#111111", white: "#F5EFE7",
@@ -89,8 +91,16 @@ function deliveryDays(zone, blocked, count = 6) {
 }
 
 const Logo = ({ size = 72 }) => (
-  <img src="/logo.png" alt="NectarFusions" width={size} height={size}
-    style={{ width: size, height: size, objectFit: "contain", flexShrink: 0, display: "block" }} />
+  <img
+    src="/logo.png"
+    alt="NectarFusions"
+    width={size}
+    height={size}
+    loading="eager"
+    decoding="sync"
+    draggable="false"
+    style={{ width: size, height: size, objectFit: "contain", flexShrink: 0, display: "block" }}
+  />
 );
 
 
@@ -230,6 +240,51 @@ const LockedBundleIcon = ({ size = 62 }) => (
     />
   </svg>
 );
+
+const ClubBenefitIcon = ({ kind }) => {
+  const paths = {
+    delivery: (
+      <>
+        <path d="M5 8h10v9H5z" />
+        <path d="M15 11h3l3 3v3h-6z" />
+        <circle cx="9" cy="19" r="2" />
+        <circle cx="18" cy="19" r="2" />
+      </>
+    ),
+    bonus: (
+      <>
+        <rect x="5" y="8" width="14" height="11" rx="2" />
+        <path d="M12 8v11M5 12h14M9 8c-2.5 0-3.5-3 0-3 2 0 3 3 3 3M15 8c2.5 0 3.5-3 0-3-2 0-3 3-3 3" />
+      </>
+    ),
+    locked: (
+      <>
+        <rect x="6" y="10" width="12" height="10" rx="2" />
+        <path d="M9 10V7a3 3 0 0 1 6 0v3M12 14v3" />
+      </>
+    ),
+    first: (
+      <>
+        <path d="M12 3l2.4 5 5.6.8-4 3.9.9 5.5-4.9-2.6-4.9 2.6.9-5.5-4-3.9 5.6-.8z" />
+      </>
+    ),
+    skip: (
+      <>
+        <path d="M5 12a7 7 0 1 0 2-5" />
+        <path d="M5 4v5h5M10 9l7 7" />
+      </>
+    ),
+  };
+
+  return (
+    <span className="nf-club-benefit-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
+        strokeLinecap="round" strokeLinejoin="round">
+        {paths[kind]}
+      </svg>
+    </span>
+  );
+};
 
 /* --- deep link: /order/<token> lets a customer reopen their order later --- */
 const TOKEN_RE = /^\/order\/([0-9a-f-]{36})\/?$/i;
@@ -1290,16 +1345,30 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
 }
 .nf-top-card {
   text-align:center;
-  transition:transform .18s ease,box-shadow .18s ease,background .18s ease,border-color .18s ease;
+  color:#FFFFFF;
+  background:linear-gradient(145deg,#249FE8,#147FBE);
+  border-color:#147FBE;
+  transition:transform .18s ease,box-shadow .18s ease,background .18s ease,border-color .18s ease,color .18s ease;
 }
-.nf-top-card:hover {
+.nf-top-card .nf-top-name,
+.nf-top-card .nf-top-price {
+  color:#FFFFFF;
+}
+.nf-top-card:hover,
+.nf-top-card.selected {
+  color:#17120E;
   background:#FFD447;
   border-color:#E1A100;
   transform:translateY(-6px);
   box-shadow:0 17px 34px rgba(189,126,0,.22);
 }
+.nf-top-card:hover .nf-top-name,
+.nf-top-card:hover .nf-top-price,
+.nf-top-card.selected .nf-top-name,
+.nf-top-card.selected .nf-top-price {
+  color:#17120E;
+}
 .nf-top-card.selected {
-  background:#FFD447;
   border-color:#D99600;
   box-shadow:0 0 0 3px rgba(247,196,28,.26),0 15px 32px rgba(189,126,0,.20);
 }
@@ -2200,6 +2269,1859 @@ html {
   will-change:auto !important;
 }
 
+
+/* HONEY CLUB + ORDER HELP REFINEMENT */
+.nf-club-intro {
+  padding:34px;
+  border-radius:24px;
+  background:linear-gradient(145deg,#FFFFFF,#F7FBFE);
+  border:1px solid #DCEAF3;
+  box-shadow:0 14px 34px rgba(32,86,122,.09);
+}
+.nf-club-page-title,
+.nf-club-section-title {
+  margin:9px 0 14px;
+  font-family:'Bebas Neue',Impact,sans-serif;
+  color:#17120E;
+  line-height:.95;
+  letter-spacing:.015em;
+}
+.nf-club-page-title { font-size:clamp(42px,6vw,66px); }
+.nf-club-section-title { font-size:clamp(35px,5vw,49px); margin-top:30px; }
+.nf-club-intro p {
+  margin:0;
+  max-width:790px;
+  color:#5B5148;
+  font-size:17px;
+  line-height:1.75;
+}
+.nf-club-benefits {
+  margin:22px 0 30px;
+  padding:28px;
+  border-radius:24px;
+  color:#FFFFFF;
+  background:linear-gradient(145deg,#249FE8,#147FBE);
+  box-shadow:0 16px 36px rgba(20,127,190,.24);
+}
+.nf-club-benefits-heading {
+  margin-bottom:18px;
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:31px;
+  line-height:1;
+}
+.nf-club-benefit {
+  display:grid;
+  grid-template-columns:54px minmax(0,1fr);
+  align-items:center;
+  gap:15px;
+  padding:15px 0;
+  border-top:1px solid rgba(255,255,255,.22);
+  animation:nfClubBenefitIn .65s cubic-bezier(.22,1,.36,1) both;
+  animation-delay:var(--nf-benefit-delay,0ms);
+}
+.nf-club-benefit:first-of-type { border-top:0; }
+.nf-club-benefit-icon {
+  width:48px;
+  height:48px;
+  display:grid;
+  place-items:center;
+  border-radius:15px;
+  color:#FFF4B8;
+  background:rgba(255,255,255,.13);
+  border:1px solid rgba(255,255,255,.3);
+}
+.nf-club-benefit-icon svg { width:29px; height:29px; }
+.nf-club-benefit strong { display:block; font-size:17px; line-height:1.35; }
+.nf-club-benefit p {
+  margin:3px 0 0;
+  color:rgba(255,255,255,.86);
+  font-size:15px;
+  line-height:1.55;
+}
+.nf-club-plan-contents {
+  margin-top:4px;
+  color:#147FBE;
+  font-size:15px;
+  line-height:1.45;
+  font-weight:750;
+}
+.nf-club-preferences {
+  margin-top:30px;
+  padding:28px;
+  border:1px solid #DCEAF3;
+  border-radius:24px;
+  background:linear-gradient(145deg,#F7FBFE,#FFFFFF);
+  box-shadow:0 12px 30px rgba(32,86,122,.08);
+}
+.nf-club-choice-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+.nf-club-choice {
+  min-height:112px;
+  padding:18px;
+  border:1.5px solid #BCD8E9;
+  border-radius:17px;
+  background:#FFFFFF;
+  color:#17120E;
+  text-align:left;
+  cursor:pointer;
+}
+.nf-club-choice.selected {
+  border-color:#147FBE;
+  background:#EAF6FD;
+  box-shadow:0 0 0 3px rgba(36,160,237,.16);
+}
+.nf-club-choice strong {
+  display:block;
+  color:#147FBE;
+  font-size:18px;
+}
+.nf-club-choice span {
+  display:block;
+  margin-top:6px;
+  color:#5D5148;
+  font-size:14px;
+  line-height:1.5;
+}
+.nf-club-preference-label {
+  margin:24px 0 10px;
+  font-size:16px;
+  font-weight:850;
+}
+.nf-club-preference-chips {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.nf-club-preference-chips button {
+  min-height:42px;
+  padding:9px 14px;
+  border:1px solid #BCD8E9;
+  border-radius:999px;
+  background:#FFFFFF;
+  color:#49667B;
+  font:inherit;
+  font-size:14px;
+  font-weight:750;
+  cursor:pointer;
+}
+.nf-club-preference-chips button.selected {
+  background:#147FBE;
+  border-color:#147FBE;
+  color:#FFFFFF;
+}
+.nf-club-request-field {
+  display:grid;
+  gap:8px;
+  margin-top:22px;
+}
+.nf-club-request-field > span {
+  font-size:15px;
+  font-weight:850;
+}
+.nf-club-preference-note {
+  margin:9px 0 0;
+  color:#74685F;
+  font-size:13px;
+  line-height:1.5;
+}
+.nf-admin-flavor-preferences {
+  display:grid;
+  gap:3px;
+  margin-top:9px;
+  padding:10px 11px;
+  border-radius:11px;
+  background:#EEF8FE;
+  color:#315E7B;
+  font-size:12px;
+  line-height:1.45;
+}
+.nf-admin-flavor-preferences em {
+  color:#5D5148;
+  font-style:normal;
+}
+.nf-club-reveal,
+.nf-help-reveal {
+  animation:nfClubPageIn .75s cubic-bezier(.22,1,.36,1) both;
+  animation-delay:var(--nf-club-delay,0ms);
+}
+@keyframes nfClubPageIn {
+  from { opacity:0; transform:translate3d(0,20px,0); }
+  to { opacity:1; transform:translate3d(0,0,0); }
+}
+@keyframes nfClubBenefitIn {
+  from { opacity:0; transform:translate3d(-16px,0,0); }
+  to { opacity:1; transform:translate3d(0,0,0); }
+}
+.nf-help-page {
+  padding-top:34px;
+  padding-bottom:70px;
+}
+.nf-help-hero {
+  padding:32px;
+  border-radius:24px;
+  color:#FFFFFF;
+  background:linear-gradient(145deg,#249FE8,#147FBE);
+  box-shadow:0 16px 36px rgba(20,127,190,.22);
+}
+.nf-help-hero .display { color:#FFFFFF !important; font-size:42px !important; }
+.nf-help-hero p {
+  margin:10px 0 0 !important;
+  color:rgba(255,255,255,.88) !important;
+  font-size:16px !important;
+  line-height:1.7 !important;
+}
+.nf-help-options {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+  margin-top:18px;
+}
+.nf-help-option {
+  min-height:118px;
+  padding:19px;
+  border:1px solid #DCEAF3;
+  border-radius:18px;
+  background:#FFFFFF;
+  color:#17120E;
+  text-align:left;
+  cursor:pointer;
+  box-shadow:0 9px 22px rgba(32,86,122,.07);
+  animation:nfClubPageIn .65s cubic-bezier(.22,1,.36,1) both;
+}
+.nf-help-option.selected {
+  border-color:#147FBE;
+  background:#EAF6FD;
+  box-shadow:0 0 0 3px rgba(36,160,237,.14);
+}
+.nf-help-option > div:first-child {
+  color:#147FBE;
+  font-size:17px !important;
+  font-weight:850 !important;
+}
+.nf-help-option > div:last-child {
+  margin-top:6px !important;
+  color:#5D5148 !important;
+  font-size:14px !important;
+  line-height:1.55 !important;
+}
+.nf-help-form {
+  margin-top:18px;
+  padding:28px;
+  border:1px solid #DCEAF3;
+  border-radius:24px;
+  background:#FFFFFF;
+  box-shadow:0 12px 30px rgba(32,86,122,.08);
+}
+.nf-help-form h2 {
+  margin:7px 0 18px;
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:38px;
+}
+@media (max-width:700px) {
+  .nf-club-intro,
+  .nf-club-benefits,
+  .nf-club-preferences,
+  .nf-help-hero,
+  .nf-help-form {
+    padding:22px 18px;
+  }
+  .nf-club-intro p { font-size:16px; }
+  .nf-club-choice-grid,
+  .nf-help-options { grid-template-columns:1fr; }
+  .nf-club-benefit {
+    grid-template-columns:46px minmax(0,1fr);
+    gap:12px;
+  }
+  .nf-club-benefit-icon { width:43px; height:43px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .nf-club-reveal,
+  .nf-help-reveal,
+  .nf-club-benefit,
+  .nf-help-option {
+    animation:none !important;
+  }
+}
+
+/* ABOUT STORY, DOCK, AND PAGE BUTTON CONSISTENCY */
+.nf-back-to-shop {
+  padding:6px 12px !important;
+  font-size:12px !important;
+  color:#FFF8E8 !important;
+  border:1px solid rgba(255,255,255,.18) !important;
+  border-radius:10px !important;
+  background:rgba(255,255,255,.07) !important;
+  box-shadow:none !important;
+}
+.nf-back-to-shop:hover {
+  background:rgba(255,255,255,.13) !important;
+  border-color:rgba(247,196,28,.34) !important;
+}
+.nf-story-gallery {
+  position:relative;
+  min-height:590px;
+  align-self:start;
+}
+.nf-story-photo {
+  margin:0;
+  overflow:hidden;
+  border-radius:24px;
+  background:#F7F1E8;
+  border:1px solid #E5DACB;
+  box-shadow:0 18px 38px rgba(45,31,20,.15);
+}
+.nf-story-photo img {
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:cover;
+}
+.nf-story-photo figcaption {
+  padding:11px 14px;
+  color:#6A5B50;
+  background:#FFFFFF;
+  font-size:12px;
+  font-weight:750;
+  line-height:1.4;
+}
+.nf-story-photo-primary {
+  position:absolute;
+  left:0;
+  top:0;
+  width:78%;
+  height:430px;
+}
+.nf-story-photo-secondary {
+  position:absolute;
+  right:0;
+  bottom:0;
+  width:62%;
+  height:315px;
+  border:7px solid #FFFFFF;
+}
+.nf-story-copy h2 {
+  font-size:54px;
+}
+.nf-story-opening {
+  color:#147FBE !important;
+  font-size:19px !important;
+  line-height:1.6 !important;
+  font-weight:850 !important;
+}
+.nf-story-closing {
+  margin-top:18px !important;
+  padding-top:18px;
+  border-top:1px solid #E4D9CB;
+  color:#17120E !important;
+  font-weight:750;
+}
+.nf-difference-dock-inner {
+  justify-items:center;
+}
+.nf-difference-tabs-grid {
+  width:min(940px,100%);
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:8px;
+  overflow:visible;
+}
+.nf-difference-tabs-grid button {
+  width:100%;
+  min-width:0;
+  white-space:normal;
+  text-align:center;
+}
+.nf-difference-socials {
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:9px;
+  margin-top:2px;
+  color:#FFFFFF;
+}
+.nf-difference-socials > span {
+  margin-right:2px;
+  font-size:12px;
+  font-weight:850;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.nf-difference-socials a {
+  width:38px;
+  height:38px;
+  padding:0;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:#FFF4CE;
+  color:#23465D;
+  border:1px solid #FFF4CE;
+}
+.nf-difference-socials svg {
+  width:19px;
+  height:19px;
+  stroke:currentColor;
+  stroke-width:2;
+}
+@media (max-width:700px) {
+  .nf-story-gallery {
+    min-height:475px;
+  }
+  .nf-story-photo-primary {
+    width:88%;
+    height:345px;
+  }
+  .nf-story-photo-secondary {
+    width:68%;
+    height:245px;
+  }
+  .nf-story-copy h2 {
+    font-size:45px;
+  }
+  .nf-difference-tabs-grid {
+    grid-template-columns:repeat(5,minmax(98px,1fr));
+    overflow-x:auto;
+    justify-content:start;
+    padding-bottom:3px;
+  }
+}
+
+/* FINAL STABILITY: SINGLE BUNDLE DEMO, CLEAN HERO, TOP PICKS, AND REVIEW */
+.nf-top-card,
+.nf-top-card:hover {
+  color:#17120E !important;
+  background:linear-gradient(145deg,#FFE27A,#F7C41C) !important;
+  border-color:#E1A100 !important;
+}
+.nf-top-card:hover {
+  transform:translateY(-3px);
+  box-shadow:0 14px 30px rgba(189,126,0,.18) !important;
+}
+.nf-top-card .nf-top-name,
+.nf-top-card .nf-top-price,
+.nf-top-card:hover .nf-top-name,
+.nf-top-card:hover .nf-top-price {
+  color:#17120E !important;
+}
+.nf-top-card.selected {
+  color:#173C52 !important;
+  background:linear-gradient(145deg,#A9D5ED,#82BBDD) !important;
+  border-color:#6FAFD5 !important;
+  box-shadow:0 0 0 3px rgba(79,145,198,.18),0 16px 32px rgba(79,145,198,.18) !important;
+}
+.nf-top-card.selected .nf-top-name,
+.nf-top-card.selected .nf-top-price {
+  color:#173C52 !important;
+}
+.nf-top-badge,
+.nf-top-card:hover .nf-top-badge {
+  background:#173C52 !important;
+  color:#FFF4B8 !important;
+  border-color:#173C52 !important;
+}
+.nf-top-card.selected .nf-top-badge {
+  background:#FFF0A8 !important;
+  color:#173C52 !important;
+  border-color:#D5A600 !important;
+}
+.nf-layered-hero-title {
+  min-height:auto !important;
+  display:flex !important;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:0;
+  overflow:visible;
+}
+.nf-layered-hero-title .nf-hero-topline {
+  position:relative;
+  z-index:3;
+  display:block;
+  margin:0;
+  transform:none !important;
+  color:#17120E;
+  line-height:.88;
+}
+.nf-layered-hero-title .nf-hero-honey-word {
+  position:relative !important;
+  left:auto !important;
+  top:auto !important;
+  z-index:1;
+  display:block;
+  width:100%;
+  margin:-2px 0 -5px;
+  color:rgba(82,146,188,.48);
+  font-size:clamp(118px,14vw,196px);
+  line-height:.73;
+  letter-spacing:-.035em;
+  transform:scaleX(1.07);
+  transform-origin:left center;
+  white-space:nowrap;
+}
+.nf-layered-hero-title .nf-hero-bottomline {
+  position:relative;
+  z-index:3;
+  display:block;
+  margin:0 !important;
+  color:#D88D00;
+  line-height:.9;
+}
+.nf-review-type-buttons button:disabled {
+  cursor:not-allowed;
+  background:#F1F2F3 !important;
+  border-color:#D8DADD !important;
+  color:#8A8F93 !important;
+  opacity:1;
+}
+@media (max-width:700px) {
+  .nf-layered-hero-title .nf-hero-honey-word {
+    margin:2px 0 0;
+    font-size:clamp(88px,26vw,122px);
+    transform:scaleX(1.03);
+  }
+  .nf-layered-hero-title .nf-hero-topline,
+  .nf-layered-hero-title .nf-hero-bottomline {
+    line-height:.94;
+  }
+}
+
+/* TYPE CHOICE, HERO, TOP PICKS, AND SPUN AVAILABILITY REFINEMENT */
+.nf-top-card {
+  color:#17120E !important;
+  background:linear-gradient(145deg,#FFE27A,#F7C41C) !important;
+  border-color:#E1A100 !important;
+}
+.nf-top-card .nf-top-name,
+.nf-top-card .nf-top-price {
+  color:#17120E !important;
+}
+.nf-top-card:hover,
+.nf-top-card.selected {
+  color:#173C52 !important;
+  background:linear-gradient(145deg,#A9D5ED,#82BBDD) !important;
+  border-color:#6FAFD5 !important;
+  box-shadow:0 17px 34px rgba(79,145,198,.20) !important;
+}
+.nf-top-card:hover .nf-top-name,
+.nf-top-card:hover .nf-top-price,
+.nf-top-card.selected .nf-top-name,
+.nf-top-card.selected .nf-top-price {
+  color:#173C52 !important;
+}
+.nf-top-badge {
+  background:#173C52 !important;
+  color:#FFF4B8 !important;
+  border-color:#173C52 !important;
+}
+.nf-top-card:hover .nf-top-badge,
+.nf-top-card.selected .nf-top-badge {
+  background:#FFF0A8 !important;
+  color:#173C52 !important;
+  border-color:#D5A600 !important;
+}
+.nf-modern-kicker {
+  position:relative;
+  z-index:4;
+}
+.nf-layered-hero-title {
+  margin-top:3px;
+}
+.nf-layered-hero-title .nf-hero-topline {
+  color:#17120E;
+  transform:translateY(-8px);
+}
+.nf-layered-hero-title .nf-hero-honey-word {
+  top:50px;
+  color:rgba(92,157,198,.42);
+  font-size:clamp(132px,15.5vw,210px);
+  letter-spacing:-.035em;
+  transform:scaleX(1.08);
+  transform-origin:left center;
+}
+.nf-layered-hero-title .nf-hero-bottomline {
+  margin-top:94px;
+}
+.nf-modern-subtitle {
+  display:grid;
+  gap:3px;
+}
+.nf-modern-subtitle strong {
+  color:#4F91C6;
+  font-weight:850;
+}
+.nf-modern-hero-image {
+  border-radius:28px 0 0 28px;
+}
+.nf-type-selector-section {
+  padding:18px 0 4px;
+  background:#FFFFFF;
+}
+.nf-type-section-heading {
+  align-items:center;
+  margin-top:10px;
+}
+.nf-type-info-link {
+  border:0;
+  background:transparent;
+  color:#147FBE;
+  font:inherit;
+  font-size:13px;
+  font-weight:800;
+  text-decoration:underline;
+  text-underline-offset:3px;
+  cursor:pointer;
+}
+.nf-type-choice-grid {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:14px;
+}
+.nf-type-choice-card {
+  min-height:116px;
+  display:flex;
+  align-items:center;
+  gap:15px;
+  padding:19px;
+  border:1.5px solid #BCD8E9;
+  border-radius:20px;
+  background:linear-gradient(145deg,#FFFFFF,#F7FBFE);
+  color:#17120E;
+  text-align:left;
+  cursor:pointer;
+  box-shadow:0 9px 22px rgba(32,86,122,.07);
+}
+.nf-type-choice-card.selected {
+  border-color:#147FBE;
+  background:#EAF6FD;
+  box-shadow:0 0 0 3px rgba(36,160,237,.14),0 11px 24px rgba(32,86,122,.09);
+}
+.nf-type-choice-card.unavailable {
+  background:#F2F3F4;
+  border-color:#D8DADD;
+  color:#777D82;
+  cursor:not-allowed;
+}
+.nf-type-choice-icon {
+  width:52px;
+  height:52px;
+  flex:0 0 52px;
+  display:grid;
+  place-items:center;
+  border-radius:16px;
+  background:#EAF6FD;
+}
+.nf-type-choice-card.unavailable .nf-type-choice-icon {
+  filter:grayscale(1);
+  opacity:.55;
+}
+.nf-type-choice-card strong {
+  display:block;
+  color:#174F72;
+  font-size:19px;
+}
+.nf-type-choice-card small {
+  display:block;
+  margin-top:5px;
+  color:#667783;
+  font-size:14px;
+  line-height:1.4;
+}
+.nf-type-question {
+  color:#147FBE;
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:34px;
+}
+.nf-type-notice {
+  margin-top:12px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  padding:13px 15px;
+  border:1px solid #72B7E4;
+  border-radius:14px;
+  background:#EEF8FE;
+  color:#315E7B;
+  font-size:14px;
+  line-height:1.55;
+}
+.nf-type-notice button {
+  border:0;
+  background:transparent;
+  color:#147FBE;
+  font-size:20px;
+  cursor:pointer;
+}
+.nf-review-type-alert,
+.nf-review-type-help {
+  margin:10px 0 12px;
+  padding:12px 13px;
+  border-radius:13px;
+  font-size:13px;
+  line-height:1.5;
+}
+.nf-review-type-alert {
+  display:grid;
+  gap:3px;
+  border:1px solid #72B7E4;
+  background:#EEF8FE;
+  color:#315E7B;
+}
+.nf-review-type-help {
+  border:1px solid #E0A400;
+  background:#FFF8D8;
+  color:#634C00;
+}
+.nf-review-item-copy {
+  min-width:0;
+}
+.nf-review-type-buttons {
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-top:8px;
+}
+.nf-review-type-buttons button {
+  min-width:82px;
+  padding:7px 9px;
+  border:1px solid #BCD8E9;
+  border-radius:999px;
+  background:#FFFFFF;
+  color:#315E7B;
+  font:inherit;
+  font-size:12px;
+  font-weight:800;
+  cursor:pointer;
+}
+.nf-review-type-buttons button.selected {
+  background:#147FBE;
+  border-color:#147FBE;
+  color:#FFFFFF;
+}
+.nf-review-type-buttons button[aria-disabled="true"] {
+  background:#F1F2F3;
+  border-color:#D8DADD;
+  color:#8A8F93;
+}
+.nf-review-type-buttons small {
+  display:block;
+  margin-top:1px;
+  font-size:9px;
+}
+.nf-admin-spun-card {
+  display:grid;
+  gap:13px;
+  margin:12px 0 18px;
+  padding:18px;
+  border:2px solid #72B7E4;
+  border-radius:18px;
+  background:#F7FBFE;
+}
+.nf-admin-spun-card h3 {
+  margin:5px 0 7px;
+  color:#174F72;
+  font-size:20px;
+}
+.nf-admin-spun-card p {
+  margin:0;
+  color:#5D7180;
+  font-size:13px;
+  line-height:1.55;
+}
+.nf-admin-spun-toggle {
+  display:flex;
+  align-items:center;
+  gap:9px;
+  color:#174F72;
+  font-size:14px;
+  font-weight:800;
+}
+.nf-admin-spun-toggle input {
+  width:20px;
+  height:20px;
+}
+@media (max-width:700px) {
+  .nf-layered-hero-title .nf-hero-topline {
+    transform:translateY(-3px);
+  }
+  .nf-layered-hero-title .nf-hero-honey-word {
+    top:52px;
+    font-size:clamp(100px,30vw,142px);
+    transform:scaleX(1.04);
+  }
+  .nf-layered-hero-title .nf-hero-bottomline {
+    margin-top:78px;
+  }
+  .nf-type-choice-grid {
+    grid-template-columns:1fr;
+  }
+  .nf-modern-hero-image {
+    border-radius:22px 0 0 22px;
+  }
+  .nf-final-review-item {
+    grid-template-columns:10px minmax(0,1fr);
+  }
+  .nf-final-review-quantity {
+    grid-column:2;
+    justify-self:start;
+  }
+}
+
+/* VISUAL POLISH: TOP PICKS, CLUB, HERO, BUNDLES, CART, AND BUTTONS */
+.nf-top-card {
+  background:linear-gradient(145deg,#8FC7E8,#6FAFD5) !important;
+  border-color:#6FAFD5 !important;
+  border-radius:20px !important;
+}
+.nf-top-card img {
+  border-radius:16px;
+}
+.nf-top-badge {
+  background:#FFF0A8 !important;
+  color:#23465D !important;
+  border:1px solid rgba(35,70,93,.18);
+}
+.nf-top-card:hover .nf-top-badge,
+.nf-top-card.selected .nf-top-badge {
+  background:#147FBE !important;
+  color:#FFFFFF !important;
+  border-color:#147FBE !important;
+}
+.nf-club-benefits {
+  color:#174F72;
+  background:linear-gradient(145deg,#EFF8FD,#E3F2FA);
+  border:1px solid #BCD8E9;
+  box-shadow:0 12px 28px rgba(32,86,122,.10);
+}
+.nf-club-benefits-heading {
+  color:#174F72;
+}
+.nf-club-benefit {
+  border-top-color:rgba(20,127,190,.16);
+}
+.nf-club-benefit-icon {
+  color:#147FBE;
+  background:#FFFFFF;
+  border-color:#BCD8E9;
+}
+.nf-club-benefit strong {
+  color:#174F72;
+}
+.nf-club-benefit p {
+  color:#5D7180;
+}
+.nf-club-intro-outlined {
+  border:2px solid #72B7E4;
+  box-shadow:0 10px 26px rgba(32,86,122,.08);
+}
+.nf-layered-hero-title {
+  position:relative;
+  min-height:248px;
+  display:grid;
+  align-content:center;
+  overflow:visible;
+}
+.nf-layered-hero-title .nf-hero-topline,
+.nf-layered-hero-title .nf-hero-bottomline {
+  position:relative;
+  z-index:2;
+  display:block;
+}
+.nf-layered-hero-title .nf-hero-topline {
+  font-size:.88em;
+}
+.nf-layered-hero-title .nf-hero-bottomline {
+  margin-top:82px;
+  color:#D88D00;
+}
+.nf-layered-hero-title .nf-hero-honey-word {
+  position:absolute;
+  left:-4px;
+  top:38px;
+  z-index:1;
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:clamp(120px,14vw,190px);
+  line-height:.72;
+  letter-spacing:-.02em;
+  color:rgba(114,183,228,.30);
+  text-transform:uppercase;
+  white-space:nowrap;
+  pointer-events:none;
+}
+.nf-empty {
+  background:#F2F3F4 !important;
+  border-color:#D8DADD !important;
+}
+.nf-empty .display,
+.nf-empty > div {
+  color:#70757A !important;
+}
+.nf-bundle-headline {
+  align-items:flex-start;
+  gap:10px;
+}
+.nf-bundle-headline-main,
+.nf-bundle-headline-price {
+  display:block;
+  font-size:clamp(72px,9vw,132px);
+  line-height:.78;
+  letter-spacing:-.02em;
+}
+.nf-bundle-headline-price {
+  color:#72B7E4;
+}
+.nf-bundle-complete-message {
+  display:grid;
+  grid-template-columns:44px minmax(0,1fr);
+  align-items:center;
+  gap:11px;
+  color:#72B7E4;
+  font-size:16px;
+  line-height:1.5;
+  font-weight:750;
+}
+.nf-bundle-complete-message b {
+  color:#5A9BCB;
+  font-size:18px;
+}
+.nf-bundle-complete-icon {
+  width:42px;
+  height:42px;
+  display:grid;
+  place-items:center;
+  color:#5A9BCB;
+  animation:nfBundleCompletePop .45s cubic-bezier(.22,1,.36,1) both;
+}
+.nf-bundle-complete-icon svg {
+  width:42px;
+  height:42px;
+  stroke:currentColor;
+  stroke-width:3;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+@keyframes nfBundleCompletePop {
+  from { opacity:0; transform:scale(.72); }
+  to { opacity:1; transform:scale(1); }
+}
+.nf-pick-add {
+  background:linear-gradient(145deg,#6FAFD5,#4F91C6) !important;
+  color:#FFFFFF !important;
+  box-shadow:0 6px 14px rgba(79,145,198,.24) !important;
+}
+.nf-pick-add:hover {
+  background:linear-gradient(145deg,#7BB9DD,#5598CD) !important;
+}
+.nf-pick-qty-btn {
+  background:#F2AA00 !important;
+  color:#17120E !important;
+}
+.nf-text-us-fab {
+  top:-84px !important;
+  color:#174F72 !important;
+  background:linear-gradient(145deg,#FFE45B,#FFC400) !important;
+  border-color:#147FBE !important;
+  box-shadow:0 10px 26px rgba(20,127,190,.28) !important;
+}
+.nf-text-us-fab span {
+  color:#174F72;
+  background:#FFE45B;
+  border:1px solid #147FBE;
+}
+.nf-cart-tray.open .nf-cart-item-name {
+  font-size:18px !important;
+}
+.nf-cart-tray.open .nf-cart-item-name strong {
+  font-size:18px !important;
+}
+.nf-cart-tray.open .nf-cart-item-name small {
+  font-size:15px !important;
+  line-height:1.45;
+}
+@media (max-width:700px) {
+  .nf-layered-hero-title {
+    min-height:210px;
+  }
+  .nf-layered-hero-title .nf-hero-topline {
+    font-size:.92em;
+  }
+  .nf-layered-hero-title .nf-hero-bottomline {
+    margin-top:66px;
+  }
+  .nf-layered-hero-title .nf-hero-honey-word {
+    top:42px;
+    font-size:clamp(92px,27vw,128px);
+  }
+  .nf-bundle-headline-main,
+  .nf-bundle-headline-price {
+    font-size:56px;
+  }
+  .nf-bundle-complete-message {
+    font-size:15px;
+  }
+  .nf-text-us-fab {
+    top:-76px !important;
+  }
+  .nf-cart-tray.open .nf-cart-item-name,
+  .nf-cart-tray.open .nf-cart-item-name strong {
+    font-size:17px !important;
+  }
+  .nf-cart-tray.open .nf-cart-item-name small {
+    font-size:14px !important;
+  }
+}
+@media (prefers-reduced-motion:reduce) {
+  .nf-bundle-complete-icon {
+    animation:none !important;
+  }
+}
+
+/* TOP PICKS, TEXT CONTACT, FAQ, AND CROSS-PAGE REVEALS */
+.nf-universal-dock-links {
+  grid-template-columns:repeat(7,minmax(0,1fr));
+}
+.nf-text-us-fab {
+  position:absolute;
+  right:clamp(12px,3vw,34px);
+  top:-70px;
+  width:58px;
+  height:58px;
+  min-height:58px !important;
+  padding:0 !important;
+  display:grid !important;
+  place-items:center;
+  border-radius:50% !important;
+  color:#FFFFFF !important;
+  background:linear-gradient(145deg,#249FE8,#0E6FA8) !important;
+  border:2px solid #FFFFFF !important;
+  box-shadow:0 10px 26px rgba(14,111,168,.34) !important;
+  text-decoration:none;
+}
+.nf-text-us-fab svg {
+  width:25px;
+  height:25px;
+  stroke:currentColor;
+  stroke-width:1.9;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.nf-text-us-fab span {
+  position:absolute;
+  bottom:-22px;
+  padding:3px 7px;
+  border-radius:999px;
+  color:#FFFFFF;
+  background:#0E6FA8;
+  font-size:10px;
+  font-weight:850;
+  white-space:nowrap;
+}
+.nf-help-faq {
+  margin-top:20px;
+  padding:28px;
+  border:1px solid #DCEAF3;
+  border-radius:24px;
+  background:linear-gradient(145deg,#FFFFFF,#F7FBFE);
+  box-shadow:0 12px 30px rgba(32,86,122,.08);
+}
+.nf-help-faq h2 {
+  margin:7px 0 18px;
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:42px;
+  line-height:.95;
+}
+.nf-help-faq-list {
+  display:grid;
+  gap:10px;
+}
+.nf-help-faq-item {
+  overflow:hidden;
+  border:1px solid #D6E7F1;
+  border-radius:15px;
+  background:#FFFFFF;
+}
+.nf-help-faq-item summary {
+  position:relative;
+  padding:17px 48px 17px 17px;
+  color:#174F72;
+  font-size:17px;
+  line-height:1.45;
+  font-weight:850;
+  cursor:pointer;
+  list-style:none;
+}
+.nf-help-faq-item summary::-webkit-details-marker {
+  display:none;
+}
+.nf-help-faq-item summary::after {
+  content:"+";
+  position:absolute;
+  right:17px;
+  top:50%;
+  transform:translateY(-50%);
+  color:#147FBE;
+  font-size:25px;
+  font-weight:700;
+}
+.nf-help-faq-item[open] summary::after {
+  content:"−";
+}
+.nf-help-faq-item p {
+  margin:0;
+  padding:0 17px 18px;
+  color:#5D5148;
+  font-size:16px;
+  line-height:1.7;
+}
+.nf-animations-ready .nf-club-intro.nf-reveal,
+.nf-animations-ready .nf-club-benefits.nf-reveal,
+.nf-animations-ready .nf-club-section-title.nf-reveal,
+.nf-animations-ready .nf-club-preferences.nf-reveal,
+.nf-animations-ready .nf-difference-section.nf-reveal,
+.nf-animations-ready .nf-story-gallery.nf-reveal,
+.nf-animations-ready .nf-find-markets.nf-reveal,
+.nf-animations-ready .nf-find-contact.nf-reveal,
+.nf-animations-ready .nf-help-hero.nf-reveal,
+.nf-animations-ready .nf-help-option.nf-reveal,
+.nf-animations-ready .nf-help-form.nf-reveal,
+.nf-animations-ready .nf-help-contact.nf-reveal,
+.nf-animations-ready .nf-help-faq.nf-reveal,
+.nf-animations-ready .pol > *.nf-reveal {
+  transform:translate3d(0,20px,0);
+}
+.nf-animations-ready .nf-club-intro.nf-reveal-visible,
+.nf-animations-ready .nf-club-benefits.nf-reveal-visible,
+.nf-animations-ready .nf-club-section-title.nf-reveal-visible,
+.nf-animations-ready .nf-club-preferences.nf-reveal-visible,
+.nf-animations-ready .nf-difference-section.nf-reveal-visible,
+.nf-animations-ready .nf-story-gallery.nf-reveal-visible,
+.nf-animations-ready .nf-find-markets.nf-reveal-visible,
+.nf-animations-ready .nf-find-contact.nf-reveal-visible,
+.nf-animations-ready .nf-help-hero.nf-reveal-visible,
+.nf-animations-ready .nf-help-option.nf-reveal-visible,
+.nf-animations-ready .nf-help-form.nf-reveal-visible,
+.nf-animations-ready .nf-help-contact.nf-reveal-visible,
+.nf-animations-ready .nf-help-faq.nf-reveal-visible,
+.nf-animations-ready .pol > *.nf-reveal-visible {
+  transform:translate3d(0,0,0);
+}
+@media (max-width:900px) {
+  .nf-universal-dock-links {
+    grid-template-columns:repeat(7,minmax(118px,1fr));
+    overflow-x:auto;
+    justify-content:start;
+    scrollbar-width:none;
+  }
+  .nf-universal-dock-links::-webkit-scrollbar {
+    display:none;
+  }
+}
+@media (max-width:700px) {
+  .nf-text-us-fab {
+    right:10px;
+    top:-62px;
+    width:52px;
+    height:52px;
+    min-height:52px !important;
+  }
+  .nf-help-faq {
+    padding:22px 18px;
+  }
+  .nf-help-faq h2 {
+    font-size:36px;
+  }
+  .nf-help-faq-item summary {
+    font-size:16px;
+  }
+  .nf-help-faq-item p {
+    font-size:15.5px;
+  }
+}
+
+/* SMOOTH UNIVERSAL DOCK, HOME SEARCH, AND ORDER HELP READABILITY */
+.nf-universal-dock {
+  animation:none !important;
+  transition:none !important;
+  transform:none;
+  opacity:1;
+}
+.nf-universal-dock.entering {
+  opacity:0;
+  transform:translate3d(0,22px,0);
+}
+.nf-universal-dock.settled {
+  opacity:1;
+  transform:translate3d(0,0,0);
+}
+.nf-universal-dock.home-dock.entering {
+  transition:opacity .85s ease,transform .85s cubic-bezier(.22,1,.36,1) !important;
+}
+.nf-universal-dock.home-dock.settled {
+  transition:none !important;
+}
+.nf-universal-dock button,
+.nf-universal-dock a {
+  transition:background .15s ease,border-color .15s ease,color .15s ease;
+}
+.nf-universal-dock button.selected {
+  background:#0E6FA8;
+  border-color:#D5F0FF;
+  color:#FFFFFF;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);
+}
+.nf-home-dock-links {
+  width:min(900px,100%);
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:8px;
+}
+.nf-site-search {
+  width:min(760px,100%);
+  display:grid;
+  gap:6px;
+}
+.nf-site-search > label {
+  color:#FFFFFF;
+  font-size:11px;
+  font-weight:850;
+  letter-spacing:.08em;
+  text-align:center;
+  text-transform:uppercase;
+}
+.nf-site-search-row {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:8px;
+}
+.nf-site-search-row input {
+  min-height:43px;
+  padding:10px 14px;
+  border:1px solid rgba(255,255,255,.52);
+  border-radius:999px;
+  background:#FFFFFF;
+  color:#17120E;
+  font-size:15px;
+  box-shadow:none;
+}
+.nf-site-search-row button {
+  min-width:92px;
+  background:#0E6FA8;
+  border-color:#D5F0FF;
+}
+.nf-site-search-help {
+  padding:8px 12px;
+  border-radius:12px;
+  background:rgba(15,80,118,.72);
+  color:#FFFFFF;
+  font-size:13px;
+  line-height:1.45;
+  text-align:center;
+}
+.nf-help-page {
+  padding-top:34px !important;
+}
+.nf-help-hero .display {
+  font-size:48px !important;
+}
+.nf-help-hero p {
+  font-size:18px !important;
+  line-height:1.75 !important;
+}
+.nf-help-option > div:first-child {
+  font-size:20px !important;
+}
+.nf-help-option > div:last-child {
+  font-size:16px !important;
+  line-height:1.65 !important;
+}
+.nf-help-form h2 {
+  font-size:44px;
+}
+.nf-help-form,
+.nf-help-form input,
+.nf-help-form textarea,
+.nf-help-form button {
+  font-size:16px;
+}
+.nf-help-contact {
+  margin-top:20px;
+  padding:28px;
+  border:1px solid #DCEAF3;
+  border-radius:24px;
+  background:#FFFFFF;
+  box-shadow:0 12px 30px rgba(32,86,122,.08);
+}
+.nf-help-contact h2 {
+  margin:7px 0 10px;
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:42px;
+  line-height:.95;
+}
+.nf-help-contact > p {
+  margin:0 0 18px;
+  color:#5D5148;
+  font-size:16px;
+  line-height:1.7;
+}
+.nf-help-contact-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+.nf-help-contact-grid a {
+  padding:18px;
+  border-radius:16px;
+  background:linear-gradient(145deg,#249FE8,#147FBE);
+  color:#FFFFFF;
+  text-decoration:none;
+  box-shadow:0 10px 22px rgba(20,127,190,.18);
+}
+.nf-help-contact-grid span {
+  display:block;
+  color:rgba(255,255,255,.76);
+  font-size:12px;
+  font-weight:850;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+}
+.nf-help-contact-grid strong {
+  display:block;
+  margin-top:5px;
+  font-size:18px;
+}
+@media (max-width:700px) {
+  .nf-home-dock-links {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .nf-site-search-row {
+    grid-template-columns:1fr;
+  }
+  .nf-site-search-row button {
+    width:100%;
+  }
+  .nf-help-hero .display {
+    font-size:40px !important;
+  }
+  .nf-help-hero p {
+    font-size:17px !important;
+  }
+  .nf-help-option > div:first-child {
+    font-size:19px !important;
+  }
+  .nf-help-option > div:last-child {
+    font-size:15.5px !important;
+  }
+  .nf-help-contact {
+    padding:22px 18px;
+  }
+  .nf-help-contact-grid {
+    grid-template-columns:1fr;
+  }
+}
+@media (prefers-reduced-motion:reduce) {
+  .nf-universal-dock.entering,
+  .nf-universal-dock.settled {
+    opacity:1 !important;
+    transform:none !important;
+    transition:none !important;
+  }
+}
+
+/* UNIVERSAL BLUE NAVIGATION, THREE-IMAGE STORY, AND FIND PAGE */
+.nf-universal-dock {
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  z-index:115;
+  padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+  background:#24A0ED;
+  border-top:1px solid rgba(255,255,255,.48);
+  box-shadow:0 -10px 30px rgba(18,89,132,.28);
+  animation:nfUniversalDockIn .7s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes nfUniversalDockIn {
+  from { opacity:0; transform:translate3d(0,30px,0); }
+  to { opacity:1; transform:translate3d(0,0,0); }
+}
+.nf-universal-dock-inner {
+  width:min(1180px,100%);
+  margin:0 auto;
+  display:grid;
+  justify-items:center;
+  gap:8px;
+}
+.nf-universal-dock-links {
+  width:min(980px,100%);
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:8px;
+}
+.nf-universal-dock button,
+.nf-universal-dock a {
+  min-height:39px;
+  padding:8px 12px;
+  border:1px solid rgba(255,255,255,.45);
+  border-radius:999px;
+  background:rgba(255,255,255,.12);
+  color:#FFFFFF;
+  font:inherit;
+  font-size:12px;
+  font-weight:800;
+  text-align:center;
+  text-decoration:none;
+  cursor:pointer;
+}
+.nf-universal-dock button:hover,
+.nf-universal-dock a:hover {
+  background:rgba(255,255,255,.2);
+}
+.nf-universal-socials {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  color:#FFFFFF;
+}
+.nf-universal-socials > span {
+  font-size:11px;
+  font-weight:850;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.nf-universal-socials a {
+  width:36px;
+  height:36px;
+  min-height:36px;
+  padding:0;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:#FFF4CE;
+  color:#23465D;
+  border-color:#FFF4CE;
+}
+.nf-universal-socials svg {
+  width:18px;
+  height:18px;
+  stroke:currentColor;
+  stroke-width:2;
+}
+.nf-story-gallery-three {
+  min-height:700px;
+}
+.nf-story-photo-founders {
+  position:absolute;
+  left:0;
+  top:0;
+  width:82%;
+  height:420px;
+  z-index:1;
+}
+.nf-story-gallery-three .nf-story-photo-primary {
+  left:auto;
+  right:0;
+  top:365px;
+  width:63%;
+  height:275px;
+  z-index:3;
+  border:7px solid #FFFFFF;
+}
+.nf-story-gallery-three .nf-story-photo-secondary {
+  left:0;
+  right:auto;
+  bottom:0;
+  width:54%;
+  height:245px;
+  z-index:2;
+  border:7px solid #FFFFFF;
+}
+.nf-find-markets,
+.nf-find-contact {
+  margin-top:24px;
+  padding:28px;
+  border:1px solid #DCEAF3;
+  border-radius:24px;
+  background:#FFFFFF;
+  box-shadow:0 12px 30px rgba(32,86,122,.08);
+}
+.nf-find-markets h2,
+.nf-find-contact h2 {
+  margin:7px 0 18px;
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:40px;
+  line-height:.95;
+}
+.nf-find-market-list {
+  display:grid;
+  gap:10px;
+}
+.nf-find-market-card {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:18px;
+  padding:16px 17px;
+  border:1px solid #DCEAF3;
+  border-radius:16px;
+  background:#F7FBFE;
+}
+.nf-find-market-card strong {
+  display:block;
+  color:#147FBE;
+  font-size:17px;
+}
+.nf-find-market-card span {
+  display:block;
+  margin-top:4px;
+  color:#5D5148;
+  font-size:14px;
+  line-height:1.5;
+}
+.nf-find-market-card time {
+  flex:0 0 auto;
+  color:#17120E;
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:23px;
+}
+.nf-find-empty {
+  padding:18px;
+  border-radius:15px;
+  background:#F7FBFE;
+  color:#5D5148;
+  font-size:15px;
+  line-height:1.6;
+}
+.nf-find-contact-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+.nf-find-contact-grid a {
+  padding:18px;
+  border-radius:16px;
+  background:linear-gradient(145deg,#249FE8,#147FBE);
+  color:#FFFFFF;
+  text-decoration:none;
+  box-shadow:0 10px 22px rgba(20,127,190,.18);
+}
+.nf-find-contact-grid span {
+  display:block;
+  color:rgba(255,255,255,.76);
+  font-size:11px;
+  font-weight:850;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+}
+.nf-find-contact-grid strong {
+  display:block;
+  margin-top:5px;
+  font-size:17px;
+}
+.nf-find-reveal {
+  animation:nfUniversalDockIn .75s cubic-bezier(.22,1,.36,1) both;
+}
+@media (max-width:700px) {
+  .nf-universal-dock {
+    padding-left:8px;
+    padding-right:8px;
+  }
+  .nf-universal-dock-links {
+    grid-template-columns:repeat(4,minmax(112px,1fr));
+    overflow-x:auto;
+    justify-content:start;
+    scrollbar-width:none;
+    padding-bottom:2px;
+  }
+  .nf-universal-dock-links::-webkit-scrollbar { display:none; }
+  .nf-universal-dock button,
+  .nf-universal-dock a {
+    font-size:11px;
+    padding:8px 9px;
+  }
+  .nf-story-gallery-three {
+    min-height:560px;
+  }
+  .nf-story-photo-founders {
+    width:90%;
+    height:330px;
+  }
+  .nf-story-gallery-three .nf-story-photo-primary {
+    top:285px;
+    width:68%;
+    height:225px;
+  }
+  .nf-story-gallery-three .nf-story-photo-secondary {
+    width:58%;
+    height:195px;
+  }
+  .nf-find-markets,
+  .nf-find-contact {
+    padding:22px 18px;
+  }
+  .nf-find-market-card {
+    align-items:flex-start;
+  }
+  .nf-find-contact-grid {
+    grid-template-columns:1fr;
+  }
+}
+
+/* BRAND, CART, AND DIFFERENCE PAGE REFINEMENT */
+.nf-modern-brand > img {
+  background:url("/logo.png") center/contain no-repeat;
+}
+.nf-brand-wordmark {
+  color:#FFFFFF;
+}
+.nf-brand-wordmark > span {
+  color:#FFD21F;
+}
+.nf-nav-tagline {
+  color:#72B7E4;
+}
+.nf-cart-tray.open {
+  top:0;
+  height:100dvh;
+  display:flex;
+  align-items:stretch;
+  background:linear-gradient(180deg,#249FE8 0%,#147FBE 100%);
+  overflow:hidden;
+}
+.nf-cart-tray.open .nf-cart-tray-inner {
+  width:100%;
+  max-width:none;
+  height:100%;
+  padding:calc(18px + env(safe-area-inset-top)) clamp(18px,4vw,54px)
+    calc(20px + env(safe-area-inset-bottom));
+  display:flex;
+  flex-direction:column;
+}
+.nf-cart-tray.open .nf-cart-tray-toggle {
+  flex:0 0 auto;
+  min-height:54px;
+  padding:0 0 14px;
+  font-size:16px;
+  border-bottom:1px solid rgba(255,255,255,.32);
+}
+.nf-cart-tray.open .nf-cart-items {
+  flex:1;
+  max-height:none;
+  overflow-y:auto;
+  margin:18px 0;
+  padding:8px;
+  background:rgba(255,255,255,.11);
+}
+.nf-cart-tray.open .nf-cart-item {
+  grid-template-columns:12px minmax(0,1fr) 42px 34px 42px;
+  gap:12px;
+  padding:14px 13px;
+}
+.nf-cart-tray.open .nf-cart-item-name {
+  font-size:16px;
+  line-height:1.35;
+}
+.nf-cart-tray.open .nf-cart-item-name small {
+  font-size:13px;
+}
+.nf-cart-tray.open .nf-cart-item button {
+  width:42px;
+  height:42px;
+  font-size:23px;
+}
+.nf-cart-tray.open .nf-cart-item-qty {
+  font-size:17px;
+}
+.nf-cart-tray.open .nf-cart-savings {
+  font-size:14px;
+  padding:12px 13px;
+}
+.nf-cart-tray.open .nf-cart-summary {
+  flex:0 0 auto;
+  padding-top:16px;
+  border-top:1px solid rgba(255,255,255,.32);
+}
+.nf-cart-tray.open .nf-cart-totals {
+  font-size:17px;
+  line-height:1.55;
+  font-weight:700;
+}
+.nf-cart-tray.open .nf-cart-totals span {
+  margin-top:8px;
+  font-size:14px;
+}
+.nf-cart-tray.open .nf-cart-totals strong {
+  font-size:48px;
+}
+.nf-cart-tray .nf-guided-order-button {
+  background:linear-gradient(145deg,#FFE545,#FFC400) !important;
+  border-color:#E3A900 !important;
+  color:#17120E !important;
+  font-weight:900;
+  box-shadow:0 8px 22px rgba(84,57,0,.24),inset 0 1px 0 rgba(255,255,255,.7) !important;
+}
+.nf-cart-tray .nf-guided-order-button:hover {
+  background:linear-gradient(145deg,#FFF16B,#FFD21F) !important;
+}
+.nf-about-anchor {
+  scroll-margin-top:94px;
+}
+.nf-difference-page {
+  padding-bottom:170px;
+}
+.nf-difference-main {
+  padding-top:44px;
+  padding-bottom:80px;
+}
+.nf-difference-hero {
+  display:grid;
+  grid-template-columns:minmax(280px,.8fr) minmax(0,1.2fr);
+  align-items:center;
+  gap:46px;
+}
+.nf-difference-section {
+  display:grid;
+  grid-template-columns:86px minmax(0,1fr);
+  gap:26px;
+  max-width:900px;
+  margin:28px auto 0;
+  padding:34px;
+  border:1px solid #E8E0D7;
+  border-radius:24px;
+  background:linear-gradient(145deg,#FFFFFF,#FBF7F1);
+  box-shadow:0 12px 30px rgba(45,31,20,.08);
+}
+.nf-difference-number {
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:58px;
+  line-height:.9;
+  color:#72B7E4;
+}
+.nf-difference-section h3 {
+  margin:7px 0 12px;
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:38px;
+  line-height:1;
+  color:#17120E;
+}
+.nf-difference-section p {
+  margin:0 0 10px;
+  color:#5D5148;
+  font-size:15px;
+  line-height:1.75;
+}
+.nf-difference-final {
+  border-color:#E2A000;
+  background:linear-gradient(145deg,#FFFDF5,#FFF7D9);
+}
+.nf-difference-dock {
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  z-index:120;
+  padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+  background:#24A0ED;
+  border-top:1px solid rgba(255,255,255,.48);
+  box-shadow:0 -10px 30px rgba(18,89,132,.28);
+  animation:nfDifferenceDockIn .7s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes nfDifferenceDockIn {
+  from { opacity:0; transform:translate3d(0,30px,0); }
+  to { opacity:1; transform:translate3d(0,0,0); }
+}
+.nf-difference-dock-inner {
+  width:min(1180px,100%);
+  margin:0 auto;
+  display:grid;
+  gap:8px;
+}
+.nf-difference-tabs,
+.nf-difference-actions {
+  display:flex;
+  align-items:center;
+  gap:7px;
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+.nf-difference-tabs::-webkit-scrollbar,
+.nf-difference-actions::-webkit-scrollbar {
+  display:none;
+}
+.nf-difference-dock button,
+.nf-difference-dock a {
+  flex:0 0 auto;
+  min-height:38px;
+  padding:8px 12px;
+  border:1px solid rgba(255,255,255,.45);
+  border-radius:999px;
+  background:rgba(255,255,255,.12);
+  color:#FFFFFF;
+  font:inherit;
+  font-size:12px;
+  font-weight:800;
+  text-decoration:none;
+  cursor:pointer;
+}
+.nf-difference-actions {
+  justify-content:flex-end;
+}
+.nf-difference-actions a {
+  background:#FFF4CE;
+  color:#23465D;
+  border-color:#FFF4CE;
+}
+@media (max-width:700px) {
+  .nf-cart-tray.open .nf-cart-tray-inner {
+    padding-left:14px;
+    padding-right:14px;
+  }
+  .nf-cart-tray.open .nf-cart-summary {
+    display:grid;
+    grid-template-columns:1fr;
+    gap:12px;
+  }
+  .nf-cart-tray.open .nf-cart-summary > .btn {
+    width:100%;
+    max-width:none;
+    min-height:54px;
+    font-size:16px;
+  }
+  .nf-cart-tray.open .nf-cart-totals {
+    font-size:16px;
+  }
+  .nf-cart-tray.open .nf-cart-totals strong {
+    font-size:44px;
+  }
+  .nf-difference-main {
+    padding-top:26px;
+  }
+  .nf-difference-hero {
+    grid-template-columns:1fr;
+    gap:25px;
+  }
+  .nf-difference-section {
+    grid-template-columns:58px minmax(0,1fr);
+    gap:14px;
+    padding:24px 18px;
+  }
+  .nf-difference-number {
+    font-size:42px;
+  }
+  .nf-difference-section h3 {
+    font-size:31px;
+  }
+  .nf-difference-dock {
+    padding-left:8px;
+    padding-right:8px;
+  }
+  .nf-difference-actions {
+    justify-content:flex-start;
+  }
+}
+
 /* REFINED PROFESSIONAL SCROLL REVEALS */
 .nf-animations-ready .nf-reveal {
   opacity:0;
@@ -2273,6 +4195,103 @@ html {
 }
 
 @media (prefers-reduced-motion:reduce) { .nf * { transition:none !important; } }
+/* FINAL LIVE-PUBLISH VISUAL OVERRIDES */
+.nf-top-card,
+.nf-top-card:hover {
+  background:#F7C41C !important;
+  background-image:linear-gradient(145deg,#FFE27A,#F7C41C) !important;
+  border-color:#D9A500 !important;
+  color:#17120E !important;
+}
+.nf-top-card .nf-top-name,
+.nf-top-card .nf-top-price,
+.nf-top-card:hover .nf-top-name,
+.nf-top-card:hover .nf-top-price {
+  color:#17120E !important;
+}
+.nf-top-card:hover {
+  transform:translateY(-4px) !important;
+  box-shadow:0 15px 30px rgba(189,126,0,.18) !important;
+}
+.nf-top-card.selected,
+.nf-top-card.selected:hover {
+  background:#9CCBE6 !important;
+  background-image:linear-gradient(145deg,#B7DCF0,#8FC2DF) !important;
+  border-color:#6FAFD5 !important;
+  color:#173C52 !important;
+  box-shadow:0 0 0 3px rgba(79,145,198,.18),0 16px 32px rgba(79,145,198,.18) !important;
+}
+.nf-top-card.selected .nf-top-name,
+.nf-top-card.selected .nf-top-price,
+.nf-top-card.selected:hover .nf-top-name,
+.nf-top-card.selected:hover .nf-top-price {
+  color:#173C52 !important;
+}
+.nf-top-card .nf-top-badge,
+.nf-top-card:hover .nf-top-badge {
+  background:#173C52 !important;
+  color:#FFF4B8 !important;
+  border-color:#173C52 !important;
+}
+.nf-top-card.selected .nf-top-badge,
+.nf-top-card.selected:hover .nf-top-badge {
+  background:#FFF0A8 !important;
+  color:#173C52 !important;
+  border-color:#D5A600 !important;
+}
+
+.nf-layered-hero-title {
+  display:grid !important;
+  grid-template-rows:auto auto auto !important;
+  row-gap:18px !important;
+  min-height:auto !important;
+  overflow:visible !important;
+}
+.nf-layered-hero-title .nf-hero-topline {
+  position:relative !important;
+  z-index:3 !important;
+  margin:0 !important;
+  transform:none !important;
+  line-height:.86 !important;
+}
+.nf-layered-hero-title .nf-hero-honey-word {
+  position:relative !important;
+  left:auto !important;
+  top:auto !important;
+  z-index:1 !important;
+  display:block !important;
+  width:100% !important;
+  margin:0 !important;
+  color:rgba(82,146,188,.48) !important;
+  font-size:clamp(126px,15.2vw,214px) !important;
+  line-height:.72 !important;
+  letter-spacing:-.035em !important;
+  transform:scaleX(1.16) !important;
+  transform-origin:left center !important;
+  white-space:nowrap !important;
+}
+.nf-layered-hero-title .nf-hero-bottomline {
+  position:relative !important;
+  z-index:3 !important;
+  margin:0 !important;
+  line-height:.88 !important;
+}
+
+@media (max-width:700px) {
+  .nf-layered-hero-title {
+    row-gap:14px !important;
+  }
+  .nf-layered-hero-title .nf-hero-honey-word {
+    font-size:clamp(92px,27vw,128px) !important;
+    transform:scaleX(1.09) !important;
+  }
+  .nf-layered-hero-title .nf-hero-topline,
+  .nf-layered-hero-title .nf-hero-bottomline {
+    line-height:.94 !important;
+  }
+}
+
+
 `;
 
 export default function App() {
@@ -2289,8 +4308,12 @@ export default function App() {
   const [pickSize, setPickSize] = useState("4oz");
   const [pickType, setPickType] = useState("regular");
   const [typeInfo, setTypeInfo] = useState(false);
+  const [typeNotice, setTypeNotice] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(true);
+  const [dockHasEntered, setDockHasEntered] = useState(false);
+  const siteSearchRef = useRef(null);
+  const [siteSearchHelp, setSiteSearchHelp] = useState("");
   const [reviewOpen, setReviewOpen] = useState(false);
   const [continueAttemptKey, setContinueAttemptKey] = useState("");
   const [continueHelp, setContinueHelp] = useState("");
@@ -2307,6 +4330,9 @@ export default function App() {
   const [subMethod, setSubMethod] = useState(null);
   const [subZip, setSubZip] = useState("");
   const [subDone, setSubDone] = useState(null);
+  const [flavorMode, setFlavorMode] = useState("surprise");
+  const [flavorPreferences, setFlavorPreferences] = useState([]);
+  const [flavorRequests, setFlavorRequests] = useState("");
 
   const reload = useCallback(async () => {
     try { setCat(await api.getCatalog()); }
@@ -2314,6 +4340,12 @@ export default function App() {
   }, []);
 
   useEffect(() => { reload(); }, [reload]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const timer = window.setTimeout(() => setDockHasEntered(true), 80);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   /* If someone lands on /order/<token> — from their email, a bookmark, or
      just hitting refresh — pull that order straight back up. */
@@ -2357,14 +4389,30 @@ export default function App() {
   const B = cat?.bundle ?? { size: "4oz", count: 3, price: 20 };
   const sizeOf = (id) =>
     cat?.sizes?.find((s) => s.id === id) ?? { id, label: id, price: 0 };
-  const typeName = (id) => TYPES.find((t) => t.id === id)?.name ?? "Regular";
+  const typeName = (id) =>
+    id === "undecided" ? "Decide in review" : TYPES.find((t) => t.id === id)?.name ?? "Regular";
+
+  const spunEnabled = cat?.spunAvailability?.enabled !== false;
+  const spunUnavailableMessage =
+    cat?.spunAvailability?.message ||
+    "Spun honey is temporarily unavailable. Warm weather can soften or melt its whipped texture.";
+
+  const flavorAvailableForType = (flavor, sizeId, type) => {
+    if (!flavor) return false;
+    if (type === "undecided") {
+      return api.inStock(flavor, sizeId, "regular") ||
+        (spunEnabled && api.inStock(flavor, sizeId, "spun"));
+    }
+    if (type === "spun" && !spunEnabled) return false;
+    return api.inStock(flavor, sizeId, type);
+  };
 
   const shelf = useMemo(() => {
     if (!cat) return [];
 
     const publicFlavors = cat.flavors.filter((f) => f.active !== false);
-    const available = publicFlavors.filter((f) => api.inStock(f, pickSize, pickType));
-    const unavailable = publicFlavors.filter((f) => !api.inStock(f, pickSize, pickType));
+    const available = publicFlavors.filter((f) => flavorAvailableForType(f, pickSize, pickType));
+    const unavailable = publicFlavors.filter((f) => !flavorAvailableForType(f, pickSize, pickType));
 
     const best = available.find((f) => f.name === cat.bestSeller);
     const orderedAvailable = best
@@ -2372,11 +4420,13 @@ export default function App() {
       : available;
 
     return [...orderedAvailable, ...unavailable];
-  }, [cat, pickSize, pickType]);
+  }, [cat, pickSize, pickType, spunEnabled]);
 
   const inventoryLimit = (flavorId, sizeId, type) => {
     const flavor = cat?.flavors?.find((f) => f.id === flavorId);
     if (!flavor) return null;
+    if (type === "undecided") return null;
+    if (type === "spun" && !spunEnabled) return 0;
 
     const raw = api.stockCount(flavor, sizeId, type);
     if (raw === "" || raw === null || raw === undefined) return null;
@@ -2409,6 +4459,35 @@ export default function App() {
       qty: 1
     }];
     });
+  };
+
+  const chooseCartItemType = (index, nextType) => {
+    const item = cart[index];
+    if (!item) return;
+
+    if (nextType === "spun" && !spunEnabled) {
+      setTypeNotice(spunUnavailableMessage);
+      return;
+    }
+
+    const flavor = cat?.flavors?.find((f) => f.id === item.flavor_id);
+    const limit = inventoryLimit(item.flavor_id, item.size_id, nextType);
+    const available = flavorAvailableForType(flavor, item.size_id, nextType);
+
+    if (!available || (limit !== null && limit < item.qty)) {
+      setTypeNotice(
+        `${item.flavor} is not currently available as ${typeName(nextType)} in ${sizeOf(item.size_id).label}. ` +
+        "Choose the other texture or return to the flavor list."
+      );
+      return;
+    }
+
+    setTypeNotice("");
+    setCart((current) =>
+      current.map((cartItem, itemIndex) =>
+        itemIndex === index ? { ...cartItem, type: nextType } : cartItem
+      )
+    );
   };
 
   const bump = (i, d) => setCart((cc) => {
@@ -2473,6 +4552,21 @@ export default function App() {
       ".nf-page-heading",
       ".nf-find-card",
       ".nf-help-card",
+      ".nf-club-intro",
+      ".nf-club-benefits",
+      ".nf-club-section-title",
+      ".nf-club-preferences",
+      ".nf-difference-section",
+      ".nf-story-gallery",
+      ".nf-find-markets",
+      ".nf-find-contact",
+      ".nf-help-hero",
+      ".nf-help-option",
+      ".nf-help-form",
+      ".nf-help-contact",
+      ".nf-help-faq",
+      ".pol > *",
+      ".nf-final-review",
     ];
 
     root.classList.add("nf-animations-ready");
@@ -2545,7 +4639,14 @@ export default function App() {
 
     const section = document.querySelector(".nf-bundle-builder");
     const fill = section?.querySelector(".nf-bundle-honey-fill");
-    if (!section || !fill || section.dataset.bundleDemoPlayed === "true") return undefined;
+    if (
+      !section ||
+      !fill ||
+      section.dataset.bundleDemoPlayed === "true" ||
+      document.documentElement.dataset.nfBundleDemoPlayed
+    ) return undefined;
+
+    document.documentElement.dataset.nfBundleDemoPlayed = "armed";
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -2553,6 +4654,7 @@ export default function App() {
         if (!entry) return;
 
         section.dataset.bundleDemoPlayed = "true";
+        document.documentElement.dataset.nfBundleDemoPlayed = "played";
         observer.disconnect();
 
         fill.classList.remove("nf-bundle-demo");
@@ -2602,8 +4704,27 @@ export default function App() {
     if (method !== "market" && !cust.address.trim()) missing.push("an address");
   }
   const canPlace = cart.length && slot && !missing.length && !belowMin && !busy;
+  const unresolvedTypeItems = cart.filter((item) => item.type === "undecided");
+  const unavailableTypeItems = cart.filter((item) => {
+    if (item.type === "undecided") return false;
+    const flavor = cat.flavors.find((f) => f.id === item.flavor_id);
+    const limit = inventoryLimit(item.flavor_id, item.size_id, item.type);
+    return !flavorAvailableForType(flavor, item.size_id, item.type) ||
+      (limit !== null && limit < item.qty);
+  });
+  const canSubmitOrder =
+    canPlace && unresolvedTypeItems.length === 0 && unavailableTypeItems.length === 0;
 
   async function submit() {
+    if (!canSubmitOrder) {
+      setTypeNotice(
+        unresolvedTypeItems.length
+          ? "Choose Regular or Spun for every undecided jar before placing your order."
+          : "One or more selected textures are no longer available. Please update those jars."
+      );
+      return;
+    }
+
     setBusy(true); setErr(null);
     try {
       const r = await api.placeOrder({
@@ -2708,6 +4829,35 @@ export default function App() {
     setReviewOpen(true);
   };
 
+  const runSiteSearch = () => {
+    const query = String(siteSearchRef.current?.value || "").trim().toLowerCase();
+    setSiteSearchHelp("");
+
+    if (!query) {
+      setSiteSearchHelp("Type what you are looking for, such as markets, delivery, ingredients, Honey Club, or order help.");
+      return;
+    }
+
+    const routes = [
+      { terms: ["market", "markets", "near me", "store", "stores", "retail", "find us", "location"], view: "find" },
+      { terms: ["about", "story", "difference", "quality", "ingredients", "raw", "unfiltered", "michigan"], view: "about" },
+      { terms: ["help", "order help", "cancel", "skip", "special request", "contact support"], view: "help" },
+      { terms: ["club", "membership", "subscription", "subscribe", "bonus jar"], view: "subscribe" },
+      { terms: ["policy", "policies", "privacy", "terms", "refund"], view: "policy" },
+      { terms: ["shop", "honey", "flavor", "flavors", "order", "4 oz", "7 oz", "1 lb"], view: "shop" },
+    ];
+
+    const match = routes.find((route) => route.terms.some((term) => query.includes(term)));
+    if (match) {
+      setView(match.view);
+      setMenuOpen(false);
+      if (siteSearchRef.current) siteSearchRef.current.value = "";
+      return;
+    }
+
+    setSiteSearchHelp("We couldn’t find that. Try markets, delivery, ingredients, Honey Club, flavors, policies, or order help.");
+  };
+
   const Header = ({ eyebrow, title, right, big }) => {
     const brand = (
       <button
@@ -2746,7 +4896,14 @@ export default function App() {
               <button
                 type="button"
                 className="nf-cart-button"
-                onClick={() => setCartOpen((open) => !open)}
+                onClick={() => {
+                  if (view !== "shop") {
+                    setView("shop");
+                    window.requestAnimationFrame(() => setCartOpen(true));
+                  } else {
+                    setCartOpen((open) => !open);
+                  }
+                }}
                 aria-label={`Open cart with ${cartCount} item${cartCount === 1 ? "" : "s"}`}
                 title="Your cart"
               >
@@ -2791,13 +4948,14 @@ export default function App() {
             <div className="nf-wrap nf-modern-hero-grid">
               <div>
                 <div className="nf-modern-kicker">Coleman, Michigan</div>
-                <h1 className="nf-modern-title">
-                  Raw Michigan<br />
-                  Honey,<br />
-                  <span>Naturally Infused</span>
+                <h1 className="nf-modern-title nf-layered-hero-title">
+                  <span className="nf-hero-topline">Raw Michigan</span>
+                  <span className="nf-hero-honey-word" aria-hidden="true">Honey</span>
+                  <span className="nf-hero-bottomline">Infused. Shared.<br />Unforgettable.</span>
                 </h1>
                 <p className="nf-modern-subtitle">
-                  Made with organic fruit, herbs, and spice.
+                  <strong>Handcrafted in small batches with real and organic ingredients</strong>
+                  <span>No artificial flavors or syrups.</span>
                 </p>
                 <button
                   className="nf-modern-primary"
@@ -2813,7 +4971,7 @@ export default function App() {
                     </div>
                     <div>
                       <div className="nf-modern-trust-title">Raw &amp; Unfiltered</div>
-                      <div className="nf-modern-trust-copy">Never heated</div>
+                      <div className="nf-modern-trust-copy">Pollens &amp; Enzymes Intact.</div>
                     </div>
                   </div>
 
@@ -2833,7 +4991,7 @@ export default function App() {
                     </div>
                     <div>
                       <div className="nf-modern-trust-title">Real Ingredients</div>
-                      <div className="nf-modern-trust-copy">No artificial anything</div>
+                      <div className="nf-modern-trust-copy">No artificial. Ever.</div>
                     </div>
                   </div>
                 </div>
@@ -2841,12 +4999,101 @@ export default function App() {
 
               <img
                 className="nf-modern-hero-image"
-                src="/nf-hero-product.png"
+                src={HERO_IMAGE}
                 alt="NectarFusions raw Michigan honey jars"
               />
             </div>
           </section>
         )}
+
+        {view !== "admin" && view !== "login" && !receipt && !(view === "shop" && cartCount > 0) && (
+          <nav
+            className={`nf-universal-dock ${dockHasEntered ? "settled" : "entering"} ${view === "shop" ? "home-dock" : ""}`}
+            aria-label="NectarFusions website navigation"
+          >
+            <div className="nf-universal-dock-inner">
+              {view === "shop" ? (
+                <>
+                  <div className="nf-home-dock-links">
+                    <button type="button" onClick={() => setView("find")}>Find NectarFusions Near Me</button>
+                    <button type="button" onClick={() => setView("about")}>Our Difference</button>
+                    <button type="button" onClick={() => setView("help")}>Order Help</button>
+                    <a href={`mailto:${CONTACT.email}`} target="_blank" rel="noreferrer">Contact</a>
+                  </div>
+
+                  <div className="nf-site-search">
+                    <label htmlFor="nf-site-search-input">Search NectarFusions</label>
+                    <div className="nf-site-search-row">
+                      <input
+                        id="nf-site-search-input"
+                        ref={siteSearchRef}
+                        type="search"
+                        defaultValue=""
+                        placeholder="Markets, ingredients, Honey Club..."
+                        onInput={() => {
+                          if (siteSearchHelp) setSiteSearchHelp("");
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") runSiteSearch();
+                        }}
+                      />
+                      <button type="button" onClick={runSiteSearch}>Search</button>
+                    </div>
+                    {siteSearchHelp && <div className="nf-site-search-help" role="status">{siteSearchHelp}</div>}
+                  </div>
+                </>
+              ) : (
+                <div className="nf-universal-dock-links">
+                  <button type="button" className={view === "find" ? "selected" : ""}
+                    onClick={() => setView("find")}>Find NectarFusions Near Me</button>
+                  <button type="button" className={view === "shop" ? "selected" : ""}
+                    onClick={() => setView("shop")}>Shop Honey</button>
+                  <button type="button" className={view === "subscribe" ? "selected" : ""}
+                    onClick={() => setView("subscribe")}>Honey Club</button>
+                  <button type="button" className={view === "about" ? "selected" : ""}
+                    onClick={() => setView("about")}>Our Difference</button>
+                  <button type="button" className={view === "help" ? "selected" : ""}
+                    onClick={() => setView("help")}>Order Help</button>
+                  <button type="button" className={view === "policy" ? "selected" : ""}
+                    onClick={() => setView("policy")}>Policies</button>
+                  <a href={`mailto:${CONTACT.email}`} target="_blank" rel="noreferrer">Contact</a>
+                </div>
+              )}
+
+              <div className="nf-universal-socials">
+                <span>Follow us</span>
+                <a href="https://www.instagram.com/nectarfusions_honey/" target="_blank" rel="noreferrer"
+                  aria-label="Follow NectarFusions on Instagram" title="Instagram">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <rect x="3" y="3" width="18" height="18" rx="5" />
+                    <circle cx="12" cy="12" r="4.25" />
+                    <circle cx="17.4" cy="6.7" r="1.15" fill="currentColor" stroke="none" />
+                  </svg>
+                </a>
+                <a href="https://www.facebook.com/NectarFusions/" target="_blank" rel="noreferrer"
+                  aria-label="Follow NectarFusions on Facebook" title="Facebook">
+                  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M13.5 22v-8h2.8l.42-3.2H13.5V8.75c0-.93.26-1.56 1.6-1.56h1.72V4.33c-.3-.04-1.32-.13-2.5-.13-2.47 0-4.16 1.51-4.16 4.28v2.32H7.36V14h2.8v8h3.34Z" />
+                  </svg>
+                </a>
+              </div>
+
+              <a
+                className="nf-text-us-fab"
+                href={`sms:${CONTACT.phone.replace(/\D/g, "")}`}
+                aria-label={`Text NectarFusions at ${CONTACT.phone}`}
+                title="Text us"
+              >
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M5 5.5h14v10H9l-4 3v-13Z" />
+                  <path d="M8 9h8M8 12h5" />
+                </svg>
+                <span>Text us</span>
+              </a>
+            </div>
+          </nav>
+        )}
+
       </>
     );
   };
@@ -2863,7 +5110,7 @@ export default function App() {
 
   /* ================= FIND NECTARFUSIONS ================= */
   if (view === "find") {
-    return <FindNectarFusions Header={Header} onBack={() => setView("shop")} />;
+    return <FindNectarFusions Header={Header} onBack={() => setView("shop")} marketDates={cat.marketDates ?? []} />;
   }
 
   /* ================= ORDER HELP ================= */
@@ -3035,7 +5282,16 @@ export default function App() {
               We&rsquo;ll email you a secure Square link to put a card on file. Nothing is charged until you do.
             </p>
             <button className="btn ghost" style={{ width: "100%", padding: 14, marginTop: 22 }}
-              onClick={() => { setSubDone(null); setPlan(null); setSubMethod(null); setSubZip(""); setView("shop"); }}>
+              onClick={() => {
+                setSubDone(null);
+                setPlan(null);
+                setSubMethod(null);
+                setSubZip("");
+                setFlavorMode("surprise");
+                setFlavorPreferences([]);
+                setFlavorRequests("");
+                setView("shop");
+              }}>
               Back to the shop
             </button>
           </div>
@@ -3056,6 +5312,9 @@ export default function App() {
           planId: p.id, cadence, method: subMethod,
           name: cust.name, phone: cust.phone, email: cust.email,
           address: cust.address || null, zip: subMethod === "delivery" ? subZip : null,
+          flavorMode,
+          flavorPreferences,
+          flavorRequests: flavorRequests.trim() || null,
         });
         // Straight to Square to put a card on file. Nothing is charged
         // until they do, and the subscription stays "pending" until
@@ -3069,36 +5328,42 @@ export default function App() {
     return (
       <div className="nf"><style>{CSS}</style>
         <Header eyebrow="The Honey Club" title="SUBSCRIBE"
-          right={<button className="btn ghost" onClick={() => setView("shop")} style={{ padding: "6px 12px", fontSize: 12 }}>Back to shop</button>} />
+          right={<button className="btn ghost nf-back-to-shop" onClick={() => setView("shop")}>Back to shop</button>} />
         <div className="nf-wrap" style={{ paddingTop: 24 }}>
           {err && <div className="err" style={{ marginBottom: 16 }}>{err}</div>}
 
-          <p style={{ fontSize: 15.5, lineHeight: 1.65, margin: "0 0 6px" }}>
-            <strong>{cat.flavors.length} flavors is a wonderful problem and an impossible decision.</strong> So we make it for you.
-          </p>
-          <p style={{ fontSize: 14.5, lineHeight: 1.65, color: c.brown, margin: "0 0 22px" }}>
-            Every box, we pick your jars — one you&rsquo;ll recognize, one you&rsquo;d never have tried. Packed by hand in Coleman.
-          </p>
+          <section className="nf-club-intro nf-club-intro-outlined nf-club-reveal">
+            <div className="nf-modern-kicker">Built around your taste</div>
+            <h2 className="nf-club-page-title">A Honey Club Made for Discovery</h2>
+            <p>
+              Tell us what you love, request specific flavors, or choose <strong>Surprise Me</strong> and let us
+              build a box around your preferences. Every box is packed by hand in Coleman.
+            </p>
+          </section>
 
-          <div className="card" style={{ padding: 16, marginBottom: 26, background: "#FFFBF0", borderColor: c.gold }}>
-            <div className="eyebrow" style={{ marginBottom: 9 }}>You pay shelf price. Here&rsquo;s what&rsquo;s free.</div>
+          <section className="nf-club-benefits nf-club-reveal" style={{ "--nf-club-delay": "90ms" }}>
+            <div className="nf-club-benefits-heading">You pay shelf price. Here&rsquo;s what&rsquo;s free.</div>
             {[
-              ["Free local delivery", "No fee, no minimum — ever."],
-              ["A bonus jar every 3rd box", "Our pick. Free."],
-              ["Your price is locked", "Whatever you join at, you keep."],
-              ["First pick", "Seasonal flavors go to members first."],
-              ["Skip anytime", "One tap. No phone call."],
-            ].map(([t, d]) => (
-              <div key={t} style={{ display: "flex", gap: 9, marginBottom: 7 }}>
-                <span style={{ color: c.amber, fontWeight: 700 }}>✦</span>
-                <div style={{ fontSize: 13.5, lineHeight: 1.5 }}>
-                  <strong>{t}</strong> — <span style={{ color: c.brown }}>{d}</span>
+              ["delivery", "Free local delivery", "No fee, no minimum — ever."],
+              ["bonus", "A bonus jar every 3rd box", "Our pick. Free."],
+              ["locked", "Your price is locked", "Whatever you join at, you keep."],
+              ["first", "First pick", "Seasonal flavors go to members first."],
+              ["skip", "Skip anytime", "One tap. No phone call."],
+            ].map(([icon, title, description], index) => (
+              <article key={title} className="nf-club-benefit"
+                style={{ "--nf-benefit-delay": `${150 + index * 70}ms` }}>
+                <ClubBenefitIcon kind={icon} />
+                <div>
+                  <strong>{title}</strong>
+                  <p>{description}</p>
                 </div>
-              </div>
+              </article>
             ))}
-          </div>
+          </section>
 
-          <div className="eyebrow" style={{ marginBottom: 10 }}>Choose your box</div>
+          <h2 className="nf-club-section-title nf-club-reveal" style={{ "--nf-club-delay": "170ms" }}>
+            Choose Your Box
+          </h2>
           {cat.plans.map((pl) => (
             <button key={pl.id} className={`btn ${plan === pl.id ? "on" : ""}`}
               onClick={() => { setPlan(pl.id); if (subMethod === "ship" && pl.price < cat.shipFreeOver) setSubMethod(null); }}
@@ -3109,7 +5374,7 @@ export default function App() {
                   <span className="display" style={{ fontSize: 23 }}>{pl.name.toUpperCase()}</span>
                   {pl.is_bulk && <span className="tag" style={{ background: c.sky }}>Ships free</span>}
                 </div>
-                <div style={{ fontSize: 12.5, color: c.brown, marginTop: 2 }}>{pl.contents}</div>
+                <div className="nf-club-plan-contents">{pl.contents}</div>
               </div>
               <div style={{ textAlign: "right", flexShrink: 0 }}>
                 <div className="num" style={{ fontSize: 26 }}>{money(pl.price)}</div>
@@ -3130,6 +5395,65 @@ export default function App() {
                   </button>
                 ))}
               </div>
+
+              <section className="nf-club-preferences nf-club-reveal" style={{ "--nf-club-delay": "230ms" }}>
+                <div className="nf-modern-kicker">Personalize every box</div>
+                <h2 className="nf-club-section-title">How Should We Choose?</h2>
+
+                <div className="nf-club-choice-grid">
+                  <button type="button"
+                    className={`nf-club-choice ${flavorMode === "surprise" ? "selected" : ""}`}
+                    onClick={() => setFlavorMode("surprise")}>
+                    <strong>Surprise Me</strong>
+                    <span>We&rsquo;ll choose a thoughtful mix using your taste preferences.</span>
+                  </button>
+                  <button type="button"
+                    className={`nf-club-choice ${flavorMode === "request" ? "selected" : ""}`}
+                    onClick={() => setFlavorMode("request")}>
+                    <strong>I Have Requests</strong>
+                    <span>Tell us which flavors you&rsquo;d love to receive.</span>
+                  </button>
+                </div>
+
+                <div className="nf-club-preference-label">What sounds good?</div>
+                <div className="nf-club-preference-chips">
+                  {[
+                    "Sweet & Fruity",
+                    "Warm & Cozy",
+                    "Spicy & Bold",
+                    "BBQ & Savory",
+                    "Coffee & Cocoa",
+                    "Classic Honey",
+                  ].map((preference) => {
+                    const selected = flavorPreferences.includes(preference);
+                    return (
+                      <button key={preference} type="button"
+                        className={selected ? "selected" : ""}
+                        onClick={() => setFlavorPreferences((current) =>
+                          selected
+                            ? current.filter((item) => item !== preference)
+                            : [...current, preference]
+                        )}>
+                        {preference}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <label className="nf-club-request-field">
+                  <span>{flavorMode === "request" ? "Flavor requests" : "Anything we should know? (optional)"}</span>
+                  <textarea rows={3}
+                    value={flavorRequests}
+                    placeholder={flavorMode === "request"
+                      ? "Examples: Blueberry, Cinnamon, no spicy flavors..."
+                      : "Allergies, favorites, flavors to avoid, or leave this blank for a full surprise."}
+                    onChange={(event) => setFlavorRequests(event.target.value)}
+                  />
+                </label>
+                <p className="nf-club-preference-note">
+                  Requests guide each box and are subject to seasonal availability.
+                </p>
+              </section>
 
               <div className="eyebrow" style={{ margin: "26px 0 10px" }}>How do you want it?</div>
               <div style={{ display: "grid", gap: 8 }}>
@@ -3195,7 +5519,14 @@ export default function App() {
   }
 
   /* ================= ABOUT ================= */
-  if (view === "about") return <About Header={Header} onBack={() => setView("shop")} />;
+  if (view === "about") return (
+    <About
+      Header={Header}
+      onBack={() => setView("shop")}
+      onSearch={() => setView("find")}
+      onContact={() => setView("help")}
+    />
+  );
 
   /* ================= POLICY ================= */
   if (view === "policy") return <Policy Header={Header} onBack={() => setView("shop")} shipOver={cat.shipFreeOver} minutes={cat.cancelMinutes} />;
@@ -3240,6 +5571,75 @@ export default function App() {
           </div>
         </div>
       )}
+
+      <section className="nf-type-selector-section">
+        <div className="nf-wrap">
+          <div className="nf-section-row nf-type-section-heading">
+            <div>
+              <div className="nf-modern-kicker">Choose your texture</div>
+              <h2 className="nf-section-title">Regular or Spun?</h2>
+            </div>
+            <button
+              type="button"
+              className="nf-type-info-link"
+              onClick={() => setTypeInfo(true)}
+            >
+              What&rsquo;s the difference?
+            </button>
+          </div>
+
+          <div className="nf-type-choice-grid">
+            {[
+              ...TYPES,
+              {
+                id: "undecided",
+                name: "Not Sure",
+                tagline: "Decide in review",
+              },
+            ].map((t) => {
+              const unavailable = t.id === "spun" && !spunEnabled;
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  className={`nf-type-choice-card ${pickType === t.id ? "selected" : ""} ${unavailable ? "unavailable" : ""}`}
+                  aria-disabled={unavailable}
+                  onClick={() => {
+                    if (unavailable) {
+                      setTypeNotice(spunUnavailableMessage);
+                      return;
+                    }
+
+                    setPickType(t.id);
+                    setTypeNotice(
+                      t.id === "undecided"
+                        ? "No worries. Add the flavors you want now, then choose Regular or Spun for each jar when you review your order."
+                        : ""
+                    );
+                  }}
+                >
+                  <span className="nf-type-choice-icon">
+                    {t.id === "regular" ? <PourIcon size={34} color="#147FBE" /> :
+                      t.id === "spun" ? <SpunIcon size={35} color="#147FBE" /> :
+                      <span className="nf-type-question">?</span>}
+                  </span>
+                  <span>
+                    <strong>{t.name}</strong>
+                    <small>{unavailable ? "Temporarily unavailable" : t.tagline}</small>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {typeNotice && (
+            <div className="nf-type-notice" role="status">
+              <span>{typeNotice}</span>
+              <button type="button" onClick={() => setTypeNotice("")} aria-label="Dismiss message">×</button>
+            </div>
+          )}
+        </div>
+      </section>
 
       <section className="nf-showcase">
         <div className="nf-wrap">
@@ -3301,7 +5701,7 @@ export default function App() {
                 item.type === pickType &&
                 item.qty > 0
               );
-              const available = api.inStock(flavor, pickSize, pickType);
+              const available = flavorAvailableForType(flavor, pickSize, pickType);
 
               return (
                 <button
@@ -3345,38 +5745,6 @@ export default function App() {
           </span>
           <span className="num" style={{ fontSize: 20, color: c.amber }}>→</span>
         </button>
-
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
-          <div className="eyebrow">Regular or spun?</div>
-          <button onClick={() => setTypeInfo(true)}
-            style={{ background: "none", border: "none", cursor: "pointer", padding: 0, font: "inherit",
-              fontSize: 12.5, fontWeight: 700, color: c.sky, textDecoration: "underline", textUnderlineOffset: 3 }}>
-            What&rsquo;s the difference?
-          </button>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          {TYPES.map((t) => (
-            <button
-              key={t.id}
-              className={`btn nf-type-choice ${pickType === t.id ? "on" : ""}`}
-              data-tip={t.id === "regular"
-                ? "Pourable raw honey for tea, drizzling, cooking, and drinks."
-                : "Smooth, spreadable honey for toast, biscuits, and bagels."}
-              onClick={() => setPickType(t.id)}
-              style={{ padding: "13px 14px", textAlign: "left" }}
-            >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-                <div>
-                  <div className="display" style={{ fontSize: 24 }}>{t.name.toUpperCase()}</div>
-                  <div style={{ fontSize: 12, fontWeight: 600, opacity: .72 }}>{t.tagline}</div>
-                </div>
-                <div style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>
-                  {t.id === "regular" ? <PourIcon /> : <SpunIcon />}
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
 
         <section className="nf-bundle-builder">
           <div className="nf-bundle-headline" aria-hidden="true">
@@ -3425,7 +5793,19 @@ export default function App() {
                   <p>Regular and Spun both count.</p>
                   <div className="nf-bundle-progress">
                     {price.jars % B.count === 0 && price.jars > 0 ? (
-                      <><b>{price.bundles} bundle{price.bundles > 1 ? "s" : ""} complete.</b><br />Add another jar to begin the next one.</>
+                      <div className="nf-bundle-complete-message">
+                        <span className="nf-bundle-complete-icon" aria-hidden="true">
+                          <svg viewBox="0 0 64 64" fill="none">
+                            <path d="M18 18h28l4 7v24c0 5-4 9-9 9H23c-5 0-9-4-9-9V25l4-7Z" />
+                            <path d="M22 18v-6h20v6" />
+                            <path d="M22 37l7 7 14-16" />
+                          </svg>
+                        </span>
+                        <span>
+                          <b>{price.bundles} bundle{price.bundles > 1 ? "s" : ""} complete.</b><br />
+                          Add another jar to begin the next one.
+                        </span>
+                      </div>
                     ) : (
                       <><b>{price.jars % B.count}/{B.count} jars added.</b><br />Add {B.count - (price.jars % B.count)} more to complete the bundle.</>
                     )}
@@ -3463,7 +5843,7 @@ export default function App() {
               const inCart = cartIndex > -1 ? cart[cartIndex] : null;
               const limit = inventoryLimit(f.id, pickSize, pickType);
               const quantityInCart = inCart?.qty ?? 0;
-              const stockAvailable = api.inStock(f, pickSize, pickType);
+              const stockAvailable = flavorAvailableForType(f, pickSize, pickType);
               const canAdd = stockAvailable && (limit === null || quantityInCart < limit);
               const image = flavorImage(f);
               const best = cat.bestSeller === f.name;
@@ -3493,7 +5873,9 @@ export default function App() {
                     <div className="nf-pick-stock">
                       {limit === null
                         ? `${sizeOf(pickSize).label} · ${typeName(pickType)}`
-                        : `${Math.max(0, limit - quantityInCart)} available`}
+                        : pickType === "undecided"
+                          ? `${sizeOf(pickSize).label} · choose texture in review`
+                          : `${Math.max(0, limit - quantityInCart)} available`}
                     </div>
 
                     {!inCart ? (
@@ -3799,13 +6181,48 @@ export default function App() {
             <div className="nf-final-review-grid">
               <section className="nf-final-review-card">
                 <div className="nf-final-review-label">Honey selections</div>
+                {(unresolvedTypeItems.length > 0 || unavailableTypeItems.length > 0) && (
+                  <div className="nf-review-type-alert">
+                    <strong>Choose a texture for each jar.</strong>
+                    <span>
+                      Regular and Spun availability can vary by flavor. If a button is disabled, that texture is
+                      not currently available for the selected flavor and size.
+                    </span>
+                  </div>
+                )}
+                {typeNotice && (
+                  <div className="nf-review-type-help" role="status">{typeNotice}</div>
+                )}
                 <div className="nf-final-review-items">
                   {cart.map((item, index) => (
                     <div className="nf-final-review-item" key={`${item.flavor_id}-${item.size_id}-${item.type}`}>
                       <span className="nf-final-review-dot" style={{ background: item.hex }} />
-                      <div>
+                      <div className="nf-review-item-copy">
                         <strong>{item.flavor}</strong>
                         <span>{sizeOf(item.size_id).label} · {typeName(item.type)}</span>
+                        <div className="nf-review-type-buttons">
+                          {TYPES.map((typeOption) => {
+                            const flavor = cat.flavors.find((f) => f.id === item.flavor_id);
+                            const limit = inventoryLimit(item.flavor_id, item.size_id, typeOption.id);
+                            const available =
+                              flavorAvailableForType(flavor, item.size_id, typeOption.id) &&
+                              (limit === null || limit >= item.qty);
+
+                            return (
+                              <button
+                                key={typeOption.id}
+                                type="button"
+                                className={item.type === typeOption.id ? "selected" : ""}
+                                disabled={!available}
+                                aria-disabled={!available}
+                                onClick={() => chooseCartItemType(index, typeOption.id)}
+                              >
+                                {typeOption.name}
+                                {!available && <small>Unavailable</small>}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
                       <div className="nf-final-review-quantity">
                         <button type="button" onClick={() => bump(index, -1)} aria-label={`Remove one ${item.flavor}`}>−</button>
@@ -3901,7 +6318,7 @@ export default function App() {
               <button
                 type="button"
                 className="nf-final-review-place"
-                disabled={busy || !canPlace}
+                disabled={busy || !canSubmitOrder}
                 onClick={submit}
               >
                 {busy ? "Placing order…" : "Place order"}
@@ -3980,7 +6397,7 @@ export default function App() {
 /* ============================================================
    FIND NECTARFUSIONS
    ============================================================ */
-function FindNectarFusions({ Header, onBack }) {
+function FindNectarFusions({ Header, onBack, marketDates = [] }) {
   const [zip, setZip] = useState("");
   const [searched, setSearched] = useState(false);
   const [locations, setLocations] = useState([]);
@@ -4017,11 +6434,10 @@ function FindNectarFusions({ Header, onBack }) {
   return (
     <div className="nf"><style>{CSS}</style>
       <Header eyebrow="Shop local" title="FIND NECTARFUSIONS"
-        right={<button className="btn solid" onClick={onBack}
-          style={{ padding: "8px 14px", fontSize: 12 }}>Back to shop</button>} />
+        right={<button className="btn ghost nf-back-to-shop" onClick={onBack}>Back to shop</button>} />
 
-      <div className="nf-wrap" style={{ paddingTop: 26 }}>
-        <div className="card" style={{ padding: 20, background: "#FFFBF0", borderColor: c.gold }}>
+      <div className="nf-wrap nf-help-page">
+        <div className="nf-help-hero nf-help-reveal">
           <div className="display" style={{ fontSize: 31, color: c.darkBrown }}>
             FIND HONEY NEAR YOU
           </div>
@@ -4123,6 +6539,48 @@ function FindNectarFusions({ Header, onBack }) {
             ))}
           </div>
         )}
+
+        <section className="nf-find-markets nf-find-reveal">
+          <div className="nf-modern-kicker">See us in person</div>
+          <h2>Upcoming Markets</h2>
+
+          {marketDates.length === 0 ? (
+            <div className="nf-find-empty">
+              No upcoming markets are posted yet. Check back soon or contact us for the next date.
+            </div>
+          ) : (
+            <div className="nf-find-market-list">
+              {marketDates.map((market) => (
+                <article key={market.id} className="nf-find-market-card">
+                  <div>
+                    <strong>{market.venue?.name}</strong>
+                    <span>
+                      {market.venue?.where_at}
+                      {market.venue?.hours ? ` · ${market.venue.hours}` : ""}
+                    </span>
+                  </div>
+                  <time>{fmt(parseDay(market.day))}</time>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="nf-find-contact nf-find-reveal">
+          <div className="nf-modern-kicker">Questions or wholesale inquiries</div>
+          <h2>Contact NectarFusions</h2>
+          <div className="nf-find-contact-grid">
+            <a href={`tel:${CONTACT.phone.replace(/\D/g, "")}`}>
+              <span>Phone</span>
+              <strong>{CONTACT.phone}</strong>
+            </a>
+            <a href={`mailto:${CONTACT.email}`}>
+              <span>Email</span>
+              <strong>{CONTACT.email}</strong>
+            </a>
+          </div>
+        </section>
+
       </div>
     </div>
   );
@@ -4219,8 +6677,7 @@ function OrderHelp({ Header, onBack }) {
     return (
       <div className="nf"><style>{CSS}</style>
         <Header eyebrow="Customer care" title="REQUEST RECEIVED"
-          right={<button className="btn solid" onClick={onBack}
-            style={{ padding: "8px 14px", fontSize: 12 }}>Back to shop</button>} />
+          right={<button className="btn ghost nf-back-to-shop" onClick={onBack}>Back to shop</button>} />
 
         <div className="nf-wrap" style={{ paddingTop: 30 }}>
           <div className="card"
@@ -4256,8 +6713,7 @@ function OrderHelp({ Header, onBack }) {
   return (
     <div className="nf"><style>{CSS}</style>
       <Header eyebrow="Customer care" title="ORDER HELP"
-        right={<button className="btn solid" onClick={onBack}
-          style={{ padding: "8px 14px", fontSize: 12 }}>Back to shop</button>} />
+        right={<button className="btn ghost nf-back-to-shop" onClick={onBack}>Back to shop</button>} />
 
       <div className="nf-wrap" style={{ paddingTop: 26 }}>
         <div className="card" style={{ padding: 20, background: "#FFFBF0", borderColor: c.gold }}>
@@ -4269,12 +6725,11 @@ function OrderHelp({ Header, onBack }) {
           </p>
         </div>
 
-        <div style={{ display: "grid", gap: 9, marginTop: 14 }}>
+        <div className="nf-help-options">
           {options.map((option) => (
             <button key={option.id}
-              className={`btn ${requestKind === option.id ? "on" : ""}`}
-              onClick={() => selectOption(option)}
-              style={{ padding: 15, textAlign: "left" }}>
+              className={`nf-help-option ${requestKind === option.id ? "selected" : ""}`}
+              onClick={() => selectOption(option)}>
               <div style={{ fontSize: 14.5, fontWeight: 750 }}>{option.label}</div>
               <div style={{ fontSize: 12.5, lineHeight: 1.5, color: c.brown, marginTop: 3 }}>
                 {option.note}
@@ -4284,8 +6739,9 @@ function OrderHelp({ Header, onBack }) {
         </div>
 
         {chosen && (
-          <div className="card" style={{ padding: 17, marginTop: 15 }}>
-            <div className="eyebrow" style={{ marginBottom: 10 }}>Your information</div>
+          <div className="nf-help-form nf-help-reveal">
+            <div className="nf-modern-kicker">Your information</div>
+            <h2>Tell Us What You Need</h2>
 
             <div style={{ display: "grid", gap: 9 }}>
               <div
@@ -4386,6 +6842,61 @@ function OrderHelp({ Header, onBack }) {
             </div>
           </div>
         )}
+
+        <section className="nf-help-faq nf-help-reveal">
+          <div className="nf-modern-kicker">Quick answers</div>
+          <h2>Frequently Asked Questions</h2>
+
+          <div className="nf-help-faq-list">
+            {[
+              [
+                "Can I change or cancel an order?",
+                "Use the order link in your confirmation email during the cancellation window. After that, submit an Order Help request and we’ll review what is still possible.",
+              ],
+              [
+                "How does market pickup work?",
+                "Choose Market Pickup during checkout, select an available market date, and bring your order number when you arrive.",
+              ],
+              [
+                "Can I request specific Honey Club flavors?",
+                "Yes. Choose I Have Requests during signup, select your flavor preferences, and add favorites or flavors to avoid. Requests depend on seasonal availability.",
+              ],
+              [
+                "Can I skip a Honey Club box?",
+                "Yes. Choose Skip My Next Box above and send the request. We’ll confirm the change before the next box is prepared.",
+              ],
+              [
+                "Do you ship outside Michigan?",
+                "Current shipping and delivery availability is shown during checkout. Enter your order details to see the options available for your location.",
+              ],
+              [
+                "Are NectarFusions honeys made with artificial flavors or syrups?",
+                "No. Our infusions use real fruits, herbs, spices, peppers, coffee, and vanilla—never artificial flavors or syrups.",
+              ],
+            ].map(([question, answer]) => (
+              <details key={question} className="nf-help-faq-item">
+                <summary>{question}</summary>
+                <p>{answer}</p>
+              </details>
+            ))}
+          </div>
+        </section>
+
+        <section className="nf-help-contact nf-help-reveal">
+          <div className="nf-modern-kicker">Contact NectarFusions directly</div>
+          <h2>We&rsquo;re Here to Help</h2>
+          <p>For quick questions, order concerns, market pickup help, or wholesale inquiries, contact us directly.</p>
+          <div className="nf-help-contact-grid">
+            <a href={`tel:${CONTACT.phone.replace(/\D/g, "")}`}>
+              <span>Phone</span>
+              <strong>{CONTACT.phone}</strong>
+            </a>
+            <a href={`mailto:${CONTACT.email}`} target="_blank" rel="noreferrer">
+              <span>Email</span>
+              <strong>{CONTACT.email}</strong>
+            </a>
+          </div>
+        </section>
       </div>
     </div>
   );
@@ -4449,6 +6960,11 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
   const [openFlavor, setOpenFlavor] = useState(null);
   const [topPickDrafts, setTopPickDrafts] = useState([]);
   const [topPickUploading, setTopPickUploading] = useState(null);
+  const [spunEnabledDraft, setSpunEnabledDraft] = useState(cat?.spunAvailability?.enabled !== false);
+  const [spunMessageDraft, setSpunMessageDraft] = useState(
+    cat?.spunAvailability?.message ||
+    "Spun honey is temporarily unavailable. Warm weather can soften or melt its whipped texture."
+  );
   const [newDay, setNewDay] = useState("");
   const [blockDay, setBlockDay] = useState("");
   const [err, setErr] = useState(null);
@@ -4470,6 +6986,14 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
     } catch (e) { setErr(e.message); }
   }, []);
   useEffect(() => { pull(); }, [pull]);
+
+  useEffect(() => {
+    setSpunEnabledDraft(cat?.spunAvailability?.enabled !== false);
+    setSpunMessageDraft(
+      cat?.spunAvailability?.message ||
+      "Spun honey is temporarily unavailable. Warm weather can soften or melt its whipped texture."
+    );
+  }, [cat?.spunAvailability?.enabled, cat?.spunAvailability?.message]);
 
   useEffect(() => {
     const existing = Array.isArray(cat?.topPicks) ? cat.topPicks : [];
@@ -4908,6 +7432,15 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                         {s.boxes_sent > 0 && ` · ${s.boxes_sent} boxes sent`}
                       </div>
                       <div style={{ fontSize: 12.5, color: c.tan }}>{s.customers?.phone} · {s.customers?.email}</div>
+                      {(s.flavor_mode || s.flavor_preferences?.length || s.flavor_requests) && (
+                        <div className="nf-admin-flavor-preferences">
+                          <strong>{s.flavor_mode === "request" ? "Flavor requests" : "Surprise preference"}</strong>
+                          {s.flavor_preferences?.length > 0 && (
+                            <span>{s.flavor_preferences.join(" · ")}</span>
+                          )}
+                          {s.flavor_requests && <em>{s.flavor_requests}</em>}
+                        </div>
+                      )}
                       {pending && <div style={{ fontSize: 11.5, color: c.orange, fontWeight: 700, marginTop: 6 }}>
                         NO CARD ON FILE YET — don&rsquo;t pack a box until Square confirms.
                       </div>}
@@ -5314,6 +7847,41 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
             <p style={{ fontSize: 13, color: c.brown, margin: "0 0 10px", lineHeight: 1.55 }}>
               Open a flavor to set the exact jars on hand for every size and texture. Saving zero marks it out of stock.
             </p>
+            <section className="nf-admin-spun-card">
+              <div>
+                <div className="eyebrow">Seasonal texture availability</div>
+                <h3>Spun Honey Storefront Control</h3>
+                <p>
+                  Turn Spun off during hot weather or whenever it cannot be offered safely. Customers will see your
+                  custom message and the Spun option will appear unavailable.
+                </p>
+              </div>
+
+              <label className="nf-admin-spun-toggle">
+                <input
+                  type="checkbox"
+                  checked={spunEnabledDraft}
+                  onChange={(event) => setSpunEnabledDraft(event.target.checked)}
+                />
+                <span>{spunEnabledDraft ? "Spun is available" : "Spun is unavailable"}</span>
+              </label>
+
+              <textarea
+                rows={3}
+                value={spunMessageDraft}
+                onChange={(event) => setSpunMessageDraft(event.target.value)}
+                placeholder="Explain why Spun is temporarily unavailable."
+              />
+
+              <button
+                type="button"
+                className="btn solid"
+                onClick={() => guard(() => api.setSpunAvailability(spunEnabledDraft, spunMessageDraft))}
+              >
+                Save Spun availability
+              </button>
+            </section>
+
             {cat.flavors.map((f) => {
               const open = openFlavor === f.id;
               const out = cat.sizes.flatMap((s) => TYPES.map((t) => !api.inStock(f, s.id, t.id))).filter(Boolean).length;
@@ -5430,72 +7998,199 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
 /* ============================================================
    POLICY
    ============================================================ */
-function About({ Header, onBack }) {
+function About({ Header, onBack, onSearch, onContact }) {
+  const sections = [
+    ["difference-story", "Our Story"],
+    ["difference-quality", "Quality"],
+    ["difference-raw", "Raw & Unfiltered"],
+    ["difference-ingredients", "Real Ingredients"],
+    ["difference-small-batch", "Small Batch"],
+    ["difference-michigan", "Made in Michigan"],
+    ["difference-safety", "Food Safety"],
+    ["difference-flavor", "Flavor"],
+  ];
+
+  const goToSection = (id) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
-    <div className="nf"><style>{CSS}</style>
-      <Header eyebrow="Our Story" title="Nature’s Happiness, Honey Infused." right={
-        <button className="btn ghost" onClick={onBack}>Back to shop</button>
+    <div className="nf nf-difference-page"><style>{CSS}</style>
+      <Header eyebrow="The NectarFusions Difference" title="Nature’s Happiness | Honey Infused." right={
+        <button className="btn ghost nf-back-to-shop" onClick={onBack}>Back to shop</button>
       } />
 
-      <main className="nf-wrap nf-about">
-        <figure className="nf-about-image">
-          <img
-            src="/nf-founders.png"
-            alt="The founders of NectarFusions wearing beekeeping suits and holding jars of honey"
-          />
-          <figcaption>Rooted in Michigan. Made together.</figcaption>
-        </figure>
+      <main className="nf-wrap nf-difference-main">
+        <section id="difference-story" className="nf-difference-hero nf-about-anchor">
+          <div className="nf-story-gallery nf-story-gallery-three" aria-label="The NectarFusions founders and first hive">
+            <figure className="nf-story-photo nf-story-photo-founders">
+              <img
+                src="/nf-founders.png"
+                alt="The NectarFusions founders wearing beekeeping suits and holding jars of honey"
+              />
+              <figcaption>Mother and daughter, building NectarFusions together.</figcaption>
+            </figure>
+            <figure className="nf-story-photo nf-story-photo-primary">
+              <img
+                src="/nf-story-squirrel-house.png"
+                alt="The original handmade squirrel house that became the first honeybee hive"
+              />
+              <figcaption>The little house the bees chose first.</figcaption>
+            </figure>
+            <figure className="nf-story-photo nf-story-photo-secondary">
+              <img
+                src="/nf-story-wild-hive.jpg"
+                alt="Wild honeybees building comb inside the original wooden hive"
+              />
+              <figcaption>Inside the wild colony that started everything.</figcaption>
+            </figure>
+          </div>
 
-        <article className="nf-about-copy">
-          <div className="nf-modern-kicker">From hive to home</div>
-          <h2>Nature&rsquo;s Happiness, made with intention.</h2>
+          <article className="nf-about-copy nf-story-copy">
+            <div className="nf-modern-kicker">From hive to home</div>
+            <h2>Our Story</h2>
 
-          <p>NectarFusions began with a wild honeybee swarm, a curious garden, and a deep respect for nature.</p>
-          <p>
-            When bees settled in our yard, our organic garden flourished in a way we had never seen before.
-            It quickly became clear that the bees were not just passing through. They were part of something bigger.
-          </p>
-          <p>
-            With guidance from trusted beekeeping friends, we began tending our own hives and learning the craft
-            hands on. What started as curiosity grew into a family centered practice rooted in care,
-            responsibility, and respect for the bees.
-          </p>
-          <p>
-            Today, NectarFusions is built around raw, unfiltered Michigan honey from our own hives and, as we grow,
-            from trusted Michigan beekeepers who share our values. We do not cut or blend our honey with imported
-            honey. Supporting local beekeeping matters to us because it supports pollination, farming, and the
-            health of our agricultural communities.
-          </p>
-          <p>
-            Our approach is intentionally small scale and thoughtful. We harvest seasonally, care for each hive
-            individually, and make choices that protect colony strength and bee health.
-          </p>
-          <p>
-            Our infused honeys were created as a way to bring more creativity, flavor, and everyday use to real
-            honey. We use organic fruits, herbs, and spices only. No artificial flavorings. No extracts. Our cold
-            infusion process takes time, but it allows us to preserve the integrity of raw honey while creating
-            unique flavors people can enjoy in tea, coffee, toast, yogurt, pizza, marinades, baking, and more.
-          </p>
-          <p>
-            Every jar is made with care, from hive to home, with help from family who share in the work and joy
-            of the process.
-          </p>
-          <p className="nf-about-closing">
-            NectarFusions is rooted in Michigan, made with intention, and created to bring a little more
-            Nature&rsquo;s Happiness into everyday life.
-          </p>
+            <p className="nf-story-opening">We didn&rsquo;t go looking for the bees. They found us first.</p>
 
-          <button className="nf-modern-primary" onClick={onBack}>Shop the honey</button>
-        </article>
+            <p>
+              Our first hive was supposed to be a squirrel house. It was a summer workshop project, built mostly
+              for the pleasure of spending an afternoon together. The squirrels never claimed it. Over the years,
+              nearly every other creature in Michigan did.
+            </p>
+            <p>Then a wild swarm moved in.</p>
+            <p>
+              That summer, our garden came alive. Zucchini and squash stretched past their rows. Pumpkins appeared
+              faster than we could count them. The fruit trees bent under their own weight. Even a butternut squash
+              and a zucchini found each other and made something no seed packet could have prepared us for.
+            </p>
+            <p>We stopped calling it luck and started keeping bees. Mother and daughter, one frame at a time.</p>
+            <p>
+              The first honey we pulled ruined us for the kind that comes in a plastic bear. But honey that good
+              deserves better than a permanent spot at the back of the cupboard.
+            </p>
+            <p>That&rsquo;s how NectarFusions began.</p>
+            <p>
+              We started pairing Michigan honey with real ingredients to make flavors worth reaching for every day.
+              Stirred into morning coffee. Drizzled over warm biscuits. Set next to a sharp cheese. Eaten straight
+              off the spoon, if we&rsquo;re being honest.
+            </p>
+            <p>
+              At the heart of every jar is carefully sourced Michigan honey, strained rather than filtered, so it
+              keeps the character of the hive and the place it came from.
+            </p>
+            <p className="nf-story-closing">
+              Made by our family, for yours. Bring it to the table, pass it around, and let an ordinary day taste
+              like something worth remembering.
+            </p>
+          </article>
+        </section>
+
+        <section id="difference-quality" className="nf-difference-section nf-about-anchor">
+          <div className="nf-difference-number">01</div>
+          <div>
+            <div className="nf-modern-kicker">Our standard</div>
+            <h3>Our Commitment to Quality</h3>
+            <p>
+              At NectarFusions, we believe exceptional honey begins with exceptional ingredients and thoughtful
+              craftsmanship. Every jar is carefully made with quality, transparency, and flavor at the heart of
+              everything we do.
+            </p>
+          </div>
+        </section>
+
+        <section id="difference-raw" className="nf-difference-section nf-about-anchor">
+          <div className="nf-difference-number">02</div>
+          <div>
+            <div className="nf-modern-kicker">Preserving what matters</div>
+            <h3>Raw &amp; Unfiltered</h3>
+            <p>
+              We start with raw honey that is gently strained—not finely filtered—to remove natural wax and debris
+              while preserving its natural character and fine local pollen.
+            </p>
+            <p>
+              Our Smoked Applewood variety is gently warmed during its smoking process to develop its distinctive
+              wood-smoked flavor.
+            </p>
+          </div>
+        </section>
+
+        <section id="difference-ingredients" className="nf-difference-section nf-about-anchor">
+          <div className="nf-difference-number">03</div>
+          <div>
+            <div className="nf-modern-kicker">Nothing artificial</div>
+            <h3>Real Ingredients</h3>
+            <p>
+              Every NectarFusions infusion is made with real fruits, herbs, spices, peppers, coffee, and
+              vanilla—never artificial flavors, colors, preservatives, or syrups.
+            </p>
+          </div>
+        </section>
+
+        <section id="difference-small-batch" className="nf-difference-section nf-about-anchor">
+          <div className="nf-difference-number">04</div>
+          <div>
+            <div className="nf-modern-kicker">Made with intention</div>
+            <h3>Small-Batch Crafted</h3>
+            <p>
+              Each batch is carefully handcrafted in small quantities, allowing us to focus on consistency,
+              quality, and exceptional flavor in every jar.
+            </p>
+          </div>
+        </section>
+
+        <section id="difference-michigan" className="nf-difference-section nf-about-anchor">
+          <div className="nf-difference-number">05</div>
+          <div>
+            <div className="nf-modern-kicker">Rooted locally</div>
+            <h3>Proudly Made in Michigan</h3>
+            <p>
+              NectarFusions is proudly handcrafted in Coleman, Michigan using locally sourced raw honey whenever
+              possible. Supporting local beekeepers and our Michigan community is an important part of who we are.
+            </p>
+          </div>
+        </section>
+
+        <section id="difference-safety" className="nf-difference-section nf-about-anchor">
+          <div className="nf-difference-number">06</div>
+          <div>
+            <div className="nf-modern-kicker">Crafted responsibly</div>
+            <h3>Produced in a Licensed Food Establishment</h3>
+            <p>
+              Every jar is produced in a Michigan food establishment licensed by the Michigan Department of
+              Agriculture &amp; Rural Development (MDARD) and crafted in accordance with Michigan food safety
+              regulations.
+            </p>
+          </div>
+        </section>
+
+        <section id="difference-flavor" className="nf-difference-section nf-difference-final nf-about-anchor">
+          <div className="nf-difference-number">07</div>
+          <div>
+            <div className="nf-modern-kicker">Made to be remembered</div>
+            <h3>Flavor Without Compromise</h3>
+            <p>
+              Our goal has always been simple: create bold, unforgettable infused honey using real ingredients
+              while preserving the integrity of the honey itself.
+            </p>
+            <p>
+              Whether you&rsquo;re drizzling it over biscuits, pairing it with cheese, glazing meats, sweetening tea,
+              or adding a kick to your favorite recipes, every jar is crafted to bring something truly unique to
+              the table.
+            </p>
+            <button className="nf-modern-primary" onClick={onBack}>Shop the honey</button>
+          </div>
+        </section>
       </main>
+
+
     </div>
   );
 }
-
 function Policy({ Header, onBack, shipOver, minutes }) {
   return (
-    <div className="nf"><style>{CSS}</style>
-      <Header title="POLICIES" right={<button className="btn solid" onClick={onBack} style={{ padding: "8px 16px", fontSize: 13 }}>Back to shop</button>} />
+    <div className="nf"><style>{CSS}
+</style>
+      <Header title="POLICIES" right={<button className="btn ghost nf-back-to-shop" onClick={onBack}>Back to shop</button>} />
       <div className="nf-wrap pol" style={{ paddingTop: 26 }}>
         <div className="card" style={{ padding: 18, marginBottom: 12, borderColor: c.amber }}>
           <h2>RETURNS &amp; REFUNDS</h2>

@@ -62,6 +62,13 @@ export async function getCatalog() {
     },
     shipFreeOver: (cfg.shipping?.free_over_cents ?? 7500) / 100,
     cancelMinutes: cfg.cancel_minutes ?? 60,
+    spunAvailability: {
+      enabled: cfg.spun_availability?.enabled !== false,
+      message: String(
+        cfg.spun_availability?.message ||
+        "Spun honey is temporarily unavailable. Warm weather can soften or melt its whipped texture."
+      ),
+    },
   };
 }
 
@@ -302,6 +309,23 @@ export const restoreFlavor = (id) =>
 export const setBestSeller = (name) =>
   supabase.from("settings").update({ value: name }).eq("key", "best_seller").then(throwIf);
 
+export const setSpunAvailability = async (enabled, message) => {
+  const value = {
+    enabled: !!enabled,
+    message: String(message || "").trim() ||
+      "Spun honey is temporarily unavailable. Warm weather can soften or melt its whipped texture.",
+  };
+
+  const { data, error } = await supabase
+    .from("settings")
+    .upsert({ key: "spun_availability", value }, { onConflict: "key" })
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+};
+
 export const setTopPicks = async (picks) => {
   const clean = (Array.isArray(picks) ? picks : []).slice(0, 8).map((pick) => ({
     flavor_id: pick.flavor_id || null,
@@ -430,6 +454,16 @@ export async function startSubscription(s) {
   });
   if (error) throw new Error(error.message);
   const row = Array.isArray(data) ? data[0] : data;
+
+  const { error: preferenceError } = await supabase.rpc("set_subscription_preferences", {
+    p_token: row.token,
+    p_flavor_mode: s.flavorMode ?? "surprise",
+    p_flavor_preferences: s.flavorPreferences ?? [],
+    p_flavor_requests: s.flavorRequests ?? null,
+  });
+
+  if (preferenceError) throw new Error(preferenceError.message);
+
   return { subNo: row.sub_no, token: row.token, price: row.price_cents / 100 };
 }
 
