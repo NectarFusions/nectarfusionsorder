@@ -1952,13 +1952,16 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
   position:fixed;
   inset:0;
   z-index:300;
-  overflow:auto;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
   padding:28px 18px;
   background:#24A0ED;
 }
 .nf-final-review-shell {
   width:min(980px,100%);
-  min-height:calc(100vh - 56px);
+  min-height:calc(100dvh - 56px);
   margin:0 auto;
   display:flex;
   flex-direction:column;
@@ -3882,6 +3885,63 @@ html {
 .nf-nav-tagline {
   color:#72B7E4;
 }
+.nf-cart-badge.empty {
+  background:#D62828 !important;
+  color:#FFFFFF !important;
+  border-color:#FFFFFF !important;
+  opacity:1 !important;
+}
+
+.nf-cart-delivery-warning {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  margin:0 0 14px;
+  padding:13px 14px;
+  border:2px solid rgba(255,255,255,.72);
+  border-radius:14px;
+  background:#D62828;
+  color:#FFFFFF;
+  box-shadow:0 8px 22px rgba(74,0,0,.25);
+}
+
+.nf-cart-delivery-warning-copy {
+  min-width:0;
+  font-size:14px;
+  line-height:1.5;
+  font-weight:750;
+}
+
+.nf-cart-delivery-warning-copy strong {
+  font-family:inherit !important;
+  font-size:inherit !important;
+  line-height:inherit !important;
+  letter-spacing:0 !important;
+  text-shadow:none !important;
+}
+
+.nf-cart-delivery-warning-note {
+  margin-top:4px;
+  font-size:12px;
+  font-weight:650;
+  color:rgba(255,255,255,.9);
+}
+
+.nf-cart-delivery-warning button {
+  flex:0 0 auto;
+  min-height:38px;
+  padding:8px 12px;
+  border:1px solid rgba(255,255,255,.75);
+  border-radius:10px;
+  background:#FFFFFF;
+  color:#9D1717;
+  font:inherit;
+  font-size:12.5px;
+  font-weight:900;
+  cursor:pointer;
+}
+
 .nf-cart-tray.open {
   top:0;
   height:100dvh;
@@ -3944,16 +4004,21 @@ html {
   border-top:1px solid rgba(255,255,255,.32);
 }
 .nf-cart-tray.open .nf-cart-totals {
-  font-size:17px;
+  font-size:20px;
   line-height:1.55;
-  font-weight:700;
+  font-weight:800;
 }
 .nf-cart-tray.open .nf-cart-totals span {
-  margin-top:8px;
-  font-size:14px;
+  margin-top:12px;
+  font-size:16px;
+  font-weight:950;
+  letter-spacing:.12em;
 }
 .nf-cart-tray.open .nf-cart-totals strong {
-  font-size:48px;
+  font-size:58px;
+  font-weight:950;
+  letter-spacing:.015em;
+  text-shadow:0 2px 0 rgba(0,0,0,.12);
 }
 .nf-cart-tray .nf-guided-order-button {
   background:linear-gradient(145deg,#FFE545,#FFC400) !important;
@@ -4317,6 +4382,7 @@ export default function App() {
   const [reviewOpen, setReviewOpen] = useState(false);
   const [continueAttemptKey, setContinueAttemptKey] = useState("");
   const [continueHelp, setContinueHelp] = useState("");
+  const [deliveryWarningDismissedAt, setDeliveryWarningDismissedAt] = useState(null);
   const [method, setMethod] = useState(null);
   const [zip, setZip] = useState("");
   const [slot, setSlot] = useState(null);
@@ -4333,6 +4399,21 @@ export default function App() {
   const [flavorMode, setFlavorMode] = useState("surprise");
   const [flavorPreferences, setFlavorPreferences] = useState([]);
   const [flavorRequests, setFlavorRequests] = useState("");
+
+  useEffect(() => {
+    if (!reviewOpen && !typeInfo) return undefined;
+
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+    };
+  }, [reviewOpen, typeInfo]);
 
   const reload = useCallback(async () => {
     try { setCat(await api.getCatalog()); }
@@ -4735,8 +4816,13 @@ export default function App() {
         day: slot.kind === "delivery" ? iso(slot.date) : null,
         marketDateId: slot.kind === "market" ? slot.m.id : null,
       });
-      const full = await api.getOrder(r.token);
-      pushOrderUrl(r.token);   // survives a refresh, and it's what the email links to
+      // Save the order URL immediately. The order already exists once placeOrder returns,
+      // so a temporary confirmation-response failure must never encourage a duplicate order.
+      pushOrderUrl(r.token);
+
+      // Supabase can occasionally return an empty response while the new order is becoming
+      // available to the confirmation lookup. Retry that lookup before showing an error.
+      const full = await api.getOrderWithRetry(r.token);
       setReceipt({ ...full, token: r.token, email: cust.email, address: cust.address });
       setCart([]); setSlot(null); setMethod(null); setZip(""); setCtaOff(false); setReviewOpen(false);
       reload();  // stock may have moved
@@ -4806,11 +4892,10 @@ export default function App() {
     }
 
     if (belowMin) {
-      guideContinue(
-        "minimum",
-        "order-section",
-        "Add enough honey to meet the delivery minimum shown in your order total."
-      );
+      setContinueAttemptKey("minimum");
+      setContinueHelp("");
+      setDeliveryWarningDismissedAt(null);
+      setCartOpen(true);
       return;
     }
 
@@ -4864,7 +4949,7 @@ export default function App() {
         type="button"
         className="nf-modern-brand nf-modern-brand-button"
         onClick={() => { setView("shop"); setMenuOpen(false); }}
-        aria-label="Return to NectarFusions shop"
+        aria-label="NectarFusions home"
       >
         <Logo size={50} />
         <span className="nf-brand-copy">
@@ -4913,7 +4998,9 @@ export default function App() {
                   <circle cx="10" cy="20" r="1.35" fill="currentColor" />
                   <circle cx="18" cy="20" r="1.35" fill="currentColor" />
                 </svg>
-                {cartCount > 0 && <span className="nf-cart-badge">{cartCount}</span>}
+                <span className={`nf-cart-badge ${cartCount === 0 ? "empty" : ""}`}>
+                  {cartCount}
+                </span>
               </button>
 
               <button
@@ -5933,7 +6020,13 @@ export default function App() {
                 <div className="display" style={{ fontSize: 22 }}>MARKET PICKUP</div>
                 <div style={{ fontSize: 12, fontWeight: 600, opacity: .7, marginTop: 2 }}>Free · no minimum</div>
               </button>
-              <button className={`btn ${method === "delivery" ? "on" : ""}`} onClick={() => setMethod("delivery")}
+              <button
+                className={`btn ${method === "delivery" ? "on" : ""}`}
+                onClick={() => {
+                  setMethod("delivery");
+                  setSlot(null);
+                  setDeliveryWarningDismissedAt(null);
+                }}
                 style={{ padding: "15px 13px", textAlign: "left" }}>
                 <div className="display" style={{ fontSize: 22 }}>LOCAL DELIVERY</div>
                 <div style={{ fontSize: 12, fontWeight: 600, opacity: .7, marginTop: 2 }}>$3 – $5</div>
@@ -6369,6 +6462,30 @@ export default function App() {
                 )}
               </div>
             )}
+
+            {method === "delivery" &&
+              belowMin &&
+              zone &&
+              deliveryWarningDismissedAt !== price.sub && (
+                <div className="nf-cart-delivery-warning" role="status" aria-live="polite">
+                  <div className="nf-cart-delivery-warning-copy">
+                    <div>
+                      <strong>{money(price.sub)} merchandise subtotal</strong> — add{" "}
+                      <strong>{money(Math.max(0, zone.minimum - price.sub))}</strong>{" "}
+                      more to qualify for local delivery.
+                    </div>
+                    <div className="nf-cart-delivery-warning-note">
+                      Delivery fees don&rsquo;t count toward the {money(zone.minimum)} minimum.
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setDeliveryWarningDismissedAt(price.sub)}
+                  >
+                    Got it
+                  </button>
+                </div>
+              )}
 
             <div className="nf-cart-summary">
               <div className="nf-cart-totals">

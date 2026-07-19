@@ -87,27 +87,111 @@ export const stockCount = (flavor, sizeId, type) => {
 /* ---------- ordering (anonymous, via security-definer RPCs) ---------- */
 
 export async function placeOrder(payload) {
-  const { data, error } = await supabase.rpc("place_order", {
-    p_items: payload.items,          // [{flavor_id, size_id, type, qty}]
-    p_method: payload.method,        // 'market' | 'delivery' | 'ship'
-    p_name: payload.name,
-    p_phone: payload.phone,
-    p_email: payload.email,
-    p_address: payload.address ?? null,
-    p_notes: payload.notes ?? null,
-    p_zip: payload.zip ?? null,
-    p_day: payload.day ?? null,                  // 'YYYY-MM-DD'
-    p_market_date_id: payload.marketDateId ?? null,
-  });
-  if (error) throw new Error(error.message);
-  const row = Array.isArray(data) ? data[0] : data;
-  return { orderNo: row.order_no, token: row.token, total: row.total_cents / 100 };
+  try {
+    const { data, error } = await supabase.rpc("place_order", {
+      p_items: payload.items,          // [{flavor_id, size_id, type, qty}]
+      p_method: payload.method,        // 'market' | 'delivery' | 'ship'
+      p_name: payload.name,
+      p_phone: payload.phone,
+      p_email: payload.email,
+      p_address: payload.address ?? null,
+      p_notes: payload.notes ?? null,
+      p_zip: payload.zip ?? null,
+      p_day: payload.day ?? null,                  // 'YYYY-MM-DD'
+      p_market_date_id: payload.marketDateId ?? null,
+    });
+
+    if (error) throw new Error(error.message);
+
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row?.token || !row?.order_no) {
+      throw new Error(
+        "The order service returned an empty response. Your order was not confirmed."
+      );
+    }
+
+    return {
+      orderNo: row.order_no,
+      token: row.token,
+      total: Number(row.total_cents || 0) / 100,
+    };
+  } catch (error) {
+    const message = String(error?.message || error || "");
+
+    if (
+      message.includes("Unexpected end of JSON input") ||
+      message.includes("Failed to execute 'json'")
+    ) {
+      throw new Error(
+        "We could not confirm whether the order was received. Check your confirmation email before trying again, or use Order Help."
+      );
+    }
+
+    throw error;
+  }
 }
 
 export async function getOrder(token) {
-  const { data, error } = await supabase.rpc("get_order", { p_token: token });
-  if (error) throw new Error(error.message);
-  return data;
+  try {
+    const { data, error } = await supabase.rpc("get_order", { p_token: token });
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error("The order confirmation could not be loaded.");
+    return data;
+  } catch (error) {
+    const message = String(error?.message || error || "");
+
+    if (
+      message.includes("Unexpected end of JSON input") ||
+      message.includes("Failed to execute 'json'")
+    ) {
+      throw new Error(
+        "The order service returned an incomplete confirmation. Check your confirmation email or use Order Help."
+      );
+    }
+
+    throw error;
+  }
+}
+
+
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+export async function getOrderWithRetry(
+  token,
+  { attempts = 6, initialDelayMs = 350 } = {}
+) {
+  let lastError = null;
+
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      const order = await getOrder(token);
+      if (order) return order;
+      lastError = new Error("The order confirmation response was empty.");
+    } catch (error) {
+      lastError = error;
+    }
+
+    if (attempt < attempts - 1) {
+      await wait(initialDelayMs * (attempt + 1));
+    }
+  }
+
+  const message = String(lastError?.message || "");
+  if (
+    message.includes("Unexpected end of JSON input") ||
+    message.includes("Failed to execute 'json'") ||
+    message.includes("empty")
+  ) {
+    throw new Error(
+      "Your order was created, but its confirmation is still loading. " +
+      "Please check your email or refresh this order page instead of placing the order again."
+    );
+  }
+
+  throw lastError || new Error(
+    "Your order was created, but its confirmation could not be loaded. " +
+    "Please check your email before trying again."
+  );
 }
 
 export async function cancelOrder(token) {
