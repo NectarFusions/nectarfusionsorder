@@ -4872,6 +4872,66 @@ body {
   }
 }
 
+
+/* SPACED, ROUNDED HAMBURGER NAVIGATION BUTTONS */
+.nf-modern-links {
+  padding:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  gap:9px !important;
+}
+
+.nf-modern-links.open {
+  display:grid !important;
+  gap:9px !important;
+}
+
+.nf-modern-links .btn.ghost {
+  width:100% !important;
+  min-height:50px !important;
+  padding:12px 15px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  border:1px solid rgba(255,255,255,.3) !important;
+  border-radius:13px !important;
+  background:rgba(31,20,12,.78) !important;
+  color:#FFFFFF !important;
+  font-size:16px !important;
+  font-weight:700 !important;
+  line-height:1.2 !important;
+  letter-spacing:.01em;
+  box-shadow:0 8px 20px rgba(0,0,0,.16) !important;
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  transform:none !important;
+}
+
+.nf-modern-links .btn.ghost:hover,
+.nf-modern-links .btn.ghost:focus-visible {
+  background:rgba(31,20,12,.9) !important;
+  border-color:rgba(247,196,28,.55) !important;
+  box-shadow:0 10px 24px rgba(0,0,0,.28) !important;
+  transform:translateY(-1px) !important;
+}
+
+@media (max-width:640px) {
+  .nf-modern-links {
+    right:8px !important;
+    width:calc(100vw - 16px) !important;
+    max-width:none !important;
+  }
+
+  .nf-modern-links .btn.ghost {
+    min-height:50px !important;
+    padding:13px 14px !important;
+    font-size:16px !important;
+  }
+}
+
 `;
 
 export default function App() {
@@ -6483,7 +6543,6 @@ export default function App() {
                   className={`nf-top-card ${selected ? "selected" : ""}`}
                   onClick={() => {
                     if (available) addJar(flavor);
-                    document.getElementById("order-section")?.scrollIntoView({ behavior: "smooth" });
                   }}
                 >
                   {image ? (
