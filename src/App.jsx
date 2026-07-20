@@ -4932,6 +4932,214 @@ body {
   }
 }
 
+
+/* FINAL EXPANDED SEARCH LAYOUT FIX */
+.nf-universal-dock .nf-universal-dock-links.search-open,
+.nf-universal-dock .nf-home-dock-links.search-open {
+  display:none !important;
+}
+
+.nf-universal-dock .nf-site-search.open {
+  width:min(760px,100%) !important;
+}
+
+.nf-universal-dock .nf-site-search.open .nf-site-search-row {
+  width:100%;
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) auto 42px !important;
+  align-items:center;
+  gap:9px;
+}
+
+.nf-universal-dock .nf-site-search-close {
+  grid-column:auto !important;
+  width:42px !important;
+  min-width:42px !important;
+  max-width:42px !important;
+  height:42px !important;
+  min-height:42px !important;
+  max-height:42px !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:2px solid rgba(255,255,255,.95) !important;
+  border-radius:50% !important;
+  background:#C82727 !important;
+  display:grid !important;
+  place-items:center !important;
+  justify-self:center !important;
+  align-self:center !important;
+  box-shadow:0 4px 12px rgba(82,12,12,.25) !important;
+}
+
+.nf-universal-dock .nf-site-search-close svg {
+  width:20px !important;
+  height:20px !important;
+  stroke:#FFFFFF !important;
+  stroke-width:2.7 !important;
+  stroke-linecap:round;
+}
+
+@media (max-width:700px) {
+  .nf-universal-dock .nf-universal-dock-links.search-open,
+  .nf-universal-dock .nf-home-dock-links.search-open {
+    display:none !important;
+  }
+
+  .nf-universal-dock .nf-site-search.open {
+    width:100% !important;
+  }
+
+  .nf-universal-dock .nf-site-search.open .nf-site-search-row {
+    grid-template-columns:minmax(0,1fr) auto 40px !important;
+    gap:7px;
+  }
+
+  .nf-universal-dock .nf-site-search-row input {
+    min-width:0;
+    width:100% !important;
+  }
+
+  .nf-universal-dock .nf-site-search-submit {
+    width:auto !important;
+    min-width:78px !important;
+    padding-left:12px !important;
+    padding-right:12px !important;
+  }
+
+  .nf-universal-dock .nf-site-search-close {
+    width:40px !important;
+    min-width:40px !important;
+    max-width:40px !important;
+    height:40px !important;
+    min-height:40px !important;
+    max-height:40px !important;
+  }
+}
+
+
+/* INLINE MAGNIFYING-GLASS CONTROL */
+.nf-dock-search-icon {
+  flex:0 0 44px;
+  width:44px !important;
+  min-width:44px !important;
+  height:46px;
+  min-height:46px !important;
+  padding:0 !important;
+  display:grid !important;
+  place-items:center !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  color:#FFFFFF !important;
+  box-shadow:none !important;
+  cursor:pointer;
+}
+
+.nf-dock-search-icon svg {
+  width:27px;
+  height:27px;
+  stroke:currentColor;
+  stroke-width:2.1;
+  stroke-linecap:round;
+}
+
+.nf-dock-search-icon:hover,
+.nf-dock-search-icon:focus-visible {
+  transform:scale(1.08);
+  background:transparent !important;
+}
+
+.nf-universal-dock .nf-site-search.open {
+  width:min(760px,100%) !important;
+  margin:0 auto;
+}
+
+.nf-universal-dock .nf-site-search.open .nf-site-search-row {
+  width:100%;
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) auto 42px !important;
+  align-items:center;
+  gap:9px;
+}
+
+.nf-universal-dock .nf-site-search-close {
+  width:42px !important;
+  min-width:42px !important;
+  max-width:42px !important;
+  height:42px !important;
+  min-height:42px !important;
+  max-height:42px !important;
+  margin:0 !important;
+  padding:0 !important;
+  display:grid !important;
+  place-items:center !important;
+  border:2px solid rgba(255,255,255,.95) !important;
+  border-radius:50% !important;
+  background:#C82727 !important;
+  box-shadow:0 4px 12px rgba(82,12,12,.24) !important;
+}
+
+.nf-universal-dock .nf-site-search-close svg {
+  width:19px !important;
+  height:19px !important;
+  stroke:#FFFFFF !important;
+  stroke-width:2.8 !important;
+  stroke-linecap:round;
+}
+
+@media (max-width:700px) {
+  .nf-dock-row-secondary {
+    gap:5px !important;
+  }
+
+  .nf-dock-row-secondary .nf-near-me-button {
+    flex:1.6 1 0;
+    min-width:0;
+    font-size:13.5px !important;
+  }
+
+  .nf-dock-row-secondary .nf-dock-contact {
+    flex:.78 1 0;
+    min-width:68px;
+  }
+
+  .nf-universal-dock .nf-dock-row .nf-dock-social,
+  .nf-universal-dock .nf-dock-row .nf-dock-search-icon {
+    flex:0 0 36px;
+    width:36px !important;
+    min-width:36px !important;
+    height:46px !important;
+    min-height:46px !important;
+  }
+
+  .nf-universal-dock .nf-dock-row .nf-dock-social svg,
+  .nf-universal-dock .nf-dock-row .nf-dock-search-icon svg {
+    width:24px;
+    height:24px;
+  }
+
+  .nf-universal-dock .nf-site-search.open .nf-site-search-row {
+    grid-template-columns:minmax(0,1fr) auto 40px !important;
+    gap:7px;
+  }
+
+  .nf-universal-dock .nf-site-search-submit {
+    width:auto !important;
+    min-width:76px !important;
+    padding-left:11px !important;
+    padding-right:11px !important;
+  }
+
+  .nf-universal-dock .nf-site-search-close {
+    width:40px !important;
+    min-width:40px !important;
+    max-width:40px !important;
+    height:40px !important;
+    min-height:40px !important;
+    max-height:40px !important;
+  }
+}
+
 `;
 
 export default function App() {
@@ -5756,6 +5964,23 @@ export default function App() {
                     Contact
                   </a>
 
+                  <button
+                    type="button"
+                    className="nf-dock-search-icon"
+                    onClick={() => {
+                      setSiteSearchOpen(true);
+                      setSiteSearchHelp("");
+                      window.requestAnimationFrame(() => siteSearchRef.current?.focus());
+                    }}
+                    aria-label="Search NectarFusions"
+                    title="Search"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle cx="10.5" cy="10.5" r="6.5" />
+                      <path d="m15.5 15.5 4.5 4.5" />
+                    </svg>
+                  </button>
+
                   <a
                     className="nf-dock-social"
                     href="https://www.instagram.com/nectarfusions_honey/"
@@ -5783,71 +6008,73 @@ export default function App() {
                       <path d="M13.5 22v-8h2.8l.42-3.2H13.5V8.75c0-.93.26-1.56 1.6-1.56h1.72V4.33c-.3-.04-1.32-.13-2.5-.13-2.47 0-4.16 1.51-4.16 4.28v2.32H7.36V14h2.8v8h3.34Z" />
                     </svg>
                   </a>
+
+
                 </div>
               </div>
 
-              <div className={`nf-site-search ${siteSearchOpen ? "open" : "closed"}`}>
-                {!siteSearchOpen ? (
-                  <button
-                    type="button"
-                    className="nf-site-search-toggle"
-                    onClick={() => {
-                      setSiteSearchOpen(true);
-                      window.requestAnimationFrame(() => siteSearchRef.current?.focus());
-                    }}
-                    aria-label="Open NectarFusions search"
-                    title="Search"
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <circle cx="10.8" cy="10.8" r="6.8" />
-                      <path d="m16 16 4.2 4.2" />
-                    </svg>
-                    <span>Search</span>
-                  </button>
-                ) : (
-                  <>
-                    <label htmlFor="nf-site-search-input">Search NectarFusions</label>
-                    <div className="nf-site-search-row">
-                      <input
-                        id="nf-site-search-input"
-                        ref={siteSearchRef}
-                        type="search"
-                        defaultValue=""
-                        placeholder="Search NectarFusions or enter an order number..."
-                        onInput={() => {
-                          if (siteSearchHelp) setSiteSearchHelp("");
-                        }}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter") runSiteSearch();
-                          if (event.key === "Escape") {
-                            setSiteSearchOpen(false);
-                            setSiteSearchHelp("");
-                          }
-                        }}
-                      />
-                      <button type="button" className="nf-site-search-submit" onClick={runSiteSearch}>
-                        Search
-                      </button>
-                      <button
-                        type="button"
-                        className="nf-site-search-close"
-                        onClick={() => {
+              {siteSearchOpen && (
+                <div className="nf-site-search open">
+                  <div className="nf-site-search-row">
+                    <input
+                      id="nf-site-search-input"
+                      ref={siteSearchRef}
+                      type="search"
+                      defaultValue=""
+                      aria-label="Search NectarFusions"
+                      placeholder="Search NectarFusions or enter an order number..."
+                      onInput={() => {
+                        if (siteSearchHelp) setSiteSearchHelp("");
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") runSiteSearch();
+
+                        if (event.key === "Escape") {
                           setSiteSearchOpen(false);
                           setSiteSearchHelp("");
-                          if (siteSearchRef.current) siteSearchRef.current.value = "";
-                        }}
-                        aria-label="Close search"
-                        title="Close search"
-                      >
-                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                          <path d="M7 7l10 10M17 7 7 17" />
-                        </svg>
-                      </button>
+
+                          if (siteSearchRef.current) {
+                            siteSearchRef.current.value = "";
+                          }
+                        }
+                      }}
+                    />
+
+                    <button
+                      type="button"
+                      className="nf-site-search-submit"
+                      onClick={runSiteSearch}
+                    >
+                      Search
+                    </button>
+
+                    <button
+                      type="button"
+                      className="nf-site-search-close"
+                      onClick={() => {
+                        setSiteSearchOpen(false);
+                        setSiteSearchHelp("");
+
+                        if (siteSearchRef.current) {
+                          siteSearchRef.current.value = "";
+                        }
+                      }}
+                      aria-label="Close search"
+                      title="Close search"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M7 7l10 10M17 7 7 17" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  {siteSearchHelp && (
+                    <div className="nf-site-search-help" role="status">
+                      {siteSearchHelp}
                     </div>
-                    {siteSearchHelp && <div className="nf-site-search-help" role="status">{siteSearchHelp}</div>}
-                  </>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
 
               <a
                 className="nf-text-us-fab"
