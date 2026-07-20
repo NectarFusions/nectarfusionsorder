@@ -199,6 +199,22 @@ export async function cancelOrder(token) {
   if (error) throw new Error(error.message);
 }
 
+export async function findOrder(orderNo, email) {
+  const { data, error } = await supabase.rpc("find_order", { p_order_no: orderNo, p_email: email });
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("We could not locate an order using those details.");
+  return data;
+}
+
+export async function replaceOrderFlavor(token, orderItemId, newFlavorId) {
+  const { data, error } = await supabase.rpc("replace_order_flavor", {
+    p_token: token, p_order_item_id: orderItemId, p_new_flavor_id: newFlavorId,
+  });
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("The order could not be updated.");
+  return data;
+}
+
 /* ---------- retail locator ---------- */
 
 export async function findRetailLocations(zip) {
@@ -248,7 +264,7 @@ export async function amAdmin() {
 
 export const listOrders = () =>
   supabase.from("orders")
-    .select("*, order_items(*), customers(flagged, consecutive_noshows), market_dates(day, venues(name, hours))")
+    .select("*, order_items(*), order_item_changes(*), customers(flagged, consecutive_noshows), market_dates(day, venues(name, hours))")
     .order("placed_at", { ascending: false })
     .limit(200)
     .then(throwIf);
@@ -581,9 +597,34 @@ export async function subscribeLink(token) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ token }),
   });
-  const j = await r.json();
-  if (!r.ok) throw new Error(j.error || "Couldn't create a checkout link.");
-  return j.url;
+
+  const text = await r.text();
+  let result = {};
+
+  try {
+    result = text ? JSON.parse(text) : {};
+  } catch {
+    result = {
+      error:
+        text ||
+        "Honey Club checkout returned an unreadable response. Please contact NectarFusions.",
+    };
+  }
+
+  if (!r.ok) {
+    throw new Error(
+      result.error ||
+        "Honey Club checkout is temporarily unavailable. Please contact NectarFusions."
+    );
+  }
+
+  if (!result.url) {
+    throw new Error(
+      "Honey Club checkout did not return a payment link. Please contact NectarFusions."
+    );
+  }
+
+  return result.url;
 }
 
 /* ---------- helpers ---------- */

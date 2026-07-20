@@ -31,7 +31,7 @@ import { Resend } from "resend";
 const FROM = "NectarFusions <orders@nectar-fusions.com>";
 const OWNER = "info@nectar-fusions.com";
 
-const G = { gold: "#F7C41C", amber: "#E69B00", dark: "#4A3313", brown: "#7B5821", cream: "#F5EFE7", red: "#FF3B30" };
+const G = { gold: "#F7C41C", amber: "#E69B00", blue: "#24A0ED", dark: "#174A68", brown: "#526B7B", cream: "#F5EFE7", red: "#FF3B30" };
 
 const money = (cents) => `$${(cents / 100).toFixed(2)}`;
 const esc = (s) => String(s ?? "").replace(/[<>&"]/g, (m) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[m]));
@@ -97,12 +97,12 @@ function customerEmail(o, siteUrl) {
           : "We'll text you to confirm your window and take payment."}
       </div>
 
-      <a href="${link}" style="display:block;margin-top:18px;padding:14px;background:${G.amber};color:#111;
+      <a href="${link}" style="display:block;margin-top:18px;padding:14px;background:${G.blue};color:#fff;
         text-align:center;text-decoration:none;border-radius:6px;font-weight:700;font-size:15px">
-        View or cancel your order
+        View or Change Your Order
       </a>
       <div style="font-size:12.5px;color:${G.brown};margin-top:9px;line-height:1.55;text-align:center">
-        You can cancel free for 60 minutes. After that we&rsquo;ve started packing — call or text and we&rsquo;ll sort it out.
+        For 30 minutes, you may replace a flavor with another available flavor of the same size, texture, quantity, and price. For quantities, sizes, refunds, or another type of change, contact NectarFusions directly.
       </div>
     </div>
 
@@ -120,7 +120,7 @@ function customerEmail(o, siteUrl) {
 /* ---------- your alert ---------- */
 function ownerEmail(o, siteUrl, event) {
   const flagged = o.customers?.flagged;
-  const heading = event === "cancelled" ? "ORDER CANCELLED" : event === "changed" ? "ORDER CHANGED" : "NEW ORDER";
+  const heading = event === "cancelled" ? "ORDER CANCELLED" : event === "changed" ? "CUSTOMER CHANGED ORDER" : event === "status" ? "ORDER STATUS UPDATED" : "NEW ORDER";
   const colour = event === "cancelled" ? G.red : G.amber;
   return `
 <div style="background:${G.cream};padding:22px 14px;font-family:Helvetica,Arial,sans-serif">
@@ -177,12 +177,13 @@ export default async (req) => {
   // What happened?
   let event = "placed";
   if (type === "UPDATE") {
-    if (record.status === old_record?.status) return new Response("No status change", { status: 200 });
-    if (record.status === "cancelled") event = "cancelled";
-    else event = "changed";
+    const customerChanged = record.last_customer_change_at && record.last_customer_change_at !== old_record?.last_customer_change_at;
+    if (customerChanged) event = "changed";
+    else if (record.status === old_record?.status) return new Response("No customer-facing change", { status: 200 });
+    else if (record.status === "cancelled") event = "cancelled";
+    else event = "status";
   }
-  // Don't spam the customer when you tick "picked up".
-  const tellCustomer = event === "placed" || event === "cancelled";
+  const tellCustomer = ["placed", "cancelled", "changed"].includes(event);
 
   const supa = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
   const { data: o, error } = await supa
@@ -199,7 +200,7 @@ export default async (req) => {
   const jobs = [
     resend.emails.send({
       from: FROM, to: OWNER,
-      subject: `${event === "cancelled" ? "Cancelled" : event === "changed" ? "Changed" : "New order"} #${o.order_no} — ${o.name} — ${money(o.total_cents)}`,
+      subject: `${event === "cancelled" ? "Cancelled" : event === "changed" ? "Customer changed" : event === "status" ? "Status updated" : "New order"} #${o.order_no} — ${o.name} — ${money(o.total_cents)}`,
       html: ownerEmail(o, site, event),
     }),
   ];
@@ -209,7 +210,7 @@ export default async (req) => {
       from: FROM, to: o.email,
       subject: event === "cancelled"
         ? `Your NectarFusions order #${o.order_no} is cancelled`
-        : `NectarFusions order #${o.order_no} — confirmed`,
+        : event === "changed" ? `NectarFusions order #${o.order_no} — updated` : `NectarFusions order #${o.order_no} — confirmed`,
       html: customerEmail(o, site),
     }));
   }

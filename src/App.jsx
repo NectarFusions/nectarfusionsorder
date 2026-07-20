@@ -1,5 +1,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import * as api from "./lib/api";
+import PartnerPage from "./pages/PartnerPage";
+import MarketConfirmationPage from "./pages/MarketConfirmationPage";
 
 /* ============================================================
    NECTARFUSIONS — ORDER SYSTEM
@@ -2176,6 +2178,71 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
 .nf-final-review-place:disabled {
   opacity:.55;
   cursor:not-allowed;
+}
+
+/* FINAL REVIEW ACCESSIBLE TYPE SCALE
+   Keep essential checkout copy at 16px or larger.
+   Small uppercase labels remain 14px with increased spacing and weight. */
+.nf-final-review-eyebrow,
+.nf-final-review-label {
+  font-size:14px;
+  line-height:1.35;
+}
+
+.nf-final-review-header p {
+  font-size:16px;
+  line-height:1.65;
+}
+
+.nf-final-review-item strong {
+  font-size:16px;
+  line-height:1.45;
+}
+
+.nf-final-review-item span {
+  font-size:15px;
+  line-height:1.5;
+}
+
+.nf-final-review-savings {
+  font-size:15px;
+  line-height:1.5;
+}
+
+.nf-final-review-detail,
+.nf-final-review-price-row {
+  font-size:16px;
+  line-height:1.6;
+}
+
+.nf-final-review-notes {
+  font-size:16px;
+  line-height:1.6;
+}
+
+.nf-final-review-edit {
+  min-height:44px;
+  font-size:16px;
+  line-height:1.4;
+}
+
+.nf-final-review-back,
+.nf-final-review-place {
+  font-size:16px;
+  line-height:1.35;
+}
+
+.nf-final-review .err,
+.nf-final-review .nf-review-type-alert {
+  font-size:16px;
+  line-height:1.6;
+}
+
+@media (max-width:700px) {
+  .nf-final-review-back,
+  .nf-final-review-place {
+    font-size:16px;
+  }
 }
 @media (max-width:700px) {
   .nf-final-review {
@@ -4356,6 +4423,111 @@ html {
   }
 }
 
+/* PARTNER PAGE ROUTING AND COMPACT SHARED UNIVERSAL DOCK */
+.nf-universal-dock {
+  padding:7px 10px calc(7px + env(safe-area-inset-bottom));
+}
+.nf-universal-dock-inner {
+  gap:6px;
+}
+.nf-universal-dock .nf-site-search {
+  order:2;
+  width:min(720px,100%);
+  gap:4px;
+}
+.nf-universal-dock .nf-site-search > label {
+  font-size:10px;
+}
+.nf-universal-dock .nf-site-search-row input {
+  min-height:38px;
+  padding:8px 12px;
+  font-size:14px;
+}
+.nf-universal-dock .nf-site-search-row button {
+  min-height:38px;
+  padding:7px 14px;
+}
+.nf-universal-dock .nf-universal-dock-links,
+.nf-universal-dock .nf-home-dock-links {
+  order:1;
+  width:min(1080px,100%);
+  display:flex;
+  grid-template-columns:none;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  overflow-x:auto;
+  scrollbar-width:none;
+  padding-bottom:1px;
+}
+.nf-universal-dock .nf-universal-dock-links::-webkit-scrollbar,
+.nf-universal-dock .nf-home-dock-links::-webkit-scrollbar {
+  display:none;
+}
+.nf-universal-dock .nf-universal-dock-links > button,
+.nf-universal-dock .nf-universal-dock-links > a,
+.nf-universal-dock .nf-home-dock-links > button,
+.nf-universal-dock .nf-home-dock-links > a {
+  flex:0 0 auto;
+  width:auto;
+  min-height:36px;
+  padding:7px 11px;
+  font-size:11.5px;
+  white-space:nowrap;
+}
+.nf-universal-dock .nf-dock-social {
+  width:36px !important;
+  min-width:36px;
+  height:36px;
+  min-height:36px !important;
+  padding:0 !important;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+}
+.nf-universal-dock .nf-dock-social svg {
+  width:18px;
+  height:18px;
+  stroke:currentColor;
+  stroke-width:1.8;
+}
+@media (max-width:700px) {
+  .nf-universal-dock {
+    padding:5px 7px calc(5px + env(safe-area-inset-bottom));
+  }
+  .nf-universal-dock-inner { gap:4px; }
+  .nf-universal-dock .nf-site-search > label { display:none; }
+  .nf-universal-dock .nf-site-search-row input {
+    min-height:36px;
+    padding:7px 10px;
+    font-size:13px;
+  }
+  .nf-universal-dock .nf-site-search-row button {
+    min-height:36px;
+    padding:6px 11px;
+    font-size:11px;
+  }
+  .nf-universal-dock .nf-universal-dock-links,
+  .nf-universal-dock .nf-home-dock-links {
+    justify-content:flex-start;
+  }
+  .nf-universal-dock .nf-universal-dock-links > button,
+  .nf-universal-dock .nf-universal-dock-links > a,
+  .nf-universal-dock .nf-home-dock-links > button,
+  .nf-universal-dock .nf-home-dock-links > a {
+    min-height:33px;
+    padding:6px 9px;
+    font-size:10.5px;
+  }
+  .nf-universal-dock .nf-dock-social {
+    width:33px !important;
+    min-width:33px;
+    height:33px;
+    min-height:33px !important;
+  }
+}
+
+
 
 `;
 
@@ -4379,6 +4551,7 @@ export default function App() {
   const [dockHasEntered, setDockHasEntered] = useState(false);
   const siteSearchRef = useRef(null);
   const [siteSearchHelp, setSiteSearchHelp] = useState("");
+  const [searchedOrderNo, setSearchedOrderNo] = useState("");
   const [reviewOpen, setReviewOpen] = useState(false);
   const [continueAttemptKey, setContinueAttemptKey] = useState("");
   const [continueHelp, setContinueHelp] = useState("");
@@ -4848,6 +5021,19 @@ export default function App() {
     setBusy(false);
   }
 
+  async function replaceFlavor(orderItemId, newFlavorId) {
+    setBusy(true); setErr(null);
+    try {
+      const updated = await api.replaceOrderFlavor(receipt.token, orderItemId, newFlavorId);
+      setReceipt((current) => ({ ...current, ...updated, token: current.token }));
+      reload();
+      return updated;
+    } catch (e) {
+      setErr(e.message);
+      throw e;
+    } finally { setBusy(false); }
+  }
+
   const cartCount = cart.reduce((sum, item) => sum + Number(item.qty || 0), 0);
 
   const scrollToOrderStep = (id) => {
@@ -4923,7 +5109,23 @@ export default function App() {
       return;
     }
 
+    const orderNumber = query.replace(/^#/, "").trim();
+    if (/^\d{3,12}$/.test(orderNumber)) {
+      setSearchedOrderNo(orderNumber);
+      setView("help");
+      setMenuOpen(false);
+      if (siteSearchRef.current) siteSearchRef.current.value = "";
+      return;
+    }
+
     const routes = [
+      {
+        terms: [
+          "wholesale", "wholesaler", "partner", "partners", "partnership", "partnerships",
+          "work together", "work with us", "retail partner", "stock our honey", "sell nectarfusions",
+        ],
+        view: "partner",
+      },
       { terms: ["market", "markets", "near me", "store", "stores", "retail", "find us", "location"], view: "find" },
       { terms: ["about", "story", "difference", "quality", "ingredients", "raw", "unfiltered", "michigan"], view: "about" },
       { terms: ["help", "order help", "cancel", "skip", "special request", "contact support"], view: "help" },
@@ -5099,70 +5301,54 @@ export default function App() {
             aria-label="NectarFusions website navigation"
           >
             <div className="nf-universal-dock-inner">
-              {view === "shop" ? (
-                <>
-                  <div className="nf-home-dock-links">
-                    <button type="button" onClick={() => setView("find")}>Find NectarFusions Near Me</button>
-                    <button type="button" onClick={() => setView("about")}>Our Difference</button>
-                    <button type="button" onClick={() => setView("help")}>Order Help</button>
-                    <a href={`mailto:${CONTACT.email}`} target="_blank" rel="noreferrer">Contact</a>
-                  </div>
-
-                  <div className="nf-site-search">
-                    <label htmlFor="nf-site-search-input">Search NectarFusions</label>
-                    <div className="nf-site-search-row">
-                      <input
-                        id="nf-site-search-input"
-                        ref={siteSearchRef}
-                        type="search"
-                        defaultValue=""
-                        placeholder="Markets, ingredients, Honey Club..."
-                        onInput={() => {
-                          if (siteSearchHelp) setSiteSearchHelp("");
-                        }}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter") runSiteSearch();
-                        }}
-                      />
-                      <button type="button" onClick={runSiteSearch}>Search</button>
-                    </div>
-                    {siteSearchHelp && <div className="nf-site-search-help" role="status">{siteSearchHelp}</div>}
-                  </div>
-                </>
-              ) : (
-                <div className="nf-universal-dock-links">
-                  <button type="button" className={view === "find" ? "selected" : ""}
-                    onClick={() => setView("find")}>Find NectarFusions Near Me</button>
-                  <button type="button" className={view === "shop" ? "selected" : ""}
-                    onClick={() => setView("shop")}>Shop Honey</button>
-                  <button type="button" className={view === "subscribe" ? "selected" : ""}
-                    onClick={() => setView("subscribe")}>Honey Club</button>
-                  <button type="button" className={view === "about" ? "selected" : ""}
-                    onClick={() => setView("about")}>Our Difference</button>
-                  <button type="button" className={view === "help" ? "selected" : ""}
-                    onClick={() => setView("help")}>Order Help</button>
-                  <button type="button" className={view === "policy" ? "selected" : ""}
-                    onClick={() => setView("policy")}>Policies</button>
-                  <a href={`mailto:${CONTACT.email}`} target="_blank" rel="noreferrer">Contact</a>
-                </div>
-              )}
-
-              <div className="nf-universal-socials">
-                <span>Follow us</span>
-                <a href="https://www.instagram.com/nectarfusions_honey/" target="_blank" rel="noreferrer"
-                  aria-label="Follow NectarFusions on Instagram" title="Instagram">
+              <div className="nf-universal-dock-links">
+                <button type="button" className={view === "partner" ? "selected" : ""}
+                  onClick={() => setView("partner")}>Partner</button>
+                <button type="button" className={view === "help" ? "selected" : ""}
+                  onClick={() => setView("help")}>Order Help</button>
+                <button type="button" className={view === "find" ? "selected" : ""}
+                  onClick={() => setView("find")}>NectarFusions Near Me</button>
+                {view !== "shop" && (
+                  <button type="button" onClick={() => setView("shop")}>Shop Honey</button>
+                )}
+                <button type="button" className={view === "subscribe" ? "selected" : ""}
+                  onClick={() => setView("subscribe")}>Honey Club</button>
+                <a href={`mailto:${CONTACT.email}`} target="_blank" rel="noreferrer">Contact</a>
+                <a className="nf-dock-social" href="https://www.instagram.com/nectarfusions_honey/"
+                  target="_blank" rel="noreferrer" aria-label="Follow NectarFusions on Instagram" title="Instagram">
                   <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <rect x="3" y="3" width="18" height="18" rx="5" />
                     <circle cx="12" cy="12" r="4.25" />
                     <circle cx="17.4" cy="6.7" r="1.15" fill="currentColor" stroke="none" />
                   </svg>
                 </a>
-                <a href="https://www.facebook.com/NectarFusions/" target="_blank" rel="noreferrer"
-                  aria-label="Follow NectarFusions on Facebook" title="Facebook">
+                <a className="nf-dock-social" href="https://www.facebook.com/NectarFusions/"
+                  target="_blank" rel="noreferrer" aria-label="Follow NectarFusions on Facebook" title="Facebook">
                   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <path d="M13.5 22v-8h2.8l.42-3.2H13.5V8.75c0-.93.26-1.56 1.6-1.56h1.72V4.33c-.3-.04-1.32-.13-2.5-.13-2.47 0-4.16 1.51-4.16 4.28v2.32H7.36V14h2.8v8h3.34Z" />
                   </svg>
                 </a>
+              </div>
+
+              <div className="nf-site-search">
+                <label htmlFor="nf-site-search-input">Search NectarFusions</label>
+                <div className="nf-site-search-row">
+                  <input
+                    id="nf-site-search-input"
+                    ref={siteSearchRef}
+                    type="search"
+                    defaultValue=""
+                    placeholder="Search NectarFusions or enter an order number..."
+                    onInput={() => {
+                      if (siteSearchHelp) setSiteSearchHelp("");
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") runSiteSearch();
+                    }}
+                  />
+                  <button type="button" onClick={runSiteSearch}>Search</button>
+                </div>
+                {siteSearchHelp && <div className="nf-site-search-help" role="status">{siteSearchHelp}</div>}
               </div>
 
               <a
@@ -5187,6 +5373,7 @@ export default function App() {
 
   const nav = (
     <>
+      <button className="btn ghost" onClick={() => setView("partner")}>Partner</button>
       <button className="btn ghost" onClick={() => setView("about")}>About</button>
       <button className="btn ghost" onClick={() => setView("subscribe")}>Honey Club</button>
       <button className="btn ghost" onClick={() => setView("find")}>Find Us</button>
@@ -5195,6 +5382,16 @@ export default function App() {
     </>
   );
 
+  /* ================= PARTNER ================= */
+  if (view === "partner") {
+    return <PartnerPage
+      Header={Header}
+      styles={CSS}
+      onBack={() => setView("shop")}
+      submitInquiry={api.submitCustomerRequest}
+    />;
+  }
+
   /* ================= FIND NECTARFUSIONS ================= */
   if (view === "find") {
     return <FindNectarFusions Header={Header} onBack={() => setView("shop")} marketDates={cat.marketDates ?? []} />;
@@ -5202,7 +5399,16 @@ export default function App() {
 
   /* ================= ORDER HELP ================= */
   if (view === "help") {
-    return <OrderHelp Header={Header} onBack={() => setView("shop")} />;
+    return <OrderHelp Header={Header} onBack={() => setView("shop")}
+      initialOrderNo={searchedOrderNo}
+      onOrderFound={async (orderNo, email) => {
+        const token = await api.findOrder(orderNo, email);
+        pushOrderUrl(token);
+        const found = await api.getOrderWithRetry(token);
+        setReceipt({ ...found, token });
+        setErr(null);
+        setView("shop");
+      }} />;
   }
 
   /* ================= LOGIN ================= */
@@ -5218,9 +5424,52 @@ export default function App() {
   /* ================= RECEIPT ================= */
   if (receipt) {
     const cancelled = receipt.status === "cancelled";
-    const left = receipt.minutes_left ?? 0;
-    // A paid order can't be self-cancelled — that's a refund, and refunds are a decision.
-    const canKill = !cancelled && left > 0 && !receipt.paid;
+    const left = receipt.change_minutes_left ?? receipt.minutes_left ?? 0;
+    const canChange = !cancelled && receipt.can_change !== false && left > 0;
+    if (receipt.method === "market") {
+      return (
+        <MarketConfirmationPage
+          receipt={receipt}
+          cancelled={cancelled}
+          canChange={canChange}
+          minutesLeft={left}
+          busy={busy}
+          error={err}
+          onReplace={replaceFlavor}
+          onPay={pay}
+          onStartAnother={() => {
+            pushHome();
+            setReceipt(null);
+            setErr(null);
+            setCust({ name: "", phone: "", email: "", address: "", notes: "" });
+            setView("shop");
+          }}
+          onHome={() => {
+            pushHome();
+            setReceipt(null);
+            setErr(null);
+            setView("shop");
+          }}
+          onStory={() => {
+            pushHome();
+            setReceipt(null);
+            setErr(null);
+            setView("about");
+          }}
+          onJoinClub={() => {
+            pushHome();
+            setReceipt(null);
+            setErr(null);
+            setView("subscribe");
+          }}
+          contactEmail={CONTACT.email}
+          contactPhone={CONTACT.phone}
+          Logo={Logo}
+          styles={CSS}
+        />
+      );
+    }
+
     return (
       <div className="nf"><style>{CSS}</style>
         <div className="head">
@@ -5313,7 +5562,7 @@ export default function App() {
                     : <>Same shelf price on the honey, free delivery with no minimum, and a bonus jar every third box.</>}
                 </p>
                 <button className="btn solid" style={{ width: "100%", padding: 13 }}
-                  onClick={() => { pushHome(); setReceipt(null); setView("subscribe"); }}>See the boxes</button>
+                  onClick={() => { pushHome(); setReceipt(null); setView("subscribe"); }}>View Offers</button>
               </div>
 
               {canKill ? (
@@ -6706,7 +6955,7 @@ function FindNectarFusions({ Header, onBack, marketDates = [] }) {
 /* ============================================================
    ORDER HELP
    ============================================================ */
-function OrderHelp({ Header, onBack }) {
+function OrderHelp({ Header, onBack, onOrderFound, initialOrderNo}) {
   const options = [
     {
       id: "skip_next_box",
@@ -6748,6 +6997,57 @@ function OrderHelp({ Header, onBack }) {
   const [done, setDone] = useState(false);
   const [website, setWebsite] = useState("");
   const [formStartedAt] = useState(() => Date.now());
+  const [lookup, setLookup] = useState({ orderNo: String(initialOrderNo || ""), email: "" });
+  useEffect(() => {
+    if (!initialOrderNo) return;
+    setLookup((current) => ({ ...current, orderNo: String(initialOrderNo) }));
+  }, [initialOrderNo]);
+  const [lookupBusy, setLookupBusy] = useState(false);
+  const [lookupError, setLookupError] = useState("");
+  const findMyOrder = async () => {
+    if (lookupBusy) return;
+
+    const orderNo = lookup.orderNo.replace(/^#/, "").trim();
+    const email = lookup.email.trim();
+
+    if (!orderNo && !email) {
+      setLookupError("Enter your order number and the email address used at checkout.");
+      return;
+    }
+
+    if (!orderNo) {
+      setLookupError("Enter your order number.");
+      return;
+    }
+
+    if (!/^\d{3,12}$/.test(orderNo)) {
+      setLookupError("Enter the numbers from your order confirmation, such as 7856.");
+      return;
+    }
+
+    if (!email) {
+      setLookupError("Enter the email address used at checkout.");
+      return;
+    }
+
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      setLookupError("Enter a complete email address, such as name@example.com.");
+      return;
+    }
+
+    setLookupBusy(true);
+    setLookupError("");
+
+    try {
+      await onOrderFound(orderNo, email);
+    } catch (e) {
+      setLookupError(
+        "We couldn’t find an order matching that number and email. Check both entries and try again."
+      );
+    } finally {
+      setLookupBusy(false);
+    }
+  };
 
   const selectOption = (option) => {
     setRequestKind(option.id);
@@ -6833,6 +7133,33 @@ function OrderHelp({ Header, onBack }) {
         right={<button className="btn ghost nf-back-to-shop" onClick={onBack}>Back to shop</button>} />
 
       <div className="nf-wrap" style={{ paddingTop: 26 }}>
+        <section className="card" style={{ padding: 20, marginBottom: 16, background: "#F3FAFE", borderColor: "#9FD5F2" }}>
+          <div className="nf-modern-kicker">Returning to an order?</div>
+          <div className="display" style={{ fontSize: 31, color: "#174A68", marginTop: 7 }}>FIND MY ORDER</div>
+          <p style={{ margin: "8px 0 14px", fontSize: 14, lineHeight: 1.65, color: "#526B7B" }}>
+            Enter the order number and email address used at checkout to reopen your private blue confirmation page. Order details stay private until both match.
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(0,.75fr) minmax(0,1.25fr)", gap: 9 }}>
+            <input aria-label="Order number" placeholder="Order number" value={lookup.orderNo}
+              inputMode="numeric"
+              onChange={(e) => {
+                setLookup((x) => ({ ...x, orderNo: e.target.value }));
+                if (lookupError) setLookupError("");
+              }}
+              onKeyDown={(e) => { if (e.key === "Enter") findMyOrder(); }} />
+            <input aria-label="Order email" type="email" placeholder="Email used for the order" value={lookup.email}
+              onChange={(e) => {
+                setLookup((x) => ({ ...x, email: e.target.value }));
+                if (lookupError) setLookupError("");
+              }}
+              onKeyDown={(e) => { if (e.key === "Enter") findMyOrder(); }} />
+          </div>
+          {lookupError && <div className="err" style={{ marginTop: 10 }}>{lookupError}</div>}
+          <button className="btn solid" style={{ width: "100%", padding: 13, marginTop: 10 }}
+            disabled={lookupBusy} onClick={findMyOrder}>
+            {lookupBusy ? "Finding your order…" : "View My Confirmation"}
+          </button>
+        </section>
         <div className="card" style={{ padding: 20, background: "#FFFBF0", borderColor: c.gold }}>
           <div className="display" style={{ fontSize: 31, color: c.darkBrown }}>
             HOW CAN WE HELP?
@@ -7170,6 +7497,22 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
   const openCount = standardActiveOrders.filter((o) => o.status === "open").length;
   const marketOpenCount = marketPickupOrders.filter((o) => !["done", "cancelled"].includes(o.status)).length;
 
+  const orderChanges = (order) =>
+    [...(order.order_item_changes || [])].sort(
+      (a, b) => new Date(b.changed_at || 0) - new Date(a.changed_at || 0)
+    );
+
+  const changedAt = (value) => {
+    if (!value) return "";
+    return new Date(value).toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  };
+
   const activeSubs = subs.filter((s) => !s.archived_at);
   const archivedSubs = subs.filter((s) => !!s.archived_at);
   const shownSubs = subView === "archived" ? archivedSubs : activeSubs;
@@ -7253,6 +7596,20 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                     <div style={{ display: "flex", alignItems: "baseline", gap: 9 }}>
                       <span className="num" style={{ fontSize: 26, color: cx ? c.tan : c.darkBrown,
                         textDecoration: cx ? "line-through" : "none" }}>#{o.order_no}</span>
+                      {orderChanges(o).length > 0 && (
+                        <span style={{
+                          padding: "5px 8px",
+                          border: "1px solid #D28A00",
+                          borderRadius: 999,
+                          background: "#FFF2B8",
+                          color: "#6A4300",
+                          fontSize: 12.5,
+                          fontWeight: 900,
+                          whiteSpace: "nowrap",
+                        }}>
+                          CHANGED · {orderChanges(o).length}
+                        </span>
+                      )}
                       <span style={{ fontWeight: 600, fontSize: 14.5, flex: 1, minWidth: 0 }}>{o.name}</span>
                       <span className="num" style={{ fontSize: 19, color: c.brown }}>{money(o.total_cents / 100)}</span>
                     </div>
@@ -7267,6 +7624,48 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                         <div key={it.id}>{it.qty}× {it.size_label} <strong>{it.type === "spun" ? "Spun" : "Regular"}</strong> — {it.flavor_name}</div>
                       ))}
                     </div>
+
+                    {orderChanges(o).length > 0 && (
+                      <div style={{
+                        marginTop: 10,
+                        padding: "11px 12px",
+                        border: "1px solid #E2B62F",
+                        borderRadius: 10,
+                        background: "#FFF9DE",
+                      }}>
+                        <div style={{
+                          color: "#6A4300",
+                          fontSize: 13,
+                          fontWeight: 900,
+                          letterSpacing: ".06em",
+                          textTransform: "uppercase",
+                        }}>
+                          Customer order changes
+                        </div>
+
+                        {orderChanges(o).map((change) => (
+                          <div key={change.id} style={{
+                            marginTop: 8,
+                            paddingTop: 8,
+                            borderTop: "1px solid #F0D77E",
+                            color: "#4A3313",
+                            fontSize: 14,
+                            lineHeight: 1.55,
+                          }}>
+                            <div>
+                              <strong>{change.old_flavor_name}</strong>
+                              {" → "}
+                              <strong>{change.new_flavor_name}</strong>
+                            </div>
+                            <div style={{ color: "#6F6258", fontSize: 13.5 }}>
+                              {change.qty}× {change.size_label} {change.type === "spun" ? "Spun" : "Regular"}
+                              {" · "}
+                              Changed {changedAt(change.changed_at)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     {o.notes && <div style={{ fontSize: 12.5, marginTop: 6, padding: "7px 9px", background: "#FBF7F1", borderRadius: 5 }}>{o.notes}</div>}
 
                     {orderView === "active" ? (
@@ -7339,9 +7738,23 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                   }}>
                     <div className="nf-market-pickup-banner">MARKET PICKUP</div>
 
-                    <div style={{ display: "flex", alignItems: "baseline", gap: 9, marginTop: 10 }}>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 9, marginTop: 10, flexWrap: "wrap" }}>
                       <span className="num" style={{ fontSize: 28, color: c.darkBrown }}>#{o.order_no}</span>
-                      <span style={{ fontWeight: 750, fontSize: 15, flex: 1 }}>{o.name}</span>
+                      {orderChanges(o).length > 0 && (
+                        <span style={{
+                          padding: "5px 8px",
+                          border: "1px solid #D28A00",
+                          borderRadius: 999,
+                          background: "#FFF2B8",
+                          color: "#6A4300",
+                          fontSize: 12.5,
+                          fontWeight: 900,
+                          whiteSpace: "nowrap",
+                        }}>
+                          CHANGED · {orderChanges(o).length}
+                        </span>
+                      )}
+                      <span style={{ fontWeight: 750, fontSize: 15, flex: 1, minWidth: 160 }}>{o.name}</span>
                       <span className="num" style={{ fontSize: 20, color: c.brown }}>{money(o.total_cents / 100)}</span>
                     </div>
 
@@ -7359,6 +7772,48 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                         </div>
                       ))}
                     </div>
+
+                    {orderChanges(o).length > 0 && (
+                      <div style={{
+                        marginTop: 10,
+                        padding: "12px 13px",
+                        border: "1px solid #E2B62F",
+                        borderRadius: 10,
+                        background: "#FFF9DE",
+                      }}>
+                        <div style={{
+                          color: "#6A4300",
+                          fontSize: 13,
+                          fontWeight: 900,
+                          letterSpacing: ".06em",
+                          textTransform: "uppercase",
+                        }}>
+                          Customer order changes
+                        </div>
+
+                        {orderChanges(o).map((change) => (
+                          <div key={change.id} style={{
+                            marginTop: 8,
+                            paddingTop: 8,
+                            borderTop: "1px solid #F0D77E",
+                            color: "#4A3313",
+                            fontSize: 14,
+                            lineHeight: 1.55,
+                          }}>
+                            <div>
+                              <strong>{change.old_flavor_name}</strong>
+                              {" → "}
+                              <strong>{change.new_flavor_name}</strong>
+                            </div>
+                            <div style={{ color: "#6F6258", fontSize: 13.5 }}>
+                              {change.qty}× {change.size_label} {change.type === "spun" ? "Spun" : "Regular"}
+                              {" · "}
+                              Changed {changedAt(change.changed_at)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
                     <div className={`nf-noshow-status ${missed >= 2 ? "final" : missed === 1 ? "warning" : ""}`}>
                       {missed === 0 && "No missed pickups"}
