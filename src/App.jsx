@@ -4529,6 +4529,349 @@ html {
 
 
 
+
+/* 2026 MOBILE FOUNDATION, FIXED DOCK, AND EXPANDABLE SEARCH */
+html,
+body,
+#root {
+  min-height:100%;
+  width:100%;
+  max-width:100%;
+}
+
+html {
+  -webkit-text-size-adjust:100%;
+  text-size-adjust:100%;
+}
+
+body {
+  position:relative;
+  min-width:0;
+}
+
+.nf,
+.nf * {
+  box-sizing:border-box;
+}
+
+.nf {
+  min-width:0;
+  min-height:100dvh;
+}
+
+.nf input,
+.nf select,
+.nf textarea {
+  max-width:100%;
+  font-size:16px;
+}
+
+.nf-loading-brand {
+  font-family:'Bebas Neue',Impact,sans-serif;
+  color:#17120E;
+  font-size:clamp(38px,8vw,58px);
+  line-height:1;
+  letter-spacing:.02em;
+}
+
+.nf-loading-tagline {
+  margin-top:7px;
+  color:#4F7790;
+  font-size:16px;
+  font-weight:750;
+  letter-spacing:.025em;
+}
+
+.nf-universal-dock {
+  bottom:-1px !important;
+  width:100%;
+  max-width:100vw;
+  transform:translateZ(0);
+}
+
+.nf-universal-dock-inner {
+  min-width:0;
+}
+
+.nf-universal-dock .nf-universal-dock-links.search-open {
+  display:none;
+}
+
+.nf-universal-dock .nf-site-search.closed {
+  order:2;
+  width:auto;
+}
+
+.nf-site-search-toggle {
+  min-width:46px;
+  min-height:46px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  border:1px solid rgba(255,255,255,.62);
+  border-radius:999px;
+  background:rgba(13,79,119,.28);
+  color:#FFFFFF;
+  font:inherit;
+  font-size:16px !important;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.nf-site-search-toggle svg {
+  width:22px;
+  height:22px;
+  stroke:currentColor;
+  stroke-width:2;
+  stroke-linecap:round;
+}
+
+.nf-universal-dock .nf-site-search.open {
+  order:1;
+  width:min(760px,100%);
+}
+
+.nf-universal-dock .nf-site-search.open > label {
+  display:block;
+  color:#FFFFFF;
+  font-size:16px;
+  font-weight:800;
+  text-align:center;
+}
+
+.nf-universal-dock .nf-site-search-row {
+  grid-template-columns:minmax(0,1fr) auto auto;
+  align-items:center;
+}
+
+.nf-universal-dock .nf-site-search-row input,
+.nf-universal-dock .nf-site-search-submit {
+  min-height:46px;
+  font-size:16px !important;
+}
+
+.nf-site-search-close {
+  width:40px;
+  min-width:40px;
+  height:40px;
+  min-height:40px !important;
+  padding:0 !important;
+  display:grid;
+  place-items:center;
+  align-self:center;
+  border:2px solid rgba(255,255,255,.95) !important;
+  border-radius:50% !important;
+  background:#C82727 !important;
+  color:#FFFFFF !important;
+  box-shadow:0 4px 12px rgba(82,12,12,.28);
+  cursor:pointer;
+}
+
+.nf-site-search-close svg {
+  width:21px;
+  height:21px;
+  stroke:currentColor;
+  stroke-width:2.6;
+  stroke-linecap:round;
+}
+
+.nf-universal-dock button,
+.nf-universal-dock a {
+  font-size:16px !important;
+}
+
+@media (max-width:700px) {
+  .nf-universal-dock {
+    padding:9px 10px calc(15px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .nf-universal-dock-inner {
+    gap:9px !important;
+    padding-bottom:2px;
+  }
+
+  .nf-universal-dock .nf-universal-dock-links,
+  .nf-universal-dock .nf-home-dock-links {
+    width:100%;
+    display:grid;
+    grid-template-columns:
+      minmax(0,1fr)
+      minmax(0,1fr)
+      minmax(0,1fr)
+      minmax(145px,1.45fr);
+    grid-template-rows:repeat(2,auto);
+    align-items:stretch;
+    justify-content:stretch;
+    gap:8px;
+    overflow:visible !important;
+    padding:0 !important;
+  }
+
+  .nf-universal-dock .nf-universal-dock-links > button,
+  .nf-universal-dock .nf-universal-dock-links > a,
+  .nf-universal-dock .nf-home-dock-links > button,
+  .nf-universal-dock .nf-home-dock-links > a {
+    width:100%;
+    min-width:0;
+    min-height:47px;
+    padding:7px 4px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    white-space:normal;
+    overflow-wrap:anywhere;
+    font-size:15px !important;
+    line-height:1.15;
+  }
+
+  .nf-universal-dock .nf-dock-social {
+    width:100% !important;
+    min-width:0;
+    height:44px;
+    min-height:44px !important;
+    border-radius:999px;
+  }
+
+  .nf-universal-dock .nf-near-me-button {
+    grid-column:auto;
+    min-height:47px;
+    white-space:nowrap !important;
+    overflow-wrap:normal !important;
+    font-size:14px !important;
+    letter-spacing:-.02em;
+  }
+
+  .nf-universal-dock .nf-site-search.closed {
+    width:100%;
+  }
+
+  .nf-site-search-toggle {
+    width:100%;
+    min-height:46px;
+  }
+
+  .nf-universal-dock .nf-site-search-row {
+    grid-template-columns:minmax(0,1fr) auto;
+  }
+
+  .nf-universal-dock .nf-site-search-submit {
+    width:auto;
+    min-width:82px;
+  }
+
+  .nf-site-search-close {
+    grid-column:auto;
+    justify-self:center;
+    margin:4px 0 2px;
+  }
+
+  .nf-universal-dock .nf-site-search-help {
+    font-size:15px;
+    line-height:1.4;
+  }
+}
+
+
+/* EXACT TWO-ROW MOBILE UNIVERSAL NAVIGATION */
+.nf-universal-dock-links {
+  display:grid;
+  gap:8px;
+}
+
+.nf-dock-row {
+  width:100%;
+  display:flex;
+  align-items:stretch;
+  justify-content:center;
+  gap:7px;
+}
+
+.nf-dock-row > button,
+.nf-dock-row > a {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+
+.nf-dock-row-primary > button {
+  flex:1 1 0;
+  min-width:0;
+}
+
+.nf-dock-row-secondary .nf-near-me-button {
+  flex:1.8 1 0;
+  min-width:0;
+}
+
+.nf-dock-row-secondary .nf-dock-contact {
+  flex:.8 1 0;
+  min-width:72px;
+}
+
+@media (max-width:700px) {
+  .nf-universal-dock .nf-universal-dock-links,
+  .nf-universal-dock .nf-home-dock-links {
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    grid-template-rows:repeat(2,auto) !important;
+    gap:8px !important;
+    overflow:visible !important;
+    padding:0 !important;
+  }
+
+  .nf-dock-row {
+    min-width:0;
+    flex-wrap:nowrap;
+    overflow:visible;
+  }
+
+  .nf-dock-row > button,
+  .nf-dock-row > a {
+    width:auto !important;
+    min-height:46px !important;
+    padding:8px 7px !important;
+    border-radius:999px;
+    font-size:15px !important;
+    line-height:1.15;
+    white-space:nowrap !important;
+    overflow-wrap:normal !important;
+  }
+
+  .nf-dock-row-secondary .nf-near-me-button {
+    flex:1.8 1 0;
+    min-width:0;
+    font-size:14px !important;
+    letter-spacing:-.015em;
+  }
+
+  .nf-dock-row-secondary .nf-dock-contact {
+    flex:.8 1 0;
+    min-width:72px;
+    font-size:14px !important;
+  }
+
+  .nf-universal-dock .nf-dock-row .nf-dock-social {
+    flex:0 0 44px;
+    width:44px !important;
+    min-width:44px !important;
+    height:46px !important;
+    min-height:46px !important;
+    padding:0 !important;
+    border:0 !important;
+    border-radius:0 !important;
+    background:transparent !important;
+    box-shadow:none !important;
+  }
+
+  .nf-universal-dock .nf-dock-row .nf-dock-social svg {
+    width:25px;
+    height:25px;
+  }
+}
+
 `;
 
 export default function App() {
@@ -4551,6 +4894,7 @@ export default function App() {
   const [dockHasEntered, setDockHasEntered] = useState(false);
   const siteSearchRef = useRef(null);
   const [siteSearchHelp, setSiteSearchHelp] = useState("");
+  const [siteSearchOpen, setSiteSearchOpen] = useState(false);
   const [searchedOrderNo, setSearchedOrderNo] = useState("");
   const [reviewOpen, setReviewOpen] = useState(false);
   const [continueAttemptKey, setContinueAttemptKey] = useState("");
@@ -4600,6 +4944,16 @@ export default function App() {
     const timer = window.setTimeout(() => setDockHasEntered(true), 80);
     return () => window.clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setMenuOpen(false);
+    setSiteSearchOpen(false);
+    setSiteSearchHelp("");
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    });
+  }, [view]);
 
   /* If someone lands on /order/<token> — from their email, a bookmark, or
      just hitting refresh — pull that order straight back up. */
@@ -4946,7 +5300,8 @@ export default function App() {
     return <div className="nf"><style>{CSS}</style>
       <div className="nf-wrap" style={{ paddingTop: 100, textAlign: "center" }}>
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}><Logo size={70} /></div>
-        <div className="eyebrow">Loading the shelf…</div>
+        <div className="nf-loading-brand">NectarFusions</div>
+        <div className="nf-loading-tagline">Nature&rsquo;s Happiness | Honey Infused</div>
       </div></div>;
   }
 
@@ -5301,54 +5656,137 @@ export default function App() {
             aria-label="NectarFusions website navigation"
           >
             <div className="nf-universal-dock-inner">
-              <div className="nf-universal-dock-links">
-                <button type="button" className={view === "partner" ? "selected" : ""}
-                  onClick={() => setView("partner")}>Partner</button>
-                <button type="button" className={view === "help" ? "selected" : ""}
-                  onClick={() => setView("help")}>Order Help</button>
-                <button type="button" className={view === "find" ? "selected" : ""}
-                  onClick={() => setView("find")}>NectarFusions Near Me</button>
-                {view !== "shop" && (
-                  <button type="button" onClick={() => setView("shop")}>Shop Honey</button>
-                )}
-                <button type="button" className={view === "subscribe" ? "selected" : ""}
-                  onClick={() => setView("subscribe")}>Honey Club</button>
-                <a href={`mailto:${CONTACT.email}`} target="_blank" rel="noreferrer">Contact</a>
-                <a className="nf-dock-social" href="https://www.instagram.com/nectarfusions_honey/"
-                  target="_blank" rel="noreferrer" aria-label="Follow NectarFusions on Instagram" title="Instagram">
-                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <rect x="3" y="3" width="18" height="18" rx="5" />
-                    <circle cx="12" cy="12" r="4.25" />
-                    <circle cx="17.4" cy="6.7" r="1.15" fill="currentColor" stroke="none" />
-                  </svg>
-                </a>
-                <a className="nf-dock-social" href="https://www.facebook.com/NectarFusions/"
-                  target="_blank" rel="noreferrer" aria-label="Follow NectarFusions on Facebook" title="Facebook">
-                  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <path d="M13.5 22v-8h2.8l.42-3.2H13.5V8.75c0-.93.26-1.56 1.6-1.56h1.72V4.33c-.3-.04-1.32-.13-2.5-.13-2.47 0-4.16 1.51-4.16 4.28v2.32H7.36V14h2.8v8h3.34Z" />
-                  </svg>
-                </a>
+              <div className={`nf-universal-dock-links ${siteSearchOpen ? "search-open" : ""}`}>
+                <div className="nf-dock-row nf-dock-row-primary">
+                  <button
+                    type="button"
+                    className={view === "subscribe" ? "selected" : ""}
+                    onClick={() => setView("subscribe")}
+                  >
+                    Honey Club
+                  </button>
+
+                  <button
+                    type="button"
+                    className={view === "partner" ? "selected" : ""}
+                    onClick={() => setView("partner")}
+                  >
+                    Partner
+                  </button>
+
+                  <button
+                    type="button"
+                    className={view === "help" ? "selected" : ""}
+                    onClick={() => setView("help")}
+                  >
+                    Order Help
+                  </button>
+                </div>
+
+                <div className="nf-dock-row nf-dock-row-secondary">
+                  <button
+                    type="button"
+                    className={`nf-near-me-button ${view === "find" ? "selected" : ""}`}
+                    onClick={() => setView("find")}
+                  >
+                    NectarFusions Near Me
+                  </button>
+
+                  <a className="nf-dock-contact" href={`mailto:${CONTACT.email}`}>
+                    Contact
+                  </a>
+
+                  <a
+                    className="nf-dock-social"
+                    href="https://www.instagram.com/nectarfusions_honey/"
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Follow NectarFusions on Instagram"
+                    title="Instagram"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <rect x="3" y="3" width="18" height="18" rx="5" />
+                      <circle cx="12" cy="12" r="4.25" />
+                      <circle cx="17.4" cy="6.7" r="1.15" fill="currentColor" stroke="none" />
+                    </svg>
+                  </a>
+
+                  <a
+                    className="nf-dock-social"
+                    href="https://www.facebook.com/NectarFusions/"
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Follow NectarFusions on Facebook"
+                    title="Facebook"
+                  >
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M13.5 22v-8h2.8l.42-3.2H13.5V8.75c0-.93.26-1.56 1.6-1.56h1.72V4.33c-.3-.04-1.32-.13-2.5-.13-2.47 0-4.16 1.51-4.16 4.28v2.32H7.36V14h2.8v8h3.34Z" />
+                    </svg>
+                  </a>
+                </div>
               </div>
 
-              <div className="nf-site-search">
-                <label htmlFor="nf-site-search-input">Search NectarFusions</label>
-                <div className="nf-site-search-row">
-                  <input
-                    id="nf-site-search-input"
-                    ref={siteSearchRef}
-                    type="search"
-                    defaultValue=""
-                    placeholder="Search NectarFusions or enter an order number..."
-                    onInput={() => {
-                      if (siteSearchHelp) setSiteSearchHelp("");
+              <div className={`nf-site-search ${siteSearchOpen ? "open" : "closed"}`}>
+                {!siteSearchOpen ? (
+                  <button
+                    type="button"
+                    className="nf-site-search-toggle"
+                    onClick={() => {
+                      setSiteSearchOpen(true);
+                      window.requestAnimationFrame(() => siteSearchRef.current?.focus());
                     }}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") runSiteSearch();
-                    }}
-                  />
-                  <button type="button" onClick={runSiteSearch}>Search</button>
-                </div>
-                {siteSearchHelp && <div className="nf-site-search-help" role="status">{siteSearchHelp}</div>}
+                    aria-label="Open NectarFusions search"
+                    title="Search"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle cx="10.8" cy="10.8" r="6.8" />
+                      <path d="m16 16 4.2 4.2" />
+                    </svg>
+                    <span>Search</span>
+                  </button>
+                ) : (
+                  <>
+                    <label htmlFor="nf-site-search-input">Search NectarFusions</label>
+                    <div className="nf-site-search-row">
+                      <input
+                        id="nf-site-search-input"
+                        ref={siteSearchRef}
+                        type="search"
+                        defaultValue=""
+                        placeholder="Search NectarFusions or enter an order number..."
+                        onInput={() => {
+                          if (siteSearchHelp) setSiteSearchHelp("");
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") runSiteSearch();
+                          if (event.key === "Escape") {
+                            setSiteSearchOpen(false);
+                            setSiteSearchHelp("");
+                          }
+                        }}
+                      />
+                      <button type="button" className="nf-site-search-submit" onClick={runSiteSearch}>
+                        Search
+                      </button>
+                      <button
+                        type="button"
+                        className="nf-site-search-close"
+                        onClick={() => {
+                          setSiteSearchOpen(false);
+                          setSiteSearchHelp("");
+                          if (siteSearchRef.current) siteSearchRef.current.value = "";
+                        }}
+                        aria-label="Close search"
+                        title="Close search"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M7 7l10 10M17 7 7 17" />
+                        </svg>
+                      </button>
+                    </div>
+                    {siteSearchHelp && <div className="nf-site-search-help" role="status">{siteSearchHelp}</div>}
+                  </>
+                )}
               </div>
 
               <a
