@@ -480,7 +480,7 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
 }
 .nf-hero-copy {
   max-width:520px;
-  margin-top:72px;
+  margin-top:-8px;
 }
 .nf-hero-title {
   margin:0;
@@ -5140,6 +5140,170 @@ body {
   }
 }
 
+
+/* HOMEPAGE CTA, WHITE FLAVOR CARDS, AND FOUNDERS IMAGE FIX */
+.nf-hero-actions {
+  display:flex;
+  align-items:stretch;
+  flex-wrap:wrap;
+  gap:12px;
+  margin-top:20px;
+}
+
+.nf-hero-actions .nf-modern-primary,
+.nf-hero-actions .nf-modern-secondary {
+  min-height:50px;
+  padding:13px 19px;
+  border-radius:13px;
+  font:inherit;
+  font-size:15px;
+  font-weight:850;
+  line-height:1.2;
+  cursor:pointer;
+}
+
+.nf-hero-actions .nf-modern-primary {
+  margin:0;
+}
+
+.nf-modern-secondary {
+  border:2px solid #147FBE;
+  background:#FFFFFF;
+  color:#147FBE;
+  box-shadow:0 8px 20px rgba(32,86,122,.12);
+}
+
+.nf-modern-secondary:hover,
+.nf-modern-secondary:focus-visible {
+  background:#EEF8FE;
+  border-color:#0C6FA9;
+  color:#0C6FA9;
+  transform:translateY(-1px);
+}
+
+.nf-pick-card {
+  background:#FFFFFF !important;
+  box-shadow:0 10px 26px rgba(46,33,23,.12) !important;
+}
+
+.nf-pick-card:hover {
+  box-shadow:0 15px 34px rgba(46,33,23,.17) !important;
+}
+
+.nf-pick-card.selected {
+  box-shadow:
+    0 0 0 3px rgba(247,196,28,.22),
+    0 15px 34px rgba(46,33,23,.15) !important;
+}
+
+.nf-pick-image-wrap,
+.nf-pick-body {
+  background:#FFFFFF !important;
+}
+
+.nf-story-photo-founders {
+  background:#FFFFFF;
+}
+
+.nf-story-photo-founders img {
+  object-fit:contain !important;
+  object-position:center top !important;
+  background:#FFFFFF;
+}
+
+@media (max-width:640px) {
+  .nf-hero-actions {
+    display:grid;
+    grid-template-columns:1fr;
+    gap:10px;
+    margin-top:18px;
+  }
+
+  .nf-hero-actions .nf-modern-primary,
+  .nf-hero-actions .nf-modern-secondary {
+    width:100%;
+    min-height:50px;
+    font-size:16px;
+  }
+
+  .nf-story-photo-founders img {
+    object-position:center top !important;
+  }
+}
+
+
+/* FOUNDERS IMAGE FILL AND MOBILE HERO WATERMARK LOGO */
+.nf-story-photo-founders {
+  overflow:hidden;
+  background:#FFFFFF;
+}
+
+.nf-story-photo-founders img {
+  width:100% !important;
+  height:100% !important;
+  object-fit:cover !important;
+  object-position:center 22% !important;
+  background:#FFFFFF;
+}
+
+.nf-modern-hero-copy {
+  position:relative;
+  min-width:0;
+}
+
+.nf-mobile-hero-logo {
+  display:none;
+}
+
+@media (max-width:640px) {
+  .nf-modern-hero-copy {
+    overflow:hidden;
+    isolation:isolate;
+  }
+
+  .nf-mobile-hero-logo {
+    position:absolute;
+    display:block;
+    width:340px;
+    height:340px;
+    right:-145px;
+    top:72px;
+    object-fit:contain;
+    opacity:.10;
+    pointer-events:none;
+    user-select:none;
+    z-index:-1;
+    transform:rotate(-7deg);
+  }
+
+  .nf-modern-hero-copy > *:not(.nf-mobile-hero-logo) {
+    position:relative;
+    z-index:1;
+  }
+
+  .nf-story-photo-founders img {
+    object-position:center 18% !important;
+  }
+}
+
+@media (min-width:641px) {
+  .nf-mobile-hero-logo {
+    display:none !important;
+  }
+}
+
+
+/* FINAL MOBILE HERO LOGO SIZE AND POSITION */
+@media (max-width:640px) {
+  .nf-mobile-hero-logo {
+    width:470px !important;
+    height:470px !important;
+    right:-220px !important;
+    top:-75px !important;
+    transform:rotate(-7deg) !important;
+  }
+}
+
 `;
 
 export default function App() {
@@ -5858,7 +6022,13 @@ export default function App() {
         {big && (
           <section className="nf-modern-hero">
             <div className="nf-wrap nf-modern-hero-grid">
-              <div>
+              <div className="nf-modern-hero-copy">
+                <img
+                  className="nf-mobile-hero-logo"
+                  src="/logo.png"
+                  alt=""
+                  aria-hidden="true"
+                />
                 <div className="nf-modern-kicker">Coleman, Michigan</div>
                 <h1 className="nf-modern-title nf-layered-hero-title">
                   <span className="nf-hero-topline">Raw Michigan</span>
@@ -5866,15 +6036,29 @@ export default function App() {
                   <span className="nf-hero-bottomline">Infused. Shared.<br />Unforgettable.</span>
                 </h1>
                 <p className="nf-modern-subtitle">
-                  <strong>Handcrafted in small batches with real and organic ingredients</strong>
+                  <strong>
+                    Handcrafted in small batches
+                    <br />
+                    with real and organic ingredients
+                  </strong>
                   <span>No artificial flavors or syrups.</span>
                 </p>
-                <button
-                  className="nf-modern-primary"
-                  onClick={() => document.getElementById("order-section")?.scrollIntoView({ behavior: "smooth" })}
-                >
-                  Start Your Order
-                </button>
+                <div className="nf-hero-actions">
+                  <button
+                    className="nf-modern-primary"
+                    onClick={() => document.getElementById("order-section")?.scrollIntoView({ behavior: "smooth" })}
+                  >
+                    Start Your Order
+                  </button>
+
+                  <button
+                    type="button"
+                    className="nf-modern-secondary nf-difference-cta"
+                    onClick={() => setView("about")}
+                  >
+                    The NectarFusions Difference
+                  </button>
+                </div>
 
                 <div className="nf-modern-trust">
                   <div className="nf-modern-trust-item">
