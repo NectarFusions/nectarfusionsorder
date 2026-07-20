@@ -69,6 +69,12 @@ export async function getCatalog() {
         "Spun honey is temporarily unavailable. Warm weather can soften or melt its whipped texture."
       ),
     },
+    flavorCategories:
+      cfg.flavor_categories &&
+      typeof cfg.flavor_categories === "object" &&
+      !Array.isArray(cfg.flavor_categories)
+        ? cfg.flavor_categories
+        : {},
   };
 }
 
@@ -405,6 +411,49 @@ export const restoreFlavor = (id) =>
     .update({ active: true })
     .eq("id", id)
     .then(throwIf);
+
+export const setFlavorCategory = async (flavorId, category) => {
+  const normalizedCategory = [
+    "core",
+    "seasonal",
+    "limited",
+    "other",
+  ].includes(category)
+    ? category
+    : "other";
+
+  const { data: existing, error: readError } = await supabase
+    .from("settings")
+    .select("value")
+    .eq("key", "flavor_categories")
+    .maybeSingle();
+
+  if (readError) throw new Error(readError.message);
+
+  const current =
+    existing?.value &&
+    typeof existing.value === "object" &&
+    !Array.isArray(existing.value)
+      ? existing.value
+      : {};
+
+  const value = {
+    ...current,
+    [String(flavorId)]: normalizedCategory,
+  };
+
+  const { data, error } = await supabase
+    .from("settings")
+    .upsert(
+      { key: "flavor_categories", value },
+      { onConflict: "key" }
+    )
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+};
 
 export const setBestSeller = (name) =>
   supabase.from("settings").update({ value: name }).eq("key", "best_seller").then(throwIf);

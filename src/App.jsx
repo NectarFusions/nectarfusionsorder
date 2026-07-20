@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import * as api from "./lib/api";
 import PartnerPage from "./pages/PartnerPage";
@@ -5304,6 +5305,216 @@ body {
   }
 }
 
+
+/* ADMIN FLAVOR VISIBILITY, CATEGORIES, AND SPUN FEEDBACK */
+.nf-admin-save-status,
+.nf-admin-spun-blocked-help {
+  padding:11px 13px;
+  border-radius:12px;
+  font-size:14px;
+  font-weight:750;
+  line-height:1.45;
+}
+
+.nf-admin-save-status.unsaved {
+  border:1px solid #DCA400;
+  background:#FFF8D8;
+  color:#755400;
+}
+
+.nf-admin-save-status.saved {
+  border:1px solid #61A56D;
+  background:#EDF9EF;
+  color:#235D2C;
+}
+
+.nf-admin-spun-blocked-help {
+  border:1px solid #D88989;
+  background:#FFF0F0;
+  color:#8E2525;
+}
+
+.nf-admin-spun-save:disabled {
+  cursor:wait;
+  opacity:.72;
+}
+
+.nf-admin-flavor-category-heading {
+  margin:22px 0 9px;
+  padding:11px 14px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  border-radius:13px;
+  background:#173C52;
+  color:#FFFFFF;
+}
+
+.nf-admin-flavor-category-heading > div {
+  font-size:17px;
+  font-weight:850;
+}
+
+.nf-admin-flavor-category-heading > span {
+  font-size:13px;
+  font-weight:700;
+  color:rgba(255,255,255,.78);
+}
+
+.nf-admin-flavor-card.hidden {
+  border-style:dashed;
+  background:#F8F8F8;
+  opacity:.88;
+}
+
+.nf-admin-visibility-badge {
+  display:inline-flex;
+  margin-left:8px;
+  padding:3px 7px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:800;
+  line-height:1.2;
+  vertical-align:middle;
+}
+
+.nf-admin-visibility-badge.visible {
+  background:#E8F7EB;
+  color:#276230;
+}
+
+.nf-admin-visibility-badge.hidden {
+  background:#EFEFEF;
+  color:#626262;
+}
+
+.nf-admin-out-count {
+  margin-left:6px;
+  color:#C82727;
+  font-size:12px;
+  font-weight:800;
+}
+
+.nf-admin-visibility-button {
+  width:auto !important;
+  min-width:132px;
+  padding:7px 9px !important;
+  font-size:12px !important;
+  line-height:1.2;
+}
+
+.nf-admin-visibility-button.hide {
+  border-color:#D88989 !important;
+  color:#9C2D2D !important;
+  background:#FFF5F5 !important;
+}
+
+.nf-admin-visibility-button.show {
+  border-color:#61A56D !important;
+  color:#276230 !important;
+  background:#EDF9EF !important;
+}
+
+.nf-admin-flavor-settings {
+  margin-top:8px;
+  padding:12px;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(150px,.6fr);
+  gap:12px;
+  border:1px solid #DCEAF3;
+  border-radius:14px;
+  background:#F7FBFE;
+}
+
+.nf-admin-flavor-settings label,
+.nf-admin-flavor-status {
+  display:grid;
+  gap:6px;
+}
+
+.nf-admin-flavor-settings label > span,
+.nf-admin-flavor-status > span {
+  color:#5D7180;
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+
+.nf-admin-flavor-settings select {
+  min-height:44px;
+  padding:9px 10px;
+  border:1px solid #BFD5E2;
+  border-radius:10px;
+  background:#FFFFFF;
+  font-size:16px;
+}
+
+.nf-admin-flavor-status strong {
+  min-height:44px;
+  padding:10px 12px;
+  display:flex;
+  align-items:center;
+  border:1px solid #BFD5E2;
+  border-radius:10px;
+  background:#FFFFFF;
+  color:#174F72;
+  font-size:15px;
+}
+
+.nf-admin-spun-locked-section {
+  padding:10px;
+  border:1px dashed #D88989;
+  border-radius:13px;
+  background:#FFF8F8;
+}
+
+.nf-admin-spun-lock-note {
+  margin:0 0 8px;
+  padding:8px 10px;
+  border-radius:9px;
+  background:#FFEAEA;
+  color:#8E2525;
+  font-size:13px;
+  font-weight:750;
+  line-height:1.4;
+}
+
+.nf-admin-stock-locked {
+  cursor:not-allowed !important;
+  border-color:#D2D2D2 !important;
+  background:#ECECEC !important;
+  color:#777777 !important;
+}
+
+.nf-admin-spun-locked-section input:disabled {
+  cursor:not-allowed;
+  background:#ECECEC;
+  color:#777777;
+}
+
+@media (max-width:700px) {
+  .nf-admin-flavor-category-heading {
+    align-items:flex-start;
+  }
+
+  .nf-admin-flavor-settings {
+    grid-template-columns:1fr;
+  }
+
+  .nf-admin-visibility-button {
+    min-width:108px;
+    font-size:11.5px !important;
+  }
+
+  .nf-admin-visibility-badge {
+    display:flex;
+    width:max-content;
+    margin:5px 0 0;
+  }
+}
+
 `;
 
 export default function App() {
@@ -8317,6 +8528,8 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
     cat?.spunAvailability?.message ||
     "Spun honey is temporarily unavailable. Warm weather can soften or melt its whipped texture."
   );
+  const [spunSaveState, setSpunSaveState] = useState("");
+  const [spunBlockedHelp, setSpunBlockedHelp] = useState("");
   const [newDay, setNewDay] = useState("");
   const [blockDay, setBlockDay] = useState("");
   const [err, setErr] = useState(null);
@@ -8365,6 +8578,25 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
       await reload();
       setErr(null);
     } catch (e) { setErr(e.message); }
+  };
+
+  const saveSpunAvailability = async () => {
+    setSpunSaveState("saving");
+
+    try {
+      await api.setSpunAvailability(
+        spunEnabledDraft,
+        spunMessageDraft
+      );
+      await pull();
+      await reload();
+      setErr(null);
+      setSpunBlockedHelp("");
+      setSpunSaveState("saved");
+    } catch (e) {
+      setErr(e.message);
+      setSpunSaveState("error");
+    }
   };
 
   const updateTopPick = (index, patch) => {
@@ -8432,6 +8664,44 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
   const newRequestCount = customerRequests.filter((request) => request.status === "new").length;
 
   const today = api.today();
+
+  const flavorCategoryOptions = [
+    { id: "core", label: "Core Collection" },
+    { id: "seasonal", label: "Seasonal Special" },
+    { id: "limited", label: "Limited Flavor" },
+    { id: "other", label: "Other" },
+  ];
+
+  const flavorCategoryMap =
+    cat?.flavorCategories &&
+    typeof cat.flavorCategories === "object"
+      ? cat.flavorCategories
+      : {};
+
+  const flavorCategoryFor = (flavorId) =>
+    flavorCategoryMap[String(flavorId)] || "other";
+
+  const categoryRank = new Map(
+    flavorCategoryOptions.map((category, index) => [
+      category.id,
+      index,
+    ])
+  );
+
+  const sortedFlavors = [...(cat?.flavors || [])].sort((a, b) => {
+    const categoryDifference =
+      (categoryRank.get(flavorCategoryFor(a.id)) ?? 99) -
+      (categoryRank.get(flavorCategoryFor(b.id)) ?? 99);
+
+    if (categoryDifference !== 0) return categoryDifference;
+
+    return String(a.name || "").localeCompare(
+      String(b.name || ""),
+      undefined,
+      { sensitivity: "base" }
+    );
+  });
+
   const tabs = [
     ["inventory", "Flavors & Inventory"],
     ["subscriptions", `Honey Club (${activeSubs.length})`],
@@ -8439,13 +8709,20 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
     ["markets", "Market Schedule"],
     ["requests", `Order Help (${newRequestCount})`],
     ["orders", `Orders (${standardActiveOrders.length})`],
-    ["retail", `Retailers (${retailLocations.filter((r) => r.active).length})`],
+    ["retail", `Partners (${retailLocations.filter((r) => r.active).length})`],
     ["topPicks", "Top Picks"],
   ].sort((a, b) =>
     a[1]
       .replace(/\s*\(\d+\)$/, "")
       .localeCompare(b[1].replace(/\s*\(\d+\)$/, ""))
   );
+
+  const adminTabsHalf = Math.ceil(tabs.length / 2);
+  const displayedAdminTabs = tabs
+    .slice(0, adminTabsHalf)
+    .flatMap((tab, index) =>
+      [tab, tabs[index + adminTabsHalf]].filter(Boolean)
+    );
 
   return (
     <div className="nf"><style>{CSS}</style>
@@ -8462,7 +8739,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
         {err && <div className="err" style={{ marginBottom: 16 }}>{err}</div>}
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: 8, marginBottom: 22 }}>
-          {tabs.map(([id, label]) => (
+          {displayedAdminTabs.map(([id, label]) => (
             <button key={id} className={`btn ${adminTab === id ? "on" : ""}`}
               style={{ padding: "11px 9px", fontSize: 12.5 }}
               onClick={() => { setAdminTab(id); setQ(""); }}>
@@ -9341,7 +9618,15 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                 <input
                   type="checkbox"
                   checked={spunEnabledDraft}
-                  onChange={(event) => setSpunEnabledDraft(event.target.checked)}
+                  onChange={(event) => {
+                    const enabled = event.target.checked;
+                    setSpunEnabledDraft(enabled);
+                    setSpunSaveState("unsaved");
+
+                    if (enabled) {
+                      setSpunBlockedHelp("");
+                    }
+                  }}
                 />
                 <span>{spunEnabledDraft ? "Spun is available" : "Spun is unavailable"}</span>
               </label>
@@ -9349,25 +9634,84 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
               <textarea
                 rows={3}
                 value={spunMessageDraft}
-                onChange={(event) => setSpunMessageDraft(event.target.value)}
+                onChange={(event) => {
+                  setSpunMessageDraft(event.target.value);
+                  setSpunSaveState("unsaved");
+                }}
                 placeholder="Explain why Spun is temporarily unavailable."
               />
 
               <button
                 type="button"
-                className="btn solid"
-                onClick={() => guard(() => api.setSpunAvailability(spunEnabledDraft, spunMessageDraft))}
+                className="btn solid nf-admin-spun-save"
+                disabled={spunSaveState === "saving"}
+                onClick={saveSpunAvailability}
               >
-                Save Spun availability
+                {spunSaveState === "saving"
+                  ? "Saving..."
+                  : spunSaveState === "saved"
+                    ? "Saved ✓"
+                    : "Save Spun availability"}
               </button>
+
+              {spunSaveState === "unsaved" && (
+                <div className="nf-admin-save-status unsaved" role="status">
+                  You have an unsaved Spun availability change.
+                </div>
+              )}
+
+              {spunSaveState === "saved" && (
+                <div className="nf-admin-save-status saved" role="status">
+                  Spun storefront availability was updated successfully.
+                </div>
+              )}
+
+              {spunBlockedHelp && (
+                <div className="nf-admin-spun-blocked-help" role="status">
+                  {spunBlockedHelp}
+                </div>
+              )}
             </section>
 
-            {cat.flavors.map((f) => {
+            {sortedFlavors.map((f, index) => {
               const open = openFlavor === f.id;
-              const out = cat.sizes.flatMap((s) => TYPES.map((t) => !api.inStock(f, s.id, t.id))).filter(Boolean).length;
+              const out = cat.sizes
+                .flatMap((s) =>
+                  TYPES.map((t) => !api.inStock(f, s.id, t.id))
+                )
+                .filter(Boolean).length;
+
+              const categoryId = flavorCategoryFor(f.id);
+              const previousCategoryId =
+                index > 0
+                  ? flavorCategoryFor(sortedFlavors[index - 1].id)
+                  : null;
+
+              const categoryLabel =
+                flavorCategoryOptions.find(
+                  (category) => category.id === categoryId
+                )?.label || "Other";
+
               return (
-                <div key={f.id} className="card" style={{ marginBottom: 6,
-                  borderColor: cat.bestSeller === f.name ? c.orange : "#E2D6C4" }}>
+                <Fragment key={f.id}>
+                  {categoryId !== previousCategoryId && (
+                    <div className="nf-admin-flavor-category-heading">
+                      <div>{categoryLabel}</div>
+                      <span>
+                        {
+                          sortedFlavors.filter(
+                            (flavor) =>
+                              flavorCategoryFor(flavor.id) === categoryId
+                          ).length
+                        }{" "}
+                        flavors
+                      </span>
+                    </div>
+                  )}
+
+                  <div className={`card nf-admin-flavor-card ${f.active === false ? "hidden" : ""}`}
+                    style={{ marginBottom: 6,
+                      borderColor: cat.bestSeller === f.name ? c.orange : "#E2D6C4" }}>
                   <div style={{ padding: "8px 10px", display: "flex", alignItems: "center", gap: 8 }}>
                     <button aria-label="Best seller" style={{ background: "none", border: "none", cursor: "pointer",
                       fontSize: 17, width: 22, padding: 0, color: cat.bestSeller === f.name ? c.orange : "#DDD2C0" }}
@@ -9378,16 +9722,91 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                       style={{ flex: 1, minWidth: 0, background: "none", border: "none", cursor: "pointer",
                         textAlign: "left", padding: "6px 0", font: "inherit", fontSize: 14, fontWeight: 600 }}>
                       {f.name}
-                      {out > 0 && <span style={{ color: c.red, fontWeight: 700, fontSize: 11.5, marginLeft: 6 }}>{out} out</span>}
+
+                      <span
+                        className={`nf-admin-visibility-badge ${
+                          f.active === false ? "hidden" : "visible"
+                        }`}
+                      >
+                        {f.active === false
+                          ? "Hidden from storefront"
+                          : "Visible on storefront"}
+                      </span>
+
+                      {out > 0 && (
+                        <span className="nf-admin-out-count">
+                          {out} out
+                        </span>
+                      )}
                     </button>
-                    <span style={{ color: c.tan, fontSize: 13 }}>{open ? "▾" : "▸"}</span>
-                    <button className="btn ghost" aria-label="Delete" style={{ width: 26, color: c.tan, padding: 2 }}
-                      onClick={() => confirm(`Delete ${f.name}? Past orders keep their record.`) &&
-                        guard(() => f.active === false ? api.restoreFlavor(f.id) : api.deleteFlavor(f.id))}>×</button>
+
+                    <span style={{ color: c.tan, fontSize: 13 }}>
+                      {open ? "▾" : "▸"}
+                    </span>
+
+                    <button
+                      type="button"
+                      className={`btn nf-admin-visibility-button ${
+                        f.active === false ? "show" : "hide"
+                      }`}
+                      onClick={() => {
+                        if (f.active === false) {
+                          guard(() => api.restoreFlavor(f.id));
+                          return;
+                        }
+
+                        if (
+                          confirm(
+                            `Hide ${f.name} from the storefront? It will remain available in Admin and can be shown again later.`
+                          )
+                        ) {
+                          guard(() => api.deleteFlavor(f.id));
+                        }
+                      }}
+                    >
+                      {f.active === false
+                        ? "Show on storefront"
+                        : "Hide from storefront"}
+                    </button>
                   </div>
 
                   {open && (
                     <div style={{ padding: "0 10px 12px" }}>
+                      <div className="nf-admin-flavor-settings">
+                        <label>
+                          <span>Flavor category</span>
+                          <select
+                            value={flavorCategoryFor(f.id)}
+                            onChange={(event) =>
+                              guard(() =>
+                                api.setFlavorCategory(
+                                  f.id,
+                                  event.target.value
+                                )
+                              )
+                            }
+                          >
+                            {flavorCategoryOptions.map((category) => (
+                              <option
+                                key={category.id}
+                                value={category.id}
+                              >
+                                {category.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <div className="nf-admin-flavor-status">
+                          <span>Storefront status</span>
+                          <strong>
+                            {f.active === false
+                              ? "Hidden"
+                              : "Visible"}
+                          </strong>
+                        </div>
+                      </div>
+
                       <div className="card" style={{ padding: 10, marginTop: 8, boxShadow: "none" }}>
                         <div className="eyebrow" style={{ marginBottom: 8 }}>Storefront lid image</div>
                         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -9424,35 +9843,114 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                         </div>
                       </div>
 
-                      {TYPES.map((t) => (
-                        <div key={t.id} style={{ marginTop: 10 }}>
+                      {TYPES.map((t) => {
+                        const spunLocked =
+                          t.id === "spun" && !spunEnabledDraft;
+
+                        return (
+                        <div
+                          key={t.id}
+                          className={spunLocked ? "nf-admin-spun-locked-section" : ""}
+                          style={{ marginTop: 10 }}
+                        >
                           <div style={{ fontSize: 11.5, fontWeight: 700, color: c.brown, marginBottom: 6 }}>
                             {t.name.toUpperCase()}
                           </div>
+
+                          {spunLocked && (
+                            <div className="nf-admin-spun-lock-note">
+                              Spun storefront availability is off. Turn it on above to make Spun inventory changes.
+                            </div>
+                          )}
                           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6 }}>
                             {cat.sizes.map((s) => {
-                              const on = api.inStock(f, s.id, t.id);
-                              const count = api.stockCount(f, s.id, t.id);
+                              const on = spunLocked
+                                ? false
+                                : api.inStock(f, s.id, t.id);
+
+                              const count = api.stockCount(
+                                f,
+                                s.id,
+                                t.id
+                              );
                               return (
                                 <div key={s.id} className="card" style={{ padding: 8, boxShadow: "none",
                                   background: on ? "#FFFBF0" : "#FBF7F1",
                                   borderColor: on ? c.amber : "#D9CDBB" }}>
                                   <div style={{ fontSize: 11.5, fontWeight: 700, color: c.darkBrown, marginBottom: 5 }}>{s.label}</div>
-                                  <input type="number" min="0" step="1" defaultValue={count} placeholder="0"
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    step="1"
+                                    defaultValue={count}
+                                    placeholder="0"
+                                    disabled={spunLocked}
                                     aria-label={`${f.name} ${s.label} ${t.name} quantity`}
-                                    style={{ padding: "8px 7px", fontSize: 14, textAlign: "center" }}
-                                    onBlur={(e) => guard(() => api.setStockCount(f.id, s.id, t.id, e.target.value))} />
-                                  <button className={`btn ${on ? "on" : ""}`}
-                                    style={{ width: "100%", padding: "6px 3px", marginTop: 6, fontSize: 11 }}
-                                    onClick={() => guard(() => api.setStock(f.id, s.id, t.id, !on))}>
-                                    {on ? "Available ✓" : "Out ✕"}
+                                    style={{
+                                      padding: "8px 7px",
+                                      fontSize: 14,
+                                      textAlign: "center",
+                                    }}
+                                    onBlur={(event) => {
+                                      if (spunLocked) return;
+
+                                      guard(() =>
+                                        api.setStockCount(
+                                          f.id,
+                                          s.id,
+                                          t.id,
+                                          event.target.value
+                                        )
+                                      );
+                                    }}
+                                  />
+
+                                  <button
+                                    className={`btn ${
+                                      on ? "on" : ""
+                                    } ${
+                                      spunLocked
+                                        ? "nf-admin-stock-locked"
+                                        : ""
+                                    }`}
+                                    aria-disabled={spunLocked}
+                                    style={{
+                                      width: "100%",
+                                      padding: "6px 3px",
+                                      marginTop: 6,
+                                      fontSize: 11,
+                                    }}
+                                    onClick={() => {
+                                      if (spunLocked) {
+                                        setSpunBlockedHelp(
+                                          "Turn Spun Storefront Availability on to make changes."
+                                        );
+                                        return;
+                                      }
+
+                                      guard(() =>
+                                        api.setStock(
+                                          f.id,
+                                          s.id,
+                                          t.id,
+                                          !on
+                                        )
+                                      );
+                                    }}
+                                  >
+                                    {spunLocked
+                                      ? "Unavailable"
+                                      : on
+                                        ? "Available ✓"
+                                        : "Out ✕"}
                                   </button>
                                 </div>
                               );
                             })}
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                       <div style={{ display: "flex", gap: 6, marginTop: 10 }}>
                         <button className="btn" style={{ flex: 1, padding: 8, fontSize: 12 }}
                           onClick={() => guard(() => api.setFlavorStockAll(f.id, true))}>All available</button>
@@ -9461,7 +9959,8 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                       </div>
                     </div>
                   )}
-                </div>
+                  </div>
+                </Fragment>
               );
             })}
             <button className="btn" style={{ width: "100%", padding: 12, marginTop: 6, marginBottom: 40 }}
