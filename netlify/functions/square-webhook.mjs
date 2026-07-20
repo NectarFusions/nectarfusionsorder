@@ -149,11 +149,49 @@ export default async (req) => {
 
         const status = map[sub.status] ?? "pending";
 
+        /*
+          The webhook payload does not include Square's scheduled actions.
+          Retrieve them so paused_until always mirrors the currently
+          scheduled RESUME action:
+
+          - one-cycle skip scheduled or active -> exact automatic resume date
+          - automatic resume completed -> null
+          - cancellation or an indefinite/manual pause -> null
+
+          If this retrieval fails, leave paused_until untouched instead of
+          accidentally erasing a valid future resume date.
+        */
+        let actionsLoaded = false;
+        let scheduledResumeDate = null;
+
+        try {
+          const detail = await square(
+            `/v2/subscriptions/${sub.id}?include=actions`,
+            { method: "GET" }
+          );
+
+          const actions = detail.actions || [];
+          scheduledResumeDate =
+            actions.find((action) => action.type === "RESUME")?.effective_date ??
+            null;
+          actionsLoaded = true;
+        } catch (actionError) {
+          console.error(
+            "Could not refresh scheduled actions for subscription",
+            sub.id,
+            actionError.message
+          );
+        }
+
         const patch = {
           square_customer_id: sub.customer_id,
           square_subscription_id: sub.id,
           status,
         };
+
+        if (actionsLoaded) {
+          patch.paused_until = scheduledResumeDate;
+        }
 
         if (sub.plan_variation_id) {
           patch.square_plan_variation_id = sub.plan_variation_id;
