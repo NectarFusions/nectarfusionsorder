@@ -5515,6 +5515,165 @@ body {
   }
 }
 
+
+/* LIMITED TOP PICK */
+.nf-admin-top-pick-card.limited {
+  border:2px solid #D88900;
+  background:
+    linear-gradient(145deg,#FFF8D7,#FFFFFF);
+  box-shadow:0 15px 32px rgba(188,126,0,.14);
+}
+
+.nf-admin-limited-position {
+  display:block;
+  padding:4px 7px;
+  border-radius:999px;
+  background:#F7C41C;
+  color:#4A3313;
+  font-size:9px;
+  font-weight:900;
+  line-height:1.25;
+  text-align:center;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+}
+
+.nf-admin-limited-editor {
+  display:grid;
+  gap:11px;
+  padding:13px;
+  border:1px solid #E4B63B;
+  border-radius:14px;
+  background:#FFF9E7;
+}
+
+.nf-admin-limited-grid {
+  display:grid;
+  grid-template-columns:minmax(0,.65fr) minmax(0,1fr);
+  gap:10px;
+}
+
+.nf-admin-limited-editor textarea {
+  resize:vertical;
+}
+
+.nf-admin-limited-preview {
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  padding:10px 12px;
+  border-radius:11px;
+  font-size:12px;
+  line-height:1.4;
+}
+
+.nf-admin-limited-preview.available {
+  border:1px solid #D7A91A;
+  background:#FFF1AF;
+  color:#634500;
+}
+
+.nf-admin-limited-preview.empty {
+  border:1px solid #D88989;
+  background:#FFF0F0;
+  color:#8E2525;
+}
+
+.nf-admin-limited-preview strong {
+  flex-shrink:0;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+
+.nf-top-card-limited {
+  position:relative;
+  overflow:visible !important;
+  border:3px solid #D88900 !important;
+  background:
+    linear-gradient(150deg,#FFF4AD,#F7C41C) !important;
+  box-shadow:
+    0 18px 38px rgba(181,116,0,.23) !important;
+}
+
+.nf-top-limited-badge {
+  position:absolute;
+  top:-12px;
+  left:50%;
+  z-index:4;
+  transform:translateX(-50%);
+  min-width:max-content;
+  padding:6px 12px;
+  border:2px solid #FFFFFF;
+  border-radius:999px;
+  background:#B72222;
+  color:#FFFFFF;
+  box-shadow:0 5px 12px rgba(91,18,18,.22);
+  font-size:10px;
+  font-weight:950;
+  line-height:1;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+
+.nf-top-limited-copy {
+  display:grid;
+  gap:5px;
+  margin:8px 0 2px;
+  padding:8px 9px;
+  border-radius:10px;
+  background:rgba(255,255,255,.62);
+  color:#604000;
+  font-size:10.5px;
+  line-height:1.35;
+}
+
+.nf-top-limited-copy span {
+  font-weight:650;
+}
+
+.nf-top-limited-copy strong {
+  color:#A51E1E;
+  font-size:11.5px;
+  font-weight:950;
+  text-transform:uppercase;
+  letter-spacing:.035em;
+}
+
+.nf-top-card-limited.selected,
+.nf-top-card-limited:hover {
+  border-color:#B72222 !important;
+}
+
+@media (max-width:700px) {
+  .nf-admin-limited-grid {
+    grid-template-columns:1fr;
+  }
+
+  .nf-admin-limited-preview {
+    display:grid;
+  }
+
+  .nf-top-limited-badge {
+    top:-10px;
+    padding:5px 9px;
+    font-size:9px;
+  }
+}
+
+
+/* TOP PICKS SAVE CONFIRMATION */
+.nf-admin-top-picks-saved,
+.nf-admin-top-picks-saved:hover {
+  border-color:#2F7D45 !important;
+  background:#2F7D45 !important;
+  color:#FFFFFF !important;
+}
+
+.nf-admin-top-pick-footer .btn:disabled {
+  cursor:wait;
+  opacity:.75;
+}
+
 `;
 
 export default function App() {
@@ -7133,7 +7292,16 @@ export default function App() {
           <div className="nf-top-grid">
             {(cat.topPicks?.length
               ? cat.topPicks
-                  .filter((pick) => pick.active !== false && pick.flavor_id)
+                  .filter(
+                    (pick, index) =>
+                      pick.active !== false &&
+                      pick.flavor_id &&
+                      !(
+                        index === 0 &&
+                        pick.limited === true &&
+                        Number(pick.remaining) <= 0
+                      )
+                  )
                   .map((pick) => {
                     const flavor = cat.flavors.find((item) => item.id === pick.flavor_id);
                     return flavor ? { ...pick, flavor } : null;
@@ -7162,11 +7330,24 @@ export default function App() {
               return (
                 <button
                   key={flavor.id}
-                  className={`nf-top-card ${selected ? "selected" : ""}`}
+                  className={`nf-top-card ${
+                    selected ? "selected" : ""
+                  } ${
+                    pick.limited === true
+                      ? "nf-top-card-limited"
+                      : ""
+                  }`}
                   onClick={() => {
                     if (available) addJar(flavor);
                   }}
                 >
+                  {pick.limited === true && (
+                    <span className="nf-top-limited-badge">
+                      {pick.limited_label ||
+                        "Limited Release"}
+                    </span>
+                  )}
+
                   {image ? (
                     <img src={image} alt={`${flavor.name} infused honey`} />
                   ) : (
@@ -7175,7 +7356,26 @@ export default function App() {
                     </div>
                   )}
                   <div className="nf-top-name">{flavor.name}</div>
-                  <div className="nf-top-tagline">{pick.tagline || "Customer favorite"}</div>
+                  <div className="nf-top-tagline">
+                    {pick.tagline || "Customer favorite"}
+                  </div>
+
+                  {pick.limited === true && (
+                    <div className="nf-top-limited-copy">
+                      {pick.limited_message && (
+                        <span>{pick.limited_message}</span>
+                      )}
+
+                      <strong>
+                        {Number(pick.remaining) === 1
+                          ? "Only 1 jar remains"
+                          : `Only ${Number(
+                              pick.remaining
+                            )} jars remain`}
+                      </strong>
+                    </div>
+                  )}
+
                   <div className="nf-top-price">
                     {available ? `From ${money(sizeOf("4oz").price)}` : "Currently sold out"}
                   </div>
@@ -8522,6 +8722,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
   const [subView, setSubView] = useState("active");
   const [openFlavor, setOpenFlavor] = useState(null);
   const [topPickDrafts, setTopPickDrafts] = useState([]);
+  const [topPickSaveState, setTopPickSaveState] = useState("");
   const [topPickUploading, setTopPickUploading] = useState(null);
   const [spunEnabledDraft, setSpunEnabledDraft] = useState(cat?.spunAvailability?.enabled !== false);
   const [spunMessageDraft, setSpunMessageDraft] = useState(
@@ -8599,26 +8800,71 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
     }
   };
 
+  const saveTopPicks = async () => {
+    setTopPickSaveState("saving");
+
+    try {
+      await api.setTopPicks(topPickDrafts);
+      await pull();
+      await reload();
+
+      setErr(null);
+      setTopPickSaveState("saved");
+    } catch (error) {
+      setErr(error.message);
+      setTopPickSaveState("error");
+    }
+  };
+
   const updateTopPick = (index, patch) => {
+    setTopPickSaveState("unsaved");
     setTopPickDrafts((current) =>
       current.map((pick, i) => i === index ? { ...pick, ...patch } : pick)
     );
   };
 
   const moveTopPick = (index, direction) => {
+    setTopPickSaveState("unsaved");
     setTopPickDrafts((current) => {
       const nextIndex = index + direction;
-      if (nextIndex < 0 || nextIndex >= current.length) return current;
+
+      if (
+        nextIndex < 0 ||
+        nextIndex >= current.length
+      ) {
+        return current;
+      }
+
       const next = [...current];
-      [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
-      return next;
+
+      [next[index], next[nextIndex]] = [
+        next[nextIndex],
+        next[index],
+      ];
+
+      return next.map((pick, position) =>
+        position === 0
+          ? pick
+          : { ...pick, limited: false }
+      );
     });
   };
 
   const addTopPickSlot = () => {
+    setTopPickSaveState("unsaved");
     setTopPickDrafts((current) => [
       ...current,
-      { flavor_id: null, tagline: "", image_url: "", active: true },
+      {
+        flavor_id: null,
+        tagline: "",
+        image_url: "",
+        active: true,
+        limited: false,
+        limited_label: "Limited Release",
+        limited_message:
+          "Small batch. Once it’s gone, it’s gone.",
+        remaining: 0,
+      },
     ].slice(0, 8));
   };
 
@@ -9056,9 +9302,23 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                 const preview = pick.image_url || (flavor ? flavorImage(flavor) : "");
 
                 return (
-                  <div key={`${pick.flavor_id || "empty"}-${index}`} className="card nf-admin-top-pick-card">
+                  <div
+                    key={`${pick.flavor_id || "empty"}-${index}`}
+                    className={`card nf-admin-top-pick-card ${
+                      index === 0 && pick.limited === true
+                        ? "limited"
+                        : ""
+                    }`}
+                  >
                     <div className="nf-admin-top-pick-order">
                       <span className="num">#{index + 1}</span>
+
+                      {index === 0 && (
+                        <span className="nf-admin-limited-position">
+                          Limited position
+                        </span>
+                      )}
+
                       <div>
                         <button className="btn ghost" disabled={index === 0}
                           onClick={() => moveTopPick(index, -1)} aria-label="Move Top Pick up">↑</button>
@@ -9089,10 +9349,125 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
 
                       <label>
                         <span>Promotional line</span>
-                        <input value={pick.tagline || ""} maxLength={60}
+                        <input
+                          value={pick.tagline || ""}
+                          maxLength={60}
                           placeholder="Customer favorite"
-                          onChange={(e) => updateTopPick(index, { tagline: e.target.value })} />
+                          onChange={(event) =>
+                            updateTopPick(index, {
+                              tagline: event.target.value,
+                            })
+                          }
+                        />
                       </label>
+
+                      {index === 0 && (
+                        <section className="nf-admin-limited-editor">
+                          <label className="nf-admin-top-pick-toggle">
+                            <input
+                              type="checkbox"
+                              checked={pick.limited === true}
+                              onChange={(event) =>
+                                updateTopPick(index, {
+                                  limited: event.target.checked,
+                                })
+                              }
+                            />
+                            <span>
+                              Make Top Pick #1 a limited offer
+                            </span>
+                          </label>
+
+                          {pick.limited === true && (
+                            <>
+                              <div className="nf-admin-limited-grid">
+                                <label>
+                                  <span>Quantity remaining</span>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    step="1"
+                                    value={pick.remaining ?? 0}
+                                    onChange={(event) =>
+                                      updateTopPick(index, {
+                                        remaining: Math.max(
+                                          0,
+                                          Number.parseInt(
+                                            event.target.value,
+                                            10
+                                          ) || 0
+                                        ),
+                                      })
+                                    }
+                                  />
+                                </label>
+
+                                <label>
+                                  <span>Limited badge</span>
+                                  <input
+                                    value={
+                                      pick.limited_label ||
+                                      "Limited Release"
+                                    }
+                                    maxLength={36}
+                                    placeholder="Limited Release"
+                                    onChange={(event) =>
+                                      updateTopPick(index, {
+                                        limited_label:
+                                          event.target.value,
+                                      })
+                                    }
+                                  />
+                                </label>
+                              </div>
+
+                              <label>
+                                <span>Limited-offer message</span>
+                                <textarea
+                                  rows={3}
+                                  maxLength={140}
+                                  value={
+                                    pick.limited_message ||
+                                    ""
+                                  }
+                                  placeholder="Small batch. Once it’s gone, it’s gone."
+                                  onChange={(event) =>
+                                    updateTopPick(index, {
+                                      limited_message:
+                                        event.target.value,
+                                    })
+                                  }
+                                />
+                              </label>
+
+                              <div
+                                className={`nf-admin-limited-preview ${
+                                  Number(pick.remaining) > 0
+                                    ? "available"
+                                    : "empty"
+                                }`}
+                              >
+                                <strong>
+                                  {pick.limited_label ||
+                                    "Limited Release"}
+                                </strong>
+
+                                <span>
+                                  {Number(pick.remaining) > 0
+                                    ? `${
+                                        Number(pick.remaining) === 1
+                                          ? "1 jar remains"
+                                          : `${Number(
+                                              pick.remaining
+                                            )} jars remain`
+                                      }`
+                                    : "This offer will be hidden because the remaining quantity is zero."}
+                                </span>
+                              </div>
+                            </>
+                          )}
+                        </section>
+                      )}
 
                       <label className="nf-admin-top-pick-upload">
                         <span>Custom image</span>
@@ -9130,7 +9505,12 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                           </button>
                         )}
                         <button className="btn danger"
-                          onClick={() => setTopPickDrafts((current) => current.filter((_, i) => i !== index))}>
+                          onClick={() => {
+                            setTopPickSaveState("unsaved");
+                            setTopPickDrafts((current) =>
+                              current.filter((_, i) => i !== index)
+                            );
+                          }}>
                           Remove slot
                         </button>
                       </div>
@@ -9144,11 +9524,54 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
               <button className="btn" disabled={topPickDrafts.length >= 8} onClick={addTopPickSlot}>
                 Add Top Pick
               </button>
-              <button className="btn solid"
-                onClick={() => guard(() => api.setTopPicks(topPickDrafts))}>
-                Save Top Picks
+              <button
+                type="button"
+                className={`btn solid ${
+                  topPickSaveState === "saved"
+                    ? "nf-admin-top-picks-saved"
+                    : ""
+                }`}
+                disabled={topPickSaveState === "saving"}
+                onClick={saveTopPicks}
+              >
+                {topPickSaveState === "saving"
+                  ? "Saving..."
+                  : topPickSaveState === "saved"
+                    ? "Saved ✓"
+                    : "Save Top Picks"}
               </button>
             </div>
+
+            {topPickSaveState === "unsaved" && (
+              <div
+                className="nf-admin-save-status unsaved"
+                role="status"
+                style={{ marginTop: 12 }}
+              >
+                You have unsaved Top Pick changes.
+              </div>
+            )}
+
+            {topPickSaveState === "saved" && (
+              <div
+                className="nf-admin-save-status saved"
+                role="status"
+                style={{ marginTop: 12 }}
+              >
+                Top Picks were saved successfully.
+              </div>
+            )}
+
+            {topPickSaveState === "error" && (
+              <div
+                className="nf-admin-spun-blocked-help"
+                role="alert"
+                style={{ marginTop: 12 }}
+              >
+                The Top Picks could not be saved. Review the error
+                above and try again.
+              </div>
+            )}
           </>
         )}
 

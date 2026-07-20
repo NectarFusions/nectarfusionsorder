@@ -52,6 +52,18 @@ export async function getCatalog() {
           tagline: String(pick?.tagline || ""),
           image_url: String(pick?.image_url || ""),
           active: pick?.active !== false,
+          limited: index === 0 && pick?.limited === true,
+          limited_label: String(
+            pick?.limited_label || "Limited Release"
+          ),
+          limited_message: String(
+            pick?.limited_message ||
+            "Small batch. Once it’s gone, it’s gone."
+          ),
+          remaining: Math.max(
+            0,
+            Number.parseInt(pick?.remaining, 10) || 0
+          ),
           sort: index,
         }))
       : [],
@@ -476,11 +488,23 @@ export const setSpunAvailability = async (enabled, message) => {
 };
 
 export const setTopPicks = async (picks) => {
-  const clean = (Array.isArray(picks) ? picks : []).slice(0, 8).map((pick) => ({
+  const clean = (Array.isArray(picks) ? picks : []).slice(0, 8).map((pick, index) => ({
     flavor_id: pick.flavor_id || null,
     tagline: String(pick.tagline || "").trim().slice(0, 60),
     image_url: String(pick.image_url || "").trim(),
     active: pick.active !== false,
+    limited: index === 0 && pick.limited === true,
+    limited_label: String(
+      pick.limited_label || "Limited Release"
+    ).trim().slice(0, 36),
+    limited_message: String(
+      pick.limited_message ||
+      "Small batch. Once it’s gone, it’s gone."
+    ).trim().slice(0, 140),
+    remaining: Math.max(
+      0,
+      Number.parseInt(pick.remaining, 10) || 0
+    ),
   }));
 
   const { data, error } = await supabase
