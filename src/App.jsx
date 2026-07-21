@@ -5647,6 +5647,313 @@ body {
   line-height:1.4;
 }
 
+
+/* PICK YOUR FLAVORS — FINAL CARD POLISH */
+.nf-flavor-section-row {
+  align-items:center;
+  margin-top:42px !important;
+  padding-top:28px;
+  border-top:1px solid #E4EBEF;
+}
+
+.nf-flavor-section-row .nf-section-title {
+  color:#17120E;
+  font-size:44px;
+  line-height:.95;
+}
+
+.nf-flavor-section-row > .nf-section-note:last-child {
+  padding:7px 11px;
+  border:1px solid #BCD8E9;
+  border-radius:999px;
+  background:#EFF8FD;
+  color:#174F72;
+  font-size:11px;
+  font-weight:850;
+  white-space:nowrap;
+}
+
+.nf-pick-grid {
+  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+  gap:18px !important;
+}
+
+.nf-pick-card {
+  display:flex;
+  flex-direction:column;
+  min-height:100%;
+  border:1.5px solid #DCE7ED !important;
+  border-radius:23px !important;
+  background:#FFFFFF !important;
+  box-shadow:
+    0 10px 25px rgba(32,86,122,.08),
+    0 3px 8px rgba(46,33,23,.05) !important;
+  overflow:hidden;
+  transition:
+    transform .22s ease,
+    border-color .22s ease,
+    box-shadow .22s ease !important;
+}
+
+.nf-pick-card:hover,
+.nf-animations-ready
+.nf-pick-card.nf-reveal.nf-reveal-visible:hover {
+  transform:translateY(-5px) !important;
+  border-color:#8FC5E3 !important;
+  box-shadow:
+    0 18px 36px rgba(32,86,122,.13),
+    0 6px 14px rgba(46,33,23,.07) !important;
+}
+
+.nf-pick-card.selected {
+  border-color:#E1A100 !important;
+  background:#FFFDF6 !important;
+  box-shadow:
+    0 0 0 3px rgba(247,196,28,.22),
+    0 17px 34px rgba(181,116,0,.14) !important;
+}
+
+.nf-pick-image-wrap {
+  height:205px !important;
+  flex-shrink:0;
+  border-bottom:1px solid #DFEAF0;
+  background:
+    radial-gradient(
+      circle at 50% 52%,
+      rgba(247,196,28,.18) 0%,
+      rgba(247,196,28,.08) 36%,
+      transparent 66%
+    ),
+    linear-gradient(150deg,#F8FCFE 0%,#FFFFFF 58%,#FFF9E8 100%) !important;
+}
+
+.nf-pick-card.selected .nf-pick-image-wrap {
+  border-bottom-color:#E9D38C;
+  background:
+    radial-gradient(
+      circle at 50% 52%,
+      rgba(247,196,28,.28) 0%,
+      rgba(247,196,28,.10) 42%,
+      transparent 70%
+    ),
+    linear-gradient(150deg,#FFFDF4,#FFFFFF) !important;
+}
+
+.nf-pick-image {
+  padding:14px !important;
+  filter:drop-shadow(0 15px 14px rgba(59,37,17,.16)) !important;
+  transition:transform .25s ease,filter .25s ease;
+}
+
+.nf-pick-card:hover .nf-pick-image {
+  transform:scale(1.035);
+  filter:drop-shadow(0 18px 17px rgba(59,37,17,.19)) !important;
+}
+
+.nf-pick-selected-badge {
+  position:absolute;
+  top:12px;
+  right:12px;
+  z-index:2;
+  max-width:calc(100% - 24px);
+  padding:6px 9px;
+  border:2px solid #FFFFFF;
+  border-radius:999px;
+  background:#F7C41C;
+  color:#3F2B00;
+  box-shadow:0 5px 13px rgba(133,88,0,.18);
+  font-size:9px;
+  font-weight:950;
+  line-height:1;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  white-space:nowrap;
+}
+
+.nf-pick-body {
+  flex:1;
+  min-height:156px !important;
+  padding:17px 16px 16px !important;
+  background:#FFFFFF !important;
+}
+
+.nf-pick-card.selected .nf-pick-body {
+  background:#FFFDF6 !important;
+}
+
+.nf-pick-name {
+  min-height:46px !important;
+  color:#17120E;
+  font-size:17px !important;
+  line-height:1.25 !important;
+  font-weight:900 !important;
+}
+
+.nf-pick-stock {
+  min-height:38px !important;
+  display:flex;
+  align-items:center;
+  margin:7px 0 13px !important;
+  padding:7px 9px;
+  border:1px solid #DDEAF1;
+  border-radius:10px;
+  background:#F4F9FC;
+  color:#526A78 !important;
+  font-size:11.5px !important;
+  font-weight:750 !important;
+  line-height:1.35 !important;
+}
+
+.nf-pick-card.selected .nf-pick-stock {
+  border-color:#EBD78E;
+  background:#FFF7D8;
+  color:#6E5200 !important;
+}
+
+.nf-pick-add {
+  min-height:44px;
+  border-radius:13px !important;
+  background:linear-gradient(145deg,#6FAFD5,#3F87BA) !important;
+  color:#FFFFFF !important;
+  font-size:13px;
+  letter-spacing:.01em;
+  box-shadow:0 7px 15px rgba(63,135,186,.22) !important;
+  transition:
+    transform .16s ease,
+    box-shadow .16s ease,
+    background .16s ease;
+}
+
+.nf-pick-add:hover:not(:disabled) {
+  transform:translateY(-1px);
+  background:linear-gradient(145deg,#7BB9DD,#498FC0) !important;
+  box-shadow:0 9px 19px rgba(63,135,186,.27) !important;
+}
+
+.nf-pick-add:disabled,
+.nf-pick-qty-btn:disabled {
+  cursor:not-allowed;
+  opacity:.48;
+  box-shadow:none !important;
+}
+
+.nf-pick-controls {
+  min-height:46px;
+  padding:4px;
+  border:1px solid #BCD8E9;
+  border-radius:14px;
+  background:#EAF6FD;
+}
+
+.nf-pick-qty-btn {
+  width:38px !important;
+  height:38px !important;
+  border-radius:11px !important;
+  background:#F7C41C !important;
+  color:#17120E !important;
+  box-shadow:0 4px 10px rgba(181,116,0,.16) !important;
+}
+
+.nf-pick-qty {
+  color:#174F72;
+  font-size:17px;
+  font-weight:950;
+}
+
+@media (max-width:980px) {
+  .nf-pick-grid {
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  }
+}
+
+@media (max-width:680px) {
+  .nf-flavor-section-row {
+    align-items:flex-end;
+    gap:10px;
+    margin-top:34px !important;
+    padding-top:22px;
+  }
+
+  .nf-flavor-section-row .nf-section-title {
+    font-size:34px;
+  }
+
+  .nf-flavor-section-row .nf-section-note {
+    font-size:11px;
+  }
+
+  .nf-flavor-section-row > .nf-section-note:last-child {
+    padding:6px 8px;
+    font-size:9.5px;
+  }
+
+  .nf-pick-grid {
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:12px !important;
+  }
+
+  .nf-pick-card {
+    border-radius:19px !important;
+  }
+
+  .nf-pick-image-wrap {
+    height:158px !important;
+  }
+
+  .nf-pick-image {
+    padding:9px !important;
+  }
+
+  .nf-pick-body {
+    min-height:148px !important;
+    padding:13px 11px 12px !important;
+  }
+
+  .nf-pick-name {
+    min-height:38px !important;
+    font-size:14.5px !important;
+  }
+
+  .nf-pick-stock {
+    min-height:34px !important;
+    margin:6px 0 10px !important;
+    padding:6px 7px;
+    font-size:10.5px !important;
+  }
+
+  .nf-pick-selected-badge {
+    top:8px;
+    right:8px;
+    padding:5px 7px;
+    font-size:7.5px;
+  }
+
+  .nf-pick-add {
+    min-height:41px;
+    padding:9px 7px !important;
+    font-size:12px;
+  }
+
+  .nf-pick-controls {
+    min-height:43px;
+  }
+
+  .nf-pick-qty-btn {
+    width:34px !important;
+    height:34px !important;
+  }
+}
+
+@media (max-width:390px) {
+  .nf-pick-image-wrap {
+    height:145px !important;
+  }
+
+  .nf-pick-grid {
+    gap:9px !important;
+  }
+}
+
 .nf-admin-limited-preview.available {
   border:1px solid #D7A91A;
   background:#FFF1AF;
@@ -7572,7 +7879,10 @@ export default function App() {
           </div>
         </section>
 
-        <div className="nf-section-row" style={{ marginTop: 30 }}>
+        <div
+          className="nf-section-row nf-flavor-section-row"
+          style={{ marginTop: 30 }}
+        >
           <div>
             <h2 className="nf-section-title">Pick Your Flavors</h2>
             <div className="nf-section-note" style={{ marginTop: 4 }}>
@@ -7603,6 +7913,12 @@ export default function App() {
               return (
                 <article key={f.id} className={`nf-pick-card ${inCart ? "selected" : ""}`}>
                   <div className="nf-pick-image-wrap">
+                    {inCart && (
+                      <span className="nf-pick-selected-badge">
+                        In Your Order · {quantityInCart}
+                      </span>
+                    )}
+
                     {image ? (
                       <img className="nf-pick-image" src={image} alt={`${f.name} lid label`} />
                     ) : (
