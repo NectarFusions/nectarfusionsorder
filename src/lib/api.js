@@ -764,14 +764,41 @@ export async function requestSubscriptionCancellation(token) {
 /* ---------- Square (via Netlify functions) ---------- */
 
 export async function payLink(token) {
-  const r = await fetch("/.netlify/functions/pay-link", {
+  const response = await fetch("/.netlify/functions/pay-link", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({ token }),
   });
-  const j = await r.json();
-  if (!r.ok) throw new Error(j.error || "Couldn't create a payment link.");
-  return j.url;
+
+  const rawBody = await response.text();
+  let payload = {};
+
+  if (rawBody.trim()) {
+    try {
+      payload = JSON.parse(rawBody);
+    } catch {
+      throw new Error(
+        `Payment service returned an unreadable response (${response.status}).`
+      );
+    }
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      payload.error ||
+      `Payment service could not create the Square payment link (${response.status}).`
+    );
+  }
+
+  if (!payload.url) {
+    throw new Error(
+      "The payment service returned an empty response. The order is saved, but no Square payment link was created."
+    );
+  }
+
+  return payload.url;
 }
 
 export async function subscribeLink(token) {

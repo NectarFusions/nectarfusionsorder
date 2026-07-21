@@ -756,6 +756,1145 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
   display:block; font-family:'Bebas Neue',sans-serif; font-size:34px; line-height:1;
 }
 .nf-cart-summary > .btn { padding:13px 20px; flex-shrink:0; }
+
+
+/* HOMEPAGE — LIMITED TOP PICK EXCITEMENT */
+.nf-top-card-limited,
+.nf-top-card-limited:hover,
+.nf-top-card-limited.selected {
+  position:relative;
+  overflow:visible !important;
+  padding-top:19px !important;
+  border:4px solid #C92228 !important;
+  background:
+    radial-gradient(
+      circle at 50% 14%,
+      rgba(255,255,255,.34),
+      transparent 36%
+    ),
+    linear-gradient(
+      150deg,
+      #B9E0F2 0%,
+      #8CC7E5 50%,
+      #73B2D7 100%
+    ) !important;
+  box-shadow:
+    0 0 0 3px rgba(201,34,40,.10),
+    0 19px 38px rgba(37,113,158,.24),
+    0 9px 19px rgba(124,24,28,.14) !important;
+  color:#173C52 !important;
+}
+
+.nf-top-card-limited:hover {
+  transform:translateY(-7px) scale(1.012) !important;
+  border-color:#A9151B !important;
+  box-shadow:
+    0 0 0 4px rgba(201,34,40,.14),
+    0 24px 45px rgba(37,113,158,.28),
+    0 11px 24px rgba(124,24,28,.18) !important;
+}
+
+.nf-top-card-limited.selected {
+  box-shadow:
+    0 0 0 5px rgba(201,34,40,.17),
+    0 22px 42px rgba(37,113,158,.27) !important;
+}
+
+.nf-top-card-limited .nf-top-limited-badge,
+.nf-top-card-limited:hover .nf-top-limited-badge,
+.nf-top-card-limited.selected .nf-top-limited-badge {
+  top:-17px;
+  min-width:max-content;
+  padding:10px 19px;
+  border:3px solid #FFFFFF !important;
+  border-radius:999px;
+  background:
+    linear-gradient(
+      145deg,
+      #D82C32 0%,
+      #B4181E 100%
+    ) !important;
+  color:#FFFFFF !important;
+  box-shadow:
+    0 7px 16px rgba(111,15,19,.30),
+    0 0 0 2px rgba(201,34,40,.10);
+  font-size:13px;
+  font-weight:950;
+  line-height:1;
+  letter-spacing:.09em;
+  animation:
+    nf-limited-badge-arrive .52s
+    cubic-bezier(.22,1,.36,1) both;
+}
+
+.nf-top-card-limited img {
+  border:2px solid rgba(201,34,40,.20);
+  border-radius:18px !important;
+  background:#FFFFFF;
+  box-shadow:
+    0 10px 25px rgba(36,91,123,.14),
+    inset 0 0 0 1px rgba(255,255,255,.82);
+}
+
+.nf-top-card-limited .nf-top-name {
+  margin-top:8px;
+  color:#173C52 !important;
+  font-size:21px;
+  font-weight:950;
+  line-height:1.1;
+}
+
+.nf-top-card-limited .nf-top-tagline {
+  margin-top:6px;
+  color:#A76700 !important;
+  font-size:12.5px;
+  font-weight:950;
+  letter-spacing:.10em;
+}
+
+.nf-top-card-limited .nf-top-limited-copy {
+  display:grid;
+  gap:8px;
+  margin:12px 0 8px;
+  padding:12px 12px 11px;
+  border:2px solid #D12A30;
+  border-radius:15px;
+  background:
+    linear-gradient(
+      145deg,
+      #FFFDF7 0%,
+      #FFF2F2 100%
+    );
+  color:#5A3A0B;
+  box-shadow:
+    0 8px 18px rgba(134,27,31,.12),
+    inset 0 0 0 1px rgba(255,255,255,.86);
+}
+
+.nf-top-card-limited .nf-top-limited-copy > span {
+  color:#5A3A0B;
+  font-size:12.5px;
+  font-weight:800;
+  line-height:1.35;
+}
+
+.nf-top-limited-countdown {
+  display:grid;
+  grid-template-columns:auto auto auto;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  padding-top:8px;
+  border-top:1px solid rgba(201,34,40,.18);
+  color:#B0181E;
+  text-transform:uppercase;
+}
+
+.nf-top-limited-count-label {
+  font-size:12px;
+  font-weight:950;
+  letter-spacing:.09em;
+}
+
+.nf-top-limited-count-number {
+  color:#C92228 !important;
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:48px !important;
+  font-weight:400 !important;
+  line-height:.75;
+  letter-spacing:.01em !important;
+  text-shadow:0 2px 0 rgba(255,255,255,.84);
+}
+
+.nf-top-limited-count-unit {
+  max-width:62px;
+  color:#B0181E;
+  font-size:11px;
+  font-weight:950;
+  line-height:1.05;
+  letter-spacing:.055em;
+  text-align:left;
+}
+
+.nf-top-card-limited .nf-top-price {
+  margin-top:10px;
+  color:#173C52 !important;
+  font-size:16.5px;
+  font-weight:900;
+}
+
+@keyframes nf-limited-badge-arrive {
+  0% {
+    opacity:0;
+    transform:translateX(-50%) translateY(-9px) scale(.82);
+  }
+
+  68% {
+    opacity:1;
+    transform:translateX(-50%) translateY(2px) scale(1.05);
+  }
+
+  100% {
+    opacity:1;
+    transform:translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+@media (max-width:700px) {
+  .nf-top-card-limited,
+  .nf-top-card-limited:hover,
+  .nf-top-card-limited.selected {
+    border-width:3px !important;
+    padding-top:17px !important;
+  }
+
+  .nf-top-card-limited .nf-top-limited-badge,
+  .nf-top-card-limited:hover .nf-top-limited-badge,
+  .nf-top-card-limited.selected .nf-top-limited-badge {
+    top:-14px;
+    padding:8px 14px;
+    border-width:2px !important;
+    font-size:11px;
+  }
+
+  .nf-top-card-limited .nf-top-name {
+    font-size:19px;
+  }
+
+  .nf-top-card-limited .nf-top-limited-copy {
+    padding:10px 9px;
+  }
+
+  .nf-top-limited-count-number {
+    font-size:42px !important;
+  }
+
+  .nf-top-limited-count-unit {
+    max-width:56px;
+    font-size:9.5px;
+  }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .nf-top-card-limited .nf-top-limited-badge {
+    animation:none !important;
+  }
+}
+
+
+/* HOMEPAGE — TOP PICK READABILITY AND COMPACT CARDS */
+.nf-top-grid {
+  align-items:start;
+}
+
+.nf-top-card {
+  height:auto;
+}
+
+/* Shorter regular cards with the flavor name above the image. */
+.nf-top-card:not(.nf-top-card-limited) {
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+  padding:18px 16px 20px !important;
+}
+
+.nf-top-card:not(.nf-top-card-limited) .nf-top-name-above {
+  order:0;
+  margin:0 0 14px;
+  color:#17120E !important;
+  font-size:clamp(24px,1.7vw,30px);
+  font-weight:950;
+  line-height:1.05;
+  letter-spacing:-.015em;
+  text-align:center;
+}
+
+.nf-top-card:not(.nf-top-card-limited) img,
+.nf-top-card:not(.nf-top-card-limited)
+.nf-top-image-placeholder {
+  order:1;
+}
+
+.nf-top-card:not(.nf-top-card-limited) img {
+  width:100%;
+  max-height:300px;
+  aspect-ratio:1.08 / 1;
+  object-fit:contain;
+}
+
+.nf-top-card:not(.nf-top-card-limited)
+.nf-top-image-placeholder {
+  min-height:260px;
+}
+
+.nf-top-card:not(.nf-top-card-limited)
+.nf-top-tagline {
+  order:2;
+  margin-top:15px;
+  color:#976400 !important;
+  font-size:16px;
+  font-weight:950;
+  line-height:1.25;
+  letter-spacing:.075em;
+  text-align:center;
+}
+
+.nf-top-card:not(.nf-top-card-limited)
+.nf-top-price {
+  order:3;
+  margin-top:9px;
+  color:#17120E !important;
+  font-size:18px;
+  font-weight:900;
+  line-height:1.25;
+  text-align:center;
+}
+
+/* Increase all important Limited Flavor text to readable sizes. */
+.nf-top-card-limited .nf-top-name {
+  font-size:26px !important;
+  line-height:1.08;
+}
+
+.nf-top-card-limited .nf-top-tagline {
+  font-size:16px !important;
+  line-height:1.25;
+}
+
+.nf-top-limited-message,
+.nf-top-card-limited
+.nf-top-limited-copy
+.nf-top-limited-message {
+  display:grid;
+  gap:3px;
+  color:#55360A !important;
+  font-size:16px !important;
+  font-weight:800 !important;
+  line-height:1.35;
+  text-align:center;
+}
+
+.nf-top-limited-message b {
+  color:#55360A;
+  font-size:17px;
+  font-weight:950;
+  line-height:1.25;
+}
+
+.nf-top-limited-message > span {
+  display:block;
+  color:#55360A;
+  font-size:16px;
+  font-weight:800;
+  line-height:1.35;
+}
+
+.nf-top-limited-count-label {
+  font-size:16px !important;
+}
+
+.nf-top-limited-count-number {
+  font-size:56px !important;
+}
+
+.nf-top-limited-count-unit {
+  max-width:82px;
+  font-size:16px !important;
+  line-height:1.05;
+}
+
+.nf-top-card-limited .nf-top-price {
+  font-size:18px !important;
+  line-height:1.25;
+}
+
+@media (max-width:900px) {
+  .nf-top-card:not(.nf-top-card-limited)
+  .nf-top-name-above {
+    font-size:23px;
+  }
+
+  .nf-top-card:not(.nf-top-card-limited) img {
+    max-height:270px;
+  }
+}
+
+@media (max-width:640px) {
+  .nf-top-card:not(.nf-top-card-limited) {
+    padding:16px 12px 18px !important;
+  }
+
+  .nf-top-card:not(.nf-top-card-limited)
+  .nf-top-name-above {
+    margin-bottom:11px;
+    font-size:21px;
+  }
+
+  .nf-top-card:not(.nf-top-card-limited) img {
+    max-height:230px;
+  }
+
+  .nf-top-card:not(.nf-top-card-limited)
+  .nf-top-tagline {
+    margin-top:12px;
+    font-size:16px;
+  }
+
+  .nf-top-card:not(.nf-top-card-limited)
+  .nf-top-price {
+    font-size:17px;
+  }
+
+  .nf-top-card-limited .nf-top-name {
+    font-size:22px !important;
+  }
+
+  .nf-top-limited-message,
+  .nf-top-limited-message > span {
+    font-size:16px !important;
+  }
+
+  .nf-top-limited-count-number {
+    font-size:50px !important;
+  }
+
+  .nf-top-limited-count-label,
+  .nf-top-limited-count-unit {
+    font-size:16px !important;
+  }
+}
+
+
+/* HOMEPAGE — CENTERED TOP PICKS WITH HONEYCOMB TEXTURE */
+
+/*
+  The Limited Flavor establishes the height of the Top Picks row.
+  The three regular cards remain compact and center themselves
+  vertically instead of stretching and leaving empty space inside.
+*/
+.nf-top-grid {
+  align-items:stretch !important;
+}
+
+.nf-top-card-limited {
+  align-self:stretch !important;
+}
+
+.nf-top-card:not(.nf-top-card-limited) {
+  position:relative;
+  isolation:isolate;
+  align-self:center !important;
+  height:auto !important;
+  min-height:0 !important;
+  max-height:none !important;
+  overflow:hidden;
+}
+
+/*
+  A very subtle CSS-only honeycomb pattern gives the compact cards
+  an intentional textured finish without adding words or imagery.
+*/
+.nf-top-card:not(.nf-top-card-limited)::before {
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  border-radius:inherit;
+  opacity:.18;
+  background-image:
+    linear-gradient(
+      30deg,
+      rgba(255,255,255,.34) 12%,
+      transparent 12.5%,
+      transparent 87%,
+      rgba(255,255,255,.34) 87.5%,
+      rgba(255,255,255,.34)
+    ),
+    linear-gradient(
+      150deg,
+      rgba(255,255,255,.34) 12%,
+      transparent 12.5%,
+      transparent 87%,
+      rgba(255,255,255,.34) 87.5%,
+      rgba(255,255,255,.34)
+    ),
+    linear-gradient(
+      30deg,
+      rgba(255,255,255,.34) 12%,
+      transparent 12.5%,
+      transparent 87%,
+      rgba(255,255,255,.34) 87.5%,
+      rgba(255,255,255,.34)
+    ),
+    linear-gradient(
+      150deg,
+      rgba(255,255,255,.34) 12%,
+      transparent 12.5%,
+      transparent 87%,
+      rgba(255,255,255,.34) 87.5%,
+      rgba(255,255,255,.34)
+    ),
+    linear-gradient(
+      60deg,
+      rgba(133,84,0,.09) 25%,
+      transparent 25.5%,
+      transparent 75%,
+      rgba(133,84,0,.09) 75%,
+      rgba(133,84,0,.09)
+    );
+  background-size:28px 49px;
+  background-position:
+    0 0,
+    0 0,
+    14px 24.5px,
+    14px 24.5px,
+    0 0;
+}
+
+.nf-top-card:not(.nf-top-card-limited) > * {
+  position:relative;
+  z-index:1;
+}
+
+.nf-top-card:not(.nf-top-card-limited):hover::before,
+.nf-top-card:not(.nf-top-card-limited).selected::before {
+  opacity:.13;
+}
+
+/*
+  Preserve a little editorial breathing room while ensuring the
+  compact cards never appear attached to the top or bottom edge.
+*/
+@media (min-width:901px) {
+  .nf-top-card:not(.nf-top-card-limited) {
+    margin-top:clamp(20px,2.3vw,38px);
+    margin-bottom:clamp(20px,2.3vw,38px);
+  }
+}
+
+@media (max-width:900px) {
+  .nf-top-card:not(.nf-top-card-limited) {
+    margin-top:18px;
+    margin-bottom:18px;
+  }
+
+  .nf-top-card:not(.nf-top-card-limited)::before {
+    background-size:24px 42px;
+    background-position:
+      0 0,
+      0 0,
+      12px 21px,
+      12px 21px,
+      0 0;
+  }
+}
+
+@media (max-width:640px) {
+  .nf-top-grid {
+    align-items:start !important;
+  }
+
+  .nf-top-card-limited,
+  .nf-top-card:not(.nf-top-card-limited) {
+    align-self:start !important;
+    margin-top:0;
+    margin-bottom:0;
+  }
+
+  .nf-top-card:not(.nf-top-card-limited)::before {
+    opacity:.13;
+  }
+}
+
+
+/* HOMEPAGE — SAFE TOP PICK NAVIGATION AND SOLD OUT OVERLAY */
+.nf-top-card {
+  cursor:pointer;
+}
+
+.nf-top-image-shell {
+  position:relative;
+  width:100%;
+  min-width:0;
+  overflow:hidden;
+  border-radius:16px;
+}
+
+.nf-top-card:not(.nf-top-card-limited)
+.nf-top-image-shell {
+  order:1;
+}
+
+.nf-top-image-shell > img {
+  display:block;
+}
+
+.nf-top-sold-out-overlay {
+  position:absolute;
+  inset:0;
+  z-index:5;
+  display:grid;
+  place-items:center;
+  padding:18px;
+  border-radius:inherit;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(20,49,67,.88),
+      rgba(10,31,44,.94)
+    );
+  color:#FFFFFF;
+  text-align:center;
+  pointer-events:none;
+}
+
+.nf-top-sold-out-overlay strong {
+  padding:10px 18px;
+  border:2px solid rgba(255,255,255,.88);
+  border-radius:999px;
+  background:rgba(183,34,34,.94);
+  box-shadow:
+    0 8px 20px rgba(0,0,0,.24),
+    0 0 0 4px rgba(255,255,255,.10);
+  color:#FFFFFF;
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:30px;
+  font-weight:400;
+  line-height:1;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+}
+
+.nf-top-card-sold-out .nf-top-price {
+  color:#8E2525 !important;
+  font-weight:950 !important;
+}
+
+.nf-top-card:focus-visible {
+  outline:4px solid rgba(20,127,190,.34);
+  outline-offset:4px;
+}
+
+.nf-admin-sold-out-toggle {
+  margin-top:4px;
+  border:1px solid #E7B6B6;
+  border-radius:12px;
+  background:#FFF4F4;
+  color:#8E2525;
+}
+
+.nf-admin-sold-out-toggle span {
+  color:#8E2525;
+  font-weight:900;
+}
+
+.nf-admin-sold-out-help {
+  display:block;
+  margin:-4px 0 8px;
+  color:#7A5B5B;
+  font-size:12px;
+  font-weight:650;
+  line-height:1.45;
+}
+
+@media (max-width:640px) {
+  .nf-top-sold-out-overlay strong {
+    padding:9px 14px;
+    font-size:25px;
+  }
+}
+
+
+/* HOMEPAGE — MOBILE TOP PICKS CENTERED BESIDE LIMITED FLAVOR */
+
+/*
+  The Limited Flavor creates a taller first grid row on mobile.
+  Center the regular card vertically inside that row so the open
+  space is divided evenly above and below instead of collecting
+  underneath the card.
+*/
+@media (max-width:640px) {
+  .nf-top-grid {
+    align-items:stretch !important;
+  }
+
+  .nf-top-grid > .nf-top-card-limited {
+    align-self:stretch !important;
+  }
+
+  .nf-top-grid >
+  .nf-top-card:not(.nf-top-card-limited) {
+    align-self:center !important;
+    margin-top:0 !important;
+    margin-bottom:0 !important;
+  }
+}
+
+
+/* HOMEPAGE — TOP PICKS USE LIVE INVENTORY */
+.nf-top-card-size-sold-out:not(:disabled) {
+  cursor:pointer;
+}
+
+.nf-top-card-all-sold-out,
+.nf-top-card-all-sold-out:hover {
+  cursor:not-allowed !important;
+  opacity:.82;
+  transform:none !important;
+}
+
+.nf-top-sold-out-overlay {
+  align-content:center;
+  gap:10px;
+}
+
+.nf-top-sold-out-overlay > span {
+  max-width:180px;
+  padding:6px 10px;
+  border-radius:999px;
+  background:rgba(255,255,255,.94);
+  color:#173C52;
+  font-size:14px;
+  font-weight:950;
+  line-height:1.25;
+  text-align:center;
+}
+
+.nf-top-limited-size-label {
+  margin-top:7px;
+  color:#8E2525;
+  font-size:14px;
+  font-weight:950;
+  line-height:1.2;
+  letter-spacing:.08em;
+  text-align:center;
+  text-transform:uppercase;
+}
+
+.nf-top-limited-untracked {
+  margin-top:7px;
+  padding:11px 12px;
+  border-top:1px solid rgba(201,34,40,.18);
+  color:#B0181E;
+  font-size:17px;
+  font-weight:950;
+  line-height:1.3;
+  text-align:center;
+}
+
+.nf-pick-card {
+  scroll-margin-top:110px;
+}
+
+.nf-pick-card.nf-top-pick-target {
+  position:relative;
+  z-index:2;
+  outline:5px solid rgba(20,127,190,.30);
+  outline-offset:4px;
+  box-shadow:
+    0 0 0 8px rgba(247,196,28,.18),
+    0 22px 42px rgba(36,112,155,.22);
+  animation:
+    nf-top-pick-target-pulse .72s
+    cubic-bezier(.22,1,.36,1) both;
+}
+
+@keyframes nf-top-pick-target-pulse {
+  0% {
+    transform:scale(.96);
+  }
+
+  65% {
+    transform:scale(1.025);
+  }
+
+  100% {
+    transform:scale(1);
+  }
+}
+
+.nf-admin-limited-stock-intro {
+  min-height:100%;
+  display:grid;
+  align-content:center;
+  gap:5px;
+  padding:12px;
+  border:1px solid #B7D9EC;
+  border-radius:12px;
+  background:#F1FAFF;
+}
+
+.nf-admin-limited-stock-intro strong {
+  color:#176D9F;
+  font-size:13px;
+  font-weight:950;
+}
+
+.nf-admin-limited-stock-intro span {
+  color:#456879;
+  font-size:12px;
+  font-weight:700;
+  line-height:1.4;
+}
+
+.nf-admin-limited-live-stock {
+  display:grid;
+  gap:13px;
+  margin-top:13px;
+  padding:15px;
+  border:2px solid #8DC6E3;
+  border-radius:15px;
+  background:
+    linear-gradient(
+      145deg,
+      #F5FCFF,
+      #EAF7FD
+    );
+}
+
+.nf-admin-limited-live-stock-heading {
+  display:grid;
+  gap:3px;
+}
+
+.nf-admin-limited-live-stock-heading strong {
+  color:#174F72;
+  font-size:16px;
+  font-weight:950;
+}
+
+.nf-admin-limited-live-stock-heading span {
+  color:#557584;
+  font-size:12px;
+  font-weight:700;
+  line-height:1.4;
+}
+
+.nf-admin-limited-stock-type {
+  display:grid;
+  gap:7px;
+}
+
+.nf-admin-limited-stock-type-label {
+  color:#8B5E00;
+  font-size:12px;
+  font-weight:950;
+  letter-spacing:.07em;
+  text-transform:uppercase;
+}
+
+.nf-admin-limited-stock-grid {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+
+.nf-admin-limited-stock-grid label {
+  display:grid;
+  gap:5px;
+  padding:9px;
+  border:1px solid #D3E4ED;
+  border-radius:11px;
+  background:#FFFFFF;
+}
+
+.nf-admin-limited-stock-grid label > span {
+  color:#3F5F70;
+  font-size:12px;
+  font-weight:900;
+  text-align:center;
+}
+
+.nf-admin-limited-stock-grid input {
+  width:100%;
+  min-width:0;
+  padding:9px 6px;
+  font-size:16px;
+  font-weight:900;
+  text-align:center;
+}
+
+.nf-admin-limited-live-stock > small {
+  color:#557584;
+  font-size:11.5px;
+  font-weight:700;
+  line-height:1.45;
+}
+
+@media (max-width:640px) {
+  .nf-top-sold-out-overlay > span {
+    max-width:145px;
+    font-size:12px;
+  }
+
+  .nf-top-limited-size-label {
+    font-size:12px;
+  }
+
+  .nf-admin-limited-stock-grid {
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:5px;
+  }
+
+  .nf-admin-limited-stock-grid label {
+    padding:7px 5px;
+  }
+
+  .nf-admin-limited-stock-grid input {
+    font-size:15px;
+  }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .nf-pick-card.nf-top-pick-target {
+    animation:none !important;
+  }
+}
+
+
+/* HOMEPAGE — TOP PICKS ADD DIRECTLY WITH LIVE INVENTORY */
+.nf-continue-help > div > strong:only-child {
+  display:block;
+  max-width:310px;
+  font-size:16px;
+  line-height:1.4;
+}
+
+/* HOMEPAGE — LINE JARS INSIDE BLUE CART BAR */
+.nf-cart-tray .nf-cart-summary {
+  display:grid;
+  grid-template-columns:
+    minmax(410px,1.45fr)
+    minmax(145px,.48fr)
+    auto;
+  align-items:center;
+  gap:16px;
+}
+
+.nf-cart-bundle-rail {
+  min-width:0;
+  display:grid;
+  grid-template-columns:minmax(180px,.65fr) minmax(0,1.35fr);
+  align-items:center;
+  gap:14px;
+  padding-right:17px;
+  border-right:1px solid rgba(255,255,255,.33);
+  color:#FFFFFF;
+}
+
+.nf-cart-bundle-rail-copy {
+  min-width:0;
+  display:grid;
+  gap:4px;
+}
+
+.nf-cart-bundle-rail-heading {
+  color:#FFF1AE;
+  font-size:10px;
+  font-weight:950;
+  line-height:1.2;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+}
+
+.nf-cart-bundle-rail-status {
+  min-width:0;
+  display:grid;
+  gap:2px;
+}
+
+.nf-cart-bundle-rail-status strong {
+  overflow:hidden;
+  color:#FFFFFF;
+  font-size:13px;
+  font-weight:950;
+  line-height:1.2;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.nf-cart-bundle-rail-status span {
+  overflow:hidden;
+  color:rgba(255,255,255,.83);
+  font-size:9.5px;
+  font-weight:700;
+  line-height:1.3;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.nf-cart-bundle-rail-jars {
+  min-width:0;
+  display:flex;
+  align-items:flex-end;
+  gap:6px;
+  overflow-x:auto;
+  padding:2px 3px 3px;
+  scrollbar-width:thin;
+  scrollbar-color:
+    rgba(255,255,255,.48)
+    rgba(255,255,255,.10);
+}
+
+.nf-cart-bundle-rail-jar {
+  flex:0 0 54px;
+  display:grid;
+  justify-items:center;
+  align-items:end;
+  gap:0;
+}
+
+.nf-cart-bundle-rail-jar svg {
+  overflow:visible;
+  filter:drop-shadow(0 5px 6px rgba(11,74,111,.24));
+}
+
+.nf-cart-bundle-rail-jar > span {
+  max-width:54px;
+  overflow:hidden;
+  color:#FFFFFF;
+  font-size:7px;
+  font-weight:900;
+  line-height:1.1;
+  letter-spacing:.04em;
+  text-align:center;
+  text-overflow:ellipsis;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+
+.nf-cart-bundle-rail-jar.is-complete {
+  animation:
+    nf-cart-bundle-jar-enter .38s
+    cubic-bezier(.22,1,.36,1) both;
+}
+
+.nf-cart-bundle-rail-jar.is-current > div {
+  gap:0 !important;
+}
+
+.nf-cart-bundle-rail-jar.is-current > div > div:last-child {
+  margin-top:-3px;
+  font-size:8px !important;
+}
+
+.nf-cart-totals {
+  min-width:0;
+}
+
+@keyframes nf-cart-bundle-jar-enter {
+  0% {
+    opacity:0;
+    transform:translateY(8px) scale(.72);
+  }
+
+  70% {
+    opacity:1;
+    transform:translateY(-2px) scale(1.05);
+  }
+
+  100% {
+    opacity:1;
+    transform:translateY(0) scale(1);
+  }
+}
+
+@media (max-width:900px) {
+  .nf-cart-tray .nf-cart-summary {
+    grid-template-columns:
+      minmax(315px,1.25fr)
+      minmax(125px,.45fr)
+      auto;
+    gap:11px;
+  }
+
+  .nf-cart-bundle-rail {
+    grid-template-columns:minmax(145px,.62fr) minmax(0,1.38fr);
+    gap:9px;
+    padding-right:11px;
+  }
+
+  .nf-cart-bundle-rail-heading {
+    font-size:8.5px;
+  }
+
+  .nf-cart-bundle-rail-status strong {
+    font-size:11px;
+  }
+
+  .nf-cart-bundle-rail-status span {
+    font-size:8px;
+  }
+
+  .nf-cart-bundle-rail-jar {
+    flex-basis:47px;
+  }
+
+  .nf-cart-bundle-rail-jar svg {
+    width:46px;
+    height:46px;
+  }
+}
+
+@media (max-width:640px) {
+  .nf-cart-tray .nf-cart-summary {
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:8px 10px;
+  }
+
+  .nf-cart-bundle-rail {
+    grid-column:1 / -1;
+    width:100%;
+    grid-template-columns:minmax(130px,.72fr) minmax(0,1.28fr);
+    gap:8px;
+    padding:3px 0 7px;
+    border-right:0;
+    border-bottom:1px solid rgba(255,255,255,.28);
+  }
+
+  .nf-cart-bundle-rail-heading {
+    font-size:8px;
+  }
+
+  .nf-cart-bundle-rail-status strong {
+    font-size:10.5px;
+  }
+
+  .nf-cart-bundle-rail-status span {
+    font-size:7.5px;
+  }
+
+  .nf-cart-bundle-rail-jars {
+    gap:2px;
+  }
+
+  .nf-cart-bundle-rail-jar {
+    flex-basis:41px;
+  }
+
+  .nf-cart-bundle-rail-jar svg {
+    width:40px;
+    height:40px;
+  }
+
+  .nf-cart-bundle-rail-jar > span {
+    max-width:41px;
+    font-size:6px;
+  }
+
+  .nf-cart-summary > .btn {
+    align-self:end;
+  }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .nf-cart-bundle-rail-jar.is-complete {
+    animation:none !important;
+  }
+}
+
 .nf-about {
   padding-top:44px; padding-bottom:60px;
   display:grid; grid-template-columns:minmax(280px,.8fr) minmax(0,1.2fr);
@@ -7201,6 +8340,7 @@ export default function App() {
   const [reviewOpen, setReviewOpen] = useState(false);
   const [continueAttemptKey, setContinueAttemptKey] = useState("");
   const [continueHelp, setContinueHelp] = useState("");
+  const [topPickFocusId, setTopPickFocusId] = useState("");
   const [deliveryWarningDismissedAt, setDeliveryWarningDismissedAt] = useState(null);
   const [method, setMethod] = useState(null);
   const [zip, setZip] = useState("");
@@ -7246,6 +8386,19 @@ export default function App() {
     const timer = window.setTimeout(() => setDockHasEntered(true), 80);
     return () => window.clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (!topPickFocusId || typeof window === "undefined") {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(
+      () => setTopPickFocusId(""),
+      3600
+    );
+
+    return () => window.clearTimeout(timer);
+  }, [topPickFocusId]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -7345,11 +8498,156 @@ export default function App() {
     return Number.isFinite(count) ? Math.max(0, count) : null;
   };
 
-  const addJar = (f) => {
+  // HOMEPAGE — TOP PICKS USE CART-ADJUSTED INVENTORY
+  const topPickInventoryFor = (flavor) =>
+    (cat?.sizes ?? []).map((size) => {
+      const limit = inventoryLimit(
+        flavor.id,
+        size.id,
+        pickType
+      );
+
+      const quantityInCart = cart
+        .filter(
+          (item) =>
+            item.flavor_id === flavor.id &&
+            item.size_id === size.id &&
+            item.type === pickType
+        )
+        .reduce(
+          (total, item) =>
+            total + Number(item.qty || 0),
+          0
+        );
+
+      const remaining =
+        limit === null
+          ? null
+          : Math.max(
+              0,
+              limit - quantityInCart
+            );
+
+      const stockAvailable =
+        flavorAvailableForType(
+          flavor,
+          size.id,
+          pickType
+        );
+
+      const available =
+        stockAvailable &&
+        (
+          remaining === null ||
+          remaining > 0
+        );
+
+      const cartLimitReached =
+        stockAvailable &&
+        limit !== null &&
+        limit > 0 &&
+        remaining === 0 &&
+        quantityInCart > 0;
+
+      return {
+        id: size.id,
+        label: size.label,
+        price: size.price,
+        limit,
+        quantityInCart,
+        remaining,
+        stockAvailable,
+        cartLimitReached,
+        available,
+      };
+    });
+
+  const openTopPickFlavor = (
+    flavor,
+    sizeInventory
+  ) => {
+    const selectedInventory =
+      sizeInventory.find(
+        (size) => size.id === pickSize
+      );
+
+    const targetInventory =
+      selectedInventory?.available
+        ? selectedInventory
+        : sizeInventory.find(
+            (size) => size.available
+          );
+
+    if (!targetInventory) {
+      const allAvailableInCart =
+        sizeInventory.some(
+          (size) => size.cartLimitReached
+        );
+
+      setContinueAttemptKey("");
+      setContinueHelp(
+        allAvailableInCart
+          ? `${flavor.name} is already at the available quantity in your cart.`
+          : `${flavor.name} is currently sold out in every size.`
+      );
+      return;
+    }
+
+    const targetCartItem = cart.find(
+      (item) =>
+        item.flavor_id === flavor.id &&
+        item.size_id === targetInventory.id &&
+        item.type === pickType
+    );
+
+    const targetQuantity =
+      targetCartItem?.qty ?? 0;
+
+    if (
+      targetInventory.limit !== null &&
+      targetQuantity >= targetInventory.limit
+    ) {
+      setContinueAttemptKey("");
+      setContinueHelp(
+        `${flavor.name} is already at the available quantity in your cart.`
+      );
+      return;
+    }
+
+    if (targetInventory.id !== pickSize) {
+      setPickSize(targetInventory.id);
+    }
+
+    setContinueAttemptKey("");
+    setContinueHelp(
+      "Select the size and additional flavors below."
+    );
+
+    addJar(
+      flavor,
+      targetInventory.id,
+      pickType
+    );
+  };
+
+  const addJar = (
+    f,
+    sizeId = pickSize,
+    typeId = pickType
+  ) => {
     setCartOpen(false);
     setCart((cc) => {
-    const i = cc.findIndex((x) => x.flavor_id === f.id && x.size_id === pickSize && x.type === pickType);
-    const limit = inventoryLimit(f.id, pickSize, pickType);
+    const i = cc.findIndex(
+      (x) =>
+        x.flavor_id === f.id &&
+        x.size_id === sizeId &&
+        x.type === typeId
+    );
+    const limit = inventoryLimit(
+      f.id,
+      sizeId,
+      typeId
+    );
     const current = i > -1 ? cc[i].qty : 0;
 
     if (limit !== null && current >= limit) return cc;
@@ -7364,8 +8662,8 @@ export default function App() {
       flavor_id: f.id,
       flavor: f.name,
       hex: f.hex,
-      size_id: pickSize,
-      type: pickType,
+      size_id: sizeId,
+      type: typeId,
       qty: 1
     }];
     });
@@ -8363,7 +9661,7 @@ export default function App() {
                   onClick={() => { pushHome(); setReceipt(null); setView("subscribe"); }}>View Offers</button>
               </div>
 
-              {canKill ? (
+              {canChange ? (
                 <div style={{ marginTop: 22, textAlign: "center" }}>
                   <button className="btn danger" style={{ padding: "12px 24px" }} onClick={kill} disabled={busy}>
                     {busy ? "Cancelling…" : "Cancel this order"}
@@ -8812,14 +10110,9 @@ export default function App() {
             {(cat.topPicks?.length
               ? cat.topPicks
                   .filter(
-                    (pick, index) =>
+                    (pick) =>
                       pick.active !== false &&
-                      pick.flavor_id &&
-                      !(
-                        index === 0 &&
-                        pick.limited === true &&
-                        Number(pick.remaining) <= 0
-                      )
+                      pick.flavor_id
                   )
                   .map((pick) => {
                     const flavor = cat.flavors.find((item) => item.id === pick.flavor_id);
@@ -8837,28 +10130,69 @@ export default function App() {
                 }).filter(Boolean)
             ).map((pick) => {
               const flavor = pick.flavor;
-              const image = pick.image_url || flavorImage(flavor);
-              const selected = cart.some((item) =>
-                item.flavor_id === flavor.id &&
-                item.size_id === pickSize &&
-                item.type === pickType &&
-                item.qty > 0
-              );
-              const available = flavorAvailableForType(flavor, pickSize, pickType);
+              const image =
+                pick.image_url || flavorImage(flavor);
+              const sizeInventory =
+                topPickInventoryFor(flavor);
+              const selectedInventory =
+                sizeInventory.find(
+                  (size) => size.id === pickSize
+                );
+              const availableSizes =
+                sizeInventory.filter(
+                  (size) => size.available
+                );
+              const allSizesSoldOut =
+                availableSizes.length === 0;
+              const selectedSizeSoldOut =
+                !selectedInventory?.available;
+              const selectedSizeCartLimitReached =
+                selectedInventory?.cartLimitReached === true;
+              const anySizeCartLimitReached =
+                sizeInventory.some(
+                  (size) =>
+                    size.cartLimitReached
+                );
+              const selectedCount =
+                selectedInventory?.remaining ?? null;
+              const limitedDisplayCount =
+                selectedSizeSoldOut
+                  ? 0
+                  : selectedCount;
+              const availableSizeLabels =
+                availableSizes
+                  .map((size) => size.label)
+                  .join(" · ");
 
               return (
                 <button
                   key={flavor.id}
+                  type="button"
                   className={`nf-top-card ${
-                    selected ? "selected" : ""
-                  } ${
                     pick.limited === true
                       ? "nf-top-card-limited"
                       : ""
+                  } ${
+                    selectedSizeSoldOut
+                      ? "nf-top-card-size-sold-out"
+                      : ""
+                  } ${
+                    allSizesSoldOut
+                      ? "nf-top-card-all-sold-out"
+                      : ""
                   }`}
-                  onClick={() => {
-                    if (available) addJar(flavor);
-                  }}
+                  disabled={allSizesSoldOut}
+                  aria-label={
+                    allSizesSoldOut
+                      ? `${flavor.name} is sold out in every size.`
+                      : `${flavor.name}. Add this flavor to your cart.`
+                  }
+                  onClick={() =>
+                    openTopPickFlavor(
+                      flavor,
+                      sizeInventory
+                    )
+                  }
                 >
                   {pick.limited === true && (
                     <span className="nf-top-limited-badge">
@@ -8867,14 +10201,66 @@ export default function App() {
                     </span>
                   )}
 
-                  {image ? (
-                    <img src={image} alt={`${flavor.name} infused honey`} />
-                  ) : (
-                    <div className="nf-top-image-placeholder" style={{ background: flavor.hex }}>
+                  {pick.limited !== true && (
+                    <div className="nf-top-name nf-top-name-above">
                       {flavor.name}
                     </div>
                   )}
-                  <div className="nf-top-name">{flavor.name}</div>
+
+                  <div className="nf-top-image-shell">
+                    {image ? (
+                      <img
+                        src={image}
+                        alt={`${flavor.name} infused honey`}
+                      />
+                    ) : (
+                      <div
+                        className="nf-top-image-placeholder"
+                        style={{ background: flavor.hex }}
+                      >
+                        {flavor.name}
+                      </div>
+                    )}
+
+                    {selectedSizeSoldOut && (
+                      <div
+                        className="nf-top-sold-out-overlay"
+                        aria-label={
+                          allSizesSoldOut
+                            ? `${flavor.name} is sold out`
+                            : `${flavor.name} is sold out in ${selectedInventory?.label || sizeOf(pickSize).label}`
+                        }
+                      >
+                        <strong>
+                          {selectedSizeCartLimitReached
+                            ? `All ${
+                                selectedInventory?.label ||
+                                sizeOf(pickSize).label
+                              } in your cart`
+                            : allSizesSoldOut
+                              ? "Sold Out"
+                              : `Sold Out in ${
+                                  selectedInventory?.label ||
+                                  sizeOf(pickSize).label
+                                }`}
+                        </strong>
+
+                        {!allSizesSoldOut && (
+                          <span>
+                            Available in{" "}
+                            {availableSizeLabels}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {pick.limited === true && (
+                    <div className="nf-top-name">
+                      {flavor.name}
+                    </div>
+                  )}
+
                   <div className="nf-top-tagline">
                     {pick.tagline || "Customer favorite"}
                   </div>
@@ -8882,21 +10268,83 @@ export default function App() {
                   {pick.limited === true && (
                     <div className="nf-top-limited-copy">
                       {pick.limited_message && (
-                        <span>{pick.limited_message}</span>
+                        <span className="nf-top-limited-message">
+                          {pick.limited_message.startsWith("Small batch.") ? (
+                            <>
+                              <b>Small batch.</b>
+                              <span>
+                                {pick.limited_message
+                                  .slice("Small batch.".length)
+                                  .trim()}
+                              </span>
+                            </>
+                          ) : (
+                            pick.limited_message
+                          )}
+                        </span>
                       )}
 
-                      <strong>
-                        {Number(pick.remaining) === 1
-                          ? "Only 1 jar remains"
-                          : `Only ${Number(
-                              pick.remaining
-                            )} jars remain`}
-                      </strong>
+                      <div className="nf-top-limited-size-label">
+                        {selectedInventory?.label ||
+                          sizeOf(pickSize).label}{" "}
+                        selected
+                      </div>
+
+                      {limitedDisplayCount === null ? (
+                        <div className="nf-top-limited-untracked">
+                          Available in this size
+                        </div>
+                      ) : (
+                        <div
+                          className="nf-top-limited-countdown"
+                          aria-label={`Only ${limitedDisplayCount} ${
+                            limitedDisplayCount === 1
+                              ? "jar remains"
+                              : "jars remain"
+                          } in ${
+                            selectedInventory?.label ||
+                            sizeOf(pickSize).label
+                          }`}
+                        >
+                          <span className="nf-top-limited-count-label">
+                            Only
+                          </span>
+
+                          <strong className="nf-top-limited-count-number">
+                            {limitedDisplayCount}
+                          </strong>
+
+                          <span className="nf-top-limited-count-unit">
+                            {limitedDisplayCount === 1
+                              ? "jar remains"
+                              : "jars remain"}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   )}
 
                   <div className="nf-top-price">
-                    {available ? `From ${money(sizeOf("4oz").price)}` : "Currently sold out"}
+                    {allSizesSoldOut
+                      ? anySizeCartLimitReached
+                        ? "All available quantities are in your cart"
+                        : "Currently sold out"
+                      : selectedSizeSoldOut
+                        ? selectedSizeCartLimitReached
+                          ? `${
+                              selectedInventory?.label ||
+                              sizeOf(pickSize).label
+                            } limit reached · Available in ${availableSizeLabels}`
+                          : `Available in ${availableSizeLabels}`
+                        : selectedCount === null
+                          ? `${
+                              selectedInventory?.label ||
+                              sizeOf(pickSize).label
+                            } available`
+                          : `${
+                              selectedInventory?.label ||
+                              sizeOf(pickSize).label
+                            } · ${selectedCount} available`}
                   </div>
                 </button>
               );
@@ -9026,7 +10474,17 @@ export default function App() {
               const best = cat.bestSeller === f.name;
 
               return (
-                <article key={f.id} className={`nf-pick-card ${inCart ? "selected" : ""}`}>
+                <article
+                  id={`flavor-card-${f.id}`}
+                  key={f.id}
+                  className={`nf-pick-card ${
+                    inCart ? "selected" : ""
+                  } ${
+                    topPickFocusId === f.id
+                      ? "nf-top-pick-target"
+                      : ""
+                  }`}
+                >
                   <div className="nf-pick-image-wrap">
                     {inCart && (
                       <span className="nf-pick-selected-badge">
@@ -9333,8 +10791,15 @@ export default function App() {
       {continueHelp && (
         <div className="nf-continue-help" role="status" aria-live="polite">
           <div>
-            <strong>Need a hand?</strong>
-            <span>{continueHelp}</span>
+            {continueHelp ===
+            "Select the size and additional flavors below." ? (
+              <strong>{continueHelp}</strong>
+            ) : (
+              <>
+                <strong>Need a hand?</strong>
+                <span>{continueHelp}</span>
+              </>
+            )}
           </div>
           <button
             type="button"
@@ -9584,6 +11049,75 @@ export default function App() {
               )}
 
             <div className="nf-cart-summary">
+              {price.jars > 0 && (
+                <section
+                  className="nf-cart-bundle-rail"
+                  aria-label={`${price.bundles} completed bundles and ${
+                    price.jars % B.count
+                  } of ${B.count} jars selected for the next bundle`}
+                >
+                  <div className="nf-cart-bundle-rail-copy">
+                    <div className="nf-cart-bundle-rail-heading">
+                      {sizeOf(B.size).label} Bundle · {B.count} for{" "}
+                      {money(B.price)}
+                    </div>
+
+                    <div
+                      className="nf-cart-bundle-rail-status"
+                      aria-live="polite"
+                    >
+                      {price.jars % B.count === 0 ? (
+                        <>
+                          <strong>
+                            {price.bundles} bundle
+                            {price.bundles > 1 ? "s" : ""} complete
+                          </strong>
+                          <span>
+                            Start selecting your next bundle
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <strong>
+                            {price.jars % B.count}/{B.count} jars selected
+                          </strong>
+                          <span>
+                            Choose{" "}
+                            {B.count - (price.jars % B.count)} more
+                            to complete this bundle
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="nf-cart-bundle-rail-jars">
+                    {Array.from({
+                      length: price.bundles,
+                    }).map((_, index) => (
+                      <div
+                        className="nf-cart-bundle-rail-jar is-complete"
+                        key={`completed-bundle-${index}`}
+                      >
+                        <LockedBundleIcon size={50} />
+                        <span>Bundle {index + 1}</span>
+                      </div>
+                    ))}
+
+                    <div
+                      className="nf-cart-bundle-rail-jar is-current"
+                      key={`current-bundle-${price.bundles}`}
+                    >
+                      <HoneyJarProgress
+                        filled={price.jars % B.count}
+                        total={B.count}
+                        size={56}
+                      />
+                    </div>
+                  </div>
+                </section>
+              )}
+
               <div className="nf-cart-totals">
                 <div>Merchandise subtotal: {money(price.sub)}</div>
                 {method === "delivery" && <div>Delivery: {fee > 0 ? money(fee) : "Free"}</div>}
@@ -11593,26 +13127,16 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                           {pick.limited === true && (
                             <>
                               <div className="nf-admin-limited-grid">
-                                <label>
-                                  <span>Quantity remaining</span>
-                                  <input
-                                    type="number"
-                                    min="0"
-                                    step="1"
-                                    value={pick.remaining ?? 0}
-                                    onChange={(event) =>
-                                      updateTopPick(index, {
-                                        remaining: Math.max(
-                                          0,
-                                          Number.parseInt(
-                                            event.target.value,
-                                            10
-                                          ) || 0
-                                        ),
-                                      })
-                                    }
-                                  />
-                                </label>
+                                <div className="nf-admin-limited-stock-intro">
+                                  <strong>
+                                    Live inventory
+                                  </strong>
+                                  <span>
+                                    Sold Out banners and countdowns now
+                                    follow the selected flavor’s real
+                                    inventory.
+                                  </span>
+                                </div>
 
                                 <label>
                                   <span>Limited badge</span>
@@ -11652,28 +13176,97 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                                 />
                               </label>
 
-                              <div
-                                className={`nf-admin-limited-preview ${
-                                  Number(pick.remaining) > 0
-                                    ? "available"
-                                    : "empty"
-                                }`}
-                              >
+                              {flavor && (
+                                <section className="nf-admin-limited-live-stock">
+                                  <div className="nf-admin-limited-live-stock-heading">
+                                    <strong>
+                                      Special inventory by size
+                                    </strong>
+                                    <span>
+                                      Orders reduce these quantities automatically.
+                                    </span>
+                                  </div>
+
+                                  {TYPES.map((type) => {
+                                    const spunLocked =
+                                      type.id === "spun" &&
+                                      !spunEnabledDraft;
+
+                                    return (
+                                      <div
+                                        className="nf-admin-limited-stock-type"
+                                        key={type.id}
+                                      >
+                                        <div className="nf-admin-limited-stock-type-label">
+                                          {type.name}
+                                          {spunLocked
+                                            ? " · storefront unavailable"
+                                            : ""}
+                                        </div>
+
+                                        <div className="nf-admin-limited-stock-grid">
+                                          {cat.sizes.map((size) => {
+                                            const count =
+                                              api.stockCount(
+                                                flavor,
+                                                size.id,
+                                                type.id
+                                              );
+
+                                            return (
+                                              <label
+                                                key={`${flavor.id}-${type.id}-${size.id}`}
+                                              >
+                                                <span>
+                                                  {size.label}
+                                                </span>
+                                                <input
+                                                  type="number"
+                                                  min="0"
+                                                  step="1"
+                                                  defaultValue={count}
+                                                  placeholder="0"
+                                                  disabled={spunLocked}
+                                                  aria-label={`${flavor.name} ${size.label} ${type.name} special inventory`}
+                                                  onBlur={(event) => {
+                                                    if (spunLocked) return;
+
+                                                    guard(() =>
+                                                      api.setStockCount(
+                                                        flavor.id,
+                                                        size.id,
+                                                        type.id,
+                                                        event.target.value
+                                                      )
+                                                    );
+                                                  }}
+                                                />
+                                              </label>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+
+                                  <small>
+                                    These are the same quantities used by
+                                    the regular flavor cards and protected
+                                    during checkout.
+                                  </small>
+                                </section>
+                              )}
+
+                              <div className="nf-admin-limited-preview available">
                                 <strong>
                                   {pick.limited_label ||
                                     "Limited Release"}
                                 </strong>
 
                                 <span>
-                                  {Number(pick.remaining) > 0
-                                    ? `${
-                                        Number(pick.remaining) === 1
-                                          ? "1 jar remains"
-                                          : `${Number(
-                                              pick.remaining
-                                            )} jars remain`
-                                      }`
-                                    : "This offer will be hidden because the remaining quantity is zero."}
+                                  {flavor
+                                    ? "Live inventory connected. The storefront countdown changes with the shopper’s selected size and texture."
+                                    : "Choose a flavor above to connect its live inventory."}
                                 </span>
                               </div>
                             </>
