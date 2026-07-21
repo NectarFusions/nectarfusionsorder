@@ -289,12 +289,24 @@ const ClubBenefitIcon = ({ kind }) => {
   );
 };
 
-/* --- deep link: /order/<token> lets a customer reopen their order later --- */
+/* --- private customer deep links --- */
 const TOKEN_RE = /^\/order\/([0-9a-f-]{36})\/?$/i;
-const tokenFromUrl = () => (window.location.pathname.match(TOKEN_RE) || [])[1] || null;
-const pushOrderUrl = (token) => window.history.pushState({}, "", `/order/${token}`);
-const pushHome = () => window.history.pushState({}, "", "/");
-export const orderUrl = (token) => `${window.location.origin}/order/${token}`;
+const CLUB_TOKEN_RE = /^\/club\/([0-9a-f-]{36})\/?$/i;
+
+const tokenFromUrl = () =>
+  (window.location.pathname.match(TOKEN_RE) || [])[1] || null;
+
+const clubTokenFromUrl = () =>
+  (window.location.pathname.match(CLUB_TOKEN_RE) || [])[1] || null;
+
+const pushOrderUrl = (token) =>
+  window.history.pushState({}, "", `/order/${token}`);
+
+const pushHome = () =>
+  window.history.pushState({}, "", "/");
+
+export const orderUrl = (token) =>
+  `${window.location.origin}/order/${token}`;
 
 const Field = ({ value, onChange, placeholder, type, required = true, rows }) => {
   const filled = String(value || "").trim().length > 0;
@@ -6661,6 +6673,23 @@ export default function App() {
     </>
   );
 
+  /* ================= PRIVATE HONEY CLUB ACCOUNT ================= */
+  const clubToken = clubTokenFromUrl();
+
+  if (clubToken) {
+    return (
+      <HoneyClubAccount
+        Header={Header}
+        token={clubToken}
+        onBack={() => {
+          pushHome();
+          setErr(null);
+          setView("shop");
+        }}
+      />
+    );
+  }
+
   /* ================= PARTNER ================= */
   if (view === "partner") {
     return <PartnerPage
@@ -8272,6 +8301,525 @@ function FindNectarFusions({ Header, onBack, marketDates = [] }) {
 }
 
 /* ============================================================
+   PRIVATE HONEY CLUB ACCOUNT
+   ============================================================ */
+function HoneyClubAccount({ Header, token, onBack }) {
+  const [membership, setMembership] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [requestState, setRequestState] = useState("");
+  const [requestError, setRequestError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    const load = async () => {
+      setLoading(true);
+      setLoadError("");
+
+      try {
+        const result = await api.getCustomerSubscription(token);
+
+        if (active) {
+          setMembership(result);
+        }
+      } catch (error) {
+        if (active) {
+          setLoadError(
+            error.message ||
+            "This Honey Club link could not be opened."
+          );
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+
+    load();
+
+    return () => {
+      active = false;
+    };
+  }, [token]);
+
+  const statusLabel = (status) => {
+    const labels = {
+      active: "Active",
+      pending: "Payment setup pending",
+      past_due: "Payment issue",
+      cancelled: "Cancelled",
+    };
+
+    return labels[status] || "Membership";
+  };
+
+  const cadenceLabel = (cadence) =>
+    cadence === "2mo"
+      ? "Every 2 months"
+      : cadence === "1mo"
+        ? "Monthly"
+        : cadence || "Membership schedule";
+
+  const methodLabel = (method) => {
+    const labels = {
+      delivery: "Local delivery",
+      market: "Market pickup",
+      ship: "Shipping",
+    };
+
+    return labels[method] || method || "Fulfillment";
+  };
+
+  const requestCancellation = async () => {
+    if (
+      !confirm(
+        "Send a cancellation request for this Honey Club membership?\n\n" +
+        "This will notify NectarFusions. It will not immediately cancel " +
+        "Square billing."
+      )
+    ) {
+      return;
+    }
+
+    setRequestState("sending");
+    setRequestError("");
+
+    try {
+      const result =
+        await api.requestSubscriptionCancellation(token);
+
+      setMembership((current) => ({
+        ...current,
+        cancellationRequested: true,
+        cancellationRequestStatus:
+          result.requestStatus || "new",
+      }));
+
+      setRequestState(
+        result.alreadyRequested ? "already" : "sent"
+      );
+    } catch (error) {
+      setRequestState("");
+      setRequestError(
+        error.message ||
+        "Your cancellation request could not be sent."
+      );
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="nf">
+        <style>{CSS}</style>
+
+        <Header
+          eyebrow="The Honey Club"
+          title="MEMBER DETAILS"
+          right={
+            <button className="btn ghost" onClick={onBack}>
+              Back to shop
+            </button>
+          }
+        />
+
+        <div
+          className="nf-wrap"
+          style={{ paddingTop: 35, textAlign: "center" }}
+        >
+          <div className="card" style={{ padding: 28 }}>
+            <Logo size={62} />
+
+            <div
+              className="display"
+              style={{
+                fontSize: 29,
+                color: c.darkBrown,
+                marginTop: 12,
+              }}
+            >
+              OPENING YOUR MEMBERSHIP
+            </div>
+
+            <p
+              style={{
+                color: c.brown,
+                fontSize: 16,
+                lineHeight: 1.6,
+                marginBottom: 0,
+              }}
+            >
+              Loading your private Honey Club details…
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (loadError || !membership) {
+    return (
+      <div className="nf">
+        <style>{CSS}</style>
+
+        <Header
+          eyebrow="The Honey Club"
+          title="MEMBER DETAILS"
+          right={
+            <button className="btn ghost" onClick={onBack}>
+              Back to shop
+            </button>
+          }
+        />
+
+        <div className="nf-wrap" style={{ paddingTop: 30 }}>
+          <div
+            className="card"
+            style={{
+              padding: 22,
+              borderColor: c.red,
+              textAlign: "center",
+            }}
+          >
+            <div className="err">
+              {loadError ||
+                "This Honey Club link could not be opened."}
+            </div>
+
+            <p
+              style={{
+                color: c.brown,
+                fontSize: 16,
+                lineHeight: 1.6,
+                marginBottom: 0,
+              }}
+            >
+              Check the private link from your confirmation
+              email or contact NectarFusions for help.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const cancelled = membership.status === "cancelled";
+  const cancellationRequested =
+    membership.cancellationRequested;
+
+  return (
+    <div className="nf">
+      <style>{CSS}</style>
+
+      <Header
+        eyebrow="The Honey Club"
+        title="MY MEMBERSHIP"
+        right={
+          <button className="btn ghost" onClick={onBack}>
+            Back to shop
+          </button>
+        }
+      />
+
+      <div className="nf-wrap" style={{ paddingTop: 26 }}>
+        <section
+          className="card"
+          style={{
+            padding: 22,
+            borderColor: cancellationRequested
+              ? c.red
+              : cancelled
+                ? c.tan
+                : c.gold,
+            background: cancellationRequested
+              ? "#FFF8F8"
+              : "#FFFBF0",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              gap: 12,
+            }}
+          >
+            <div>
+              <div className="eyebrow">
+                Honey Club membership
+              </div>
+
+              <div
+                className="num"
+                style={{
+                  fontSize: 46,
+                  color: c.darkBrown,
+                  marginTop: 3,
+                }}
+              >
+                #{membership.subNo}
+              </div>
+            </div>
+
+            <span
+              className="tag"
+              style={{
+                background: cancelled
+                  ? c.tan
+                  : membership.status === "past_due"
+                    ? c.red
+                    : membership.status === "pending"
+                      ? c.orange
+                      : "#6E8C58",
+              }}
+            >
+              {statusLabel(membership.status)}
+            </span>
+          </div>
+
+          <div
+            style={{
+              marginTop: 12,
+              fontSize: 17,
+              fontWeight: 750,
+              color: c.darkBrown,
+            }}
+          >
+            {membership.planName}
+          </div>
+
+          <div
+            style={{
+              fontSize: 16,
+              lineHeight: 1.7,
+              color: c.brown,
+              marginTop: 5,
+            }}
+          >
+            {cadenceLabel(membership.cadence)}
+            {" · "}
+            {methodLabel(membership.method)}
+            {membership.price > 0 &&
+              ` · ${money(membership.price)} per box`}
+            {membership.boxesSent > 0 &&
+              ` · ${membership.boxesSent} ${
+                membership.boxesSent === 1
+                  ? "box"
+                  : "boxes"
+              } sent`}
+          </div>
+
+          {membership.pausedUntil && (
+            <div
+              style={{
+                marginTop: 12,
+                padding: 11,
+                borderRadius: 10,
+                background: "#F3FAFE",
+                color: "#315E78",
+                fontSize: 16,
+                lineHeight: 1.55,
+              }}
+            >
+              Your next box is currently skipped. Square is
+              scheduled to resume the membership after{" "}
+              <strong>{membership.pausedUntil}</strong>.
+            </div>
+          )}
+        </section>
+
+        {cancellationRequested && !cancelled && (
+          <section
+            className="card"
+            style={{
+              marginTop: 14,
+              padding: 18,
+              borderColor: c.red,
+              background: "#FFF1F1",
+            }}
+          >
+            <div
+              className="display"
+              style={{ fontSize: 27, color: c.red }}
+            >
+              CANCELLATION REQUESTED
+            </div>
+
+            <p
+              style={{
+                margin: "7px 0 0",
+                color: c.brown,
+                fontSize: 16,
+                lineHeight: 1.6,
+              }}
+            >
+              We received your cancellation request. We’ll email
+              you as soon as your membership has been cancelled.
+            </p>
+          </section>
+        )}
+
+        {cancelled && (
+          <section
+            className="card"
+            style={{
+              marginTop: 14,
+              padding: 18,
+              borderColor: c.tan,
+              background: "#FBF7F1",
+              textAlign: "center",
+            }}
+          >
+            <div
+              className="display"
+              style={{ fontSize: 27, color: c.darkBrown }}
+            >
+              MEMBERSHIP CANCELLED
+            </div>
+
+            <p
+              style={{
+                margin: "7px 0 0",
+                color: c.brown,
+                fontSize: 16,
+                lineHeight: 1.6,
+              }}
+            >
+              This Honey Club membership is no longer active.
+            </p>
+          </section>
+        )}
+
+        {!cancelled && !cancellationRequested && (
+          <section
+            className="card"
+            style={{
+              marginTop: 14,
+              padding: 18,
+              borderColor: "#E2D6C4",
+            }}
+          >
+            <div className="eyebrow">
+              Membership assistance
+            </div>
+
+            <div
+              className="display"
+              style={{
+                fontSize: 28,
+                color: c.darkBrown,
+                marginTop: 5,
+              }}
+            >
+              NEED TO CANCEL?
+            </div>
+
+            <p
+              style={{
+                color: c.brown,
+                fontSize: 16,
+                lineHeight: 1.65,
+                margin: "8px 0 13px",
+              }}
+            >
+              Send a cancellation request directly to
+              NectarFusions. We will review it before changing
+              your Square billing.
+            </p>
+
+            {requestError && (
+              <div className="err" style={{ marginBottom: 10 }}>
+                {requestError}
+              </div>
+            )}
+
+            <button
+              type="button"
+              className="btn danger"
+              style={{
+                width: "100%",
+                padding: 14,
+                fontSize: 16,
+              }}
+              disabled={
+                cancellationRequested ||
+                requestState === "sending"
+              }
+              onClick={requestCancellation}
+            >
+              {requestState === "sending"
+                ? "Sending request…"
+                : cancellationRequested
+                  ? "Cancellation requested ✓"
+                  : "Request Cancellation"}
+            </button>
+
+            {requestState === "sent" && (
+              <div
+                role="status"
+                style={{
+                  marginTop: 10,
+                  color: "#4F6B3C",
+                  fontSize: 16,
+                  fontWeight: 750,
+                  textAlign: "center",
+                }}
+              >
+                Your request was sent successfully.
+              </div>
+            )}
+
+            {requestState === "already" && (
+              <div
+                role="status"
+                style={{
+                  marginTop: 10,
+                  color: c.brown,
+                  fontSize: 16,
+                  fontWeight: 700,
+                  textAlign: "center",
+                }}
+              >
+                NectarFusions already has an open cancellation
+                request for this membership.
+              </div>
+            )}
+
+            <div
+              style={{
+                marginTop: 10,
+                color: c.tan,
+                fontSize: 16,
+                lineHeight: 1.55,
+                textAlign: "center",
+              }}
+            >
+              This button sends a request. It does not
+              immediately cancel the membership or stop Square
+              billing.
+            </div>
+          </section>
+        )}
+
+        <button
+          className="btn ghost"
+          style={{
+            width: "100%",
+            padding: 14,
+            marginTop: 12,
+            marginBottom: 35,
+          }}
+          onClick={onBack}
+        >
+          Back to the shop
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
    ORDER HELP
    ============================================================ */
 function OrderHelp({ Header, onBack, onOrderFound, initialOrderNo}) {
@@ -9599,17 +10147,57 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                   const skipScheduled = !!s.paused_until && s.paused_until >= api.today();
                   const canDelete = !s.square_subscription_id && (pending || cx);
 
+                  const cancellationRequest = openRequests.find(
+                    (request) =>
+                      request.request_kind ===
+                        "continue_with_cancellation" &&
+                      request.account_kind === "subscription" &&
+                      String(
+                        request.order_or_subscription_no || ""
+                      )
+                        .replace(/^#/, "")
+                        .trim() === String(s.sub_no)
+                  );
+
                   return (
                     <div key={s.id} className="card" style={{ padding: 13, marginBottom: 8, opacity: cx ? .62 : 1,
-                      borderColor: cx ? "#E2D6C4" : late ? c.red : pending ? c.orange : skipScheduled ? c.tan : c.sky }}>
+                      borderColor: cancellationRequest ? c.red : cx ? "#E2D6C4" : late ? c.red : pending ? c.orange : skipScheduled ? c.tan : c.sky }}>
                       <div style={{ display: "flex", alignItems: "baseline", gap: 9 }}>
                         <span className="num" style={{ fontSize: 22, color: c.darkBrown }}>#{s.sub_no}</span>
                         <span style={{ fontWeight: 600, fontSize: 14.5, flex: 1, minWidth: 0 }}>{s.customers?.name}</span>
                         <span className="num" style={{ fontSize: 19, color: c.brown }}>{p ? money(p.price) : "—"}</span>
                       </div>
+
+                      {cancellationRequest && (
+                        <div
+                          style={{
+                            marginTop: 8,
+                            padding: "8px 10px",
+                            border: `2px solid ${c.red}`,
+                            borderRadius: 10,
+                            background: "#FFF1F1",
+                            color: c.red,
+                            fontSize: 11.5,
+                            fontWeight: 900,
+                            letterSpacing: ".04em",
+                          }}
+                        >
+                          CANCELLATION REQUESTED
+                          {cancellationRequest.status ===
+                            "in_progress"
+                            ? " · IN PROGRESS"
+                            : ""}
+                        </div>
+                      )}
+
                       <div style={{ fontSize: 12.5, color: c.brown, marginTop: 4 }}>
                         {p?.name || s.plan_id} · {s.cadence === "2mo" ? "Every 2 months" : "Monthly"} · {s.method}
-                        {s.boxes_sent > 0 && ` · ${s.boxes_sent} boxes sent`}
+                        {s.boxes_sent > 0 &&
+                          ` · ${s.boxes_sent} ${
+                            s.boxes_sent === 1
+                              ? "box"
+                              : "boxes"
+                          } sent`}
                       </div>
                       <div style={{ fontSize: 12.5, color: c.tan }}>{s.customers?.phone} · {s.customers?.email}</div>
                       {(s.flavor_mode || s.flavor_preferences?.length || s.flavor_requests) && (
@@ -9640,7 +10228,11 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                               </button>
                               <button className="btn danger" style={{ padding: "8px 12px", fontSize: 12.5 }}
                                 onClick={() => confirm(`Cancel #${s.sub_no}?`) &&
-                                  guard(() => api.subAction(s.id, "cancel"))}>Cancel</button>
+                                  guard(() => api.subAction(s.id, "cancel"))}>
+                                  {cancellationRequest
+                                    ? "Complete cancellation"
+                                    : "Cancel"}
+                                </button>
                             </div>
                           )}
                           <button className="btn ghost" style={{ width: "100%", padding: "9px 12px", marginTop: 7, fontSize: 12.5 }}

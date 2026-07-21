@@ -651,6 +651,70 @@ export async function cancelSubscription(token) {
   if (error) throw new Error(error.message);
 }
 
+export async function getCustomerSubscription(token) {
+  const response = await fetch(
+    "/.netlify/functions/customer-subscription",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ token }),
+    }
+  );
+
+  const text = await response.text();
+  let data = {};
+
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = {};
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      data.error ||
+      "Your Honey Club membership could not be loaded."
+    );
+  }
+
+  return data.subscription;
+}
+
+export async function requestSubscriptionCancellation(token) {
+  const response = await fetch(
+    "/.netlify/functions/customer-subscription-cancel-request",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ token }),
+    }
+  );
+
+  const text = await response.text();
+  let data = {};
+
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = {};
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      data.error ||
+      "Your cancellation request could not be sent."
+    );
+  }
+
+  return data;
+}
+
+
+
 /* ---------- Square (via Netlify functions) ---------- */
 
 export async function payLink(token) {
