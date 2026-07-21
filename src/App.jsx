@@ -5954,6 +5954,1119 @@ body {
   }
 }
 
+
+/* NECTARFUSIONS DIFFERENCE — PAGE POLISH */
+.nf-difference-page {
+  padding-bottom:0 !important;
+  background:
+    linear-gradient(
+      180deg,
+      #FFFFFF 0%,
+      #FFFFFF 34%,
+      #F8FBFD 70%,
+      #FFFFFF 100%
+    );
+}
+
+.nf-difference-main {
+  padding-top:30px !important;
+  padding-bottom:92px !important;
+}
+
+.nf-difference-intro {
+  margin-bottom:46px;
+  padding:38px 40px 34px;
+  overflow:hidden;
+  position:relative;
+  border:1px solid #D8E8F1;
+  border-radius:30px;
+  background:
+    radial-gradient(
+      circle at 92% 12%,
+      rgba(247,196,28,.20),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 4% 100%,
+      rgba(36,160,237,.12),
+      transparent 38%
+    ),
+    linear-gradient(145deg,#FFFFFF,#F7FBFE);
+  box-shadow:
+    0 18px 42px rgba(32,86,122,.09),
+    0 5px 13px rgba(46,33,23,.04);
+}
+
+.nf-difference-intro::after {
+  content:"";
+  position:absolute;
+  top:-80px;
+  right:-65px;
+  width:220px;
+  height:220px;
+  border:28px solid rgba(247,196,28,.10);
+  border-radius:50%;
+  pointer-events:none;
+}
+
+.nf-difference-intro .nf-modern-kicker,
+.nf-difference-intro h2,
+.nf-difference-intro p,
+.nf-difference-jump {
+  position:relative;
+  z-index:1;
+}
+
+.nf-difference-intro h2 {
+  max-width:790px;
+  margin:10px 0 14px;
+  color:#17120E;
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:54px;
+  line-height:.94;
+  letter-spacing:.015em;
+}
+
+.nf-difference-intro > p {
+  max-width:780px;
+  margin:0;
+  color:#52616A;
+  font-size:16px;
+  font-weight:600;
+  line-height:1.7;
+}
+
+.nf-difference-jump {
+  display:grid;
+  gap:10px;
+  margin-top:26px;
+  padding-top:22px;
+  border-top:1px solid #DCE9F0;
+}
+
+.nf-difference-jump > span {
+  color:#7B5821;
+  font-size:10px;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.13em;
+}
+
+.nf-difference-jump > div {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+.nf-difference-jump button {
+  min-height:38px;
+  padding:8px 13px;
+  border:1px solid #BBD9EA;
+  border-radius:999px;
+  background:#FFFFFF;
+  color:#174F72;
+  font:inherit;
+  font-size:11.5px;
+  font-weight:850;
+  line-height:1.15;
+  cursor:pointer;
+  box-shadow:0 4px 10px rgba(32,86,122,.05);
+  transition:
+    transform .16s ease,
+    border-color .16s ease,
+    background .16s ease,
+    box-shadow .16s ease;
+}
+
+.nf-difference-jump button:hover,
+.nf-difference-jump button:focus-visible {
+  transform:translateY(-1px);
+  border-color:#147FBE;
+  background:#EAF6FD;
+  box-shadow:0 7px 15px rgba(32,86,122,.10);
+}
+
+.nf-difference-story {
+  grid-template-columns:minmax(430px,1.02fr) minmax(0,.98fr) !important;
+  align-items:start !important;
+  gap:54px !important;
+  margin-bottom:54px;
+}
+
+.nf-story-gallery-three {
+  min-height:735px !important;
+}
+
+.nf-story-photo {
+  display:grid;
+  grid-template-rows:minmax(0,1fr) auto;
+  border:1px solid #D9E5EB !important;
+  border-radius:27px !important;
+  background:#FFFFFF !important;
+  box-shadow:
+    0 20px 42px rgba(32,86,122,.12),
+    0 5px 12px rgba(46,33,23,.06) !important;
+}
+
+.nf-story-photo img {
+  min-width:0;
+  min-height:0;
+}
+
+.nf-story-photo figcaption {
+  padding:12px 15px !important;
+  border-top:1px solid #E5EDF1;
+  background:rgba(255,255,255,.98) !important;
+  color:#52616A !important;
+  font-size:11px !important;
+  font-weight:800 !important;
+  line-height:1.45 !important;
+  text-align:left;
+}
+
+.nf-story-photo-founders {
+  width:86% !important;
+  height:455px !important;
+  border-color:#C9DFEB !important;
+}
+
+.nf-story-gallery-three .nf-story-photo-primary {
+  top:390px !important;
+  width:65% !important;
+  height:292px !important;
+  border:6px solid #FFFFFF !important;
+}
+
+.nf-story-gallery-three .nf-story-photo-secondary {
+  width:55% !important;
+  height:258px !important;
+  border:6px solid #FFFFFF !important;
+}
+
+.nf-story-copy {
+  padding:34px 35px 36px;
+  border:1px solid #E3E9EC;
+  border-radius:28px;
+  background:#FFFFFF;
+  box-shadow:
+    0 17px 38px rgba(32,86,122,.08),
+    0 4px 10px rgba(46,33,23,.04);
+}
+
+.nf-story-copy h2 {
+  margin-top:8px;
+  margin-bottom:20px;
+  font-size:58px !important;
+  line-height:.9;
+}
+
+.nf-story-copy p {
+  color:#536069 !important;
+  font-size:15px !important;
+  line-height:1.78 !important;
+}
+
+.nf-story-opening {
+  margin-bottom:22px !important;
+  padding:16px 18px;
+  border-left:5px solid #147FBE;
+  border-radius:0 14px 14px 0;
+  background:#EFF8FD;
+  color:#174F72 !important;
+  font-size:18px !important;
+  line-height:1.55 !important;
+}
+
+.nf-story-closing {
+  margin-top:24px !important;
+  padding:18px 19px !important;
+  border-top:0 !important;
+  border-left:5px solid #F2AA00;
+  border-radius:0 14px 14px 0;
+  background:#FFF7D8;
+  color:#4A3510 !important;
+  line-height:1.65 !important;
+}
+
+.nf-difference-section {
+  position:relative;
+  grid-template-columns:82px minmax(0,1fr) !important;
+  gap:28px !important;
+  max-width:980px !important;
+  margin-top:20px !important;
+  padding:38px 40px !important;
+  overflow:hidden;
+  border:1px solid #DCE7ED !important;
+  border-radius:27px !important;
+  background:
+    linear-gradient(145deg,#FFFFFF 0%,#F8FBFD 100%) !important;
+  box-shadow:
+    0 13px 30px rgba(32,86,122,.07),
+    0 4px 10px rgba(46,33,23,.035) !important;
+  transition:
+    transform .2s ease,
+    border-color .2s ease,
+    box-shadow .2s ease;
+}
+
+.nf-difference-section::before {
+  content:"";
+  position:absolute;
+  top:24px;
+  bottom:24px;
+  left:0;
+  width:5px;
+  border-radius:0 999px 999px 0;
+  background:linear-gradient(180deg,#72B7E4,#147FBE);
+}
+
+.nf-difference-section:hover {
+  transform:translateY(-3px);
+  border-color:#AFD2E5 !important;
+  box-shadow:
+    0 18px 38px rgba(32,86,122,.11),
+    0 6px 14px rgba(46,33,23,.05) !important;
+}
+
+.nf-difference-number {
+  width:70px;
+  height:70px;
+  display:grid;
+  place-items:center;
+  border:1px solid #BBD9EA;
+  border-radius:20px;
+  background:#EAF6FD;
+  color:#147FBE !important;
+  font-size:39px !important;
+  line-height:1 !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.8);
+}
+
+.nf-difference-section h3 {
+  margin:6px 0 13px !important;
+  font-size:42px !important;
+  line-height:.96 !important;
+}
+
+.nf-difference-section p {
+  max-width:760px;
+  color:#536069 !important;
+  font-size:15.5px !important;
+  line-height:1.76 !important;
+}
+
+.nf-difference-section .nf-modern-kicker {
+  color:#147FBE;
+}
+
+.nf-difference-final {
+  border-color:#E2B73B !important;
+  background:
+    radial-gradient(
+      circle at 92% 10%,
+      rgba(247,196,28,.22),
+      transparent 34%
+    ),
+    linear-gradient(145deg,#FFFDF4,#FFF8D9) !important;
+  box-shadow:
+    0 16px 36px rgba(181,116,0,.12),
+    0 4px 10px rgba(46,33,23,.04) !important;
+}
+
+.nf-difference-final::before {
+  background:linear-gradient(180deg,#F7C41C,#D88D00);
+}
+
+.nf-difference-final .nf-difference-number {
+  border-color:#E3BB42;
+  background:#F7C41C;
+  color:#3F2B00 !important;
+}
+
+.nf-difference-final .nf-modern-kicker {
+  color:#A56800;
+}
+
+.nf-difference-final .nf-modern-primary {
+  min-height:49px;
+  margin-top:14px;
+  padding:13px 22px;
+  font-size:15px;
+}
+
+@media (max-width:900px) {
+  .nf-difference-story {
+    grid-template-columns:1fr !important;
+    gap:30px !important;
+  }
+
+  .nf-story-gallery-three {
+    width:min(100%,680px);
+    margin:0 auto;
+  }
+
+  .nf-story-copy {
+    width:min(100%,760px);
+    margin:0 auto;
+  }
+}
+
+@media (max-width:700px) {
+  .nf-difference-main {
+    padding-top:18px !important;
+    padding-bottom:58px !important;
+  }
+
+  .nf-difference-intro {
+    margin-bottom:30px;
+    padding:27px 21px 23px;
+    border-radius:24px;
+  }
+
+  .nf-difference-intro h2 {
+    margin-top:8px;
+    font-size:42px;
+  }
+
+  .nf-difference-intro > p {
+    font-size:14.5px;
+    line-height:1.65;
+  }
+
+  .nf-difference-jump {
+    margin-top:20px;
+    padding-top:18px;
+  }
+
+  .nf-difference-jump > div {
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    padding:1px 1px 5px;
+    scrollbar-width:none;
+  }
+
+  .nf-difference-jump > div::-webkit-scrollbar {
+    display:none;
+  }
+
+  .nf-difference-jump button {
+    flex:0 0 auto;
+  }
+
+  .nf-story-gallery-three {
+    min-height:0 !important;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+  }
+
+  .nf-story-photo-founders,
+  .nf-story-gallery-three .nf-story-photo-primary,
+  .nf-story-gallery-three .nf-story-photo-secondary {
+    position:relative !important;
+    inset:auto !important;
+    width:100% !important;
+    border:1px solid #D9E5EB !important;
+  }
+
+  .nf-story-photo-founders {
+    grid-column:1 / -1;
+    height:360px !important;
+  }
+
+  .nf-story-gallery-three .nf-story-photo-primary,
+  .nf-story-gallery-three .nf-story-photo-secondary {
+    height:245px !important;
+  }
+
+  .nf-story-copy {
+    padding:26px 21px 27px;
+    border-radius:23px;
+  }
+
+  .nf-story-copy h2 {
+    font-size:47px !important;
+  }
+
+  .nf-story-opening {
+    padding:14px 15px;
+    font-size:16px !important;
+  }
+
+  .nf-difference-section {
+    grid-template-columns:58px minmax(0,1fr) !important;
+    gap:14px !important;
+    padding:25px 19px 25px 17px !important;
+    border-radius:22px !important;
+  }
+
+  .nf-difference-section::before {
+    top:18px;
+    bottom:18px;
+    width:4px;
+  }
+
+  .nf-difference-number {
+    width:52px;
+    height:52px;
+    border-radius:15px;
+    font-size:30px !important;
+  }
+
+  .nf-difference-section h3 {
+    margin-top:4px !important;
+    font-size:32px !important;
+  }
+
+  .nf-difference-section p {
+    font-size:14px !important;
+    line-height:1.68 !important;
+  }
+}
+
+@media (max-width:470px) {
+  .nf-story-gallery-three {
+    grid-template-columns:1fr;
+  }
+
+  .nf-story-photo-founders {
+    grid-column:auto;
+    height:320px !important;
+  }
+
+  .nf-story-gallery-three .nf-story-photo-primary,
+  .nf-story-gallery-three .nf-story-photo-secondary {
+    height:265px !important;
+  }
+
+  .nf-difference-intro h2 {
+    font-size:38px;
+  }
+
+  .nf-difference-section {
+    grid-template-columns:48px minmax(0,1fr) !important;
+    gap:12px !important;
+    padding-left:14px !important;
+    padding-right:14px !important;
+  }
+
+  .nf-difference-number {
+    width:45px;
+    height:45px;
+    border-radius:13px;
+    font-size:27px !important;
+  }
+
+  .nf-difference-section h3 {
+    font-size:29px !important;
+  }
+}
+
+
+/* DIFFERENCE PAGE — STICKY NAVIGATION, CAPTIONS, AND STORY LOGO */
+.nf-difference-intro {
+  margin-bottom:0 !important;
+  border-bottom:0 !important;
+  border-radius:30px 30px 0 0 !important;
+}
+
+.nf-difference-jump-sticky {
+  position:sticky;
+  top:76px;
+  z-index:105;
+  margin:0 0 46px;
+  padding:18px 20px 20px;
+  border:1px solid #D8E8F1;
+  border-top:1px solid #DCE9F0;
+  border-radius:0 0 25px 25px;
+  background:rgba(255,255,255,.96);
+  box-shadow:
+    0 14px 28px rgba(32,86,122,.10),
+    0 4px 10px rgba(46,33,23,.04);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+}
+
+.nf-difference-jump-sticky > span {
+  color:#8A5A00;
+  font-size:11px;
+  font-weight:950;
+  letter-spacing:.14em;
+}
+
+.nf-difference-jump-sticky > div {
+  display:grid;
+  grid-template-columns:repeat(8,minmax(0,1fr));
+  gap:10px;
+  overflow:visible;
+}
+
+.nf-difference-jump-sticky button {
+  width:100%;
+  min-width:0;
+  min-height:54px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:10px 8px;
+  border-width:1.5px;
+  border-radius:15px;
+  font-size:13.5px;
+  font-weight:900;
+  line-height:1.2;
+  text-align:center;
+  white-space:normal;
+}
+
+.nf-difference-jump-sticky button:hover,
+.nf-difference-jump-sticky button:focus-visible {
+  background:#EAF6FD;
+  border-color:#147FBE;
+  color:#0C6FA9;
+}
+
+.nf-about-anchor {
+  scroll-margin-top:190px !important;
+}
+
+.nf-difference-story {
+  align-items:stretch !important;
+}
+
+.nf-story-gallery-three {
+  align-self:stretch !important;
+  height:100%;
+  min-height:790px !important;
+  isolation:isolate;
+  overflow:visible;
+}
+
+.nf-story-photo {
+  overflow:hidden !important;
+}
+
+.nf-story-photo figcaption {
+  position:relative;
+  z-index:6;
+  min-height:62px;
+  display:flex;
+  align-items:center;
+  padding:13px 16px !important;
+  overflow:visible;
+  white-space:normal;
+  font-size:12.5px !important;
+  line-height:1.45 !important;
+}
+
+.nf-story-photo-founders {
+  height:455px !important;
+}
+
+.nf-story-gallery-three .nf-story-photo-primary {
+  top:455px !important;
+  height:292px !important;
+}
+
+.nf-story-gallery-three .nf-story-photo-secondary {
+  bottom:0 !important;
+  height:258px !important;
+}
+
+.nf-story-watermark-logo {
+  position:absolute;
+  left:-185px;
+  bottom:-20px;
+  z-index:0;
+  width:620px;
+  height:620px;
+  object-fit:contain;
+  opacity:.075;
+  transform:rotate(-10deg);
+  pointer-events:none;
+  user-select:none;
+  filter:drop-shadow(0 18px 34px rgba(32,86,122,.10));
+}
+
+.nf-animations-ready .nf-story-watermark-logo {
+  opacity:0;
+  transform:translate3d(-35px,28px,0) rotate(-14deg);
+  transition:
+    opacity 1.2s ease .2s,
+    transform 1.6s cubic-bezier(.16,1,.3,1) .2s;
+}
+
+.nf-animations-ready
+.nf-story-gallery.nf-reveal.nf-reveal-visible
+.nf-story-watermark-logo {
+  opacity:.075;
+  transform:translate3d(0,0,0) rotate(-10deg);
+}
+
+@media (max-width:1000px) {
+  .nf-difference-jump-sticky > div {
+    grid-template-columns:repeat(4,minmax(0,1fr));
+  }
+}
+
+@media (max-width:700px) {
+  .nf-difference-intro {
+    border-radius:24px 24px 0 0 !important;
+  }
+
+  .nf-difference-jump-sticky {
+    top:66px;
+    margin-bottom:30px;
+    padding:12px 12px 14px;
+    border-radius:0 0 20px 20px;
+  }
+
+  .nf-difference-jump-sticky > span {
+    font-size:10px;
+  }
+
+  .nf-difference-jump-sticky > div {
+    display:flex;
+    grid-template-columns:none;
+    gap:8px;
+    overflow-x:auto;
+    padding:1px 1px 5px;
+    scrollbar-width:none;
+  }
+
+  .nf-difference-jump-sticky > div::-webkit-scrollbar {
+    display:none;
+  }
+
+  .nf-difference-jump-sticky button {
+    flex:0 0 154px;
+    min-height:48px;
+    font-size:13px;
+  }
+
+  .nf-about-anchor {
+    scroll-margin-top:165px !important;
+  }
+
+  .nf-story-gallery-three {
+    height:auto;
+    min-height:0 !important;
+  }
+
+  .nf-story-watermark-logo {
+    display:none;
+  }
+
+  .nf-story-photo figcaption {
+    min-height:58px;
+    font-size:11.5px !important;
+  }
+
+  .nf-story-photo-founders,
+  .nf-story-gallery-three .nf-story-photo-primary,
+  .nf-story-gallery-three .nf-story-photo-secondary {
+    position:relative !important;
+    inset:auto !important;
+  }
+}
+
+
+/* DIFFERENCE STORY — INTENTIONAL IMAGE GALLERY */
+.nf-difference-page {
+
+  overflow-x:clip !important;
+}
+
+.nf-story-photo figcaption {
+  justify-content:center !important;
+  text-align:center !important;
+  padding:13px 12px !important;
+  white-space:normal !important;
+}
+
+.nf-story-gallery-three {
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  grid-template-rows:auto auto;
+  gap:16px !important;
+  align-content:start !important;
+  min-height:0 !important;
+  position:relative;
+  isolation:isolate;
+}
+
+.nf-story-photo-founders,
+.nf-story-gallery-three .nf-story-photo-primary,
+.nf-story-gallery-three .nf-story-photo-secondary {
+  position:relative !important;
+  inset:auto !important;
+  width:100% !important;
+  margin:0 !important;
+  border:1px solid #D9E5EB !important;
+  z-index:2;
+}
+
+.nf-story-photo-founders {
+  grid-column:1 / -1;
+  grid-row:1;
+  height:430px !important;
+}
+
+.nf-story-gallery-three .nf-story-photo-primary {
+  grid-column:1;
+  grid-row:2;
+  height:270px !important;
+}
+
+.nf-story-gallery-three .nf-story-photo-secondary {
+  grid-column:2;
+  grid-row:2;
+  height:270px !important;
+}
+
+.nf-story-photo-founders figcaption {
+  min-height:62px;
+  font-size:12px !important;
+}
+
+.nf-story-gallery-three .nf-story-photo-primary figcaption,
+.nf-story-gallery-three .nf-story-photo-secondary figcaption {
+  min-height:70px;
+  font-size:11.5px !important;
+}
+
+@media (min-width:901px) {
+  .nf-story-gallery-three {
+    height:100% !important;
+    padding-bottom:190px;
+  }
+
+  .nf-story-watermark-logo {
+    position:absolute !important;
+    left:-205px !important;
+    right:auto !important;
+    top:auto !important;
+    bottom:-125px !important;
+    width:610px !important;
+    height:610px !important;
+    max-width:none !important;
+    margin:0 !important;
+    opacity:.065 !important;
+    transform:rotate(-9deg) !important;
+    z-index:0 !important;
+  }
+
+  .nf-animations-ready .nf-story-watermark-logo {
+    opacity:0 !important;
+    transform:
+      translate3d(-34px,28px,0)
+      rotate(-13deg) !important;
+  }
+
+  .nf-animations-ready
+  .nf-story-gallery.nf-reveal.nf-reveal-visible
+  .nf-story-watermark-logo {
+    opacity:.065 !important;
+    transform:
+      translate3d(0,0,0)
+      rotate(-9deg) !important;
+  }
+}
+
+@media (max-width:900px) {
+  .nf-story-gallery-three {
+    width:min(100%,720px);
+    height:auto !important;
+    margin:0 auto;
+    padding-bottom:0;
+  }
+
+  .nf-story-photo-founders {
+    height:430px !important;
+  }
+
+  .nf-story-gallery-three .nf-story-photo-primary,
+  .nf-story-gallery-three .nf-story-photo-secondary {
+    height:275px !important;
+  }
+
+  .nf-story-watermark-logo {
+    display:none !important;
+  }
+}
+
+@media (max-width:600px) {
+  .nf-story-gallery-three {
+    grid-template-columns:1fr !important;
+    gap:13px !important;
+  }
+
+  .nf-story-photo-founders,
+  .nf-story-gallery-three .nf-story-photo-primary,
+  .nf-story-gallery-three .nf-story-photo-secondary {
+    grid-column:1;
+    grid-row:auto;
+  }
+
+  .nf-story-photo-founders {
+    height:360px !important;
+  }
+
+  .nf-story-gallery-three .nf-story-photo-primary,
+  .nf-story-gallery-three .nf-story-photo-secondary {
+    height:300px !important;
+  }
+
+  .nf-story-photo figcaption,
+  .nf-story-photo-founders figcaption,
+  .nf-story-gallery-three .nf-story-photo-primary figcaption,
+  .nf-story-gallery-three .nf-story-photo-secondary figcaption {
+    min-height:58px;
+    padding:12px 11px !important;
+    font-size:11px !important;
+  }
+}
+
+
+/* DIFFERENCE STORY — FEATURED FAMILY STATEMENT */
+.nf-story-family-statement {
+  position:relative;
+  z-index:3;
+  grid-column:1 / -1;
+  grid-row:3;
+  margin-top:8px;
+  padding:31px 32px 34px;
+  overflow:hidden;
+  isolation:isolate;
+  border:1px solid #D6E5ED;
+  border-radius:27px;
+  background:
+    radial-gradient(
+      circle at 94% 12%,
+      rgba(247,196,28,.19),
+      transparent 34%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.90),
+      rgba(246,251,254,.88)
+    );
+  box-shadow:
+    0 18px 38px rgba(32,86,122,.10),
+    0 5px 12px rgba(46,33,23,.04);
+}
+
+.nf-story-family-statement::before {
+  content:"";
+  position:absolute;
+  top:23px;
+  bottom:23px;
+  left:0;
+  width:7px;
+  border-radius:0 999px 999px 0;
+  background:
+    linear-gradient(
+      180deg,
+      #F7C41C 0%,
+      #D88D00 34%,
+      #D95F27 62%,
+      #147FBE 100%
+    );
+}
+
+.nf-story-family-statement::after {
+  content:"";
+  position:absolute;
+  right:-75px;
+  bottom:-95px;
+  z-index:-1;
+  width:260px;
+  height:260px;
+  border:30px solid rgba(20,127,190,.055);
+  border-radius:50%;
+  pointer-events:none;
+}
+
+.nf-story-family-kicker {
+  margin:0 0 13px;
+  color:#A56800;
+  font-size:11px;
+  font-weight:950;
+  line-height:1.2;
+  text-transform:uppercase;
+  letter-spacing:.17em;
+}
+
+.nf-story-family-statement p {
+  max-width:760px;
+  margin:0;
+  color:#17120E;
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:clamp(38px,3.4vw,56px);
+  font-weight:400;
+  line-height:.98;
+  letter-spacing:.012em;
+  text-wrap:balance;
+}
+
+.nf-family-word {
+  display:inline;
+  font-size:1.08em;
+  font-weight:950;
+  line-height:inherit;
+}
+
+.nf-family-word-gold {
+  color:#D88D00;
+}
+
+.nf-family-word-blue {
+  color:#147FBE;
+}
+
+.nf-family-word-orange {
+  color:#D95F27;
+}
+
+@media (min-width:901px) {
+  .nf-story-gallery-three {
+    padding-bottom:0 !important;
+  }
+
+  .nf-story-watermark-logo {
+    left:-180px !important;
+    bottom:35px !important;
+    width:590px !important;
+    height:590px !important;
+    opacity:.07 !important;
+  }
+
+  .nf-animations-ready .nf-story-watermark-logo {
+    opacity:0 !important;
+  }
+
+  .nf-animations-ready
+  .nf-story-gallery.nf-reveal.nf-reveal-visible
+  .nf-story-watermark-logo {
+    opacity:.07 !important;
+  }
+}
+
+@media (max-width:900px) {
+  .nf-story-family-statement {
+    grid-column:1 / -1;
+    grid-row:3;
+    padding:27px 26px 30px;
+  }
+
+  .nf-story-family-statement p {
+    font-size:clamp(34px,5.5vw,48px);
+  }
+}
+
+@media (max-width:600px) {
+  .nf-story-family-statement {
+    grid-column:1;
+    grid-row:auto;
+    margin-top:2px;
+    padding:24px 21px 27px;
+    border-radius:22px;
+  }
+
+  .nf-story-family-statement::before {
+    top:18px;
+    bottom:18px;
+    width:5px;
+  }
+
+  .nf-story-family-kicker {
+    margin-bottom:10px;
+    font-size:10px;
+  }
+
+  .nf-story-family-statement p {
+    font-size:31px;
+    line-height:1.01;
+  }
+}
+
+@media (max-width:390px) {
+  .nf-story-family-statement {
+    padding:21px 18px 24px;
+  }
+
+  .nf-story-family-statement p {
+    font-size:27px;
+  }
+}
+
+
+/* DIFFERENCE PAGE — FINAL TEXT AND MOTION REFINEMENT */
+.nf-difference-intro h2 {
+  color:#147FBE !important;
+}
+
+.nf-story-opening-second-line {
+  display:inline-block;
+  margin-top:3px;
+}
+
+.nf-animations-ready .nf-difference-intro.nf-reveal,
+.nf-animations-ready .nf-story-family-statement.nf-reveal {
+  opacity:0;
+  transform:translate3d(0,18px,0) scale(.992);
+  transition:
+    opacity .72s cubic-bezier(.22,1,.36,1)
+      var(--nf-reveal-delay,0ms),
+    transform .84s cubic-bezier(.22,1,.36,1)
+      var(--nf-reveal-delay,0ms);
+}
+
+.nf-animations-ready
+.nf-difference-intro.nf-reveal.nf-reveal-visible,
+.nf-animations-ready
+.nf-story-family-statement.nf-reveal.nf-reveal-visible {
+  opacity:1;
+  transform:translate3d(0,0,0) scale(1);
+}
+
+
+/* DIFFERENCE PAGE — VERIFIED STICKY AND HEADING FIX */
+.nf-difference-page {
+  overflow-x:clip !important;
+  overflow-y:visible !important;
+}
+
+.nf-difference-main {
+  overflow:visible !important;
+  contain:none !important;
+}
+
+.nf-difference-intro h2 {
+  color:#147FBE !important;
+}
+
+.nf-difference-intro-line {
+  display:block !important;
+}
+
+.nf-difference-intro-second-line {
+  margin-top:2px;
+}
+
+.nf-difference-jump-sticky {
+  position:-webkit-sticky !important;
+  position:sticky !important;
+  top:76px !important;
+  z-index:109 !important;
+  align-self:start !important;
+}
+
+@media (max-width:700px) {
+  .nf-difference-jump-sticky {
+    top:66px !important;
+  }
+}
+
 .nf-admin-limited-preview.available {
   border:1px solid #D7A91A;
   background:#FFF1AF;
@@ -6347,6 +7460,8 @@ export default function App() {
       ".nf-about-image",
       ".nf-about-copy",
       ".nf-page-heading",
+      ".nf-difference-intro",
+      ".nf-story-family-statement",
       ".nf-find-card",
       ".nf-help-card",
       ".nf-club-intro",
@@ -11564,14 +12679,68 @@ function About({ Header, onBack, onSearch, onContact }) {
       } />
 
       <main className="nf-wrap nf-difference-main">
-        <section id="difference-story" className="nf-difference-hero nf-about-anchor">
+        <section
+          className="nf-difference-intro"
+          aria-labelledby="difference-intro-title"
+        >
+          <div className="nf-modern-kicker">
+            What makes NectarFusions different
+          </div>
+
+          <h2 id="difference-intro-title">
+            <span className="nf-difference-intro-line">
+              Michigan honey,
+            </span>
+            <span className="nf-difference-intro-line nf-difference-intro-second-line">
+              thoughtfully transformed
+            </span>
+          </h2>
+
+          <p>
+            Real ingredients, carefully sourced honey, and small-batch
+            craftsmanship come together in every jar. Explore our story and
+            the standards behind every NectarFusions flavor.
+          </p>
+
+        </section>
+
+        <nav
+          className="nf-difference-jump nf-difference-jump-sticky"
+          aria-label="Explore the NectarFusions Difference"
+        >
+          <span>Explore</span>
+
+          <div>
+            {sections.map(([id, label]) => (
+              <button
+                type="button"
+                key={id}
+                onClick={() => goToSection(id)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </nav>
+
+        <section
+          id="difference-story"
+          className="nf-difference-hero nf-difference-story nf-about-anchor"
+        >
           <div className="nf-story-gallery nf-story-gallery-three" aria-label="The NectarFusions founders and first hive">
+            <img
+              className="nf-story-watermark-logo"
+              src="/logo.png"
+              alt=""
+              aria-hidden="true"
+            />
+
             <figure className="nf-story-photo nf-story-photo-founders">
               <img
                 src="/nf-founders.png"
                 alt="The NectarFusions founders wearing beekeeping suits and holding jars of honey"
               />
-              <figcaption>Mother and daughter, building NectarFusions together.</figcaption>
+              <figcaption>Megan (Founder) &amp; Margaret (Co-Founder) of NectarFusions.</figcaption>
             </figure>
             <figure className="nf-story-photo nf-story-photo-primary">
               <img
@@ -11587,13 +12756,49 @@ function About({ Header, onBack, onSearch, onContact }) {
               />
               <figcaption>Inside the wild colony that started everything.</figcaption>
             </figure>
+
+            <aside
+              className="nf-story-family-statement"
+              aria-label="A message from the NectarFusions family"
+            >
+              <div className="nf-story-family-kicker">
+                From our family to yours
+              </div>
+
+              <p>
+                Made by our{" "}
+                <strong className="nf-family-word nf-family-word-gold">
+                  family
+                </strong>
+                , for{" "}
+                <strong className="nf-family-word nf-family-word-blue">
+                  yours
+                </strong>
+                . Bring it to the{" "}
+                <strong className="nf-family-word nf-family-word-orange">
+                  table
+                </strong>
+                , pass it around, and let an ordinary day taste like something
+                worth{" "}
+                <strong className="nf-family-word nf-family-word-blue">
+                  remembering
+                </strong>
+                .
+              </p>
+            </aside>
           </div>
 
           <article className="nf-about-copy nf-story-copy">
             <div className="nf-modern-kicker">From hive to home</div>
             <h2>Our Story</h2>
 
-            <p className="nf-story-opening">We didn&rsquo;t go looking for the bees. They found us first.</p>
+            <p className="nf-story-opening">
+              We didn&rsquo;t go looking for the bees.
+              <br />
+              <span className="nf-story-opening-second-line">
+                They found us first.
+              </span>
+            </p>
 
             <p>
               Our first hive was supposed to be a squirrel house. It was a summer workshop project, built mostly
@@ -11621,10 +12826,7 @@ function About({ Header, onBack, onSearch, onContact }) {
               At the heart of every jar is carefully sourced Michigan honey, strained rather than filtered, so it
               keeps the character of the hive and the place it came from.
             </p>
-            <p className="nf-story-closing">
-              Made by our family, for yours. Bring it to the table, pass it around, and let an ordinary day taste
-              like something worth remembering.
-            </p>
+
           </article>
         </section>
 
