@@ -27,7 +27,7 @@ const CADENCES = [
 ];
 
 const CONTACT = { email: "info@nectar-fusions.com", phone: "(989) 941-6385" };
-/* Replace public/nf-hero-product.png whenever you want to update the homepage hero image. */
+/* Default homepage hero image used until an Admin replacement is saved. */
 const HERO_IMAGE = "/nf-hero-product.png";
 
 const c = {
@@ -1812,6 +1812,74 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
   font-size:20px;
   text-align:center;
 }
+.nf-admin-hero-editor {
+  display:grid;
+  grid-template-columns:minmax(260px,.9fr) minmax(0,1.1fr);
+  gap:20px;
+  align-items:start;
+  padding:16px;
+}
+.nf-admin-hero-preview {
+  min-height:300px;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  padding:18px;
+  border:1px solid #E6D8C3;
+  border-radius:18px;
+  background:
+    radial-gradient(circle at 50% 52%,rgba(247,196,28,.18),transparent 44%),
+    linear-gradient(145deg,#FFF9E9,#FFFFFF);
+}
+.nf-admin-hero-preview img {
+  width:100%;
+  height:100%;
+  max-height:330px;
+  object-fit:contain;
+}
+.nf-admin-hero-controls {
+  display:grid;
+  gap:14px;
+}
+.nf-admin-hero-controls label > span {
+  display:block;
+  margin-bottom:7px;
+  color:#7B5821;
+  font-size:11px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+}
+.nf-admin-hero-guidance {
+  margin:0;
+  color:#6F6258;
+  font-size:12.5px;
+  line-height:1.6;
+}
+.nf-admin-hero-actions {
+  display:flex;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.nf-admin-hero-actions .btn {
+  padding:11px 14px;
+}
+@media (max-width:700px) {
+  .nf-admin-hero-editor {
+    grid-template-columns:1fr;
+  }
+  .nf-admin-hero-preview {
+    min-height:220px;
+  }
+  .nf-admin-hero-actions {
+    justify-content:stretch;
+  }
+  .nf-admin-hero-actions .btn {
+    flex:1 1 180px;
+  }
+}
+
 .nf-admin-top-picks-list {
   display:grid;
   gap:12px;
@@ -6477,7 +6545,7 @@ export default function App() {
 
               <img
                 className="nf-modern-hero-image"
-                src={HERO_IMAGE}
+                src={cat?.homepageHeroImage || HERO_IMAGE}
                 alt="NectarFusions raw Michigan honey jars"
               />
             </div>
@@ -9272,6 +9340,11 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
   const [topPickDrafts, setTopPickDrafts] = useState([]);
   const [topPickSaveState, setTopPickSaveState] = useState("");
   const [topPickUploading, setTopPickUploading] = useState(null);
+  const [heroImageDraft, setHeroImageDraft] = useState(
+    cat?.homepageHeroImage || ""
+  );
+  const [heroImageSaveState, setHeroImageSaveState] = useState("");
+  const [heroImageUploading, setHeroImageUploading] = useState(false);
   const [spunEnabledDraft, setSpunEnabledDraft] = useState(cat?.spunAvailability?.enabled !== false);
   const [spunMessageDraft, setSpunMessageDraft] = useState(
     cat?.spunAvailability?.message ||
@@ -9310,6 +9383,10 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
   }, [cat?.spunAvailability?.enabled, cat?.spunAvailability?.message]);
 
   useEffect(() => {
+    setHeroImageDraft(cat?.homepageHeroImage || "");
+  }, [cat?.homepageHeroImage]);
+
+  useEffect(() => {
     const existing = Array.isArray(cat?.topPicks) ? cat.topPicks : [];
     const defaults = [
       { flavor_id: cat?.flavors?.find((f) => f.name === "Blueberry")?.id || null, tagline: "Best Seller", image_url: "/nf-top-blueberry.png", active: true },
@@ -9345,6 +9422,20 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
     } catch (e) {
       setErr(e.message);
       setSpunSaveState("error");
+    }
+  };
+
+  const saveHomepageHeroImage = async () => {
+    setHeroImageSaveState("saving");
+
+    try {
+      await api.setHomepageHeroImage(heroImageDraft);
+      await reload();
+      setErr(null);
+      setHeroImageSaveState("saved");
+    } catch (error) {
+      setErr(error.message);
+      setHeroImageSaveState("error");
     }
   };
 
@@ -9504,6 +9595,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
     ["requests", `Order Help (${newRequestCount})`],
     ["orders", `Orders (${standardActiveOrders.length})`],
     ["retail", `Partners (${retailLocations.filter((r) => r.active).length})`],
+    ["homepage", "Homepage Image"],
     ["topPicks", "Top Picks"],
   ].sort((a, b) =>
     a[1]
@@ -9833,6 +9925,147 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                   </div>
                 );
               })}
+            </div>
+          </>
+        )}
+
+        {adminTab === "homepage" && (
+          <>
+            <div className="eyebrow" style={{ marginBottom: 6 }}>
+              Homepage Hero Image
+            </div>
+
+            <p
+              style={{
+                fontSize: 13,
+                color: c.brown,
+                margin: "0 0 14px",
+                lineHeight: 1.6,
+              }}
+            >
+              Replace the honey jars displayed beside the homepage headline.
+              The original image remains available as a safe fallback.
+            </p>
+
+            <div className="card nf-admin-hero-editor">
+              <div className="nf-admin-hero-preview">
+                <img
+                  src={heroImageDraft || HERO_IMAGE}
+                  alt="Homepage hero preview"
+                />
+              </div>
+
+              <div className="nf-admin-hero-controls">
+                <label className="nf-admin-top-pick-upload">
+                  <span>Upload replacement image</span>
+
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    disabled={heroImageUploading}
+                    onChange={async (event) => {
+                      const file = event.target.files?.[0];
+                      if (!file) return;
+
+                      try {
+                        setHeroImageUploading(true);
+
+                        const imageUrl =
+                          await api.uploadHomepageHeroImage(file);
+
+                        setHeroImageDraft(imageUrl);
+                        setHeroImageSaveState("unsaved");
+                        setErr(null);
+                      } catch (error) {
+                        setErr(error.message);
+                        setHeroImageSaveState("error");
+                      } finally {
+                        setHeroImageUploading(false);
+                        event.target.value = "";
+                      }
+                    }}
+                  />
+
+                  <small>
+                    {heroImageUploading
+                      ? "Uploading…"
+                      : "PNG, JPG, or WebP. A transparent product image works best."}
+                  </small>
+                </label>
+
+                <p className="nf-admin-hero-guidance">
+                  The preview shows the image that will appear on the
+                  homepage. Uploading alone does not publish the change;
+                  select Save Homepage Image when ready.
+                </p>
+
+                <div className="nf-admin-hero-actions">
+                  {heroImageDraft && (
+                    <button
+                      type="button"
+                      className="btn ghost"
+                      disabled={
+                        heroImageUploading ||
+                        heroImageSaveState === "saving"
+                      }
+                      onClick={() => {
+                        setHeroImageDraft("");
+                        setHeroImageSaveState("unsaved");
+                      }}
+                    >
+                      Use Original Image
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    className={`btn solid ${
+                      heroImageSaveState === "saved"
+                        ? "nf-admin-top-picks-saved"
+                        : ""
+                    }`}
+                    disabled={
+                      heroImageUploading ||
+                      heroImageSaveState === "saving"
+                    }
+                    onClick={saveHomepageHeroImage}
+                  >
+                    {heroImageSaveState === "saving"
+                      ? "Saving..."
+                      : heroImageSaveState === "saved"
+                        ? "Saved ✓"
+                        : "Save Homepage Image"}
+                  </button>
+                </div>
+
+                {heroImageSaveState === "unsaved" && (
+                  <div
+                    className="nf-admin-save-status unsaved"
+                    role="status"
+                  >
+                    You have an unsaved homepage-image change.
+                  </div>
+                )}
+
+                {heroImageSaveState === "saved" && (
+                  <div
+                    className="nf-admin-save-status saved"
+                    role="status"
+                  >
+                    The homepage image was saved successfully.
+                  </div>
+                )}
+
+                {heroImageSaveState === "error" && (
+                  <div
+                    className="nf-admin-spun-blocked-help"
+                    role="alert"
+                  >
+                    The homepage image could not be saved. Review the
+                    error above and try again.
+                  </div>
+                )}
+              </div>
             </div>
           </>
         )}

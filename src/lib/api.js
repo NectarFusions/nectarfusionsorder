@@ -46,6 +46,10 @@ export async function getCatalog() {
     blockedDates: blocked.map((b) => b.day),
     plans: plans.map((p) => ({ ...p, price: p.price_cents / 100 })),
     bestSeller: cfg.best_seller ?? "",
+    homepageHeroImage:
+      typeof cfg.homepage_hero_image === "string"
+        ? cfg.homepage_hero_image
+        : "",
     topPicks: Array.isArray(cfg.top_picks)
       ? cfg.top_picks.map((pick, index) => ({
           flavor_id: pick?.flavor_id ?? null,
@@ -516,6 +520,48 @@ export const setTopPicks = async (picks) => {
   if (error) throw new Error(error.message);
   return data;
 };
+
+export const setHomepageHeroImage = async (imageUrl) => {
+  const value = String(imageUrl || "").trim();
+
+  const { data, error } = await supabase
+    .from("settings")
+    .upsert(
+      { key: "homepage_hero_image", value },
+      { onConflict: "key" }
+    )
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+};
+
+export async function uploadHomepageHeroImage(file) {
+  if (!file) throw new Error("Choose an image first.");
+
+  const extension = (file.name.split(".").pop() || "png").toLowerCase();
+  const safeExtension = ["png", "jpg", "jpeg", "webp"].includes(extension)
+    ? extension
+    : "png";
+  const path = `homepage/hero-${Date.now()}.${safeExtension}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("flavor-images")
+    .upload(path, file, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: file.type || undefined,
+    });
+
+  if (uploadError) throw new Error(uploadError.message);
+
+  const { data } = supabase.storage
+    .from("flavor-images")
+    .getPublicUrl(path);
+
+  return data.publicUrl;
+}
 
 export async function uploadTopPickImage(file) {
   if (!file) throw new Error("Choose an image first.");
