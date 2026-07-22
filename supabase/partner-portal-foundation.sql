@@ -227,9 +227,13 @@ as $$
   where pu.user_id = auth.uid()
     and pu.active = true
     and pa.auth_access_enabled = true
-    and pa.relationship_status not in (
-      'closed',
-      'declined'
+    and pa.relationship_status in (
+      'approved',
+      'onboarding',
+      'active_opening',
+      'active_ongoing',
+      'optimize',
+      'paused'
     )
   limit 1;
 $$;
@@ -459,7 +463,7 @@ create table if not exists public.partner_resources (
       ]::text[]
     ),
 
-  status text not null default 'active'
+  status text not null default 'draft'
     check (status in ('draft', 'active', 'archived')),
 
   version_label text,
@@ -941,7 +945,8 @@ as $$
       'approved',
       'onboarding',
       'active_opening',
-      'active_ongoing'
+      'active_ongoing',
+      'optimize'
     )
     and (
       nullif(btrim(coalesce(p_zip, '')), '') is null
@@ -1024,8 +1029,14 @@ with check (
   and public.nf_is_admin()
 );
 
--- Partners may upload and manage images only inside their own folder:
--- partner-event-images/<partner-id>/<filename>
+-- Event image access is tied to one registered event image path.
+--
+-- Required object path:
+-- partner-event-images/<partner-id>/<event-id>/<filename>
+--
+-- The event record must contain the same bucket and complete storage path.
+-- Partners may replace or delete an image only while the event remains
+-- editable. Submitted and approved event images are locked for Admin review.
 
 drop policy if exists "Partners view their event images"
 on storage.objects;
@@ -1036,8 +1047,18 @@ for select
 to authenticated
 using (
   bucket_id = 'partner-event-images'
-  and (storage.foldername(name))[1] =
-    public.nf_partner_id_for_user()::text
+  and exists (
+    select 1
+    from public.partner_events e
+    where e.partner_id =
+      (select public.nf_partner_id_for_user())
+      and e.image_bucket = bucket_id
+      and e.image_path = name
+      and (storage.foldername(name))[1] =
+        e.partner_id::text
+      and (storage.foldername(name))[2] =
+        e.id::text
+  )
 );
 
 drop policy if exists "Partners upload their event images"
@@ -1049,8 +1070,22 @@ for insert
 to authenticated
 with check (
   bucket_id = 'partner-event-images'
-  and (storage.foldername(name))[1] =
-    public.nf_partner_id_for_user()::text
+  and exists (
+    select 1
+    from public.partner_events e
+    join public.partner_accounts pa
+      on pa.id = e.partner_id
+    where e.partner_id =
+      (select public.nf_partner_id_for_user())
+      and e.image_bucket = bucket_id
+      and e.image_path = name
+      and (storage.foldername(name))[1] =
+        e.partner_id::text
+      and (storage.foldername(name))[2] =
+        e.id::text
+      and e.status in ('draft', 'rejected')
+      and pa.event_submission_enabled = true
+  )
 );
 
 drop policy if exists "Partners update their event images"
@@ -1062,13 +1097,41 @@ for update
 to authenticated
 using (
   bucket_id = 'partner-event-images'
-  and (storage.foldername(name))[1] =
-    public.nf_partner_id_for_user()::text
+  and exists (
+    select 1
+    from public.partner_events e
+    join public.partner_accounts pa
+      on pa.id = e.partner_id
+    where e.partner_id =
+      (select public.nf_partner_id_for_user())
+      and e.image_bucket = bucket_id
+      and e.image_path = name
+      and (storage.foldername(name))[1] =
+        e.partner_id::text
+      and (storage.foldername(name))[2] =
+        e.id::text
+      and e.status in ('draft', 'rejected')
+      and pa.event_submission_enabled = true
+  )
 )
 with check (
   bucket_id = 'partner-event-images'
-  and (storage.foldername(name))[1] =
-    public.nf_partner_id_for_user()::text
+  and exists (
+    select 1
+    from public.partner_events e
+    join public.partner_accounts pa
+      on pa.id = e.partner_id
+    where e.partner_id =
+      (select public.nf_partner_id_for_user())
+      and e.image_bucket = bucket_id
+      and e.image_path = name
+      and (storage.foldername(name))[1] =
+        e.partner_id::text
+      and (storage.foldername(name))[2] =
+        e.id::text
+      and e.status in ('draft', 'rejected')
+      and pa.event_submission_enabled = true
+  )
 );
 
 drop policy if exists "Partners delete their event images"
@@ -1080,8 +1143,22 @@ for delete
 to authenticated
 using (
   bucket_id = 'partner-event-images'
-  and (storage.foldername(name))[1] =
-    public.nf_partner_id_for_user()::text
+  and exists (
+    select 1
+    from public.partner_events e
+    join public.partner_accounts pa
+      on pa.id = e.partner_id
+    where e.partner_id =
+      (select public.nf_partner_id_for_user())
+      and e.image_bucket = bucket_id
+      and e.image_path = name
+      and (storage.foldername(name))[1] =
+        e.partner_id::text
+      and (storage.foldername(name))[2] =
+        e.id::text
+      and e.status in ('draft', 'rejected')
+      and pa.event_submission_enabled = true
+  )
 );
 
 -- Partners can read only active materials authorized for their account.
