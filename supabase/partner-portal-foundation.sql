@@ -198,17 +198,20 @@ create table if not exists public.partner_users (
         'staff'
       )
     ),
-
   active boolean not null default true,
   invited_at timestamptz,
   last_access_at timestamptz,
-  created_at timestamptz not null default now(),
-
-  unique (partner_id, email)
+  created_at timestamptz not null default now()
 );
 
 create index if not exists partner_users_partner_index
 on public.partner_users (partner_id);
+
+create unique index if not exists partner_users_partner_email_unique
+on public.partner_users (
+  partner_id,
+  lower(btrim(email))
+);
 
 create index if not exists partner_users_email_index
 on public.partner_users (lower(btrim(email)));
@@ -402,9 +405,12 @@ create table if not exists public.partner_replenishment_items (
   flavor_id uuid
     references public.flavors(id)
     on delete set null,
-
   flavor_name text not null,
-  size_id text not null,
+
+  size_id text not null
+    references public.sizes(id)
+    on delete restrict,
+
   texture text not null default 'regular'
     check (texture in ('regular', 'spun')),
 
@@ -556,10 +562,38 @@ on public.partner_events (status, start_at);
 
 drop trigger if exists partner_events_updated_at
 on public.partner_events;
-
 create trigger partner_events_updated_at
 before update on public.partner_events
 for each row execute function public.nf_set_updated_at();
+
+create or replace function public.nf_set_partner_event_submitted_at()
+returns trigger
+language plpgsql
+security invoker
+set search_path = public
+as $$
+begin
+  if tg_op = 'INSERT' then
+    if new.status = 'submitted' then
+      new.submitted_at = now();
+    end if;
+  elsif new.status = 'submitted'
+    and old.status is distinct from 'submitted'
+  then
+    new.submitted_at = now();
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists partner_events_submitted_at
+on public.partner_events;
+
+create trigger partner_events_submitted_at
+before insert or update on public.partner_events
+for each row
+execute function public.nf_set_partner_event_submitted_at();
 
 -- ============================================================
 -- AUTH AND ADMIN AUDIT LOG
@@ -608,27 +642,7 @@ alter table public.partner_replenishment_items enable row level security;
 alter table public.partner_resources enable row level security;
 alter table public.partner_events enable row level security;
 alter table public.partner_auth_audit enable row level security;
-
-grant select on public.partner_accounts to authenticated;
-grant select on public.partner_users to authenticated;
-
-grant select, insert, update
-on public.partner_replenishment_requests
-to authenticated;
-
-grant select, insert
-on public.partner_replenishment_items
-to authenticated;
-
-grant select
-on public.partner_resources
-to authenticated;
-
-grant select, insert, update
-on public.partner_events
-to authenticated;
-
-grant select, insert, update, delete
+revoke all
 on public.partner_accounts,
    public.partner_users,
    public.partner_applications,
@@ -637,6 +651,24 @@ on public.partner_accounts,
    public.partner_resources,
    public.partner_events,
    public.partner_auth_audit
+from anon, authenticated;
+
+-- Admins and partners share the authenticated database role.
+-- Row Level Security determines the records each user can access.
+
+grant select, insert, update, delete
+on public.partner_accounts,
+   public.partner_users,
+   public.partner_applications,
+   public.partner_replenishment_requests,
+   public.partner_replenishment_items,
+   public.partner_resources,
+   public.partner_events
+to authenticated;
+
+-- Authentication audit records are append-only.
+grant select, insert
+on public.partner_auth_audit
 to authenticated;
 
 -- Partner accounts
