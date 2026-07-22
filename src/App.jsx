@@ -165,22 +165,102 @@ const SocialLinks = ({ compact = false }) => {
   );
 };
 
-const PourIcon = ({ size = 30, color = "#A86708" }) => (
-  <svg width={size} height={size} viewBox="0 0 64 64" fill="none" aria-hidden="true">
-    <path d="M32 8S18 25 18 36a14 14 0 0 0 28 0C46 25 32 8 32 8Z" fill={color} opacity=".18" />
-    <path d="M32 12S22 26 22 35.5a10 10 0 0 0 20 0C42 26 32 12 32 12Z" fill={color} />
-    <path d="M17 52h30" stroke={color} strokeWidth="3.2" strokeLinecap="round" />
+/* TEXTURE ICON SHAPES — DROP, TOAST, QUESTION */
+/* TEXTURE ICON SHAPES — DROP, TOAST, QUESTION */
+const RegularTextureIcon = ({
+  size = 36,
+  color = "#147FBE",
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 64 64"
+    fill="none"
+    aria-hidden="true"
+  >
+    <path
+      d="M32 8C32 8 16.5 27 16.5 40.5C16.5 49.1 23.4 56 32 56C40.6 56 47.5 49.1 47.5 40.5C47.5 27 32 8 32 8Z"
+      fill={color}
+      opacity=".14"
+    />
+    <path
+      d="M32 8C32 8 16.5 27 16.5 40.5C16.5 49.1 23.4 56 32 56C40.6 56 47.5 49.1 47.5 40.5C47.5 27 32 8 32 8Z"
+      stroke={color}
+      strokeWidth="3.4"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M24.5 41C24.5 36.4 26.5 31.6 31.1 25.6"
+      stroke={color}
+      strokeWidth="3"
+      strokeLinecap="round"
+      opacity=".55"
+    />
   </svg>
 );
 
-const SpunIcon = ({ size = 31, color = "#A86708" }) => (
-  <svg width={size} height={size} viewBox="0 0 64 64" fill="none" aria-hidden="true">
-    <path d="M17 37c2.8 4.8 8 7.5 14 7.5 8.8 0 16-5.4 16-12.2 0-5.1-4.2-9.4-10-11.2"
-      stroke={color} strokeWidth="3.4" strokeLinecap="round" />
-    <path d="M23 27.5c2-3.5 6.1-5.7 10.8-5.7 6.8 0 12.2 4.3 12.2 9.7 0 2.8-1.5 5.4-4 7.3"
-      stroke={color} strokeWidth="3.4" strokeLinecap="round" />
-    <path d="M14 47c4.4 4.5 10.6 7 17.5 7 10.8 0 19.8-5.7 22.5-14"
-      stroke={color} strokeWidth="3.4" strokeLinecap="round" />
+const SpunTextureIcon = ({
+  size = 36,
+  color = "#147FBE",
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 64 64"
+    fill="none"
+    aria-hidden="true"
+  >
+    <path
+      d="M15 50V30.5C15 22.5 21.5 16 29.5 16H34.5C42.5 16 49 22.5 49 30.5V50H15Z"
+      fill={color}
+      opacity=".10"
+    />
+    <path
+      d="M15 50V30.5C15 22.5 21.5 16 29.5 16H34.5C42.5 16 49 22.5 49 30.5V50H15Z"
+      stroke={color}
+      strokeWidth="3.2"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M23 35C26 30.9 29.6 29 33.7 29C39 29 43 32.1 43 36.1C43 39.3 40.2 41.6 36.8 42C33.5 42.4 30.5 40.9 30.5 38.5C30.5 36.7 32.2 35.3 34.5 35.3"
+      stroke={color}
+      strokeWidth="3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M20.5 51.5H43.5"
+      stroke={color}
+      strokeWidth="3.2"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+const NotSureTextureIcon = ({
+  size = 36,
+  color = "#147FBE",
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 64 64"
+    fill="none"
+    aria-hidden="true"
+  >
+    <path
+      d="M22.5 24.5C22.5 17.6 27.6 13 34.8 13C41.8 13 47 17.4 47 23.8C47 28.5 44.6 31.3 39.7 34.5C35.7 37.1 34.2 39.2 34.2 42.5V44"
+      stroke={color}
+      strokeWidth="4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <circle
+      cx="34.2"
+      cy="52"
+      r="3"
+      fill={color}
+    />
   </svg>
 );
 
@@ -8206,6 +8286,1117 @@ body {
   }
 }
 
+
+/* MOBILE STACKING + SAFE AREA POLISH */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+.nf {
+  overflow-x: clip;
+}
+
+:root {
+  --nf-safe-bottom: calc(env(safe-area-inset-bottom) + 18px);
+}
+
+/* 1) TOP PICKS + LIMITED FLAVOR: stack full-width on mobile */
+@media (max-width: 760px) {
+  .nf-top-grid,
+  .nf-top-picks-grid,
+  .nf-top-picks-list,
+  .nf-top-picks-row {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  .nf-top-grid > *,
+  .nf-top-picks-grid > *,
+  .nf-top-picks-list > *,
+  .nf-top-picks-row > * {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+  }
+
+  .nf-top-card,
+  .nf-top-card-limited,
+  .nf-top-pick-card {
+    width: 100% !important;
+    max-width: none !important;
+    min-height: auto !important;
+  }
+
+  /* 2) PICK YOUR FLAVORS: one card per row on mobile */
+  .nf-pick-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .nf-pick-card {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .nf-pick-name,
+  .nf-pick-card h3 {
+    font-size: 18px !important;
+    line-height: 1.15 !important;
+  }
+
+  .nf-pick-stock,
+  .nf-pick-add,
+  .nf-pick-controls,
+  .nf-pick-card button {
+    font-size: 16px !important;
+  }
+
+  /* 3) ADMIN MOBILE ZOOM FIX
+     iPhone/Chrome zooms inputs if font-size is under 16px */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  .nf-admin-top-pick-fields input,
+  .nf-admin-top-pick-fields select,
+  .nf-admin-top-pick-fields textarea,
+  .nf-admin-limited-editor input,
+  .nf-admin-limited-editor textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* 4) FIX BOTTOM GAP UNDER BLUE ORDER BAR IN MOBILE CHROME / GOOGLE */
+.nf [class*="order-bar"],
+.nf [class*="orderbar"],
+.nf [class*="bottom-order"],
+.nf [class*="mobile-order"],
+.nf [class*="cart-bar"],
+.nf [class*="summary-bar"],
+.nf [class*="sticky-order"] {
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  padding-bottom: var(--nf-safe-bottom) !important;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+.nf [class*="order-bar"]::after,
+.nf [class*="orderbar"]::after,
+.nf [class*="bottom-order"]::after,
+.nf [class*="mobile-order"]::after,
+.nf [class*="cart-bar"]::after,
+.nf [class*="summary-bar"]::after,
+.nf [class*="sticky-order"]::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(-1 * var(--nf-safe-bottom));
+  height: var(--nf-safe-bottom);
+  background: inherit;
+  pointer-events: none;
+}
+
+@supports (height: 100dvh) {
+  .nf,
+  .nf-modern,
+  .nf-page {
+    min-height: 100dvh;
+  }
+}
+
+
+/* MOBILE TOP PICKS — IMAGE-FIRST PRODUCT CARDS */
+@media (max-width:760px) {
+  .nf-top-grid {
+    grid-template-columns:1fr !important;
+    gap:22px !important;
+  }
+
+  .nf-top-card,
+  .nf-top-card:hover,
+  .nf-top-card.selected,
+  .nf-top-card-limited,
+  .nf-top-card-limited:hover,
+  .nf-top-card-limited.selected {
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    width:100% !important;
+    max-width:none !important;
+    min-height:0 !important;
+    height:auto !important;
+    margin:0 !important;
+    padding:0 !important;
+    overflow:hidden !important;
+    border-radius:28px !important;
+    transform:none !important;
+    box-shadow:
+      0 17px 38px rgba(36,71,91,.13),
+      0 3px 9px rgba(36,71,91,.08) !important;
+  }
+
+  /* Regular Top Picks */
+  .nf-top-card:not(.nf-top-card-limited) {
+    grid-template-areas:
+      "image"
+      "name"
+      "tagline"
+      "price";
+    border:2px solid #E6B321 !important;
+    background:
+      linear-gradient(
+        145deg,
+        #FFF9DF 0%,
+        #FFED9A 100%
+      ) !important;
+  }
+
+  .nf-top-card:not(.nf-top-card-limited)
+  .nf-top-image-shell {
+    grid-area:image;
+    position:relative;
+    width:100%;
+    aspect-ratio:4 / 3;
+    margin:0 !important;
+    padding:14px !important;
+    overflow:hidden;
+    border-bottom:1px solid rgba(197,139,0,.18);
+    background:#FFFFFF;
+  }
+
+  .nf-top-card:not(.nf-top-card-limited)
+  .nf-top-image-shell img {
+    width:100% !important;
+    height:100% !important;
+    max-height:none !important;
+    aspect-ratio:auto !important;
+    object-fit:contain !important;
+    border-radius:20px !important;
+    background:#FFFFFF;
+  }
+
+  .nf-top-card:not(.nf-top-card-limited)
+  .nf-top-name-above {
+    grid-area:name;
+    margin:0 !important;
+    padding:19px 20px 0 !important;
+    color:#17120E !important;
+    font-size:32px !important;
+    font-weight:950 !important;
+    line-height:1.05 !important;
+    letter-spacing:-.025em !important;
+    text-align:left !important;
+  }
+
+  .nf-top-card:not(.nf-top-card-limited)
+  .nf-top-tagline {
+    grid-area:tagline;
+    margin:0 !important;
+    padding:9px 20px 0 !important;
+    color:#976400 !important;
+    font-size:17px !important;
+    font-weight:950 !important;
+    line-height:1.2 !important;
+    letter-spacing:.07em !important;
+    text-align:left !important;
+  }
+
+  .nf-top-card:not(.nf-top-card-limited)
+  .nf-top-price {
+    grid-area:price;
+    margin:0 !important;
+    padding:12px 20px 21px !important;
+    color:#17120E !important;
+    font-size:20px !important;
+    font-weight:900 !important;
+    line-height:1.25 !important;
+    text-align:left !important;
+  }
+
+  /* Limited Flavor */
+  .nf-top-card-limited,
+  .nf-top-card-limited:hover,
+  .nf-top-card-limited.selected {
+    grid-template-areas:
+      "image"
+      "name"
+      "tagline"
+      "copy"
+      "price";
+    border:3px solid #D69A00 !important;
+    background:
+      linear-gradient(
+        145deg,
+        #FFF8D6 0%,
+        #FFD53D 100%
+      ) !important;
+  }
+
+  .nf-top-card-limited .nf-top-image-shell {
+    grid-area:image;
+    position:relative;
+    width:100%;
+    aspect-ratio:4 / 3;
+    margin:0 !important;
+    padding:14px !important;
+    overflow:hidden;
+    border-bottom:1px solid rgba(197,139,0,.20);
+    background:#FFFFFF;
+  }
+
+  .nf-top-card-limited .nf-top-image-shell img {
+    width:100% !important;
+    height:100% !important;
+    max-height:none !important;
+    aspect-ratio:auto !important;
+    object-fit:contain !important;
+    border-radius:20px !important;
+    background:#FFFFFF;
+  }
+
+  .nf-top-card-limited .nf-top-limited-badge,
+  .nf-top-card-limited:hover .nf-top-limited-badge,
+  .nf-top-card-limited.selected .nf-top-limited-badge {
+    top:14px !important;
+    left:14px !important;
+    right:auto !important;
+    transform:none !important;
+    padding:9px 15px !important;
+    animation:none !important;
+    font-size:12px !important;
+    box-shadow:0 6px 16px rgba(102,12,16,.25) !important;
+  }
+
+  .nf-top-card-limited .nf-top-name {
+    grid-area:name;
+    margin:0 !important;
+    padding:19px 20px 0 !important;
+    color:#17120E !important;
+    font-size:32px !important;
+    font-weight:950 !important;
+    line-height:1.05 !important;
+    letter-spacing:-.025em !important;
+    text-align:left !important;
+  }
+
+  .nf-top-card-limited .nf-top-tagline {
+    grid-area:tagline;
+    margin:0 !important;
+    padding:9px 20px 0 !important;
+    color:#976400 !important;
+    font-size:17px !important;
+    font-weight:950 !important;
+    line-height:1.2 !important;
+    letter-spacing:.07em !important;
+    text-align:left !important;
+  }
+
+  .nf-top-card-limited .nf-top-limited-copy {
+    grid-area:copy;
+    gap:9px !important;
+    margin:15px 18px 0 !important;
+    padding:14px 15px !important;
+    border:2px solid rgba(190,31,37,.82) !important;
+    border-radius:18px !important;
+    background:rgba(255,255,255,.86) !important;
+    box-shadow:none !important;
+  }
+
+  .nf-top-card-limited .nf-top-limited-message,
+  .nf-top-card-limited .nf-top-limited-message > span {
+    font-size:16px !important;
+    line-height:1.3 !important;
+  }
+
+  .nf-top-card-limited .nf-top-limited-size-label {
+    font-size:13px !important;
+    line-height:1.2 !important;
+  }
+
+  .nf-top-card-limited .nf-top-limited-countdown {
+    padding-top:9px !important;
+  }
+
+  .nf-top-card-limited .nf-top-limited-count-label,
+  .nf-top-card-limited .nf-top-limited-count-unit {
+    font-size:13px !important;
+  }
+
+  .nf-top-card-limited .nf-top-limited-count-number {
+    font-size:48px !important;
+  }
+
+  .nf-top-card-limited .nf-top-price {
+    grid-area:price;
+    margin:0 !important;
+    padding:14px 20px 22px !important;
+    color:#17120E !important;
+    font-size:20px !important;
+    font-weight:900 !important;
+    line-height:1.25 !important;
+    text-align:left !important;
+  }
+
+  /*
+    When this shopper has every available jar in their own cart,
+    use a compact status badge instead of covering the product image.
+  */
+  .nf-top-sold-out-overlay.cart-limit {
+    inset:auto 14px 14px 14px !important;
+    display:flex !important;
+    min-height:0 !important;
+    height:auto !important;
+    padding:11px 14px !important;
+    border:1px solid rgba(255,255,255,.72) !important;
+    border-radius:16px !important;
+    background:rgba(22,62,84,.94) !important;
+    box-shadow:0 7px 18px rgba(22,62,84,.22) !important;
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+  }
+
+  .nf-top-sold-out-overlay.cart-limit strong {
+    font-family:inherit !important;
+    font-size:16px !important;
+    font-weight:900 !important;
+    line-height:1.2 !important;
+    letter-spacing:0 !important;
+  }
+
+  .nf-top-sold-out-overlay.cart-limit span {
+    font-size:13px !important;
+    font-weight:800 !important;
+    line-height:1.2 !important;
+  }
+}
+
+
+
+/* MOBILE FLAVOR CARDS — COMPLETE UNCROPPED IMAGES */
+@media (max-width:760px) {
+  .nf-pick-card {
+    display:grid !important;
+    grid-template-rows:auto auto !important;
+    width:100% !important;
+    overflow:hidden !important;
+  }
+
+  /*
+    Replace the old short fixed-height image window with a properly
+    proportioned product stage so the complete jar and ingredients show.
+  */
+  .nf-pick-card .nf-pick-image-wrap {
+    position:relative !important;
+    width:100% !important;
+    height:auto !important;
+    min-height:0 !important;
+    aspect-ratio:4 / 3 !important;
+    display:grid !important;
+    place-items:center !important;
+    padding:16px !important;
+    overflow:hidden !important;
+    background:
+      radial-gradient(
+        circle at 50% 52%,
+        rgba(247,196,28,.08),
+        transparent 48%
+      ),
+      #FFFFFF !important;
+    border-bottom:1px solid #DCE9F1 !important;
+  }
+
+  .nf-pick-card .nf-pick-image {
+    display:block !important;
+    width:100% !important;
+    height:100% !important;
+    max-width:100% !important;
+    max-height:100% !important;
+    aspect-ratio:auto !important;
+    object-fit:contain !important;
+    object-position:center center !important;
+    padding:0 !important;
+    transform:none !important;
+  }
+
+  .nf-pick-card .nf-pick-placeholder {
+    width:min(58%,220px) !important;
+    height:auto !important;
+    aspect-ratio:1 / 1 !important;
+  }
+
+  .nf-pick-card .nf-pick-body {
+    min-height:0 !important;
+    padding:19px 18px 18px !important;
+  }
+
+  .nf-pick-card .nf-pick-name {
+    min-height:0 !important;
+    font-size:25px !important;
+    line-height:1.12 !important;
+    letter-spacing:-.015em !important;
+  }
+
+  .nf-pick-card .nf-pick-stock {
+    min-height:0 !important;
+    margin:14px 0 13px !important;
+    padding:11px 13px !important;
+    border:1px solid #CFE2EE !important;
+    border-radius:13px !important;
+    background:#F3F9FC !important;
+    font-size:16px !important;
+    line-height:1.25 !important;
+    font-weight:800 !important;
+  }
+
+  .nf-pick-card .nf-pick-add {
+    min-height:54px !important;
+    padding:14px 12px !important;
+    border-radius:14px !important;
+    font-size:18px !important;
+  }
+}
+
+
+/* MOBILE READABILITY STANDARD + CART TRAY REBUILD */
+@media (max-width:760px) {
+  html {
+    -webkit-text-size-adjust:100%;
+    text-size-adjust:100%;
+  }
+
+  .nf {
+    font-size:16px;
+  }
+
+  /*
+    Mobile body-copy floor.
+
+    Decorative eyebrows, badges, icons, headings, product names,
+    prices and large totals keep their own intentional sizing.
+  */
+  .nf :where(
+    p,
+    li,
+    label,
+    input,
+    select,
+    textarea,
+    option,
+    .btn,
+    .nf-section-note,
+    .nf-modern-subtitle,
+    .nf-modern-trust-copy,
+    .nf-promo-text,
+    .nf-pick-stock,
+    .nf-nonbundle-note,
+    .nf-bundle-copy p,
+    .nf-bundle-progress,
+    .nf-fulfillment-intro,
+    .nf-continue-help span,
+    .nf-club-plan-contents,
+    .nf-club-choice span,
+    .nf-club-preference-note,
+    .nf-help-option span,
+    .nf-help-card p,
+    .nf-find-card p,
+    .nf-difference-section p,
+    .nf-story-family-statement,
+    .pol p,
+    .pol li,
+    .nf-admin-save-status,
+    .nf-admin-spun-lock-note,
+    .nf-admin-spun-blocked-help
+  ) {
+    font-size:16px !important;
+    line-height:1.55 !important;
+  }
+
+  .nf input,
+  .nf select,
+  .nf textarea {
+    min-height:48px;
+  }
+
+  .nf textarea {
+    min-height:112px;
+  }
+
+  .nf .btn {
+    min-height:48px;
+    line-height:1.25 !important;
+  }
+
+  /*
+    Admin mobile readability and iPhone input-zoom protection.
+  */
+  .nf [class*="nf-admin"] :where(
+    p,
+    label,
+    input,
+    select,
+    textarea,
+    button
+  ) {
+    font-size:16px !important;
+    line-height:1.45 !important;
+  }
+
+  .nf .nf-admin-flavor-card button {
+    font-size:16px !important;
+  }
+
+  .nf .nf-admin-flavor-card input,
+  .nf .nf-admin-flavor-card select,
+  .nf .nf-admin-flavor-card textarea {
+    font-size:16px !important;
+  }
+
+  /*
+    Blue order tray: readable structure instead of tiny compressed copy.
+  */
+  .nf-cart-tray {
+    font-size:16px !important;
+  }
+
+  .nf-cart-tray .nf-cart-summary {
+    grid-template-columns:
+      minmax(0,1fr)
+      minmax(156px,180px) !important;
+    align-items:end !important;
+    gap:15px 16px !important;
+    padding:
+      16px
+      16px
+      calc(16px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .nf-cart-bundle-rail {
+    grid-column:1 / -1 !important;
+    width:100% !important;
+    grid-template-columns:
+      minmax(0,1fr)
+      minmax(82px,auto) !important;
+    align-items:center !important;
+    gap:13px !important;
+    padding:11px 0 15px !important;
+    border-right:0 !important;
+    border-bottom:1px solid rgba(255,255,255,.32) !important;
+  }
+
+  .nf-cart-bundle-rail-heading {
+    font-size:16px !important;
+    line-height:1.25 !important;
+    letter-spacing:.055em !important;
+  }
+
+  .nf-cart-bundle-rail-status {
+    gap:5px !important;
+  }
+
+  .nf-cart-bundle-rail-status strong {
+    font-size:18px !important;
+    line-height:1.2 !important;
+  }
+
+  .nf-cart-bundle-rail-status span {
+    display:block !important;
+    max-width:none !important;
+    overflow:visible !important;
+    white-space:normal !important;
+    text-overflow:clip !important;
+    font-size:16px !important;
+    line-height:1.3 !important;
+  }
+
+  .nf-cart-bundle-rail-jars {
+    gap:6px !important;
+  }
+
+  .nf-cart-bundle-rail-jar {
+    flex-basis:62px !important;
+  }
+
+  .nf-cart-bundle-rail-jar svg {
+    width:56px !important;
+    height:56px !important;
+  }
+
+  .nf-cart-bundle-rail-jar > span {
+    max-width:62px !important;
+    font-size:16px !important;
+    line-height:1.15 !important;
+  }
+
+  /*
+    Merchandise subtotal and order-total copy.
+  */
+  .nf-cart-summary
+  > div:not(.nf-cart-bundle-rail) {
+    min-width:0 !important;
+    font-size:16px !important;
+    line-height:1.35 !important;
+  }
+
+  .nf-cart-summary
+  > div:not(.nf-cart-bundle-rail)
+  :where(span,strong,b) {
+    font-size:16px !important;
+    line-height:1.35 !important;
+  }
+
+  .nf-cart-summary .num {
+    font-size:40px !important;
+    line-height:.95 !important;
+  }
+
+  /*
+    Continue button: give it a real column and prevent clipping.
+  */
+  .nf-cart-summary > .btn {
+    grid-column:2 !important;
+    width:100% !important;
+    min-width:0 !important;
+    min-height:58px !important;
+    align-self:end !important;
+    justify-content:center !important;
+    padding:15px 16px !important;
+    border-radius:17px !important;
+    font-size:18px !important;
+    font-weight:900 !important;
+    line-height:1.15 !important;
+    text-align:center !important;
+    white-space:nowrap !important;
+  }
+}
+
+/*
+  Extra-narrow phones: place Continue beneath the total instead of
+  compressing either area.
+*/
+@media (max-width:390px) {
+  .nf-cart-tray .nf-cart-summary {
+    grid-template-columns:1fr !important;
+  }
+
+  .nf-cart-summary > .btn {
+    grid-column:1 !important;
+    width:100% !important;
+  }
+}
+
+
+/* MOBILE CART — FULL-WIDTH CONTINUE ACTION */
+@media (max-width:760px) {
+  /*
+    Use one intentional vertical flow:
+    bundle progress, totals, then the primary action.
+  */
+  .nf-cart-tray .nf-cart-summary {
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    align-items:stretch !important;
+    gap:15px !important;
+  }
+
+  .nf-cart-tray .nf-cart-bundle-rail {
+    grid-column:1 !important;
+    grid-row:auto !important;
+  }
+
+  .nf-cart-tray .nf-cart-totals {
+    grid-column:1 !important;
+    grid-row:auto !important;
+    width:100% !important;
+    min-width:0 !important;
+    padding-top:1px !important;
+    font-size:18px !important;
+    line-height:1.4 !important;
+  }
+
+  .nf-cart-tray .nf-cart-totals span {
+    display:block !important;
+    margin-top:7px !important;
+    font-size:16px !important;
+    line-height:1.25 !important;
+    letter-spacing:.09em !important;
+  }
+
+  .nf-cart-tray .nf-cart-totals strong,
+  .nf-cart-tray .nf-cart-totals .num {
+    display:block !important;
+    margin-top:3px !important;
+    font-size:42px !important;
+    line-height:1 !important;
+  }
+
+  /*
+    Explicitly remove the older 47% mobile maximum.
+  */
+  .nf-cart-tray .nf-cart-summary > .btn {
+    grid-column:1 !important;
+    grid-row:auto !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    width:100% !important;
+    max-width:none !important;
+    min-width:0 !important;
+    min-height:62px !important;
+    margin:0 !important;
+    padding:16px 20px !important;
+    border-radius:17px !important;
+    font-size:20px !important;
+    font-weight:900 !important;
+    line-height:1.15 !important;
+    text-align:center !important;
+    white-space:normal !important;
+  }
+}
+
+
+/* MOBILE CART — CONDENSABLE SUMMARY */
+.nf-cart-tray-actions {
+  display:flex;
+  align-items:center;
+  gap:9px;
+}
+
+.nf-cart-tray-actions .nf-cart-tray-toggle {
+  flex:1 1 auto;
+  width:auto;
+  min-width:0;
+}
+
+.nf-cart-compact-toggle {
+  display:none;
+}
+
+@media (max-width:760px) {
+  .nf-cart-tray-actions {
+    width:100%;
+    gap:9px;
+  }
+
+  .nf-cart-tray-actions .nf-cart-tray-toggle {
+    min-height:48px;
+    padding:5px 0 10px !important;
+  }
+
+  .nf-cart-compact-toggle {
+    width:48px;
+    height:48px;
+    flex:0 0 48px;
+    display:grid;
+    place-items:center;
+    padding:0;
+    border:1px solid rgba(255,255,255,.68);
+    border-radius:15px;
+    background:rgba(255,255,255,.14);
+    color:#FFFFFF;
+    cursor:pointer;
+    box-shadow:0 5px 14px rgba(15,73,108,.16);
+  }
+
+  .nf-cart-compact-toggle:active {
+    transform:translateY(1px);
+  }
+
+  /*
+    Compact mode removes bundle progress and individual items while
+    retaining the totals and the primary Continue action.
+  */
+  /* MOBILE CART — COMPACT BUNDLE SUMMARY REMAINS VISIBLE */
+  .nf-cart-tray.compact .nf-cart-items {
+    display:none !important;
+  }
+
+  /*
+    Condense bundle progress into one readable row instead of
+    removing it from the tray completely.
+  */
+  .nf-cart-tray.compact .nf-cart-bundle-rail {
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) auto !important;
+    align-items:center !important;
+    gap:12px !important;
+    width:100% !important;
+    padding:8px 0 11px !important;
+    border-right:0 !important;
+    border-bottom:1px solid rgba(255,255,255,.32) !important;
+  }
+
+  .nf-cart-tray.compact .nf-cart-bundle-rail-copy {
+    display:grid !important;
+    gap:4px !important;
+    min-width:0 !important;
+  }
+
+  .nf-cart-tray.compact .nf-cart-bundle-rail-heading {
+    font-size:16px !important;
+    line-height:1.2 !important;
+  }
+
+  .nf-cart-tray.compact .nf-cart-bundle-rail-status {
+    display:block !important;
+  }
+
+  .nf-cart-tray.compact .nf-cart-bundle-rail-status strong {
+    display:block !important;
+    overflow:visible !important;
+    font-size:17px !important;
+    line-height:1.25 !important;
+    white-space:normal !important;
+    text-overflow:clip !important;
+  }
+
+  /*
+    Hide only the longer instruction while compact.
+  */
+  .nf-cart-tray.compact .nf-cart-bundle-rail-status span {
+    display:none !important;
+  }
+
+  .nf-cart-tray.compact .nf-cart-bundle-rail-jars {
+    display:flex !important;
+    align-items:center !important;
+    justify-content:flex-end !important;
+    gap:4px !important;
+  }
+
+  /*
+    The selected-bundle status already reports completed bundles,
+    so only the active progress jar is needed in compact mode.
+  */
+  .nf-cart-tray.compact
+  .nf-cart-bundle-rail-jar.is-complete {
+    display:none !important;
+  }
+
+  .nf-cart-tray.compact .nf-cart-bundle-rail-jar {
+    flex-basis:48px !important;
+  }
+
+  .nf-cart-tray.compact .nf-cart-bundle-rail-jar svg {
+    width:46px !important;
+    height:46px !important;
+  }
+
+  .nf-cart-tray.compact .nf-cart-bundle-rail-jar > span {
+    display:none !important;
+  }
+
+  .nf-cart-tray.compact .nf-cart-summary {
+    grid-template-columns:1fr !important;
+    gap:14px !important;
+    padding-top:5px !important;
+  }
+
+  .nf-cart-tray.compact .nf-cart-totals {
+    grid-column:1 !important;
+    width:100% !important;
+  }
+
+  .nf-cart-tray.compact .nf-cart-summary > .btn {
+    grid-column:1 !important;
+    width:100% !important;
+    max-width:none !important;
+  }
+}
+
+
+/* MOBILE CART — FOUR OUNCE ONLY COLLAPSE */
+@media (max-width:760px) {
+  /*
+    Compact mode keeps only the expand icon, totals and primary action.
+    It is applied only while the 4 oz bundle size is selected.
+  */
+  .nf-cart-tray.compact .nf-cart-tray-actions {
+    justify-content:flex-end !important;
+  }
+
+  .nf-cart-tray.compact .nf-cart-tray-toggle {
+    display:none !important;
+  }
+
+  .nf-cart-tray.compact .nf-cart-compact-toggle {
+    display:grid !important;
+  }
+
+  .nf-cart-tray.compact .nf-cart-items,
+  .nf-cart-tray.compact .nf-cart-bundle-rail {
+    display:none !important;
+  }
+
+  .nf-cart-tray.compact .nf-cart-summary {
+    grid-template-columns:1fr !important;
+    gap:14px !important;
+    padding-top:2px !important;
+  }
+
+  .nf-cart-tray.compact .nf-cart-totals,
+  .nf-cart-tray.compact .nf-cart-summary > .btn {
+    grid-column:1 !important;
+    width:100% !important;
+    max-width:none !important;
+  }
+}
+
+
+/* MOBILE CART — RIGHT-ALIGNED REVIEW ACTION */
+@media (max-width:760px) {
+  .nf-cart-tray-actions {
+    display:flex !important;
+    align-items:center !important;
+    width:100% !important;
+  }
+
+  .nf-cart-tray-actions .nf-cart-tray-toggle {
+    display:flex !important;
+    align-items:center !important;
+    justify-content:flex-start !important;
+    width:100% !important;
+    min-width:0 !important;
+    gap:14px !important;
+  }
+
+  .nf-cart-tray-actions .nf-cart-tray-label {
+    flex:1 1 auto !important;
+    min-width:0 !important;
+  }
+
+  .nf-cart-tray-actions .nf-cart-tray-review-action {
+    position:static !important;
+    flex:0 0 auto !important;
+    margin:0 0 0 auto !important;
+    padding:9px 15px !important;
+    border:1px solid rgba(255,255,255,.68) !important;
+    border-radius:999px !important;
+    background:rgba(255,255,255,.12) !important;
+    font-size:16px !important;
+    font-weight:800 !important;
+    line-height:1 !important;
+    white-space:nowrap !important;
+  }
+}
+
+
+/* HERO WATERMARK LOGO — ALL VIEWPORTS + TEXTURE ICON REFINEMENT */
+.nf-modern-hero-grid {
+  position:relative;
+  overflow:visible;
+  isolation:isolate;
+}
+
+.nf-modern-hero-copy {
+  position:relative;
+  min-width:0;
+  overflow:visible;
+  isolation:isolate;
+  z-index:2;
+}
+
+.nf-modern-hero-image {
+  position:relative;
+  z-index:2;
+}
+
+.nf-mobile-hero-logo {
+  position:absolute !important;
+  display:block !important;
+  width:640px;
+  height:640px;
+  right:-250px;
+  top:-22px;
+  object-fit:contain;
+  opacity:.075;
+  pointer-events:none;
+  user-select:none;
+  z-index:1 !important;
+  transform:rotate(-8deg);
+  filter:drop-shadow(0 16px 34px rgba(51,32,10,.08));
+}
+
+.nf-modern-hero-copy > *:not(.nf-mobile-hero-logo) {
+  position:relative;
+  z-index:2;
+}
+
+.nf-type-choice-card {
+  align-items:center;
+  gap:14px;
+}
+
+.nf-type-choice-icon {
+  width:58px;
+  height:58px;
+  min-width:58px;
+  border-radius:16px;
+  display:grid;
+  place-items:center;
+  background:linear-gradient(180deg, #F8FCFF 0%, #EAF6FF 100%);
+  border:1px solid #C9DEED;
+  box-shadow:0 10px 24px rgba(20,127,190,.10);
+}
+
+.nf-type-choice-card.selected .nf-type-choice-icon {
+  background:linear-gradient(180deg, #F4FBFF 0%, #DFF3FF 100%);
+  border-color:#147FBE;
+  box-shadow:0 12px 26px rgba(20,127,190,.15);
+}
+
+.nf-type-choice-card.unavailable .nf-type-choice-icon {
+  opacity:.55;
+  filter:grayscale(.12);
+}
+
+.nf-type-question {
+  font-size:28px;
+  font-weight:900;
+  line-height:1;
+  color:#147FBE;
+}
+
+@media (min-width:1280px) {
+  .nf-mobile-hero-logo {
+    width:780px;
+    height:780px;
+    right:-330px;
+    top:-78px;
+    opacity:.08;
+  }
+}
+
+@media (min-width:641px) and (max-width:1024px) {
+  .nf-mobile-hero-logo {
+    width:560px;
+    height:560px;
+    right:-210px;
+    top:-8px;
+    opacity:.075;
+  }
+}
+
+@media (max-width:640px) {
+  .nf-modern-hero-copy {
+    overflow:hidden;
+  }
+
+  .nf-mobile-hero-logo {
+    width:470px !important;
+    height:470px !important;
+    right:-220px !important;
+    top:-75px !important;
+    opacity:.10 !important;
+    transform:rotate(-7deg) !important;
+  }
+}
+
 .nf-admin-limited-preview.available {
   border:1px solid #D7A91A;
   background:#FFF1AF;
@@ -8332,6 +9523,7 @@ export default function App() {
   const [typeNotice, setTypeNotice] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(true);
+  const [cartSummaryCompact, setCartSummaryCompact] = useState(false);
   const [dockHasEntered, setDockHasEntered] = useState(false);
   const siteSearchRef = useRef(null);
   const [siteSearchHelp, setSiteSearchHelp] = useState("");
@@ -8619,9 +9811,7 @@ export default function App() {
     }
 
     setContinueAttemptKey("");
-    setContinueHelp(
-      "Select the size and additional flavors below."
-    );
+    setContinueHelp("");
 
     addJar(
       flavor,
@@ -9452,11 +10642,11 @@ export default function App() {
 
   const nav = (
     <>
-      <button className="btn ghost" onClick={() => setView("partner")}>Partner</button>
       <button className="btn ghost" onClick={() => setView("about")}>About</button>
-      <button className="btn ghost" onClick={() => setView("subscribe")}>Honey Club</button>
       <button className="btn ghost" onClick={() => setView("find")}>Find Us</button>
+      <button className="btn ghost" onClick={() => setView("subscribe")}>Honey Club</button>
       <button className="btn ghost" onClick={() => setView("help")}>Order Help</button>
+      <button className="btn ghost" onClick={() => setView("partner")}>Partner</button>
       <button className="btn ghost" onClick={() => setView("policy")}>Policies</button>
     </>
   );
@@ -9969,11 +11159,37 @@ export default function App() {
       <Header big right={nav} />
 
       {typeInfo && (
-        <div role="dialog" aria-modal="true" onClick={() => setTypeInfo(false)}
-          style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(27,16,5,.55)",
-            display: "flex", alignItems: "flex-end", justifyContent: "center", padding: 12 }}>
-          <div onClick={(e) => e.stopPropagation()}
-            style={{ background: "#FFF", borderRadius: 12, width: "100%", maxWidth: 520, maxHeight: "88vh", overflowY: "auto", padding: 20 }}>
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Regular and Spun honey comparison"
+          onClick={() => setTypeInfo(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 300,
+            background: "rgba(27,16,5,.55)",
+            display: "grid",
+            placeItems: "center",
+            overflow: "hidden",
+            padding: 12,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#FFF",
+              borderRadius: 12,
+              width: "100%",
+              maxWidth: 520,
+              maxHeight: "calc(100dvh - 24px)",
+              overflowX: "hidden",
+              overflowY: "auto",
+              WebkitOverflowScrolling: "touch",
+              overscrollBehavior: "contain",
+              padding: 20,
+            }}
+          >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
               <div className="display" style={{ fontSize: 27 }}>SAME HONEY.<br />DIFFERENT TEXTURE.</div>
               <button className="btn ghost" aria-label="Close" onClick={() => setTypeInfo(false)}
@@ -10051,9 +11267,9 @@ export default function App() {
                   }}
                 >
                   <span className="nf-type-choice-icon">
-                    {t.id === "regular" ? <PourIcon size={34} color="#147FBE" /> :
-                      t.id === "spun" ? <SpunIcon size={35} color="#147FBE" /> :
-                      <span className="nf-type-question">?</span>}
+                    {t.id === "regular" ? <RegularTextureIcon size={36} color="#147FBE" /> :
+                      t.id === "spun" ? <SpunTextureIcon size={36} color="#147FBE" /> :
+                      <NotSureTextureIcon size={36} color="#147FBE" />}
                   </span>
                   <span>
                     <strong>{t.name}</strong>
@@ -10224,7 +11440,11 @@ export default function App() {
 
                     {selectedSizeSoldOut && (
                       <div
-                        className="nf-top-sold-out-overlay"
+                        className={`nf-top-sold-out-overlay ${
+                          selectedSizeCartLimitReached
+                            ? "cart-limit"
+                            : ""
+                        }`}
                         aria-label={
                           allSizesSoldOut
                             ? `${flavor.name} is sold out`
@@ -10982,27 +12202,102 @@ export default function App() {
         </div>
       )}
 
-      {cart.length > 0 && (
-        <aside className={`nf-cart-tray ${cartOpen ? "open" : ""}`} aria-label="Your order">
+      {/* TEXTURE POPUP — HIDE CART TRAY WHILE OPEN */}
+      {cart.length > 0 && !typeInfo && (
+        <aside
+          className={`nf-cart-tray ${cartOpen ? "open" : ""} ${
+            pickSize === B.size && cartSummaryCompact
+              ? "compact"
+              : ""
+          }`}
+          aria-label="Your order"
+        >
           <div className="nf-cart-tray-inner">
-            <button
-              type="button"
-              className="nf-cart-tray-toggle"
-              onClick={() => setCartOpen((open) => !open)}
-              aria-expanded={cartOpen}
-            >
-              <span className="nf-cart-tray-label">
-                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M3 4h2l2.1 10.1a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 1.9-1.4L21 7H6"
-                    stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
-                  <circle cx="10" cy="20" r="1.35" fill="currentColor" />
-                  <circle cx="18" cy="20" r="1.35" fill="currentColor" />
-                </svg>
-                Your Order
-                <span className="nf-cart-tray-count">{cartCount}</span>
-              </span>
-              <span>{cartOpen ? "Hide" : "Review order items"}</span>
-            </button>
+            <div className="nf-cart-tray-actions">
+              <button
+                type="button"
+                className="nf-cart-tray-toggle"
+                onClick={() => {
+                  if (pickSize === B.size) {
+                    setCartSummaryCompact(false);
+                    setCartOpen(true);
+                    return;
+                  }
+
+                  setCartOpen((open) => !open);
+                }}
+                aria-expanded={
+                  cartOpen &&
+                  !(pickSize === B.size && cartSummaryCompact)
+                }
+              >
+                <span className="nf-cart-tray-label">
+                  <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M3 4h2l2.1 10.1a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 1.9-1.4L21 7H6"
+                      stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+                    <circle cx="10" cy="20" r="1.35" fill="currentColor" />
+                    <circle cx="18" cy="20" r="1.35" fill="currentColor" />
+                  </svg>
+                  Your Order
+                  <span className="nf-cart-tray-count">{cartCount}</span>
+                </span>
+
+                <span className="nf-cart-tray-review-action">
+                  {pickSize === B.size
+                    ? "Review order items"
+                    : cartOpen
+                      ? "Hide"
+                      : "Review order items"}
+                </span>
+              </button>
+
+              {pickSize === B.size && (
+                <button
+                  type="button"
+                  className="nf-cart-compact-toggle"
+                  aria-label={
+                    cartSummaryCompact
+                      ? "Expand order summary"
+                      : "Condense order summary"
+                  }
+                  title={
+                    cartSummaryCompact
+                      ? "Expand order summary"
+                      : "Condense order summary"
+                  }
+                  aria-pressed={cartSummaryCompact}
+                  onClick={() => {
+                    const nextCompact = !cartSummaryCompact;
+
+                    setCartSummaryCompact(nextCompact);
+
+                    if (nextCompact) {
+                      setCartOpen(false);
+                    }
+                  }}
+                >
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d={
+                        cartSummaryCompact
+                          ? "M6 9l6 6 6-6"
+                          : "M6 15l6-6 6 6"
+                      }
+                      stroke="currentColor"
+                      strokeWidth="2.3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+              )}
+            </div>
 
             {cartOpen && (
               <div className="nf-cart-items">
