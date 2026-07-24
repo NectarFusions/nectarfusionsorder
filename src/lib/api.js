@@ -302,14 +302,20 @@ export async function getPartnerPortalContext() {
   }
 
   if (partnerId) {
-    const [accountResult, mappingResult] = await Promise.all([
+    const [
+      accountResult,
+      mappingResult,
+      milestonesResult,
+      goalsResult,
+    ] = await Promise.all([
       supabase
         .from("partner_accounts")
         .select(
           "id,business_name,public_name,contact_name,email,partner_type," +
-          "relationship_status,auth_access_enabled,preferred_delivery_days," +
-          "preferred_fulfillment,receiving_notes,delivery_notes," +
-          "locator_permission,event_submission_enabled"
+          "relationship_status,partner_level,partner_level_updated_at," +
+          "auth_access_enabled,preferred_delivery_days,preferred_fulfillment," +
+          "receiving_notes,delivery_notes,locator_permission," +
+          "event_submission_enabled"
         )
         .eq("id", partnerId)
         .maybeSingle(),
@@ -322,6 +328,27 @@ export async function getPartnerPortalContext() {
         .eq("user_id", userId)
         .eq("partner_id", partnerId)
         .maybeSingle(),
+
+      supabase
+        .from("partner_milestones")
+        .select(
+          "id,milestone_key,title,description,status,responsible_party," +
+          "next_action,due_at,completed_at,partner_visible_notes,sort"
+        )
+        .eq("partner_id", partnerId)
+        .order("sort", { ascending: true })
+        .order("created_at", { ascending: true }),
+
+      supabase
+        .from("partner_goals")
+        .select(
+          "id,title,description,goal_type,status,target_value,current_value," +
+          "unit_label,start_on,due_on,completed_at,next_action," +
+          "partner_visible_notes,sort"
+        )
+        .eq("partner_id", partnerId)
+        .order("sort", { ascending: true })
+        .order("created_at", { ascending: true }),
     ]);
 
     if (accountResult.error) {
@@ -332,6 +359,14 @@ export async function getPartnerPortalContext() {
       throw new Error(mappingResult.error.message);
     }
 
+    if (milestonesResult.error) {
+      throw new Error(milestonesResult.error.message);
+    }
+
+    if (goalsResult.error) {
+      throw new Error(goalsResult.error.message);
+    }
+
     if (!accountResult.data || !mappingResult.data) {
       return { kind: "unauthorized" };
     }
@@ -340,6 +375,8 @@ export async function getPartnerPortalContext() {
       kind: "partner",
       account: accountResult.data,
       mapping: mappingResult.data,
+      milestones: milestonesResult.data ?? [],
+      goals: goalsResult.data ?? [],
     };
   }
 

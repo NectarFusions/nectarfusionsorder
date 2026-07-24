@@ -171,7 +171,7 @@ const PORTAL_CSS = `
 }
 .nf-partner-account-details {
   display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
+  grid-template-columns:repeat(4,minmax(0,1fr));
   gap:10px;
   margin-top:20px;
 }
@@ -201,6 +201,306 @@ const PORTAL_CSS = `
   background:#FFF9E8;
   color:#604A1C;
   line-height:1.7;
+}
+.nf-partner-progress-panel {
+  margin-top:22px;
+  padding:clamp(20px,3vw,30px);
+  border:1px solid #D9C8B4;
+  border-radius:22px;
+  background:linear-gradient(145deg,#FFFEFB,#F7F1E8);
+}
+.nf-partner-progress-header {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:18px;
+}
+.nf-partner-progress-title {
+  margin:6px 0 8px;
+  color:#23170F;
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:38px;
+  line-height:1;
+}
+.nf-partner-progress-intro {
+  max-width:660px;
+  margin:0;
+  color:#67594D;
+  line-height:1.65;
+}
+.nf-partner-level-badge {
+  flex:0 0 auto;
+  padding:10px 14px;
+  border:1px solid #E8C856;
+  border-radius:999px;
+  background:#FFF4BE;
+  color:#59430F;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+}
+.nf-partner-progress-stats {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+  margin-top:22px;
+}
+.nf-partner-progress-stat {
+  min-height:94px;
+  padding:16px;
+  border-radius:16px;
+  background:#FFFFFF;
+  box-shadow:0 8px 20px rgba(52,33,18,.07);
+}
+.nf-partner-progress-stat span {
+  display:block;
+  color:#6B7D87;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+.nf-partner-progress-stat strong {
+  display:block;
+  margin-top:7px;
+  color:#173C52;
+  font-size:23px;
+  line-height:1.15;
+}
+.nf-partner-progress-stat small {
+  display:block;
+  margin-top:6px;
+  color:#75685D;
+  line-height:1.45;
+}
+.nf-partner-progress-track {
+  height:14px;
+  margin-top:14px;
+  overflow:hidden;
+  border-radius:999px;
+  background:#E8E0D7;
+}
+.nf-partner-progress-fill {
+  height:100%;
+  border-radius:inherit;
+  background:linear-gradient(90deg,#167BB6,#F7C41C);
+  transition:width .35s ease;
+}
+.nf-partner-current-step {
+  margin-top:18px;
+  padding:18px 20px;
+  border-left:5px solid #167BB6;
+  border-radius:15px;
+  background:#EEF8FD;
+}
+.nf-partner-current-step span {
+  color:#55798D;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.07em;
+  text-transform:uppercase;
+}
+.nf-partner-current-step h3 {
+  margin:7px 0 6px;
+  color:#173C52;
+  font-size:19px;
+}
+.nf-partner-current-step p {
+  margin:0;
+  color:#4D6877;
+  line-height:1.6;
+}
+.nf-partner-current-step-meta {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px 16px;
+  margin-top:10px;
+  color:#5D7582;
+  font-size:12px;
+}
+.nf-partner-progress-subheading {
+  margin:28px 0 12px;
+  color:#2B1C13;
+  font-size:19px;
+}
+.nf-partner-milestone-list {
+  display:grid;
+  gap:10px;
+}
+.nf-partner-milestone {
+  display:grid;
+  grid-template-columns:42px minmax(0,1fr) auto;
+  gap:13px;
+  align-items:start;
+  padding:16px;
+  border:1px solid #E4D9CD;
+  border-radius:16px;
+  background:#FFFFFF;
+}
+.nf-partner-milestone-marker {
+  display:grid;
+  place-items:center;
+  width:38px;
+  height:38px;
+  border-radius:50%;
+  background:#ECE5DD;
+  color:#67594D;
+  font-size:13px;
+  font-weight:900;
+}
+.nf-partner-milestone-marker[data-status="completed"] {
+  background:#DDF3E3;
+  color:#27613A;
+}
+.nf-partner-milestone-marker[data-status="in_progress"] {
+  background:#DDF1FC;
+  color:#146A9A;
+}
+.nf-partner-milestone-marker[data-status="waiting_on_partner"],
+.nf-partner-milestone-marker[data-status="waiting_on_nectarfusions"] {
+  background:#FFF0C4;
+  color:#7A5700;
+}
+.nf-partner-milestone-marker[data-status="skipped"] {
+  background:#EEE9F6;
+  color:#65587A;
+}
+.nf-partner-milestone-copy h4 {
+  margin:1px 0 5px;
+  color:#271A12;
+  font-size:15px;
+}
+.nf-partner-milestone-copy p {
+  margin:0;
+  color:#6A5D52;
+  font-size:13px;
+  line-height:1.55;
+}
+.nf-partner-milestone-copy p + p {
+  margin-top:7px;
+}
+.nf-partner-visible-note {
+  padding:9px 11px;
+  border-radius:10px;
+  background:#F7F2E8;
+}
+.nf-partner-milestone-side {
+  display:grid;
+  justify-items:end;
+  gap:7px;
+  min-width:130px;
+}
+.nf-partner-status-pill {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:6px 9px;
+  border-radius:999px;
+  background:#EFE9E1;
+  color:#62564C;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+.nf-partner-status-pill[data-status="completed"],
+.nf-partner-status-pill[data-status="achieved"] {
+  background:#DFF3E5;
+  color:#285F3A;
+}
+.nf-partner-status-pill[data-status="in_progress"] {
+  background:#DDF1FC;
+  color:#146A9A;
+}
+.nf-partner-status-pill[data-status="waiting_on_partner"],
+.nf-partner-status-pill[data-status="waiting_on_nectarfusions"] {
+  background:#FFF0C4;
+  color:#745400;
+}
+.nf-partner-milestone-side small {
+  color:#817469;
+  text-align:right;
+  line-height:1.4;
+}
+.nf-partner-goals-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+.nf-partner-goal-card {
+  padding:17px;
+  border:1px solid #E1D6C9;
+  border-radius:16px;
+  background:#FFFFFF;
+}
+.nf-partner-goal-top {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+}
+.nf-partner-goal-card h4 {
+  margin:0;
+  color:#271A12;
+  font-size:16px;
+}
+.nf-partner-goal-card p {
+  margin:8px 0 0;
+  color:#6A5D52;
+  font-size:13px;
+  line-height:1.55;
+}
+.nf-partner-goal-values {
+  display:flex;
+  justify-content:space-between;
+  gap:14px;
+  margin-top:14px;
+  color:#5C5148;
+  font-size:12px;
+}
+.nf-partner-goal-values strong {
+  color:#173C52;
+}
+.nf-partner-goal-track {
+  height:9px;
+  margin-top:8px;
+  overflow:hidden;
+  border-radius:999px;
+  background:#E8E0D7;
+}
+.nf-partner-goal-fill {
+  height:100%;
+  border-radius:inherit;
+  background:linear-gradient(90deg,#167BB6,#F7C41C);
+}
+.nf-partner-empty-goals {
+  padding:18px;
+  border:1px dashed #CDBFAF;
+  border-radius:15px;
+  background:#FFFFFF;
+  color:#706258;
+  line-height:1.6;
+}
+@media (max-width:760px) {
+  .nf-partner-progress-header {
+    flex-direction:column;
+  }
+  .nf-partner-progress-stats,
+  .nf-partner-goals-grid {
+    grid-template-columns:1fr;
+  }
+  .nf-partner-milestone {
+    grid-template-columns:38px minmax(0,1fr);
+  }
+  .nf-partner-milestone-side {
+    grid-column:2;
+    justify-items:start;
+    min-width:0;
+  }
+  .nf-partner-milestone-side small {
+    text-align:left;
+  }
 }
 .nf-partner-portal-actions {
   display:flex;
@@ -232,6 +532,60 @@ const cleanStatus = (value) =>
   String(value || "")
     .replaceAll("_", " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
+
+const formatPartnerDate = (value) => {
+  if (!value) return "";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+};
+
+const isResolvedMilestone = (status) =>
+  status === "completed" || status === "skipped";
+
+const goalProgressPercent = (goal) => {
+  const target = Number(goal?.target_value);
+  const current = Number(goal?.current_value);
+
+  if (!Number.isFinite(target) || target <= 0) return 0;
+  if (!Number.isFinite(current) || current <= 0) return 0;
+
+  return Math.max(0, Math.min(100, Math.round((current / target) * 100)));
+};
+
+const formatGoalValue = (value, unitLabel) => {
+  if (value === null || value === undefined || value === "") return "Not set";
+
+  const number = Number(value);
+  if (!Number.isFinite(number)) return String(value);
+
+  const unit = String(unitLabel || "").trim();
+  const lowerUnit = unit.toLowerCase();
+
+  if (
+    unit === "$" ||
+    lowerUnit === "usd" ||
+    lowerUnit.includes("dollar")
+  ) {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 2,
+    }).format(number);
+  }
+
+  const formatted = number.toLocaleString("en-US", {
+    maximumFractionDigits: 2,
+  });
+
+  return unit ? `${formatted} ${unit}` : formatted;
+};
 
 const accessErrorMessage = (error) => {
   const message = String(error?.message || error || "");
@@ -337,6 +691,29 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
     account?.public_name ||
     account?.business_name ||
     "NectarFusions Partner";
+
+  const milestones = Array.isArray(access.milestones)
+    ? access.milestones
+    : [];
+
+  const goals = Array.isArray(access.goals)
+    ? access.goals
+    : [];
+
+  const resolvedMilestoneCount = milestones.filter((milestone) =>
+    isResolvedMilestone(milestone.status)
+  ).length;
+
+  const progressPercent = milestones.length
+    ? Math.round((resolvedMilestoneCount / milestones.length) * 100)
+    : 0;
+
+  const currentMilestone =
+    milestones.find(
+      (milestone) => !isResolvedMilestone(milestone.status)
+    ) || null;
+
+  const partnerLevel = cleanStatus(account?.partner_level || "starter");
 
   return (
     <div className="nf nf-partner-portal-page">
@@ -508,7 +885,294 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
                       {cleanStatus(mapping?.partner_role)}
                     </strong>
                   </div>
+                  <div className="nf-partner-account-detail">
+                    <span>Partner level</span>
+                    <strong>{partnerLevel}</strong>
+                  </div>
                 </div>
+
+                <section
+                  className="nf-partner-progress-panel"
+                  aria-labelledby="partner-progress-title"
+                >
+                  <div className="nf-partner-progress-header">
+                    <div>
+                      <div className="nf-modern-kicker">
+                        Partnership journey
+                      </div>
+                      <h2
+                        id="partner-progress-title"
+                        className="nf-partner-progress-title"
+                      >
+                        Partnership Progress
+                      </h2>
+                      <p className="nf-partner-progress-intro">
+                        Follow your completed steps, current responsibility,
+                        upcoming actions, and measurable partnership goals.
+                      </p>
+                    </div>
+
+                    <div className="nf-partner-level-badge">
+                      {partnerLevel} Partner
+                    </div>
+                  </div>
+
+                  <div className="nf-partner-progress-stats">
+                    <div className="nf-partner-progress-stat">
+                      <span>Overall progress</span>
+                      <strong>{progressPercent}%</strong>
+                      <small>
+                        Based on visible milestones that are completed or
+                        intentionally skipped.
+                      </small>
+                    </div>
+
+                    <div className="nf-partner-progress-stat">
+                      <span>Milestones resolved</span>
+                      <strong>
+                        {resolvedMilestoneCount} of {milestones.length}
+                      </strong>
+                      <small>
+                        NectarFusions updates official milestone statuses.
+                      </small>
+                    </div>
+
+                    <div className="nf-partner-progress-stat">
+                      <span>Goals assigned</span>
+                      <strong>{goals.length}</strong>
+                      <small>
+                        Goals may include launch, sales, reorder,
+                        merchandising, event, or level targets.
+                      </small>
+                    </div>
+                  </div>
+
+                  <div
+                    className="nf-partner-progress-track"
+                    role="progressbar"
+                    aria-label="Partnership progress"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                    aria-valuenow={progressPercent}
+                  >
+                    <div
+                      className="nf-partner-progress-fill"
+                      style={{ width: `${progressPercent}%` }}
+                    />
+                  </div>
+
+                  <div className="nf-partner-current-step">
+                    <span>Your next step</span>
+                    <h3>
+                      {currentMilestone
+                        ? currentMilestone.title
+                        : "All visible milestones are resolved"}
+                    </h3>
+                    <p>
+                      {currentMilestone?.next_action ||
+                        "NectarFusions will add the next action when the partnership advances."}
+                    </p>
+
+                    {currentMilestone && (
+                      <div className="nf-partner-current-step-meta">
+                        <strong>
+                          Responsible:{" "}
+                          {cleanStatus(
+                            currentMilestone.responsible_party
+                          )}
+                        </strong>
+
+                        {currentMilestone.due_at && (
+                          <span>
+                            Due:{" "}
+                            {formatPartnerDate(
+                              currentMilestone.due_at
+                            )}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <h3 className="nf-partner-progress-subheading">
+                    Milestones
+                  </h3>
+
+                  <div className="nf-partner-milestone-list">
+                    {milestones.map((milestone, index) => (
+                      <article
+                        key={milestone.id || milestone.milestone_key}
+                        className="nf-partner-milestone"
+                      >
+                        <div
+                          className="nf-partner-milestone-marker"
+                          data-status={milestone.status}
+                          aria-hidden="true"
+                        >
+                          {milestone.status === "completed"
+                            ? "✓"
+                            : index + 1}
+                        </div>
+
+                        <div className="nf-partner-milestone-copy">
+                          <h4>{milestone.title}</h4>
+
+                          {milestone.description && (
+                            <p>{milestone.description}</p>
+                          )}
+
+                          {!isResolvedMilestone(milestone.status) &&
+                            milestone.next_action && (
+                              <p>
+                                <strong>Next:</strong>{" "}
+                                {milestone.next_action}
+                              </p>
+                            )}
+
+                          {milestone.partner_visible_notes && (
+                            <p className="nf-partner-visible-note">
+                              <strong>Partner note:</strong>{" "}
+                              {milestone.partner_visible_notes}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="nf-partner-milestone-side">
+                          <span
+                            className="nf-partner-status-pill"
+                            data-status={milestone.status}
+                          >
+                            {cleanStatus(milestone.status)}
+                          </span>
+
+                          <small>
+                            {cleanStatus(
+                              milestone.responsible_party
+                            )}
+                          </small>
+
+                          {milestone.due_at && (
+                            <small>
+                              Due{" "}
+                              {formatPartnerDate(milestone.due_at)}
+                            </small>
+                          )}
+
+                          {milestone.completed_at && (
+                            <small>
+                              Completed{" "}
+                              {formatPartnerDate(
+                                milestone.completed_at
+                              )}
+                            </small>
+                          )}
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+
+                  <h3 className="nf-partner-progress-subheading">
+                    Partnership Goals
+                  </h3>
+
+                  {goals.length === 0 ? (
+                    <div className="nf-partner-empty-goals">
+                      No goals have been assigned yet. NectarFusions can add
+                      measurable targets and next actions without changing
+                      your published wholesale pricing.
+                    </div>
+                  ) : (
+                    <div className="nf-partner-goals-grid">
+                      {goals.map((goal) => {
+                        const goalPercent =
+                          goalProgressPercent(goal);
+
+                        return (
+                          <article
+                            key={goal.id}
+                            className="nf-partner-goal-card"
+                          >
+                            <div className="nf-partner-goal-top">
+                              <div>
+                                <h4>{goal.title}</h4>
+                                <p>
+                                  {cleanStatus(goal.goal_type)}
+                                </p>
+                              </div>
+
+                              <span
+                                className="nf-partner-status-pill"
+                                data-status={goal.status}
+                              >
+                                {cleanStatus(goal.status)}
+                              </span>
+                            </div>
+
+                            {goal.description && (
+                              <p>{goal.description}</p>
+                            )}
+
+                            <div className="nf-partner-goal-values">
+                              <span>
+                                Current:{" "}
+                                <strong>
+                                  {formatGoalValue(
+                                    goal.current_value,
+                                    goal.unit_label
+                                  )}
+                                </strong>
+                              </span>
+                              <span>
+                                Target:{" "}
+                                <strong>
+                                  {formatGoalValue(
+                                    goal.target_value,
+                                    goal.unit_label
+                                  )}
+                                </strong>
+                              </span>
+                            </div>
+
+                            <div
+                              className="nf-partner-goal-track"
+                              role="progressbar"
+                              aria-label={`${goal.title} progress`}
+                              aria-valuemin="0"
+                              aria-valuemax="100"
+                              aria-valuenow={goalPercent}
+                            >
+                              <div
+                                className="nf-partner-goal-fill"
+                                style={{ width: `${goalPercent}%` }}
+                              />
+                            </div>
+
+                            {goal.next_action && (
+                              <p>
+                                <strong>Next:</strong>{" "}
+                                {goal.next_action}
+                              </p>
+                            )}
+
+                            {goal.partner_visible_notes && (
+                              <p className="nf-partner-visible-note">
+                                <strong>Partner note:</strong>{" "}
+                                {goal.partner_visible_notes}
+                              </p>
+                            )}
+
+                            {goal.due_on && (
+                              <p>
+                                <strong>Due:</strong>{" "}
+                                {formatPartnerDate(goal.due_on)}
+                              </p>
+                            )}
+                          </article>
+                        );
+                      })}
+                    </div>
+                  )}
+                </section>
 
                 <div className="nf-partner-dashboard-grid">
                   <article className="nf-partner-dashboard-card">
