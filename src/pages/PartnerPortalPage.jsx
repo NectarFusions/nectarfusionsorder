@@ -539,10 +539,14 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
 
                 <div className="nf-partner-program-summary">
                   <strong>Current retail wholesale structure:</strong>{" "}
-                  7 oz and 1 lb jars only. Opening orders require at least
-                  24 units, reorders require at least 12 units, and the
-                  standard case pack is six units per flavor and size unless
-                  a mixed case is approved in writing.
+                  7 oz jars are $7.25 wholesale with a $12.00 suggested retail,
+                  and 1 lb jars are $12.00 wholesale with a $20.00 suggested
+                  retail. Opening orders require at least 24 units, reorders
+                  require at least 12 units, and the standard case pack is six
+                  units per flavor and size unless a mixed case is approved in
+                  writing. The 4 oz jar remains reserved for NectarFusions
+                  direct farmers-market sales. Partner levels change benefits
+                  and access—not the published unit price.
                 </div>
               </>
             )}

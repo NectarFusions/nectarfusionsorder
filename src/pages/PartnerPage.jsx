@@ -168,11 +168,13 @@ const PARTNER_CSS = `
 
 const BUSINESS_TYPES = [
   "Boutique or gift shop",
-  "Farm store or market",
-  "Café, bakery, or restaurant",
-  "Specialty food retailer",
-  "Hospitality or lodging",
-  "Corporate or gifting program",
+  "Michigan-made shop",
+  "Farm store or specialty grocery",
+  "Café or bakery",
+  "Winery, cheese shop, or butcher",
+  "Tourist or visitor shop",
+  "Hospitality or foodservice inquiry",
+  "Corporate or event gifting inquiry",
   "Other",
 ];
 
@@ -186,22 +188,24 @@ const BENEFITS = [
 ];
 
 const PROCESS = [
-  ["Apply", "Tell us about your business, customers, and where NectarFusions would be sold."],
-  ["We review the fit", "We look at location, assortment, timing, and the kind of partnership that makes sense."],
-  ["Receive program details", "Approved businesses receive current product options, order expectations, and next steps."],
-  ["Place an opening order", "Choose the assortment and fulfillment plan confirmed with NectarFusions."],
-  ["Receive products and materials", "We prepare the jars and provide the information needed to merchandise them confidently."],
-  ["Request replenishment", "Current partners use the secure portal to request restocks and access updated resources."],
+  ["Start with an inquiry", "Tell us about your store, customers, placement, timing, and where NectarFusions would be sold."],
+  ["Complete the application", "Businesses moving forward provide store, buyer, resale, receiving, payment, and placement information."],
+  ["Receive a curated offer", "Approved businesses receive the current line sheet and a recommended 7 oz and 1 lb opening mix."],
+  ["Sign and prepay", "Sign the partner agreement and prepay the 24-unit opening order before product is released."],
+  ["Launch with support", "Receive lot-coded product, shelf guidance, and approved merchandising materials."],
+  ["Review and replenish", "Review sell-through at Day 30 and Day 60, then reorder the winners through the secure portal."],
 ];
 
 const FAQS = [
-  ["Who may apply?", "Boutiques, gift shops, farm stores, cafés, specialty food retailers, hospitality businesses, and other established businesses that are a strong fit for the brand."],
-  ["Is there a minimum opening order?", "Opening-order requirements are provided after review because the right assortment depends on the business, product format, and fulfillment plan."],
-  ["Can we choose our flavors?", "Yes. Availability changes by season and inventory, but approved partners can discuss an assortment that fits their customers."],
-  ["Is local pickup available?", "Pickup may be available for approved Michigan partners. Shipping or delivery details are confirmed during setup."],
-  ["Do you offer consignment?", "Wholesale purchasing is the standard program. A limited trial arrangement may be considered for select local businesses when both sides agree to the terms in writing."],
-  ["How do reorders work?", "Current partners will submit replenishment requests through the secure Partner Portal. A request is reviewed and confirmed before it becomes a final order."],
-  ["How should the honey be stored?", "Store jars sealed at room temperature, away from direct sunlight and excessive heat. Product-specific handling guidance is provided to approved partners."],
+  ["Who may apply?", "Boutiques, gift shops, Michigan-made shops, farm stores, specialty grocers, cafés, bakeries, wineries, cheese shops, butchers, and visitor-focused retailers may apply. Corporate, foodservice, custom, and pilot work use separate written programs."],
+  ["Which jar sizes are available to retail partners?", "Approved retail wholesale partners may purchase 7 oz and 1 lb jars. The 4 oz jar is reserved for NectarFusions direct farmers-market sales."],
+  ["What are the wholesale prices?", "The published wholesale prices are $7.25 for the 7 oz jar and $12.00 for the 1 lb jar. Suggested retail is $12.00 and $20.00, although retailers independently set their resale prices."],
+  ["What are the order minimums?", "The opening minimum is 24 units. The reorder minimum is 12 units. The standard case pack is six units per flavor and size unless a mixed case is offered in writing."],
+  ["Can we choose our flavors?", "Yes. NectarFusions provides a curated opening recommendation, and the final assortment is confirmed based on the store, customer fit, season, and available inventory."],
+  ["Are orders prepaid?", "Yes. Opening orders are prepaid. Reorders remain prepaid unless written payment terms are specifically approved."],
+  ["Do you offer consignment?", "No. The retail partner program is wholesale. Corporate gifting, foodservice, custom, co-brand, and pilot requests are quoted separately in writing."],
+  ["How do partner levels work?", "Starter, Growth, and Strategic levels reward performance with support, access, visibility, allocation, and possible earned protections. Partner level never changes the published unit wholesale price."],
+  ["How do reorders work?", "Current partners submit replenishment requests through the secure Partner Portal. NectarFusions reviews inventory, timing, fulfillment, and the requested assortment before confirming the order."],
   ["Who should we contact?", "Email info@nectar-fusions.com or call or text (989) 941-6385."],
 ];
 
@@ -302,11 +306,11 @@ export default function PartnerPage({ Header, styles, onBack, onPartnerLogin, su
       <main className="nf-wrap nf-partner-main">
         <section className="nf-partner-hero">
           <div className="nf-partner-hero-copy">
-            <div className="nf-modern-kicker" style={{ color: "#72B7E4" }}>For shops, cafés, markets, and gifting</div>
+            <div className="nf-modern-kicker" style={{ color: "#72B7E4" }}>For boutiques, farm stores, cafés, and specialty retailers</div>
             <h2>Bring NectarFusions to <span>Your Customers</span></h2>
             <p>
-              Add a Michigan-made infused honey collection that encourages discovery, conversation, gifting, and
-              memorable flavor experiences. We work directly with approved retail and hospitality partners.
+              Add a small-batch Michigan honey line made for discovery, gifting, everyday use, and strong local
+              retail relationships. Approved retail partners carry two proven wholesale sizes with published pricing.
             </p>
             <div className="nf-partner-actions">
               <button type="button" className="btn solid" onClick={scrollToApplication}>Become a Partner</button>
@@ -321,12 +325,12 @@ export default function PartnerPage({ Header, styles, onBack, onPartnerLogin, su
           </div>
 
           <aside className="nf-partner-hero-card" aria-label="Partner program overview">
-            <strong>A thoughtful retail partnership</strong>
+            <strong>A clear, low-risk retail partnership</strong>
             <ul>
-              <li><span>01</span><span>Wholesale is the standard path for approved accounts.</span></li>
-              <li><span>02</span><span>Assortment and opening-order details are reviewed with each business.</span></li>
-              <li><span>03</span><span>Limited local trials may be considered when clearly documented.</span></li>
-              <li><span>04</span><span>Replenishment requests are confirmed based on stock and timing.</span></li>
+              <li><span>01</span><span>Retail wholesale is limited to the 7 oz and 1 lb jars.</span></li>
+              <li><span>02</span><span>Every approved retail partner receives the same published unit pricing.</span></li>
+              <li><span>03</span><span>The opening order is prepaid with a 24-unit minimum.</span></li>
+              <li><span>04</span><span>Day-30 and Day-60 reviews guide reorders and assortment decisions.</span></li>
             </ul>
           </aside>
         </section>
@@ -353,6 +357,42 @@ export default function PartnerPage({ Header, styles, onBack, onPartnerLogin, su
 
         <section className="nf-partner-section">
           <div className="nf-partner-heading">
+            <div className="nf-modern-kicker">Retail wholesale program</div>
+            <h2>Two Sizes. One Published Price Schedule.</h2>
+            <p>
+              Retailers independently set resale prices. The amounts below are NectarFusions partner costs and
+              suggested retail prices under the corrected July 2026 program.
+            </p>
+          </div>
+
+          <div className="nf-partner-benefits">
+            <article className="nf-partner-benefit">
+              <div className="nf-partner-benefit-icon" aria-hidden="true">7</div>
+              <h3>7 oz Hero Jar</h3>
+              <p><strong>$7.25 partner cost</strong><br />$12.00 suggested retail<br />$4.75 partner gross at suggested retail</p>
+            </article>
+
+            <article className="nf-partner-benefit">
+              <div className="nf-partner-benefit-icon" aria-hidden="true">1</div>
+              <h3>1 lb Pantry Jar</h3>
+              <p><strong>$12.00 partner cost</strong><br />$20.00 suggested retail<br />$8.00 partner gross at suggested retail</p>
+            </article>
+
+            <article className="nf-partner-benefit">
+              <div className="nf-partner-benefit-icon" aria-hidden="true">✓</div>
+              <h3>Program Minimums</h3>
+              <p><strong>24-unit opening order</strong><br />12-unit reorder minimum<br />Six units per flavor and size</p>
+            </article>
+          </div>
+
+          <div className="nf-partner-program-note">
+            The 4 oz jar is reserved for NectarFusions direct farmers-market sales. Starter, Growth, and Strategic
+            partner levels change support and access—not the published per-jar wholesale price.
+          </div>
+        </section>
+
+        <section className="nf-partner-section">
+          <div className="nf-partner-heading">
             <div className="nf-modern-kicker">How it works</div>
             <h2>A Clear Path From Application to Reorder</h2>
           </div>
@@ -365,8 +405,9 @@ export default function PartnerPage({ Header, styles, onBack, onPartnerLogin, su
             ))}
           </div>
           <div className="nf-partner-program-note">
-            Pricing, quantities, lead times, and product availability are provided from current program information
-            after review rather than being permanently hard-coded into this page.
+            Eligible unopened units from the first wholesale order may request one controlled flavor swap by Day 45.
+            The maximum is 20% of the opening order, rounded down to whole jars. A 24-unit opening order therefore
+            allows a maximum swap of four jars, subject to label, seal, Core-flavor, and availability requirements.
           </div>
         </section>
 
@@ -375,8 +416,8 @@ export default function PartnerPage({ Header, styles, onBack, onPartnerLogin, su
             <div className="nf-modern-kicker">Partner inquiry</div>
             <h2>Tell Us About Your Business</h2>
             <p>
-              This first form is intentionally focused. We need enough information to understand the fit without asking
-              for detailed financial records before we have spoken with you.
+              This is the initial partner inquiry. Businesses moving forward will complete the formal application,
+              provide resale information, and confirm receiving, payment, and placement details before approval.
             </p>
             <p><strong>Required fields are marked with an asterisk.</strong></p>
           </div>
