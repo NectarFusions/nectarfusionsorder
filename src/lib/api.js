@@ -282,6 +282,74 @@ export async function amAdmin() {
   return !!data;
 }
 
+export async function getPartnerPortalContext() {
+  const { data: sessionData, error: sessionError } =
+    await supabase.auth.getSession();
+
+  if (sessionError) throw new Error(sessionError.message);
+
+  const userId = sessionData?.session?.user?.id;
+
+  if (!userId) {
+    return { kind: "signed_out" };
+  }
+
+  const { data: partnerId, error: partnerIdError } =
+    await supabase.rpc("nf_partner_id_for_user");
+
+  if (partnerIdError) {
+    throw new Error(partnerIdError.message);
+  }
+
+  if (partnerId) {
+    const [accountResult, mappingResult] = await Promise.all([
+      supabase
+        .from("partner_accounts")
+        .select(
+          "id,business_name,public_name,contact_name,email,partner_type," +
+          "relationship_status,auth_access_enabled,preferred_delivery_days," +
+          "preferred_fulfillment,receiving_notes,delivery_notes," +
+          "locator_permission,event_submission_enabled"
+        )
+        .eq("id", partnerId)
+        .maybeSingle(),
+
+      supabase
+        .from("partner_users")
+        .select(
+          "partner_id,user_id,email,partner_role,active,invited_at,last_access_at"
+        )
+        .eq("user_id", userId)
+        .eq("partner_id", partnerId)
+        .maybeSingle(),
+    ]);
+
+    if (accountResult.error) {
+      throw new Error(accountResult.error.message);
+    }
+
+    if (mappingResult.error) {
+      throw new Error(mappingResult.error.message);
+    }
+
+    if (!accountResult.data || !mappingResult.data) {
+      return { kind: "unauthorized" };
+    }
+
+    return {
+      kind: "partner",
+      account: accountResult.data,
+      mapping: mappingResult.data,
+    };
+  }
+
+  if (await amAdmin()) {
+    return { kind: "admin" };
+  }
+
+  return { kind: "unauthorized" };
+}
+
 /* ---------- admin ---------- */
 
 export const listOrders = () =>

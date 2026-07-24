@@ -2,6 +2,7 @@ import { Fragment } from "react";
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import * as api from "./lib/api";
 import PartnerPage from "./pages/PartnerPage";
+import PartnerPortalPage from "./pages/PartnerPortalPage";
 import MarketConfirmationPage from "./pages/MarketConfirmationPage";
 
 /* ============================================================
@@ -372,12 +373,23 @@ const ClubBenefitIcon = ({ kind }) => {
 /* --- private customer deep links --- */
 const TOKEN_RE = /^\/order\/([0-9a-f-]{36})\/?$/i;
 const CLUB_TOKEN_RE = /^\/club\/([0-9a-f-]{36})\/?$/i;
+const PARTNER_LOGIN_RE = /^\/partner\/login\/?$/i;
 
 const tokenFromUrl = () =>
   (window.location.pathname.match(TOKEN_RE) || [])[1] || null;
 
 const clubTokenFromUrl = () =>
   (window.location.pathname.match(CLUB_TOKEN_RE) || [])[1] || null;
+
+const partnerLoginFromUrl = () =>
+  PARTNER_LOGIN_RE.test(window.location.pathname);
+
+const pushPartnerLoginUrl = () =>
+  window.history.pushState(
+    { view: "partnerPortal" },
+    "",
+    "/partner/login"
+  );
 
 const pushOrderUrl = (token) =>
   window.history.pushState({}, "", `/order/${token}`);
@@ -9509,7 +9521,9 @@ html {
 export default function App() {
   const [cat, setCat] = useState(null);
   const [boot, setBoot] = useState(null);
-  const [view, setView] = useState("shop");
+  const [view, setView] = useState(() =>
+    partnerLoginFromUrl() ? "partnerPortal" : "shop"
+  );
   const [err, setErr] = useState(null);
   const [busy, setBusy] = useState(false);
 
@@ -9601,6 +9615,23 @@ export default function App() {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     });
   }, [view]);
+
+  useEffect(() => {
+    const syncPartnerRoute = () => {
+      const partnerRouteOpen = partnerLoginFromUrl();
+
+      setView((currentView) => {
+        if (partnerRouteOpen) return "partnerPortal";
+        if (currentView === "partnerPortal") return "shop";
+        return currentView;
+      });
+    };
+
+    window.addEventListener("popstate", syncPartnerRoute);
+
+    return () =>
+      window.removeEventListener("popstate", syncPartnerRoute);
+  }, []);
 
   /* If someone lands on /order/<token> — from their email, a bookmark, or
      just hitting refresh — pull that order straight back up. */
@@ -10668,12 +10699,30 @@ export default function App() {
     );
   }
 
+  /* ================= PARTNER PORTAL ================= */
+  if (view === "partnerPortal" || partnerLoginFromUrl()) {
+    return (
+      <PartnerPortalPage
+        Header={Header}
+        styles={CSS}
+        onBack={() => {
+          pushHome();
+          setView("partner");
+        }}
+      />
+    );
+  }
+
   /* ================= PARTNER ================= */
   if (view === "partner") {
     return <PartnerPage
       Header={Header}
       styles={CSS}
       onBack={() => setView("shop")}
+      onPartnerLogin={() => {
+        pushPartnerLoginUrl();
+        setView("partnerPortal");
+      }}
       submitInquiry={api.submitCustomerRequest}
     />;
   }

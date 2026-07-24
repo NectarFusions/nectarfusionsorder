@@ -205,8 +205,7 @@ const FAQS = [
   ["Who should we contact?", "Email info@nectar-fusions.com or call or text (989) 941-6385."],
 ];
 
-export default function PartnerPage({ Header, styles, onBack, submitInquiry }) {
-  const [portalNotice, setPortalNotice] = useState(false);
+export default function PartnerPage({ Header, styles, onBack, onPartnerLogin, submitInquiry }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
@@ -311,13 +310,13 @@ export default function PartnerPage({ Header, styles, onBack, submitInquiry }) {
             </p>
             <div className="nf-partner-actions">
               <button type="button" className="btn solid" onClick={scrollToApplication}>Become a Partner</button>
-              <button type="button" className="btn nf-partner-secondary" onClick={() => setPortalNotice((open) => !open)}>
+              <button
+                type="button"
+                className="btn nf-partner-secondary"
+                onClick={onPartnerLogin}
+              >
                 Current Partner Login
               </button>
-            </div>
-            <div className={`nf-partner-portal-note ${portalNotice ? "visible" : ""}`} role="status">
-              Secure portal access is the next build in this project. Current partners can contact
-              <strong> info@nectar-fusions.com</strong> for materials or replenishment support while it is completed.
             </div>
           </div>
 
