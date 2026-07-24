@@ -145,6 +145,124 @@ const PORTAL_CSS = `
   color:#51715A;
   font-size:13px;
 }
+.nf-partner-resource-panel {
+  margin-top:22px;
+  padding:clamp(20px,3vw,30px);
+  border:1px solid #C9DFEB;
+  border-radius:22px;
+  background:
+    radial-gradient(circle at 96% 8%,rgba(36,160,237,.12),transparent 28%),
+    linear-gradient(145deg,#FFFFFF,#F4FAFD);
+}
+.nf-partner-resource-header {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+}
+.nf-partner-resource-header h2 {
+  margin:6px 0 8px;
+  color:#23170F;
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:38px;
+  line-height:1;
+}
+.nf-partner-resource-header p {
+  max-width:680px;
+  margin:0;
+  color:#61717B;
+  line-height:1.65;
+}
+.nf-partner-resource-count {
+  flex:0 0 auto;
+  padding:9px 13px;
+  border:1px solid #9CCBE5;
+  border-radius:999px;
+  background:#E9F6FD;
+  color:#175D85;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+}
+.nf-partner-resource-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+  margin-top:18px;
+}
+.nf-partner-resource-card {
+  display:flex;
+  flex-direction:column;
+  min-height:190px;
+  padding:18px;
+  border:1px solid #D8E4EA;
+  border-radius:17px;
+  background:#FFFFFF;
+  box-shadow:0 9px 22px rgba(32,86,122,.07);
+}
+.nf-partner-resource-category {
+  align-self:flex-start;
+  padding:6px 9px;
+  border-radius:999px;
+  background:#FFF0B5;
+  color:#6E5100;
+  font-size:9.5px;
+  font-weight:900;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+}
+.nf-partner-resource-card h3 {
+  margin:12px 0 7px;
+  color:#281A12;
+  font-size:17px;
+}
+.nf-partner-resource-card p {
+  margin:0;
+  color:#6A5D52;
+  font-size:13px;
+  line-height:1.58;
+}
+.nf-partner-resource-meta {
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px 13px;
+  margin-top:12px;
+  color:#71808A;
+  font-size:11px;
+}
+.nf-partner-resource-card .btn {
+  width:100%;
+  margin-top:auto;
+  padding:10px 13px;
+}
+.nf-partner-resource-empty {
+  margin-top:18px;
+  padding:20px;
+  border:1px dashed #B9CEDA;
+  border-radius:15px;
+  background:#FFFFFF;
+  color:#687A85;
+  line-height:1.6;
+  text-align:center;
+}
+.nf-partner-resource-error {
+  margin-top:16px;
+  padding:12px 14px;
+  border:1px solid #E1A3A3;
+  border-radius:12px;
+  background:#FFF2F2;
+  color:#8C2525;
+  line-height:1.55;
+}
+@media (max-width:760px) {
+  .nf-partner-resource-header {
+    flex-direction:column;
+  }
+  .nf-partner-resource-grid {
+    grid-template-columns:1fr;
+  }
+}
 .nf-partner-dashboard-grid {
   display:grid;
   grid-template-columns:repeat(3,minmax(0,1fr));
@@ -587,6 +705,21 @@ const formatGoalValue = (value, unitLabel) => {
   return unit ? `${formatted} ${unit}` : formatted;
 };
 
+const PARTNER_RESOURCE_CATEGORIES = {
+  line_sheet: "Line Sheet",
+  w9: "W-9",
+  insurance: "Insurance",
+  shelf_card: "Shelf Card",
+  product_care: "Product Care",
+  terms: "Terms",
+  process: "Process",
+  event_material: "Event Material",
+  other: "Other",
+};
+
+const partnerResourceCategory = (value) =>
+  PARTNER_RESOURCE_CATEGORIES[value] || cleanStatus(value || "other");
+
 const accessErrorMessage = (error) => {
   const message = String(error?.message || error || "");
 
@@ -603,6 +736,8 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [resourceBusyId, setResourceBusyId] = useState("");
+  const [resourceError, setResourceError] = useState("");
 
   const canSubmit = useMemo(
     () => email.trim() && password && !busy,
@@ -685,6 +820,32 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
     }
   };
 
+  const downloadResource = async (resource) => {
+    if (resourceBusyId) return;
+
+    setResourceBusyId(resource.id);
+    setResourceError("");
+
+    try {
+      const signedUrl =
+        await api.getPartnerResourceDownloadUrl(resource);
+
+      const anchor = document.createElement("a");
+      anchor.href = signedUrl;
+      anchor.rel = "noopener noreferrer";
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+    } catch (downloadError) {
+      setResourceError(
+        downloadError?.message ||
+          "The resource could not be downloaded."
+      );
+    } finally {
+      setResourceBusyId("");
+    }
+  };
+
   const account = access.account;
   const mapping = access.mapping;
   const partnerName =
@@ -698,6 +859,10 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
 
   const goals = Array.isArray(access.goals)
     ? access.goals
+    : [];
+
+  const resources = Array.isArray(access.resources)
+    ? access.resources
     : [];
 
   const resolvedMilestoneCount = milestones.filter((milestone) =>
@@ -1174,6 +1339,112 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
                   )}
                 </section>
 
+                <section
+                  className="nf-partner-resource-panel"
+                  aria-labelledby="partner-resource-title"
+                >
+                  <div className="nf-partner-resource-header">
+                    <div>
+                      <div className="nf-modern-kicker">
+                        Approved downloads
+                      </div>
+                      <h2 id="partner-resource-title">
+                        Partner Resources
+                      </h2>
+                      <p>
+                        Access current files approved for your partner
+                        type. Private download links expire shortly after
+                        they are created.
+                      </p>
+                    </div>
+
+                    <div className="nf-partner-resource-count">
+                      {resources.length}{" "}
+                      {resources.length === 1
+                        ? "Resource"
+                        : "Resources"}
+                    </div>
+                  </div>
+
+                  {resourceError && (
+                    <div
+                      className="nf-partner-resource-error"
+                      role="alert"
+                    >
+                      {resourceError}
+                    </div>
+                  )}
+
+                  {resources.length === 0 ? (
+                    <div className="nf-partner-resource-empty">
+                      No approved resources are available for this
+                      partner account yet.
+                    </div>
+                  ) : (
+                    <div className="nf-partner-resource-grid">
+                      {resources.map((resource) => (
+                        <article
+                          key={resource.id}
+                          className="nf-partner-resource-card"
+                        >
+                          <span className="nf-partner-resource-category">
+                            {partnerResourceCategory(
+                              resource.category
+                            )}
+                          </span>
+
+                          <h3>{resource.title}</h3>
+
+                          {resource.description && (
+                            <p>{resource.description}</p>
+                          )}
+
+                          <div className="nf-partner-resource-meta">
+                            {resource.version_label && (
+                              <span>
+                                Version {resource.version_label}
+                              </span>
+                            )}
+
+                            {resource.effective_at && (
+                              <span>
+                                Effective{" "}
+                                {formatPartnerDate(
+                                  resource.effective_at
+                                )}
+                              </span>
+                            )}
+
+                            {resource.expires_at && (
+                              <span>
+                                Available through{" "}
+                                {formatPartnerDate(
+                                  resource.expires_at
+                                )}
+                              </span>
+                            )}
+                          </div>
+
+                          <button
+                            type="button"
+                            className="btn solid"
+                            disabled={
+                              resourceBusyId === resource.id
+                            }
+                            onClick={() =>
+                              downloadResource(resource)
+                            }
+                          >
+                            {resourceBusyId === resource.id
+                              ? "Preparing Download…"
+                              : "Download Resource"}
+                          </button>
+                        </article>
+                      ))}
+                    </div>
+                  )}
+                </section>
+
                 <div className="nf-partner-dashboard-grid">
                   <article className="nf-partner-dashboard-card">
                     <h3>Replenishment Requests</h3>
@@ -1187,8 +1458,9 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
                   <article className="nf-partner-dashboard-card">
                     <h3>Partner Resources</h3>
                     <p>
-                      Current line sheets, product guidance, merchandising
-                      materials, and approved downloads will appear here.
+                      Approved private downloads are available in the
+                      resource library above. Availability is based on
+                      resource status and partner type.
                     </p>
                   </article>
 

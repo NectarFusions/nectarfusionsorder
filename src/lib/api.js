@@ -307,6 +307,7 @@ export async function getPartnerPortalContext() {
       mappingResult,
       milestonesResult,
       goalsResult,
+      resourcesResult,
     ] = await Promise.all([
       supabase
         .from("partner_accounts")
@@ -349,6 +350,15 @@ export async function getPartnerPortalContext() {
         .eq("partner_id", partnerId)
         .order("sort", { ascending: true })
         .order("created_at", { ascending: true }),
+
+      supabase
+        .from("partner_resources")
+        .select(
+          "id,title,description,category,storage_bucket,storage_path," +
+          "version_label,effective_at,expires_at,sort"
+        )
+        .order("sort", { ascending: true })
+        .order("title", { ascending: true }),
     ]);
 
     if (accountResult.error) {
@@ -367,6 +377,10 @@ export async function getPartnerPortalContext() {
       throw new Error(goalsResult.error.message);
     }
 
+    if (resourcesResult.error) {
+      throw new Error(resourcesResult.error.message);
+    }
+
     if (!accountResult.data || !mappingResult.data) {
       return { kind: "unauthorized" };
     }
@@ -377,6 +391,7 @@ export async function getPartnerPortalContext() {
       mapping: mappingResult.data,
       milestones: milestonesResult.data ?? [],
       goals: goalsResult.data ?? [],
+      resources: resourcesResult.data ?? [],
     };
   }
 
@@ -575,6 +590,176 @@ export async function deleteAdminPartnerGoal(id) {
     .eq("id", id);
 
   if (error) throw new Error(error.message);
+}
+
+export async function getPartnerResourceDownloadUrl(resource) {
+  const bucket = String(
+    resource?.storage_bucket || "partner-resources"
+  );
+  const storagePath = String(resource?.storage_path || "");
+
+  if (bucket !== "partner-resources" || !storagePath) {
+    throw new Error("This resource does not have a valid private file.");
+  }
+
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .createSignedUrl(storagePath, 120, {
+      download: true,
+    });
+
+  if (error) throw new Error(error.message);
+  if (!data?.signedUrl) {
+    throw new Error("The private download link could not be created.");
+  }
+
+  return data.signedUrl;
+}
+
+export async function listAdminPartnerResources() {
+  const { data, error } = await supabase
+    .from("partner_resources")
+    .select(
+      "id,title,description,category,storage_bucket,storage_path," +
+      "visible_to_partner_types,status,version_label,effective_at," +
+      "expires_at,sort,created_by,created_at,updated_at"
+    )
+    .order("sort", { ascending: true })
+    .order("title", { ascending: true });
+
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+const partnerResourceSafeName = (name) =>
+  String(name || "resource")
+    .normalize("NFKD")
+    .replace(/[^a-zA-Z0-9._-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 120) || "resource";
+
+export async function createAdminPartnerResource(file, resource) {
+  if (!file) throw new Error("Choose a resource file.");
+
+  const allowedMimeTypes = [
+    "application/pdf",
+    "image/png",
+    "image/jpeg",
+    "image/webp",
+  ];
+
+  if (!allowedMimeTypes.includes(file.type)) {
+    throw new Error(
+      "Resources must be PDF, PNG, JPG, or WebP files."
+    );
+  }
+
+  if (file.size > 25 * 1024 * 1024) {
+    throw new Error("Resource files must be 25 MB or smaller.");
+  }
+
+  const title = String(resource?.title || "").trim();
+
+  if (!title) throw new Error("Enter a resource title.");
+
+  const { data: sessionData, error: sessionError } =
+    await supabase.auth.getSession();
+
+  if (sessionError) throw new Error(sessionError.message);
+
+  const userId = sessionData?.session?.user?.id;
+
+  if (!userId) throw new Error("Admin authentication is required.");
+
+  const randomPart =
+    globalThis.crypto?.randomUUID?.() ||
+    `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+  const safeName = partnerResourceSafeName(file.name);
+  const storagePath =
+    `resources/${new Date().toISOString().slice(0, 10)}/` +
+    `${randomPart}-${safeName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("partner-resources")
+    .upload(storagePath, file, {
+      cacheControl: "3600",
+      contentType: file.type,
+      upsert: false,
+    });
+
+  if (uploadError) throw new Error(uploadError.message);
+
+  const allowedFields = [
+    "description",
+    "category",
+    "visible_to_partner_types",
+    "version_label",
+    "expires_at",
+    "sort",
+  ];
+
+  const payload = {
+    title,
+    storage_bucket: "partner-resources",
+    storage_path: storagePath,
+    status: "draft",
+    created_by: userId,
+    ...cleanAdminPatch(resource, allowedFields),
+  };
+
+  const { data, error } = await supabase
+    .from("partner_resources")
+    .insert(payload)
+    .select("*")
+    .single();
+
+  if (error) {
+    await supabase.storage
+      .from("partner-resources")
+      .remove([storagePath]);
+
+    throw new Error(error.message);
+  }
+
+  return data;
+}
+
+export async function updateAdminPartnerResource(id, patch) {
+  const allowedFields = [
+    "title",
+    "description",
+    "category",
+    "visible_to_partner_types",
+    "status",
+    "version_label",
+    "expires_at",
+    "sort",
+  ];
+
+  const payload = cleanAdminPatch(patch, allowedFields);
+
+  if (
+    Object.prototype.hasOwnProperty.call(payload, "title") &&
+    !String(payload.title || "").trim()
+  ) {
+    throw new Error("Every resource requires a title.");
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, "title")) {
+    payload.title = String(payload.title).trim();
+  }
+
+  const { data, error } = await supabase
+    .from("partner_resources")
+    .update(payload)
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
 }
 
 /* ---------- existing admin operations ---------- */
