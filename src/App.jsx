@@ -3,6 +3,7 @@ import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import * as api from "./lib/api";
 import PartnerPage from "./pages/PartnerPage";
 import PartnerPortalPage from "./pages/PartnerPortalPage";
+import AdminPartnerManagement from "./pages/AdminPartnerManagement";
 import MarketConfirmationPage from "./pages/MarketConfirmationPage";
 
 /* ============================================================
@@ -13903,7 +13904,8 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
     ["markets", "Market Schedule"],
     ["requests", `Order Help (${newRequestCount})`],
     ["orders", `Orders (${standardActiveOrders.length})`],
-    ["retail", `Partners (${retailLocations.filter((r) => r.active).length})`],
+    ["partnerProgram", "Partner Program"],
+    ["retail", `Retail Locator (${retailLocations.filter((r) => r.active).length})`],
     ["homepage", "Homepage Image"],
     ["topPicks", "Top Picks"],
   ].sort((a, b) =>
@@ -14934,6 +14936,10 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                 onClick={() => guard(async () => { await api.blockDay(blockDay); setBlockDay(""); })}>Block</button>
             </div>
           </>
+        )}
+
+        {adminTab === "partnerProgram" && (
+          <AdminPartnerManagement />
         )}
 
         {adminTab === "retail" && (

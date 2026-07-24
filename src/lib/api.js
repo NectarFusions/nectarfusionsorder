@@ -389,6 +389,196 @@ export async function getPartnerPortalContext() {
 
 /* ---------- admin ---------- */
 
+const cleanAdminPatch = (patch, allowedFields) =>
+  Object.fromEntries(
+    Object.entries(patch || {}).filter(([key]) =>
+      allowedFields.includes(key)
+    )
+  );
+
+export async function listAdminPartnerAccounts() {
+  const { data, error } = await supabase
+    .from("partner_accounts")
+    .select(
+      "id,business_name,public_name,contact_name,email,partner_type," +
+      "relationship_status,partner_level,partner_level_updated_at," +
+      "auth_access_enabled,locator_permission,event_submission_enabled," +
+      "created_at,updated_at"
+    )
+    .order("business_name", { ascending: true });
+
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function getAdminPartnerProgress(partnerId) {
+  if (!partnerId) throw new Error("Choose a partner account.");
+
+  const [milestonesResult, goalsResult] = await Promise.all([
+    supabase
+      .from("partner_milestones")
+      .select(
+        "id,partner_id,milestone_key,title,description,status," +
+        "responsible_party,next_action,due_at,completed_at," +
+        "partner_visible_notes,visible_to_partner,sort,created_at,updated_at"
+      )
+      .eq("partner_id", partnerId)
+      .order("sort", { ascending: true })
+      .order("created_at", { ascending: true }),
+
+    supabase
+      .from("partner_goals")
+      .select(
+        "id,partner_id,title,description,goal_type,status,target_value," +
+        "current_value,unit_label,start_on,due_on,completed_at,next_action," +
+        "partner_visible_notes,visible_to_partner,sort,created_at,updated_at"
+      )
+      .eq("partner_id", partnerId)
+      .order("sort", { ascending: true })
+      .order("created_at", { ascending: true }),
+  ]);
+
+  if (milestonesResult.error) {
+    throw new Error(milestonesResult.error.message);
+  }
+
+  if (goalsResult.error) {
+    throw new Error(goalsResult.error.message);
+  }
+
+  return {
+    milestones: milestonesResult.data ?? [],
+    goals: goalsResult.data ?? [],
+  };
+}
+
+export async function updateAdminPartnerLevel(partnerId, partnerLevel) {
+  const allowedLevels = ["starter", "growth", "strategic"];
+
+  if (!allowedLevels.includes(partnerLevel)) {
+    throw new Error("Choose a valid partner level.");
+  }
+
+  const { data, error } = await supabase
+    .from("partner_accounts")
+    .update({ partner_level: partnerLevel })
+    .eq("id", partnerId)
+    .select(
+      "id,business_name,public_name,contact_name,email,partner_type," +
+      "relationship_status,partner_level,partner_level_updated_at," +
+      "auth_access_enabled,locator_permission,event_submission_enabled," +
+      "created_at,updated_at"
+    )
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function updateAdminPartnerMilestone(id, patch) {
+  const allowedFields = [
+    "status",
+    "responsible_party",
+    "next_action",
+    "due_at",
+    "partner_visible_notes",
+    "visible_to_partner",
+  ];
+
+  const payload = cleanAdminPatch(patch, allowedFields);
+
+  const { data, error } = await supabase
+    .from("partner_milestones")
+    .update(payload)
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function createAdminPartnerGoal(partnerId, goal) {
+  const title = String(goal?.title || "").trim();
+
+  if (!title) throw new Error("Enter a goal title.");
+
+  const allowedFields = [
+    "description",
+    "goal_type",
+    "status",
+    "target_value",
+    "current_value",
+    "unit_label",
+    "start_on",
+    "due_on",
+    "next_action",
+    "partner_visible_notes",
+    "visible_to_partner",
+  ];
+
+  const payload = {
+    partner_id: partnerId,
+    title,
+    ...cleanAdminPatch(goal, allowedFields),
+  };
+
+  const { data, error } = await supabase
+    .from("partner_goals")
+    .insert(payload)
+    .select("*")
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function updateAdminPartnerGoal(id, goal) {
+  const title = String(goal?.title || "").trim();
+
+  if (!title) throw new Error("Every goal requires a title.");
+
+  const allowedFields = [
+    "description",
+    "goal_type",
+    "status",
+    "target_value",
+    "current_value",
+    "unit_label",
+    "start_on",
+    "due_on",
+    "next_action",
+    "partner_visible_notes",
+    "visible_to_partner",
+  ];
+
+  const payload = {
+    title,
+    ...cleanAdminPatch(goal, allowedFields),
+  };
+
+  const { data, error } = await supabase
+    .from("partner_goals")
+    .update(payload)
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function deleteAdminPartnerGoal(id) {
+  const { error } = await supabase
+    .from("partner_goals")
+    .delete()
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+}
+
+/* ---------- existing admin operations ---------- */
+
 export const listOrders = () =>
   supabase.from("orders")
     .select("*, order_items(*), order_item_changes(*), customers(flagged, consecutive_noshows), market_dates(day, venues(name, hours))")
