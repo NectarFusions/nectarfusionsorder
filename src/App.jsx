@@ -4,6 +4,7 @@ import * as api from "./lib/api";
 import PartnerPage from "./pages/PartnerPage";
 import PartnerPortalPage from "./pages/PartnerPortalPage";
 import AdminPartnerManagement from "./pages/AdminPartnerManagement";
+import AdminPartnerEvents from "./pages/AdminPartnerEvents";
 import AdminPartnerResources from "./pages/AdminPartnerResources";
 import MarketConfirmationPage from "./pages/MarketConfirmationPage";
 
@@ -13906,6 +13907,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
     ["requests", `Order Help (${newRequestCount})`],
     ["orders", `Orders (${standardActiveOrders.length})`],
     ["partnerProgram", "Partner Program"],
+    ["partnerEvents", "Partner Events"],
     ["partnerResources", "Partner Resources"],
     ["retail", `Retail Locator (${retailLocations.filter((r) => r.active).length})`],
     ["homepage", "Homepage Image"],
@@ -14942,6 +14944,10 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
 
         {adminTab === "partnerProgram" && (
           <AdminPartnerManagement />
+        )}
+
+        {adminTab === "partnerEvents" && (
+          <AdminPartnerEvents />
         )}
 
         {adminTab === "partnerResources" && (

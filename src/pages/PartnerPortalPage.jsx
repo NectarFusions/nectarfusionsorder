@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import * as api from "../lib/api";
+import PartnerEventsPanel from "./PartnerEventsPanel";
 
 const PORTAL_CSS = `
 .nf-partner-portal-page {
@@ -846,6 +847,12 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
     }
   };
 
+  const refreshPartnerContext = useCallback(async () => {
+    const context = await api.getPartnerPortalContext();
+    setAccess(context);
+    return context;
+  }, []);
+
   const account = access.account;
   const mapping = access.mapping;
   const partnerName =
@@ -863,6 +870,10 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
 
   const resources = Array.isArray(access.resources)
     ? access.resources
+    : [];
+
+  const events = Array.isArray(access.events)
+    ? access.events
     : [];
 
   const resolvedMilestoneCount = milestones.filter((milestone) =>
@@ -1445,6 +1456,12 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
                   )}
                 </section>
 
+                <PartnerEventsPanel
+                  account={account}
+                  events={events}
+                  onRefresh={refreshPartnerContext}
+                />
+
                 <div className="nf-partner-dashboard-grid">
                   <article className="nf-partner-dashboard-card">
                     <h3>Replenishment Requests</h3>
@@ -1467,8 +1484,8 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
                   <article className="nf-partner-dashboard-card">
                     <h3>Events and Visibility</h3>
                     <p>
-                      Eligible partners will be able to submit events for
-                      NectarFusions review before public publication.
+                      Create drafts, upload private flyers, and submit events
+                      for NectarFusions approval in the event section above.
                     </p>
                   </article>
                 </div>
