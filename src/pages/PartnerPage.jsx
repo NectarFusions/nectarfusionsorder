@@ -319,7 +319,7 @@ export default function PartnerPage({ Header, styles, onBack, onPartnerLogin, su
                 className="btn nf-partner-secondary"
                 onClick={onPartnerLogin}
               >
-                Current Partner Login
+                Login
               </button>
             </div>
           </div>

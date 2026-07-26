@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import * as api from "../lib/api";
 import PartnerEventsPanel from "./PartnerEventsPanel";
+import PartnerReplenishmentPanel from "./PartnerReplenishmentPanel";
 
 const PORTAL_CSS = `
 .nf-partner-portal-page {
@@ -1066,6 +1067,8 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
                     <strong>{partnerLevel}</strong>
                   </div>
                 </div>
+
+                <PartnerReplenishmentPanel />
 
                 <section
                   className="nf-partner-progress-panel"

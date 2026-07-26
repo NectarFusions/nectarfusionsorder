@@ -419,6 +419,131 @@ export async function getPartnerPortalContext() {
   return { kind: "unauthorized" };
 }
 
+
+/* ---------- partner replenishment ---------- */
+
+export async function getPartnerReplenishmentCatalog() {
+  const { data, error } = await supabase.rpc(
+    "get_partner_replenishment_catalog"
+  );
+
+  if (error) throw new Error(error.message);
+  return Array.isArray(data) ? data : [];
+}
+
+export async function listPartnerReplenishmentRequests() {
+  const { data, error } = await supabase
+    .from("partner_replenishment_requests")
+    .select(
+      "id,partner_id,status,needed_by,fulfillment_method," +
+      "preferred_delivery_days,current_inventory_notes,request_notes," +
+      "partner_response,partner_reply,partner_replied_at,price_version," +
+      "requested_subtotal_cents,quote_subtotal_cents," +
+      "fulfillment_charge_cents,confirmed_total_cents,submitted_at," +
+      "reviewed_at,created_at,updated_at,quoted_at,accepted_at,paid_at," +
+      "fulfilled_at,cancelled_at,declined_at," +
+      "items:partner_replenishment_items(" +
+      "id,request_id,flavor_id,flavor_name,size_id,texture,quantity," +
+      "on_hand_count,notes,unit_price_cents,price_version,line_total_cents" +
+      ")"
+    )
+    .order("submitted_at", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function submitPartnerReplenishment(payload) {
+  const { data: sessionData, error: sessionError } =
+    await supabase.auth.getSession();
+
+  if (sessionError) throw new Error(sessionError.message);
+
+  const accessToken =
+    sessionData?.session?.access_token;
+
+  if (!accessToken) {
+    throw new Error("Partner authentication is required.");
+  }
+
+  let response;
+
+  try {
+    response = await fetch(
+      "/.netlify/functions/partner-replenishment-submit",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+  } catch {
+    const connectionError = new Error(
+      "The connection was interrupted before the submission could be confirmed."
+    );
+    connectionError.code =
+      "REPLENISHMENT_SUBMISSION_UNKNOWN";
+    throw connectionError;
+  }
+
+  let data;
+
+  try {
+    data = await response.json();
+  } catch {
+    const responseError = new Error(
+      "The replenishment service returned an incomplete response."
+    );
+    responseError.code =
+      "REPLENISHMENT_SUBMISSION_UNKNOWN";
+    throw responseError;
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      data?.error ||
+      "The replenishment request could not be submitted."
+    );
+  }
+
+  if (!data?.requestId) {
+    const confirmationError = new Error(
+      "The request may have been saved, but its confirmation could not be loaded."
+    );
+    confirmationError.code =
+      "REPLENISHMENT_SUBMISSION_UNKNOWN";
+    throw confirmationError;
+  }
+
+  return {
+    requestId: data.requestId,
+    emailWarning: data.emailWarning === true,
+  };
+}
+
+export async function partnerReplenishmentAction(
+  requestId,
+  action,
+  partnerReply = null
+) {
+  const { data, error } = await supabase.rpc(
+    "partner_replenishment_action",
+    {
+      p_request_id: requestId,
+      p_action: action,
+      p_partner_reply: partnerReply,
+    }
+  );
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+
 /* ---------- admin ---------- */
 
 const cleanAdminPatch = (patch, allowedFields) =>
@@ -441,6 +566,75 @@ export async function listAdminPartnerAccounts() {
 
   if (error) throw new Error(error.message);
   return data ?? [];
+}
+
+export async function getAdminPartnerReplenishmentHistory(
+  partnerId = null,
+  requestId = null
+) {
+  const { data, error } = await supabase.rpc(
+    "get_admin_partner_replenishment_history",
+    {
+      p_partner_id: partnerId,
+      p_request_id: requestId,
+    }
+  );
+
+  if (error) throw new Error(error.message);
+
+  return Array.isArray(data?.requests)
+    ? data.requests
+    : [];
+}
+
+export async function adminPartnerReplenishmentAction(
+  requestId,
+  action,
+  {
+    partnerResponse = null,
+    adminNotes = null,
+    fulfillmentChargeCents = null,
+  } = {}
+) {
+  if (!requestId) {
+    throw new Error("Choose a replenishment request.");
+  }
+
+  const allowedActions = [
+    "save_notes",
+    "under_review",
+    "needs_information",
+    "quote",
+    "mark_paid",
+    "fulfill",
+    "decline",
+    "cancel",
+  ];
+
+  if (!allowedActions.includes(action)) {
+    throw new Error("Choose a valid replenishment action.");
+  }
+
+  const { data, error } = await supabase.rpc(
+    "admin_partner_replenishment_action",
+    {
+      p_request_id: requestId,
+      p_action: action,
+      p_partner_response: partnerResponse,
+      p_admin_notes: adminNotes,
+      p_fulfillment_charge_cents: fulfillmentChargeCents,
+    }
+  );
+
+  if (error) throw new Error(error.message);
+
+  if (!data?.id) {
+    throw new Error(
+      "The replenishment action returned no updated request."
+    );
+  }
+
+  return data;
 }
 
 export async function getAdminPartnerProgress(partnerId) {

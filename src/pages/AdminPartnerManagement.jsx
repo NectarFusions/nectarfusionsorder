@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import * as api from "../lib/api";
+import AdminPartnerReplenishmentPanel from "./AdminPartnerReplenishmentPanel";
 
 const ADMIN_PARTNER_CSS = `
 .nf-apm {
@@ -38,6 +39,49 @@ const ADMIN_PARTNER_CSS = `
   margin:0;
   color:#2B1C13;
   font-size:17px;
+}
+.nf-apm-sidebar-heading {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.nf-apm-review-count {
+  display:inline-flex !important;
+  align-items:center;
+  justify-content:center;
+  min-width:25px;
+  height:25px;
+  padding:0 7px;
+  border-radius:999px;
+  background:#B42318 !important;
+  color:#FFFFFF !important;
+  font-size:11px !important;
+  font-weight:900 !important;
+  line-height:1;
+  letter-spacing:0 !important;
+  box-shadow:0 0 0 3px rgba(180,35,24,.12);
+}
+.nf-apm-partner-name-row {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:8px;
+}
+.nf-apm-partner-name-row strong {
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+.nf-apm-partner-name-row .nf-apm-review-count {
+  flex:0 0 auto;
+  min-width:22px;
+  height:22px;
+  padding:0 6px;
+  font-size:10px !important;
+}
+.nf-apm-review-label {
+  color:#9A231A !important;
+  font-weight:850;
 }
 .nf-apm-partner-list {
   display:grid;
@@ -361,6 +405,30 @@ const GOAL_STATUSES = [
   ["cancelled", "Cancelled"],
 ];
 
+const ADMIN_REPLENISHMENT_ACTION_STATUSES = new Set([
+  "submitted",
+  "under_review",
+  "accepted",
+  "paid",
+]);
+
+const replenishmentReviewCounts = (requests) =>
+  (requests || []).reduce((counts, request) => {
+    if (
+      !request?.partner_id ||
+      !ADMIN_REPLENISHMENT_ACTION_STATUSES.has(
+        request.status
+      )
+    ) {
+      return counts;
+    }
+
+    counts[request.partner_id] =
+      (counts[request.partner_id] || 0) + 1;
+
+    return counts;
+  }, {});
+
 const cleanStatus = (value) =>
   String(value || "")
     .replaceAll("_", " ")
@@ -430,10 +498,27 @@ export default function AdminPartnerManagement() {
   const [busyKey, setBusyKey] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [
+    replenishmentCounts,
+    setReplenishmentCounts,
+  ] = useState({});
+  const [
+    loadingReplenishmentCounts,
+    setLoadingReplenishmentCounts,
+  ] = useState(true);
 
   const selectedAccount = useMemo(
     () => accounts.find((account) => account.id === selectedId) || null,
     [accounts, selectedId]
+  );
+
+  const totalReplenishmentReviewCount = useMemo(
+    () =>
+      Object.values(replenishmentCounts).reduce(
+        (sum, count) => sum + Number(count || 0),
+        0
+      ),
+    [replenishmentCounts]
   );
 
   const filteredAccounts = useMemo(() => {
@@ -478,6 +563,47 @@ export default function AdminPartnerManagement() {
   useEffect(() => {
     loadAccounts();
   }, [loadAccounts]);
+
+  const loadReplenishmentCounts = useCallback(async () => {
+    setLoadingReplenishmentCounts(true);
+
+    try {
+      const requests =
+        await api.getAdminPartnerReplenishmentHistory();
+
+      setReplenishmentCounts(
+        replenishmentReviewCounts(requests)
+      );
+    } catch (loadError) {
+      setError(
+        `${loadError.message} Replenishment review counts could not be loaded.`
+      );
+    } finally {
+      setLoadingReplenishmentCounts(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadReplenishmentCounts();
+  }, [loadReplenishmentCounts]);
+
+  const handleReplenishmentRequestsChanged = useCallback(
+    (partnerId, requests) => {
+      if (!partnerId) return;
+
+      const count = (requests || []).filter((request) =>
+        ADMIN_REPLENISHMENT_ACTION_STATUSES.has(
+          request.status
+        )
+      ).length;
+
+      setReplenishmentCounts((current) => ({
+        ...current,
+        [partnerId]: count,
+      }));
+    },
+    []
+  );
 
   useEffect(() => {
     if (!selectedAccount) {
@@ -749,7 +875,20 @@ export default function AdminPartnerManagement() {
 
       <div className="nf-apm-layout">
         <aside className="nf-apm-sidebar">
-          <h3>Partner Accounts</h3>
+          <div className="nf-apm-sidebar-heading">
+            <h3>Partner Accounts</h3>
+
+            {!loadingReplenishmentCounts &&
+              totalReplenishmentReviewCount > 0 && (
+                <span
+                  className="nf-apm-review-count"
+                  aria-label={`${totalReplenishmentReviewCount} replenishment requests need Admin review`}
+                  title={`${totalReplenishmentReviewCount} replenishment requests need Admin review`}
+                >
+                  {totalReplenishmentReviewCount}
+                </span>
+              )}
+          </div>
 
           <input
             type="search"
@@ -777,16 +916,42 @@ export default function AdminPartnerManagement() {
                   }`}
                   onClick={() => setSelectedId(account.id)}
                 >
-                  <strong>
-                    {account.public_name ||
-                      account.business_name ||
-                      "Unnamed partner"}
-                  </strong>
+                  <div className="nf-apm-partner-name-row">
+                    <strong>
+                      {account.public_name ||
+                        account.business_name ||
+                        "Unnamed partner"}
+                    </strong>
+
+                    {Number(
+                      replenishmentCounts[account.id] || 0
+                    ) > 0 && (
+                      <span
+                        className="nf-apm-review-count"
+                        aria-label={`${replenishmentCounts[account.id]} replenishment requests need Admin review`}
+                        title={`${replenishmentCounts[account.id]} replenishment requests need Admin review`}
+                      >
+                        {replenishmentCounts[account.id]}
+                      </span>
+                    )}
+                  </div>
                   <span>
                     {cleanStatus(account.partner_level || "starter")} ·{" "}
                     {cleanStatus(account.relationship_status)}
                   </span>
                   <span>{account.email || "No email listed"}</span>
+
+                  {Number(
+                    replenishmentCounts[account.id] || 0
+                  ) > 0 && (
+                    <span className="nf-apm-review-label">
+                      {replenishmentCounts[account.id]} request
+                      {replenishmentCounts[account.id] === 1
+                        ? ""
+                        : "s"}{" "}
+                      need Admin review
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
@@ -833,6 +998,13 @@ export default function AdminPartnerManagement() {
                   </div>
                 </div>
               </div>
+
+              <AdminPartnerReplenishmentPanel
+                partner={selectedAccount}
+                onRequestsChanged={
+                  handleReplenishmentRequestsChanged
+                }
+              />
 
               <div className="nf-apm-section">
                 <div className="nf-apm-section-heading">
