@@ -282,7 +282,980 @@ export async function amAdmin() {
   return !!data;
 }
 
+export async function getPartnerPortalContext() {
+  const { data: sessionData, error: sessionError } =
+    await supabase.auth.getSession();
+
+  if (sessionError) throw new Error(sessionError.message);
+
+  const userId = sessionData?.session?.user?.id;
+
+  if (!userId) {
+    return { kind: "signed_out" };
+  }
+
+  const { data: partnerId, error: partnerIdError } =
+    await supabase.rpc("nf_partner_id_for_user");
+
+  if (partnerIdError) {
+    throw new Error(partnerIdError.message);
+  }
+
+  if (partnerId) {
+    const [
+      accountResult,
+      mappingResult,
+      milestonesResult,
+      goalsResult,
+      resourcesResult,
+      eventsResult,
+    ] = await Promise.all([
+      supabase
+        .from("partner_accounts")
+        .select(
+          "id,business_name,public_name,contact_name,email,partner_type," +
+          "relationship_status,partner_level,partner_level_updated_at," +
+          "auth_access_enabled,preferred_delivery_days,preferred_fulfillment," +
+          "receiving_notes,delivery_notes,locator_permission," +
+          "event_submission_enabled,address_line1,address_line2,city,state,zip"
+        )
+        .eq("id", partnerId)
+        .maybeSingle(),
+
+      supabase
+        .from("partner_users")
+        .select(
+          "partner_id,user_id,email,partner_role,active,invited_at,last_access_at"
+        )
+        .eq("user_id", userId)
+        .eq("partner_id", partnerId)
+        .maybeSingle(),
+
+      supabase
+        .from("partner_milestones")
+        .select(
+          "id,milestone_key,title,description,status,responsible_party," +
+          "next_action,due_at,completed_at,partner_visible_notes,sort"
+        )
+        .eq("partner_id", partnerId)
+        .order("sort", { ascending: true })
+        .order("created_at", { ascending: true }),
+
+      supabase
+        .from("partner_goals")
+        .select(
+          "id,title,description,goal_type,status,target_value,current_value," +
+          "unit_label,start_on,due_on,completed_at,next_action," +
+          "partner_visible_notes,sort"
+        )
+        .eq("partner_id", partnerId)
+        .order("sort", { ascending: true })
+        .order("created_at", { ascending: true }),
+
+      supabase
+        .from("partner_resources")
+        .select(
+          "id,title,description,category,storage_bucket,storage_path," +
+          "version_label,effective_at,expires_at,sort"
+        )
+        .order("sort", { ascending: true })
+        .order("title", { ascending: true }),
+
+      supabase
+        .from("partner_events")
+        .select(
+          "id,partner_id,title,description,start_at,end_at,venue_name," +
+          "address_line1,address_line2,city,state,zip,image_bucket," +
+          "image_path,status,rejection_reason,submitted_at,approved_at," +
+          "published_at,created_at,updated_at"
+        )
+        .eq("partner_id", partnerId)
+        .order("start_at", { ascending: false }),
+    ]);
+
+    if (accountResult.error) {
+      throw new Error(accountResult.error.message);
+    }
+
+    if (mappingResult.error) {
+      throw new Error(mappingResult.error.message);
+    }
+
+    if (milestonesResult.error) {
+      throw new Error(milestonesResult.error.message);
+    }
+
+    if (goalsResult.error) {
+      throw new Error(goalsResult.error.message);
+    }
+
+    if (resourcesResult.error) {
+      throw new Error(resourcesResult.error.message);
+    }
+
+    if (eventsResult.error) {
+      throw new Error(eventsResult.error.message);
+    }
+
+    if (!accountResult.data || !mappingResult.data) {
+      return { kind: "unauthorized" };
+    }
+
+    return {
+      kind: "partner",
+      account: accountResult.data,
+      mapping: mappingResult.data,
+      milestones: milestonesResult.data ?? [],
+      goals: goalsResult.data ?? [],
+      resources: resourcesResult.data ?? [],
+      events: eventsResult.data ?? [],
+    };
+  }
+
+  if (await amAdmin()) {
+    return { kind: "admin" };
+  }
+
+  return { kind: "unauthorized" };
+}
+
+
+/* ---------- partner replenishment ---------- */
+
+export async function getPartnerReplenishmentCatalog() {
+  const { data, error } = await supabase.rpc(
+    "get_partner_replenishment_catalog"
+  );
+
+  if (error) throw new Error(error.message);
+  return Array.isArray(data) ? data : [];
+}
+
+export async function listPartnerReplenishmentRequests() {
+  const { data, error } = await supabase
+    .from("partner_replenishment_requests")
+    .select(
+      "id,partner_id,status,needed_by,fulfillment_method," +
+      "preferred_delivery_days,current_inventory_notes,request_notes," +
+      "partner_response,partner_reply,partner_replied_at,price_version," +
+      "requested_subtotal_cents,quote_subtotal_cents," +
+      "fulfillment_charge_cents,confirmed_total_cents,submitted_at," +
+      "reviewed_at,created_at,updated_at,quoted_at,accepted_at,paid_at," +
+      "fulfilled_at,cancelled_at,declined_at," +
+      "items:partner_replenishment_items(" +
+      "id,request_id,flavor_id,flavor_name,size_id,texture,quantity," +
+      "on_hand_count,notes,unit_price_cents,price_version,line_total_cents" +
+      ")"
+    )
+    .order("submitted_at", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function submitPartnerReplenishment(payload) {
+  const { data: sessionData, error: sessionError } =
+    await supabase.auth.getSession();
+
+  if (sessionError) throw new Error(sessionError.message);
+
+  const accessToken =
+    sessionData?.session?.access_token;
+
+  if (!accessToken) {
+    throw new Error("Partner authentication is required.");
+  }
+
+  let response;
+
+  try {
+    response = await fetch(
+      "/.netlify/functions/partner-replenishment-submit",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+  } catch {
+    const connectionError = new Error(
+      "The connection was interrupted before the submission could be confirmed."
+    );
+    connectionError.code =
+      "REPLENISHMENT_SUBMISSION_UNKNOWN";
+    throw connectionError;
+  }
+
+  let data;
+
+  try {
+    data = await response.json();
+  } catch {
+    const responseError = new Error(
+      "The replenishment service returned an incomplete response."
+    );
+    responseError.code =
+      "REPLENISHMENT_SUBMISSION_UNKNOWN";
+    throw responseError;
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      data?.error ||
+      "The replenishment request could not be submitted."
+    );
+  }
+
+  if (!data?.requestId) {
+    const confirmationError = new Error(
+      "The request may have been saved, but its confirmation could not be loaded."
+    );
+    confirmationError.code =
+      "REPLENISHMENT_SUBMISSION_UNKNOWN";
+    throw confirmationError;
+  }
+
+  return {
+    requestId: data.requestId,
+    emailWarning: data.emailWarning === true,
+  };
+}
+
+export async function partnerReplenishmentAction(
+  requestId,
+  action,
+  partnerReply = null
+) {
+  const { data, error } = await supabase.rpc(
+    "partner_replenishment_action",
+    {
+      p_request_id: requestId,
+      p_action: action,
+      p_partner_reply: partnerReply,
+    }
+  );
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+
 /* ---------- admin ---------- */
+
+const cleanAdminPatch = (patch, allowedFields) =>
+  Object.fromEntries(
+    Object.entries(patch || {}).filter(([key]) =>
+      allowedFields.includes(key)
+    )
+  );
+
+export async function listAdminPartnerAccounts() {
+  const { data, error } = await supabase
+    .from("partner_accounts")
+    .select(
+      "id,business_name,public_name,contact_name,email,partner_type," +
+      "relationship_status,partner_level,partner_level_updated_at," +
+      "auth_access_enabled,locator_permission,event_submission_enabled," +
+      "created_at,updated_at"
+    )
+    .order("business_name", { ascending: true });
+
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function getAdminPartnerReplenishmentHistory(
+  partnerId = null,
+  requestId = null
+) {
+  const { data, error } = await supabase.rpc(
+    "get_admin_partner_replenishment_history",
+    {
+      p_partner_id: partnerId,
+      p_request_id: requestId,
+    }
+  );
+
+  if (error) throw new Error(error.message);
+
+  return Array.isArray(data?.requests)
+    ? data.requests
+    : [];
+}
+
+export async function adminPartnerReplenishmentAction(
+  requestId,
+  action,
+  {
+    partnerResponse = null,
+    adminNotes = null,
+    fulfillmentChargeCents = null,
+  } = {}
+) {
+  if (!requestId) {
+    throw new Error("Choose a replenishment request.");
+  }
+
+  const allowedActions = [
+    "save_notes",
+    "under_review",
+    "needs_information",
+    "quote",
+    "mark_paid",
+    "fulfill",
+    "decline",
+    "cancel",
+  ];
+
+  if (!allowedActions.includes(action)) {
+    throw new Error("Choose a valid replenishment action.");
+  }
+
+  const { data, error } = await supabase.rpc(
+    "admin_partner_replenishment_action",
+    {
+      p_request_id: requestId,
+      p_action: action,
+      p_partner_response: partnerResponse,
+      p_admin_notes: adminNotes,
+      p_fulfillment_charge_cents: fulfillmentChargeCents,
+    }
+  );
+
+  if (error) throw new Error(error.message);
+
+  if (!data?.id) {
+    throw new Error(
+      "The replenishment action returned no updated request."
+    );
+  }
+
+  return data;
+}
+
+export async function getAdminPartnerProgress(partnerId) {
+  if (!partnerId) throw new Error("Choose a partner account.");
+
+  const [milestonesResult, goalsResult] = await Promise.all([
+    supabase
+      .from("partner_milestones")
+      .select(
+        "id,partner_id,milestone_key,title,description,status," +
+        "responsible_party,next_action,due_at,completed_at," +
+        "partner_visible_notes,visible_to_partner,sort,created_at,updated_at"
+      )
+      .eq("partner_id", partnerId)
+      .order("sort", { ascending: true })
+      .order("created_at", { ascending: true }),
+
+    supabase
+      .from("partner_goals")
+      .select(
+        "id,partner_id,title,description,goal_type,status,target_value," +
+        "current_value,unit_label,start_on,due_on,completed_at,next_action," +
+        "partner_visible_notes,visible_to_partner,sort,created_at,updated_at"
+      )
+      .eq("partner_id", partnerId)
+      .order("sort", { ascending: true })
+      .order("created_at", { ascending: true }),
+  ]);
+
+  if (milestonesResult.error) {
+    throw new Error(milestonesResult.error.message);
+  }
+
+  if (goalsResult.error) {
+    throw new Error(goalsResult.error.message);
+  }
+
+  return {
+    milestones: milestonesResult.data ?? [],
+    goals: goalsResult.data ?? [],
+  };
+}
+
+export async function updateAdminPartnerLevel(partnerId, partnerLevel) {
+  const allowedLevels = ["starter", "growth", "strategic"];
+
+  if (!allowedLevels.includes(partnerLevel)) {
+    throw new Error("Choose a valid partner level.");
+  }
+
+  const { data, error } = await supabase
+    .from("partner_accounts")
+    .update({ partner_level: partnerLevel })
+    .eq("id", partnerId)
+    .select(
+      "id,business_name,public_name,contact_name,email,partner_type," +
+      "relationship_status,partner_level,partner_level_updated_at," +
+      "auth_access_enabled,locator_permission,event_submission_enabled," +
+      "created_at,updated_at"
+    )
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function updateAdminPartnerMilestone(id, patch) {
+  const allowedFields = [
+    "status",
+    "responsible_party",
+    "next_action",
+    "due_at",
+    "partner_visible_notes",
+    "visible_to_partner",
+  ];
+
+  const payload = cleanAdminPatch(patch, allowedFields);
+
+  const { data, error } = await supabase
+    .from("partner_milestones")
+    .update(payload)
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function createAdminPartnerGoal(partnerId, goal) {
+  const title = String(goal?.title || "").trim();
+
+  if (!title) throw new Error("Enter a goal title.");
+
+  const allowedFields = [
+    "description",
+    "goal_type",
+    "status",
+    "target_value",
+    "current_value",
+    "unit_label",
+    "start_on",
+    "due_on",
+    "next_action",
+    "partner_visible_notes",
+    "visible_to_partner",
+  ];
+
+  const payload = {
+    partner_id: partnerId,
+    title,
+    ...cleanAdminPatch(goal, allowedFields),
+  };
+
+  const { data, error } = await supabase
+    .from("partner_goals")
+    .insert(payload)
+    .select("*")
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function updateAdminPartnerGoal(id, goal) {
+  const title = String(goal?.title || "").trim();
+
+  if (!title) throw new Error("Every goal requires a title.");
+
+  const allowedFields = [
+    "description",
+    "goal_type",
+    "status",
+    "target_value",
+    "current_value",
+    "unit_label",
+    "start_on",
+    "due_on",
+    "next_action",
+    "partner_visible_notes",
+    "visible_to_partner",
+  ];
+
+  const payload = {
+    title,
+    ...cleanAdminPatch(goal, allowedFields),
+  };
+
+  const { data, error } = await supabase
+    .from("partner_goals")
+    .update(payload)
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function deleteAdminPartnerGoal(id) {
+  const { error } = await supabase
+    .from("partner_goals")
+    .delete()
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+}
+
+const PARTNER_EVENT_SELECT =
+  "id,partner_id,title,description,start_at,end_at,venue_name," +
+  "address_line1,address_line2,city,state,zip,image_bucket,image_path," +
+  "status,rejection_reason,submitted_at,approved_at,approved_by," +
+  "published_at,created_at,updated_at";
+
+const partnerEventWordCount = (value) => {
+  const cleaned = String(value || "").trim();
+  return cleaned ? cleaned.split(/\s+/).length : 0;
+};
+
+const partnerEventOptionalText = (value) => {
+  const cleaned = String(value || "").trim();
+  return cleaned || null;
+};
+
+const partnerEventIsoDate = (value, label, required = false) => {
+  if (!value) {
+    if (required) throw new Error(`Choose the event ${label}.`);
+    return null;
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) throw new Error(`Choose a valid event ${label}.`);
+  return date.toISOString();
+};
+
+const partnerEventPayload = (event) => {
+  const title = String(event?.title || "").trim();
+  const description = String(event?.description || "").trim();
+  const zip = String(event?.zip || "").replace(/\D/g, "");
+  const startAt = partnerEventIsoDate(event?.start_at, "start date and time", true);
+  const endAt = partnerEventIsoDate(event?.end_at, "end date and time");
+
+  if (!title) throw new Error("Enter an event title.");
+  if (title.length > 120) throw new Error("Event titles may contain no more than 120 characters.");
+  if (!description) throw new Error("Enter an event description.");
+  if (partnerEventWordCount(description) > 50) throw new Error("Event descriptions may contain no more than 50 words.");
+  if (endAt && new Date(endAt) < new Date(startAt)) throw new Error("The event end time cannot be before the start time.");
+  if (zip && zip.length !== 5) throw new Error("Enter a complete five-digit event ZIP code.");
+
+  return {
+    title,
+    description,
+    start_at: startAt,
+    end_at: endAt,
+    venue_name: partnerEventOptionalText(event?.venue_name),
+    address_line1: partnerEventOptionalText(event?.address_line1),
+    address_line2: partnerEventOptionalText(event?.address_line2),
+    city: partnerEventOptionalText(event?.city),
+    state: partnerEventOptionalText(event?.state)?.toUpperCase().slice(0, 2) || null,
+    zip: zip || null,
+  };
+};
+
+const partnerEventUuid = () => {
+  const value = globalThis.crypto?.randomUUID?.();
+  if (!value) throw new Error("This browser cannot securely create a new event identifier.");
+  return value;
+};
+
+const partnerEventSafeName = (name) =>
+  String(name || "event-flyer")
+    .normalize("NFKD")
+    .replace(/[^a-zA-Z0-9._-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 120) || "event-flyer";
+
+const validatePartnerEventFlyer = (file) => {
+  if (!file) return;
+  if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+    throw new Error("Event flyers must be PNG, JPG, or WebP images.");
+  }
+  if (file.size > 8 * 1024 * 1024) throw new Error("Event flyers must be 8 MB or smaller.");
+};
+
+async function uploadPartnerEventFlyer(event, file) {
+  validatePartnerEventFlyer(file);
+  if (!file) return event;
+  if (!["draft", "rejected"].includes(event.status)) {
+    throw new Error("Submitted and approved event flyers are locked for review.");
+  }
+
+  const existingPath = String(event.image_path || "");
+  const storagePath = existingPath ||
+    `${event.partner_id}/${event.id}/${partnerEventUuid()}-${partnerEventSafeName(file.name)}`;
+
+  let prepared = event;
+
+  if (!existingPath) {
+    const { data, error } = await supabase
+      .from("partner_events")
+      .update({
+        image_bucket: "partner-event-images",
+        image_path: storagePath,
+        status: "draft",
+      })
+      .eq("id", event.id)
+      .in("status", ["draft", "rejected"])
+      .select(PARTNER_EVENT_SELECT)
+      .single();
+
+    if (error) throw new Error(error.message);
+    prepared = data;
+  }
+
+  const { error: uploadError } = await supabase.storage
+    .from("partner-event-images")
+    .upload(storagePath, file, {
+      cacheControl: "3600",
+      contentType: file.type,
+      upsert: !!existingPath,
+    });
+
+  if (uploadError) {
+    if (!existingPath) {
+      await supabase
+        .from("partner_events")
+        .update({ image_path: null })
+        .eq("id", event.id)
+        .eq("status", "draft");
+    }
+    throw new Error(uploadError.message);
+  }
+
+  return { ...prepared, image_bucket: "partner-event-images", image_path: storagePath };
+}
+
+export async function createPartnerEventDraft(partnerId, event, flyer) {
+  if (!partnerId) throw new Error("A connected partner account is required.");
+  validatePartnerEventFlyer(flyer);
+
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw new Error(sessionError.message);
+
+  const userId = sessionData?.session?.user?.id;
+  if (!userId) throw new Error("Partner authentication is required.");
+
+  const { data, error } = await supabase
+    .from("partner_events")
+    .insert({
+      id: partnerEventUuid(),
+      partner_id: partnerId,
+      submitted_by: userId,
+      status: "draft",
+      image_bucket: "partner-event-images",
+      image_path: null,
+      ...partnerEventPayload(event),
+    })
+    .select(PARTNER_EVENT_SELECT)
+    .single();
+
+  if (error) throw new Error(error.message);
+  return flyer ? uploadPartnerEventFlyer(data, flyer) : data;
+}
+
+export async function updatePartnerEventDraft(eventId, event, flyer) {
+  if (!eventId) throw new Error("Choose an editable event.");
+  validatePartnerEventFlyer(flyer);
+
+  const { data, error } = await supabase
+    .from("partner_events")
+    .update({
+      ...partnerEventPayload(event),
+      status: "draft",
+      rejection_reason: null,
+    })
+    .eq("id", eventId)
+    .in("status", ["draft", "rejected"])
+    .select(PARTNER_EVENT_SELECT)
+    .single();
+
+  if (error) throw new Error(error.message);
+  return flyer ? uploadPartnerEventFlyer(data, flyer) : data;
+}
+
+export async function submitPartnerEvent(eventId) {
+  if (!eventId) throw new Error("Choose an event to submit.");
+
+  const { data, error } = await supabase
+    .from("partner_events")
+    .update({ status: "submitted", rejection_reason: null })
+    .eq("id", eventId)
+    .in("status", ["draft", "rejected"])
+    .select(PARTNER_EVENT_SELECT)
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function getPartnerEventFlyerUrl(event) {
+  const bucket = String(event?.image_bucket || "partner-event-images");
+  const storagePath = String(event?.image_path || "");
+
+  if (bucket !== "partner-event-images" || !storagePath) throw new Error("This event does not have a flyer.");
+
+  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(storagePath, 120);
+  if (error) throw new Error(error.message);
+  if (!data?.signedUrl) throw new Error("The private flyer link could not be created.");
+  return data.signedUrl;
+}
+
+export async function listAdminPartnerEvents() {
+  const { data, error } = await supabase
+    .from("partner_events")
+    .select(PARTNER_EVENT_SELECT)
+    .order("submitted_at", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function updateAdminPartnerEventAccess(partnerId, patch) {
+  const payload = cleanAdminPatch(patch, ["event_submission_enabled", "locator_permission"]);
+
+  const { data, error } = await supabase
+    .from("partner_accounts")
+    .update(payload)
+    .eq("id", partnerId)
+    .select(
+      "id,business_name,public_name,contact_name,email,partner_type," +
+      "relationship_status,partner_level,partner_level_updated_at," +
+      "auth_access_enabled,locator_permission,event_submission_enabled," +
+      "created_at,updated_at"
+    )
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function reviewAdminPartnerEvent(eventId, decision, rejectionReason = "") {
+  if (!["approved", "rejected", "cancelled"].includes(decision)) {
+    throw new Error("Choose a valid event review decision.");
+  }
+
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw new Error(sessionError.message);
+
+  const userId = sessionData?.session?.user?.id;
+  if (!userId) throw new Error("Admin authentication is required.");
+
+  const now = new Date().toISOString();
+  let payload;
+
+  if (decision === "approved") {
+    payload = {
+      status: "approved",
+      rejection_reason: null,
+      approved_at: now,
+      approved_by: userId,
+      published_at: now,
+    };
+  } else if (decision === "rejected") {
+    const reason = String(rejectionReason || "").trim();
+    if (!reason) throw new Error("Enter the revision requested before rejecting the event.");
+
+    payload = {
+      status: "rejected",
+      rejection_reason: reason,
+      approved_at: null,
+      approved_by: null,
+      published_at: null,
+    };
+  } else {
+    payload = { status: "cancelled", published_at: null };
+  }
+
+  const { data, error } = await supabase
+    .from("partner_events")
+    .update(payload)
+    .eq("id", eventId)
+    .select(PARTNER_EVENT_SELECT)
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function getPartnerResourceDownloadUrl(resource) {
+  const bucket = String(
+    resource?.storage_bucket || "partner-resources"
+  );
+  const storagePath = String(resource?.storage_path || "");
+
+  if (bucket !== "partner-resources" || !storagePath) {
+    throw new Error("This resource does not have a valid private file.");
+  }
+
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .createSignedUrl(storagePath, 120, {
+      download: true,
+    });
+
+  if (error) throw new Error(error.message);
+  if (!data?.signedUrl) {
+    throw new Error("The private download link could not be created.");
+  }
+
+  return data.signedUrl;
+}
+
+export async function listAdminPartnerResources() {
+  const { data, error } = await supabase
+    .from("partner_resources")
+    .select(
+      "id,title,description,category,storage_bucket,storage_path," +
+      "visible_to_partner_types,status,version_label,effective_at," +
+      "expires_at,sort,created_by,created_at,updated_at"
+    )
+    .order("sort", { ascending: true })
+    .order("title", { ascending: true });
+
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+const partnerResourceSafeName = (name) =>
+  String(name || "resource")
+    .normalize("NFKD")
+    .replace(/[^a-zA-Z0-9._-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 120) || "resource";
+
+export async function createAdminPartnerResource(file, resource) {
+  if (!file) throw new Error("Choose a resource file.");
+
+  const allowedMimeTypes = [
+    "application/pdf",
+    "image/png",
+    "image/jpeg",
+    "image/webp",
+  ];
+
+  if (!allowedMimeTypes.includes(file.type)) {
+    throw new Error(
+      "Resources must be PDF, PNG, JPG, or WebP files."
+    );
+  }
+
+  if (file.size > 25 * 1024 * 1024) {
+    throw new Error("Resource files must be 25 MB or smaller.");
+  }
+
+  const title = String(resource?.title || "").trim();
+
+  if (!title) throw new Error("Enter a resource title.");
+
+  const { data: sessionData, error: sessionError } =
+    await supabase.auth.getSession();
+
+  if (sessionError) throw new Error(sessionError.message);
+
+  const userId = sessionData?.session?.user?.id;
+
+  if (!userId) throw new Error("Admin authentication is required.");
+
+  const randomPart =
+    globalThis.crypto?.randomUUID?.() ||
+    `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+  const safeName = partnerResourceSafeName(file.name);
+  const storagePath =
+    `resources/${new Date().toISOString().slice(0, 10)}/` +
+    `${randomPart}-${safeName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("partner-resources")
+    .upload(storagePath, file, {
+      cacheControl: "3600",
+      contentType: file.type,
+      upsert: false,
+    });
+
+  if (uploadError) throw new Error(uploadError.message);
+
+  const allowedFields = [
+    "description",
+    "category",
+    "visible_to_partner_types",
+    "version_label",
+    "expires_at",
+    "sort",
+  ];
+
+  const payload = {
+    title,
+    storage_bucket: "partner-resources",
+    storage_path: storagePath,
+    status: "draft",
+    created_by: userId,
+    ...cleanAdminPatch(resource, allowedFields),
+  };
+
+  const { data, error } = await supabase
+    .from("partner_resources")
+    .insert(payload)
+    .select("*")
+    .single();
+
+  if (error) {
+    await supabase.storage
+      .from("partner-resources")
+      .remove([storagePath]);
+
+    throw new Error(error.message);
+  }
+
+  return data;
+}
+
+export async function updateAdminPartnerResource(id, patch) {
+  const allowedFields = [
+    "title",
+    "description",
+    "category",
+    "visible_to_partner_types",
+    "status",
+    "version_label",
+    "expires_at",
+    "sort",
+  ];
+
+  const payload = cleanAdminPatch(patch, allowedFields);
+
+  if (
+    Object.prototype.hasOwnProperty.call(payload, "title") &&
+    !String(payload.title || "").trim()
+  ) {
+    throw new Error("Every resource requires a title.");
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, "title")) {
+    payload.title = String(payload.title).trim();
+  }
+
+  const { data, error } = await supabase
+    .from("partner_resources")
+    .update(payload)
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+/* ---------- existing admin operations ---------- */
 
 export const listOrders = () =>
   supabase.from("orders")
