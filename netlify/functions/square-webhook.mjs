@@ -14,7 +14,69 @@
    ============================================================ */
 
 import crypto from "node:crypto";
+import { Resend } from "resend";
 import { square, db, ok, bad } from "./_square.mjs";
+
+const BONUS_ALERT_FROM = "NectarFusions <orders@nectar-fusions.com>";
+const BONUS_ALERT_TO = () =>
+  process.env.BONUS_JAR_ALERT_EMAIL || "info@nectar-fusions.com";
+
+const esc = (value) =>
+  String(value ?? "").replace(
+    /[<>&"]/g,
+    (character) =>
+      ({
+        "<": "&lt;",
+        ">": "&gt;",
+        "&": "&amp;",
+        '"': "&quot;",
+      })[character]
+  );
+
+async function sendBonusJarAlert(record) {
+  if (!record?.bonus_jar_due || record?.duplicate) return;
+
+  const resendKey = String(process.env.RESEND_API_KEY || "").trim();
+  if (!resendKey) {
+    console.error(
+      "Bonus jar email skipped: RESEND_API_KEY is missing. The admin notification alert remains active."
+    );
+    return;
+  }
+
+  try {
+    const resend = new Resend(resendKey);
+    const result = await resend.emails.send({
+      from: BONUS_ALERT_FROM,
+      to: BONUS_ALERT_TO(),
+      subject: `Bonus jar due — Honey Club #${record.sub_no} — box #${record.box_number}`,
+      html: `
+        <div style="font-family:Arial,sans-serif;line-height:1.55;color:#3E2B17">
+          <h1 style="font-size:24px;margin:0 0 12px">Bonus jar due</h1>
+          <p style="font-size:17px;margin:0 0 14px">
+            Add one bonus jar to <strong>Honey Club #${esc(record.sub_no)}</strong>
+            for <strong>${esc(record.customer_name || "the member")}</strong>.
+          </p>
+          <p style="margin:0 0 8px"><strong>Paid box:</strong> #${esc(record.box_number)}</p>
+          <p style="margin:0 0 8px"><strong>Plan:</strong> ${esc(record.plan_name)}</p>
+          <p style="margin:18px 0 0">
+            This reminder remains open in the NectarFusions Admin Honey Club screen
+            until you select <strong>Mark bonus jar packed</strong>.
+          </p>
+        </div>
+      `,
+    });
+
+    if (result?.error) {
+      console.error(
+        "Bonus jar email failed:",
+        result.error.message || "Unknown Resend error"
+      );
+    }
+  } catch (emailError) {
+    console.error("Bonus jar email failed:", emailError.message);
+  }
+}
 
 /* Square signs (notification_url + raw body) with your signature key. */
 function verify(rawBody, signature) {
@@ -210,21 +272,117 @@ export default async (req) => {
       case "invoice.payment_made": {
         const inv = obj.invoice;
         const subId = inv?.subscription_id;
+        const invoiceId = inv?.id;
+        const eventId = evt.event_id || (invoiceId ? `${type}:${invoiceId}` : null);
+
+        // Square's generic sample invoice has no subscription_id. A real
+        // Honey Club invoice must have all three identifiers below.
         if (!subId) break;
-
-        const { data: row } = await supa
-          .from("subscriptions").select("id, boxes_sent")
-          .eq("square_subscription_id", subId).maybeSingle();
-
-        if (row) {
-          // This is what drives the bonus jar on every third box.
-          await supa.from("subscriptions").update({
-            boxes_sent: row.boxes_sent + 1,
-            last_invoice_at: new Date().toISOString(),
-            status: "active",
-          }).eq("id", row.id);
-          console.log("Box billed for subscription", row.id, "→", row.boxes_sent + 1);
+        if (!invoiceId || !eventId) {
+          throw new Error("Subscription invoice webhook is missing its Square identifiers.");
         }
+
+        /*
+          One atomic database function now owns all box counting:
+
+          - Square event IDs and invoice IDs are unique
+          - a replay returns duplicate=true without incrementing
+          - boxes_sent and the event row commit together
+          - a third/sixth/ninth paid box creates a persistent bonus alert
+          - an invoice arriving before subscription.created returns 500 so
+            Square retries after the subscription link exists
+        */
+        const { data, error } = await supa.rpc(
+          "record_subscription_invoice_payment",
+          {
+            p_event_id: eventId,
+            p_invoice_id: invoiceId,
+            p_square_subscription_id: subId,
+            p_paid_at: inv.updated_at || evt.created_at || new Date().toISOString(),
+          }
+        );
+
+        let record = Array.isArray(data) ? data[0] : data;
+
+        const trackingMigrationMissing =
+          error &&
+          (error.code === "PGRST202" ||
+            error.code === "42883" ||
+            String(error.message || "").includes(
+              "Could not find the function public.record_subscription_invoice_payment"
+            ));
+
+        if (trackingMigrationMissing) {
+          /*
+            Deployment safety: Netlify may publish this function before the
+            Supabase migration is applied. Keep the current production path
+            working rather than rejecting real payments. The migration must
+            still be applied to enable duplicate protection and bonus alerts.
+          */
+          console.error(
+            "Subscription box tracking migration is not applied yet; using the legacy counter."
+          );
+
+          const { data: legacyRow, error: legacyReadError } = await supa
+            .from("subscriptions")
+            .select("id, boxes_sent")
+            .eq("square_subscription_id", subId)
+            .maybeSingle();
+
+          if (legacyReadError) throw legacyReadError;
+          if (!legacyRow) {
+            throw new Error(
+              `Subscription is not linked yet for Square subscription ${subId}.`
+            );
+          }
+
+          const nextBox = Number(legacyRow.boxes_sent || 0) + 1;
+          const { error: legacyUpdateError } = await supa
+            .from("subscriptions")
+            .update({
+              boxes_sent: nextBox,
+              last_invoice_at:
+                inv.updated_at || evt.created_at || new Date().toISOString(),
+              status: "active",
+            })
+            .eq("id", legacyRow.id);
+
+          if (legacyUpdateError) throw legacyUpdateError;
+
+          record = {
+            duplicate: false,
+            legacy: true,
+            subscription_id: legacyRow.id,
+            box_number: nextBox,
+            bonus_jar_due: false,
+          };
+        } else if (error) {
+          throw error;
+        }
+
+        if (!record) {
+          throw new Error("Subscription invoice was not recorded.");
+        }
+
+        if (record.duplicate) {
+          console.log(
+            "Duplicate subscription invoice ignored:",
+            invoiceId,
+            "box",
+            record.box_number
+          );
+          break;
+        }
+
+        console.log(
+          "Box billed for subscription",
+          record.subscription_id,
+          "→",
+          record.box_number,
+          record.bonus_jar_due ? "(bonus jar due)" : ""
+        );
+
+        await sendBonusJarAlert(record);
         break;
       }
 

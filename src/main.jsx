@@ -3,6 +3,9 @@ import ReactDOM from "react-dom/client";
 import "./index.css";
 
 const rootElement = document.getElementById("root");
+const SubscriptionBonusNotifier = React.lazy(() =>
+  import("./SubscriptionBonusNotifier.jsx")
+);
 
 function ErrorScreen({ title, error }) {
   const message = error?.message || String(error || "Unknown error");
@@ -86,6 +89,28 @@ class ErrorBoundary extends React.Component {
   }
 }
 
+/* The reminder is deliberately isolated from the storefront. If its optional
+   module or database query ever fails, checkout and the rest of the site keep
+   rendering normally. */
+class NonFatalNotifierBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { failed: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  componentDidCatch(error, info) {
+    console.error("Honey Club reminder unavailable:", error, info);
+  }
+
+  render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
+
 if (!rootElement) {
   document.body.innerHTML =
     '<pre style="padding:20px">NectarFusions error: index.html does not contain an element with id="root".</pre>';
@@ -99,6 +124,11 @@ if (!rootElement) {
           <ErrorBoundary>
             <App />
           </ErrorBoundary>
+          <NonFatalNotifierBoundary>
+            <React.Suspense fallback={null}>
+              <SubscriptionBonusNotifier />
+            </React.Suspense>
+          </NonFatalNotifierBoundary>
         </React.StrictMode>
       );
     })
