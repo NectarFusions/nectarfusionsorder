@@ -11998,10 +11998,6 @@ export default function App() {
                   </div>
                 )}
 
-                <div style={{ fontSize: 12.5, color: c.brown, marginTop: 12, lineHeight: 1.55 }}>
-                  You&rsquo;ll get an order number and an email, and you can cancel free for {cat.cancelMinutes} minutes.
-                </div>
-
                 <button
                   type="button"
                   className="btn solid nf-details-continue"
