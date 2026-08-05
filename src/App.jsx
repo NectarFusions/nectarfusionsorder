@@ -83,18 +83,104 @@ const parseDay = (s) => { const [y,m,d] = s.split("-").map(Number); return new D
 const fmt = (d) => `${DAYS[d.getDay()]} · ${MONTHS[d.getMonth()]} ${d.getDate()}`;
 const iso = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 
-function deliveryDays(zone, blocked, count = 6) {
-  const out = [], now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  for (let i = 0; out.length < count && i < 60; i++) {
-    const d = new Date(start); d.setDate(start.getDate() + i);
+const DELIVERY_TIME_ZONE = "America/Detroit";
+const DEFAULT_SAME_DAY_LEAD_MINUTES = 120;
+
+function deliveryClock(now = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: DELIVERY_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(now);
+
+  const values = Object.fromEntries(
+    parts
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, Number(part.value)])
+  );
+
+  return {
+    year: values.year,
+    month: values.month,
+    day: values.day,
+    hour: values.hour,
+    minute: values.minute,
+  };
+}
+
+function sameDayLeadMinutes(zone) {
+  const configured = Number(zone?.same_day_lead_minutes);
+  return Number.isFinite(configured) && configured >= 0
+    ? configured
+    : DEFAULT_SAME_DAY_LEAD_MINUTES;
+}
+
+function sameDayCutoffMinutes(zone) {
+  const deliveryStartHour = Number(zone?.cutoff_hour);
+  if (!Number.isFinite(deliveryStartHour)) return 0;
+  return Math.max(
+    0,
+    Math.round(deliveryStartHour * 60) - sameDayLeadMinutes(zone)
+  );
+}
+
+function clockLabel(totalMinutes) {
+  const safe = ((Math.round(totalMinutes) % 1440) + 1440) % 1440;
+  const hour24 = Math.floor(safe / 60);
+  const minute = safe % 60;
+  const suffix = hour24 >= 12 ? "PM" : "AM";
+  const hour12 = hour24 % 12 || 12;
+  return `${hour12}:${String(minute).padStart(2, "0")} ${suffix}`;
+}
+
+function leadTimeLabel(minutes) {
+  if (minutes % 60 === 0) {
+    const hours = minutes / 60;
+    return `${hours} hour${hours === 1 ? "" : "s"}`;
+  }
+  return `${minutes} minutes`;
+}
+
+function deliveryAvailability(zone, blocked, count = 6, now = new Date()) {
+  const out = [];
+  const clock = deliveryClock(now);
+  const currentMinutes = clock.hour * 60 + clock.minute;
+  const cutoffMinutes = sameDayCutoffMinutes(zone);
+  const leadMinutes = sameDayLeadMinutes(zone);
+  const start = new Date(clock.year, clock.month - 1, clock.day, 12);
+  const todayIsScheduled =
+    zone.days.includes(start.getDay()) &&
+    !blocked.includes(iso(start));
+  const sameDayOpen =
+    todayIsScheduled &&
+    zone.same_day_ok === true &&
+    currentMinutes < cutoffMinutes;
+
+  for (let i = 0; out.length < count && i < 60; i += 1) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+
     if (!zone.days.includes(d.getDay())) continue;
     if (blocked.includes(iso(d))) continue;
-    if (i === 0 && !(zone.same_day_ok && now.getHours() < zone.cutoff_hour)) continue;
-    if (i === 1 && now.getHours() >= zone.cutoff_hour && !zone.same_day_ok) continue;
+    if (i === 0 && !sameDayOpen) continue;
+
     out.push(d);
   }
-  return out;
+
+  return {
+    slots: out,
+    sameDayClosed:
+      todayIsScheduled &&
+      zone.same_day_ok === true &&
+      currentMinutes >= cutoffMinutes,
+    nextAvailable: out[0] ?? null,
+    cutoffMinutes,
+    leadMinutes,
+  };
 }
 
 const Logo = ({ size = 72 }) => (
@@ -9956,10 +10042,36 @@ export default function App() {
   const fee = method === "delivery" && zone ? (price.sub >= zone.freeOver ? 0 : zone.fee) : 0;
   const belowMin = method === "delivery" && zone && price.sub < zone.minimum;
   const total = price.sub + fee;
-  const slots = zone && cat ? deliveryDays(zone, cat.blockedDates ?? []) : [];
+  const delivery =
+    zone && cat
+      ? deliveryAvailability(zone, cat.blockedDates ?? [])
+      : {
+          slots: [],
+          sameDayClosed: false,
+          nextAvailable: null,
+          cutoffMinutes: 0,
+          leadMinutes: DEFAULT_SAME_DAY_LEAD_MINUTES,
+        };
+  const slots = delivery.slots;
+  const deliverySlotKeys = slots.map(iso).join("|");
+  const sameDayRuleLabel =
+    zone?.same_day_ok === true
+      ? `Same-day orders close at ${clockLabel(delivery.cutoffMinutes)} · ${leadTimeLabel(delivery.leadMinutes)} notice`
+      : zone?.cutoff_label;
 
   useEffect(() => { if (method === "ship" && !shipOK) { setMethod(null); setSlot(null); } }, [shipOK, method]);
   useEffect(() => { setSlot(method === "ship" ? { kind: "ship" } : null); }, [method, zone?.id]);
+
+  useEffect(() => {
+    if (method !== "delivery" || slot?.kind !== "delivery") return;
+    if (deliverySlotKeys.split("|").filter(Boolean).includes(iso(slot.date))) return;
+
+    setSlot(null);
+    setReviewOpen(false);
+    setContinueHelp(
+      "That delivery window has closed. Choose the next available delivery date."
+    );
+  }, [tick, method, zone?.id, deliverySlotKeys, slot?.kind, slot?.date]);
 
   useEffect(() => {
     if (view === "admin" || typeof window === "undefined") return undefined;
@@ -10158,6 +10270,26 @@ export default function App() {
           : "One or more selected textures are no longer available. Please update those jars."
       );
       return;
+    }
+
+    if (method === "delivery" && zone && slot?.kind === "delivery") {
+      const currentDelivery = deliveryAvailability(
+        zone,
+        cat.blockedDates ?? []
+      );
+      const selectedDay = iso(slot.date);
+      const stillAvailable = currentDelivery.slots.some(
+        (availableDay) => iso(availableDay) === selectedDay
+      );
+
+      if (!stillAvailable) {
+        setReviewOpen(false);
+        setSlot(null);
+        setErr(
+          "That delivery window has closed. Please choose the next available delivery date."
+        );
+        return;
+      }
     }
 
     setBusy(true); setErr(null);
@@ -11917,10 +12049,35 @@ export default function App() {
                     <div className="card" style={{ padding: 14, marginTop: 10 }}>
                       <div className="eyebrow">{zone.name} · {zone.day_label}</div>
                       <div style={{ fontSize: 13.5, color: c.darkBrown, marginTop: 6, lineHeight: 1.6 }}>
-                        {zone.window_label} · {zone.cutoff_label}<br />
+                        {zone.window_label}{sameDayRuleLabel ? ` · ${sameDayRuleLabel}` : ""}<br />
                         {money(zone.fee)} delivery, free over {money(zone.freeOver)} · {money(zone.minimum)} minimum
                       </div>
                     </div>
+                    {delivery.sameDayClosed && (
+                      <div
+                        className="card"
+                        role="status"
+                        aria-live="polite"
+                        style={{
+                          padding: 14,
+                          marginTop: 10,
+                          borderColor: c.amber,
+                          background: "#FFFBF0",
+                          color: c.darkBrown,
+                          fontSize: 13.5,
+                          lineHeight: 1.55,
+                        }}
+                      >
+                        <strong>Today&rsquo;s delivery window has closed.</strong>
+                        <div style={{ marginTop: 4 }}>
+                          Same-day delivery requires at least{" "}
+                          <strong>{leadTimeLabel(delivery.leadMinutes)} notice</strong>.
+                          {delivery.nextAvailable
+                            ? <> The earliest available delivery is <strong>{fmt(delivery.nextAvailable)}</strong>.</>
+                            : " Choose the next delivery date when one becomes available."}
+                        </div>
+                      </div>
+                    )}
                     {belowMin && (
                       <div className="err" style={{ marginTop: 10 }}>
                         <strong>{money(price.sub)} merchandise subtotal</strong> — add <strong>{money(zone.minimum - price.sub)}</strong> more to qualify for local delivery.
@@ -11946,7 +12103,11 @@ export default function App() {
                           style={{ width: "100%", padding: "12px 14px", marginBottom: 7, textAlign: "left",
                             display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                           <span className="num" style={{ fontSize: 19 }}>{fmt(d)}</span>
-                          <span style={{ fontSize: 12.5, opacity: .7, fontWeight: 600 }}>{zone.window_label}</span>
+                          <span style={{ fontSize: 12.5, opacity: .7, fontWeight: 600, textAlign: "right" }}>
+                            {i === 0 && delivery.sameDayClosed
+                              ? `Earliest available · ${zone.window_label}`
+                              : zone.window_label}
+                          </span>
                         </button>
                       ))}
                     </div>
