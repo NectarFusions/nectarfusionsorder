@@ -4,6 +4,9 @@
 -- Existing zone.cutoff_hour is treated as the beginning of that zone's
 -- delivery window. same_day_lead_minutes controls how far in advance a
 -- same-day order must be placed. Same-day-enabled zones default to 120 minutes.
+--
+-- Live schema relationship:
+--   orders.zone_id -> zones.id
 
 alter table public.zones
   add column if not exists same_day_lead_minutes integer not null default 120;
@@ -35,14 +38,15 @@ declare
   v_cutoff_minutes integer;
   v_lead_label text;
 begin
+  -- Shipping and market pickup are intentionally outside this rule.
   if new.method is distinct from 'delivery' then
     return new;
   end if;
 
-  if new.zip is null or btrim(new.zip) = '' then
+  if new.zone_id is null or btrim(new.zone_id) = '' then
     raise exception using
       errcode = 'P0001',
-      message = 'A delivery ZIP code is required.';
+      message = 'A delivery zone is required.';
   end if;
 
   if new.delivery_day is null then
@@ -54,13 +58,13 @@ begin
   select z.*
     into v_zone
     from public.zones z
-   where btrim(new.zip) = any(z.zips)
+   where z.id = new.zone_id
    limit 1;
 
   if not found then
     raise exception using
       errcode = 'P0001',
-      message = 'That ZIP code is outside the local delivery area.';
+      message = 'That delivery zone is not available.';
   end if;
 
   if new.delivery_day < v_today then
@@ -96,9 +100,11 @@ begin
 
     v_lead_minutes := coalesce(v_zone.same_day_lead_minutes, 120);
 
+    -- cutoff_hour stores the beginning of the delivery window.
+    -- A 6 PM window with 120 minutes of notice closes at 4 PM.
     v_cutoff_minutes := greatest(
       0,
-      round(coalesce(v_zone.cutoff_hour, 0)::numeric * 60)::integer -
+      coalesce(v_zone.cutoff_hour, 0) * 60 -
       v_lead_minutes
     );
 
@@ -128,7 +134,7 @@ drop trigger if exists nf_enforce_delivery_timing_on_orders
   on public.orders;
 
 create trigger nf_enforce_delivery_timing_on_orders
-before insert or update of method, zip, delivery_day
+before insert or update of method, zone_id, delivery_day
 on public.orders
 for each row
 execute function public.nf_enforce_delivery_timing();
