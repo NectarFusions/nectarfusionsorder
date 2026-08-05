@@ -1,15 +1,17 @@
 /* ============================================================
    ORDER EMAIL  —  /.netlify/functions/order-email
 
-   Fired by a Supabase Database Webhook when an order is created
-   or its status changes. Sends two emails: a receipt to the
-   customer, and an alert to info@nectar-fusions.com.
+   Sends two emails: a receipt to the customer and an alert to
+   info@nectar-fusions.com. It can be called in two safe ways:
 
-   WHY THE WEBHOOK, NOT THE BROWSER:
-   If the browser sent these, an order placed by someone who
-   closes the tab immediately would never reach you. The webhook
-   fires from Postgres itself, so it fires whether or not anyone
-   is still looking at the page.
+   1. Supabase Database Webhook for inserts and later changes.
+   2. The storefront immediately after a new order is saved, using
+      the private order token returned by the place_order RPC.
+
+   The storefront path fixes missed confirmations when the database
+   webhook is disabled or misconfigured. The webhook remains a
+   server-side backup if the browser closes early. Stable Resend
+   idempotency keys keep both paths from sending duplicate emails.
 
    WHY WE RE-FETCH THE ORDER:
    The webhook payload arrives with the `orders` row but NOT the
@@ -157,70 +159,148 @@ function ownerEmail(o, siteUrl, event) {
 }
 
 /* ============================================================ */
-export default async (req) => {
-  if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
+const ORDER_SELECT =
+  "*, order_items(*), customers(flagged, consecutive_noshows), " +
+  "market_dates(day, venues(name, hours))";
 
-  // Only Supabase may call this. Without the shared secret, anyone who
-  // finds the URL could make us send mail on their behalf.
-  const secret = req.headers.get("x-webhook-secret");
-  if (!process.env.WEBHOOK_SECRET || secret !== process.env.WEBHOOK_SECRET) {
-    return new Response("Unauthorized", { status: 401 });
+const safeKeyPart = (value) =>
+  String(value ?? "unknown").replace(/[^a-zA-Z0-9._:-]/g, "-").slice(0, 100);
+
+export default async (req) => {
+  if (req.method !== "POST") {
+    return new Response("Method not allowed", { status: 405 });
   }
 
   let body;
-  try { body = await req.json(); } catch { return new Response("Bad JSON", { status: 400 }); }
-
-  const { type, record, old_record } = body;
-  const id = record?.id;
-  if (!id) return new Response("No record", { status: 400 });
-
-  // What happened?
-  let event = "placed";
-  if (type === "UPDATE") {
-    const customerChanged = record.last_customer_change_at && record.last_customer_change_at !== old_record?.last_customer_change_at;
-    if (customerChanged) event = "changed";
-    else if (record.status === old_record?.status) return new Response("No customer-facing change", { status: 200 });
-    else if (record.status === "cancelled") event = "cancelled";
-    else event = "status";
+  try {
+    body = await req.json();
+  } catch {
+    return new Response("Bad JSON", { status: 400 });
   }
+
+  const secret = req.headers.get("x-webhook-secret");
+  const trustedWebhook =
+    Boolean(process.env.WEBHOOK_SECRET) && secret === process.env.WEBHOOK_SECRET;
+
+  const supa = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+
+  let event = "placed";
+  let record = null;
+  let oldRecord = null;
+  let orderQuery = supa.from("orders").select(ORDER_SELECT);
+
+  if (trustedWebhook) {
+    ({ record, old_record: oldRecord } = body);
+
+    if (!record?.id) {
+      return new Response("No record", { status: 400 });
+    }
+
+    if (body.type === "UPDATE") {
+      const customerChanged =
+        record.last_customer_change_at &&
+        record.last_customer_change_at !== oldRecord?.last_customer_change_at;
+
+      if (customerChanged) event = "changed";
+      else if (record.status === oldRecord?.status) {
+        return new Response("No customer-facing change", { status: 200 });
+      } else if (record.status === "cancelled") event = "cancelled";
+      else event = "status";
+    }
+
+    orderQuery = orderQuery.eq("id", record.id);
+  } else {
+    // Public storefront fallback. The random order token is already required
+    // to view the private order page. It may only request the initial placed
+    // emails and only shortly after the order was created.
+    const token = String(body?.token || "").trim();
+    if (!/^[0-9a-f-]{36}$/i.test(token)) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+
+    orderQuery = orderQuery.eq("token", token);
+  }
+
+  const { data: o, error } = await orderQuery.single();
+  if (error || !o) {
+    return new Response("Order not found", { status: 404 });
+  }
+
+  if (!trustedWebhook) {
+    const createdAt = Date.parse(o.created_at);
+    const ageMs = Date.now() - createdAt;
+    const fifteenMinutes = 15 * 60 * 1000;
+
+    if (!Number.isFinite(createdAt) || ageMs < -60_000 || ageMs > fifteenMinutes) {
+      return new Response("Confirmation window expired", { status: 410 });
+    }
+
+    if (o.status === "cancelled") {
+      return new Response("Order is cancelled", { status: 409 });
+    }
+
+    record = o;
+  }
+
   const tellCustomer = ["placed", "cancelled", "changed"].includes(event);
-
-  const supa = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-  const { data: o, error } = await supa
-    .from("orders")
-    .select("*, order_items(*), customers(flagged, consecutive_noshows), market_dates(day, venues(name, hours))")
-    .eq("id", id)
-    .single();
-
-  if (error || !o) return new Response(`Order not found: ${error?.message}`, { status: 404 });
-
   const resend = new Resend(process.env.RESEND_API_KEY);
   const site = process.env.SITE_URL || "https://nectar-fusions.com";
 
+  // The same stable key is produced by the checkout fallback and the
+  // Supabase INSERT webhook. Resend therefore accepts both retries but sends
+  // each recipient only one copy during its idempotency window.
+  const eventVersion =
+    event === "placed"
+      ? o.created_at
+      : event === "changed"
+        ? record?.last_customer_change_at || o.last_customer_change_at || o.updated_at
+        : record?.updated_at || o.updated_at || record?.status || event;
+  const keyBase =
+    `order/${safeKeyPart(o.id)}/${safeKeyPart(event)}/${safeKeyPart(eventVersion)}`;
+
   const jobs = [
-    resend.emails.send({
-      from: FROM, to: OWNER,
-      subject: `${event === "cancelled" ? "Cancelled" : event === "changed" ? "Customer changed" : event === "status" ? "Status updated" : "New order"} #${o.order_no} — ${o.name} — ${money(o.total_cents)}`,
-      html: ownerEmail(o, site, event),
-    }),
+    resend.emails.send(
+      {
+        from: FROM,
+        to: OWNER,
+        subject: `${event === "cancelled" ? "Cancelled" : event === "changed" ? "Customer changed" : event === "status" ? "Status updated" : "New order"} #${o.order_no} — ${o.name} — ${money(o.total_cents)}`,
+        html: ownerEmail(o, site, event),
+      },
+      { idempotencyKey: `${keyBase}/owner` }
+    ),
   ];
 
   if (tellCustomer && o.email) {
-    jobs.push(resend.emails.send({
-      from: FROM, to: o.email,
-      subject: event === "cancelled"
-        ? `Your NectarFusions order #${o.order_no} is cancelled`
-        : event === "changed" ? `NectarFusions order #${o.order_no} — updated` : `NectarFusions order #${o.order_no} — confirmed`,
-      html: customerEmail(o, site),
-    }));
+    jobs.push(
+      resend.emails.send(
+        {
+          from: FROM,
+          to: o.email,
+          subject:
+            event === "cancelled"
+              ? `Your NectarFusions order #${o.order_no} is cancelled`
+              : event === "changed"
+                ? `NectarFusions order #${o.order_no} — updated`
+                : `NectarFusions order #${o.order_no} — confirmed`,
+          html: customerEmail(o, site),
+        },
+        { idempotencyKey: `${keyBase}/customer` }
+      )
+    );
   }
 
   const results = await Promise.allSettled(jobs);
-  const failed = results.filter((r) => r.status === "rejected" || r.value?.error);
+  const failed = results.filter(
+    (result) => result.status === "rejected" || result.value?.error
+  );
 
   if (failed.length) {
     console.error("Email failures:", JSON.stringify(failed));
-    // 500 tells Supabase to retry. Better a duplicate email than a missed order.
+    // A 500 lets the trusted webhook retry. The storefront deliberately
+    // ignores this independent email error because the order is already saved.
     return new Response("Some emails failed", { status: 500 });
   }
 

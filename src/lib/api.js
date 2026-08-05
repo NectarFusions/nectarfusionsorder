@@ -108,6 +108,32 @@ export const stockCount = (flavor, sizeId, type) => {
 
 /* ---------- ordering (anonymous, via security-definer RPCs) ---------- */
 
+async function requestOrderConfirmationEmails(token) {
+  try {
+    const response = await fetch("/.netlify/functions/order-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
+      keepalive: true,
+    });
+
+    if (!response.ok) {
+      console.error(
+        "Order confirmation email request failed:",
+        response.status,
+        await response.text()
+      );
+    }
+  } catch (emailError) {
+    // The order is already saved. Never make a customer place it twice
+    // because the independent email service was temporarily unavailable.
+    console.error(
+      "Order confirmation email request failed:",
+      emailError?.message || emailError
+    );
+  }
+}
+
 export async function placeOrder(payload) {
   try {
     const { data, error } = await supabase.rpc("place_order", {
@@ -131,6 +157,11 @@ export async function placeOrder(payload) {
         "The order service returned an empty response. Your order was not confirmed."
       );
     }
+
+    // Ask the Netlify email function immediately after the database confirms
+    // the order. The existing Supabase webhook remains a server-side backup.
+    // Resend idempotency keys in that function prevent duplicate messages.
+    await requestOrderConfirmationEmails(row.token);
 
     return {
       orderNo: row.order_no,
