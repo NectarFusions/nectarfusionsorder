@@ -451,16 +451,19 @@ export default function MarketConfirmationPage({
     }
   };
 
+  const paymentPending =
+    !cancelled && receipt.requires_prepay && !receipt.paid;
+
   const paymentTitle = cancelled
     ? "This order has been cancelled."
-    : receipt.requires_prepay && !receipt.paid
+    : paymentPending
       ? "Complete payment before pickup."
       : "Pay at the market table.";
 
   const paymentCopy = cancelled
     ? "Nothing is owed."
-    : receipt.requires_prepay && !receipt.paid
-      ? "Use the secure payment button below to reserve your jars."
+    : paymentPending
+      ? "Your order is saved, but it is not confirmed until Square payment is complete."
       : "Cash, card, or tap.";
 
   return (
@@ -478,21 +481,28 @@ export default function MarketConfirmationPage({
             <Logo size={68} />
           </button>
           <div className="nf-market-kicker">
-            {cancelled ? "Order cancelled" : "Order confirmed"}
+            {cancelled
+              ? "Order cancelled"
+              : paymentPending
+                ? "Payment required"
+                : "Order confirmed"}
           </div>
           <h1>#{receipt.order_no}</h1>
           <p>
-            Keep this confirmation handy for pickup. You can also reopen it
-            anytime using the private link in your email.
+            {paymentPending
+              ? "Complete the secure Square payment to confirm this pickup."
+              : "Keep this confirmation handy for pickup. You can also reopen it anytime using the private link in your email."}
           </p>
         </header>
 
         <section className="nf-confirmation-sheet">
           <div className="nf-status-row">
-            <div className="nf-status-icon">{cancelled ? "×" : "✓"}</div>
+            <div className="nf-status-icon">
+              {cancelled ? "×" : paymentPending ? "!" : "✓"}
+            </div>
             <div className="nf-status-copy">
               <div className="nf-market-label">
-                {cancelled ? "Cancelled" : "Payment"}
+                {cancelled ? "Cancelled" : paymentPending ? "Payment required" : "Payment"}
               </div>
               <h2>{paymentTitle}</h2>
               <p>{paymentCopy}</p>
@@ -552,7 +562,7 @@ export default function MarketConfirmationPage({
               ))}
             </div>
 
-            {receipt.requires_prepay && !receipt.paid && (
+            {paymentPending && (
               <button
                 className="nf-pay-button"
                 onClick={onPay}

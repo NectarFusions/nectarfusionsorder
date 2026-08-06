@@ -59,19 +59,37 @@ function whenLine(o) {
 }
 
 /* ---------- customer receipt ---------- */
-function customerEmail(o, siteUrl) {
+function customerEmail(o, siteUrl, event) {
   const link = `${siteUrl}/order/${o.token}`;
   const market = o.method === "market";
+  const cancelled = event === "cancelled" || o.status === "cancelled";
+  const paymentPending =
+    !cancelled && o.requires_prepay && !o.paid;
+  const paymentReceived = event === "paid";
+  const headline = cancelled
+    ? "Order cancelled"
+    : paymentPending
+      ? "Payment required"
+      : paymentReceived
+        ? "Payment received"
+        : event === "changed"
+          ? "Order updated"
+          : "Order confirmed";
+  const actionLabel = paymentPending
+    ? "Complete Secure Payment"
+    : "View or Change Your Order";
   return `
 <div style="background:${G.cream};padding:26px 14px;font-family:Helvetica,Arial,sans-serif">
   <div style="max-width:520px;margin:0 auto;background:#fff;border-radius:10px;overflow:hidden;border:1px solid #E7DCC9">
 
     <div style="padding:26px 24px 20px;text-align:center;border-bottom:1px solid #E7DCC9">
       <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:${G.amber}">
-        Order confirmed
+        ${headline}
       </div>
       <div style="font-size:52px;font-weight:700;color:#111;letter-spacing:.04em;margin-top:4px">#${esc(o.order_no)}</div>
-      ${market ? `<div style="font-size:14px;color:${G.brown};margin-top:6px;line-height:1.5">
+      ${paymentPending ? `<div style="font-size:14px;color:${G.brown};margin-top:6px;line-height:1.5">
+        Your order is saved, but it is not confirmed until Square payment is complete.</div>`
+        : market ? `<div style="font-size:14px;color:${G.brown};margin-top:6px;line-height:1.5">
         Show this number at our table and we&rsquo;ll have your jars ready.</div>` : ""}
     </div>
 
@@ -94,14 +112,17 @@ function customerEmail(o, siteUrl) {
       </table>
 
       <div style="margin-top:20px;padding:14px;background:#FBF7F1;border-radius:6px;font-size:14px;color:${G.dark};line-height:1.6">
-        ${market ? "Pay at the market table — cash, card, or tap."
-          : o.method === "ship" ? "We'll send a payment link and tracking once it's packed."
-          : "We'll text you to confirm your window and take payment."}
+        ${cancelled ? "This order has been cancelled. Nothing is owed."
+          : paymentPending ? "Complete payment securely through Square using the button below. We will not prepare the order until payment is confirmed."
+          : paymentReceived ? "Payment received. Your order is confirmed and we’ll begin preparing it."
+          : market ? "Pay at the market table — cash, card, or tap."
+          : o.method === "ship" ? "We'll send tracking once it's packed."
+          : "We'll text you to confirm your delivery window."}
       </div>
 
       <a href="${link}" style="display:block;margin-top:18px;padding:14px;background:${G.blue};color:#fff;
         text-align:center;text-decoration:none;border-radius:6px;font-weight:700;font-size:15px">
-        View or Change Your Order
+        ${actionLabel}
       </a>
       <div style="font-size:12.5px;color:${G.brown};margin-top:9px;line-height:1.55;text-align:center">
         For 30 minutes, you may replace a flavor with another available flavor of the same size, texture, quantity, and price. For quantities, sizes, refunds, or another type of change, contact NectarFusions directly.
@@ -122,8 +143,29 @@ function customerEmail(o, siteUrl) {
 /* ---------- your alert ---------- */
 function ownerEmail(o, siteUrl, event) {
   const flagged = o.customers?.flagged;
-  const heading = event === "cancelled" ? "ORDER CANCELLED" : event === "changed" ? "CUSTOMER CHANGED ORDER" : event === "status" ? "ORDER STATUS UPDATED" : "NEW ORDER";
-  const colour = event === "cancelled" ? G.red : G.amber;
+  const paymentPending =
+    event !== "cancelled" &&
+    o.status !== "cancelled" &&
+    o.requires_prepay &&
+    !o.paid;
+  const heading =
+    event === "cancelled"
+      ? "ORDER CANCELLED"
+      : event === "paid"
+        ? "PAYMENT RECEIVED"
+        : event === "changed"
+          ? "CUSTOMER CHANGED ORDER"
+          : event === "status"
+            ? "ORDER STATUS UPDATED"
+            : paymentPending
+              ? "PAYMENT PENDING"
+              : "NEW ORDER";
+  const colour =
+    event === "cancelled"
+      ? G.red
+      : event === "paid"
+        ? "#4F6B3C"
+        : G.amber;
   return `
 <div style="background:${G.cream};padding:22px 14px;font-family:Helvetica,Arial,sans-serif">
   <div style="max-width:520px;margin:0 auto;background:#fff;border-radius:10px;border:2px solid ${colour};overflow:hidden">
@@ -132,6 +174,10 @@ function ownerEmail(o, siteUrl, event) {
       <div style="font-size:40px;font-weight:700;color:#111;letter-spacing:.04em">#${esc(o.order_no)}</div>
       <div style="font-size:15px;font-weight:600;color:#111;margin-top:4px">${esc(o.name)} — ${money(o.total_cents)}</div>
     </div>
+
+    ${paymentPending ? `<div style="padding:12px 22px;background:#FFF9DE;border-bottom:1px solid #E7DCC9;
+      font-size:13px;font-weight:700;color:#6A4300;line-height:1.5">
+      PAYMENT PENDING — Do not prepare this order until Square confirms payment.</div>` : ""}
 
     ${flagged ? `<div style="padding:12px 22px;background:#FFF3F2;border-bottom:1px solid #E7DCC9;
       font-size:13px;font-weight:700;color:#8A1F19;line-height:1.5">
@@ -200,11 +246,14 @@ export default async (req) => {
     }
 
     if (body.type === "UPDATE") {
+      const paymentCompleted =
+        record.paid === true && oldRecord?.paid !== true;
       const customerChanged =
         record.last_customer_change_at &&
         record.last_customer_change_at !== oldRecord?.last_customer_change_at;
 
-      if (customerChanged) event = "changed";
+      if (paymentCompleted) event = "paid";
+      else if (customerChanged) event = "changed";
       else if (record.status === oldRecord?.status) {
         return new Response("No customer-facing change", { status: 200 });
       } else if (record.status === "cancelled") event = "cancelled";
@@ -245,7 +294,7 @@ export default async (req) => {
     record = o;
   }
 
-  const tellCustomer = ["placed", "cancelled", "changed"].includes(event);
+  const tellCustomer = ["placed", "paid", "cancelled", "changed"].includes(event);
   const resend = new Resend(process.env.RESEND_API_KEY);
   const site = process.env.SITE_URL || "https://nectar-fusions.com";
 
@@ -255,18 +304,49 @@ export default async (req) => {
   const eventVersion =
     event === "placed"
       ? o.created_at
-      : event === "changed"
-        ? record?.last_customer_change_at || o.last_customer_change_at || o.updated_at
-        : record?.updated_at || o.updated_at || record?.status || event;
+      : event === "paid"
+        ? record?.paid_at || o.paid_at || record?.updated_at || o.updated_at
+        : event === "changed"
+          ? record?.last_customer_change_at || o.last_customer_change_at || o.updated_at
+          : record?.updated_at || o.updated_at || record?.status || event;
   const keyBase =
     `order/${safeKeyPart(o.id)}/${safeKeyPart(event)}/${safeKeyPart(eventVersion)}`;
+  const paymentPending =
+    event !== "cancelled" &&
+    o.status !== "cancelled" &&
+    o.requires_prepay &&
+    !o.paid;
+  const ownerEventLabel =
+    event === "cancelled"
+      ? "Cancelled"
+      : event === "paid"
+        ? "Payment received"
+        : event === "changed"
+          ? "Customer changed"
+          : event === "status"
+            ? "Status updated"
+            : paymentPending
+              ? "Payment pending"
+              : "New order";
+  const customerSubject =
+    event === "cancelled"
+      ? `Your NectarFusions order #${o.order_no} is cancelled`
+      : event === "paid"
+        ? `NectarFusions order #${o.order_no} — payment received`
+        : event === "changed" && paymentPending
+          ? `NectarFusions order #${o.order_no} — updated, payment required`
+          : event === "changed"
+            ? `NectarFusions order #${o.order_no} — updated`
+            : paymentPending
+              ? `NectarFusions order #${o.order_no} — payment required`
+              : `NectarFusions order #${o.order_no} — confirmed`;
 
   const jobs = [
     resend.emails.send(
       {
         from: FROM,
         to: OWNER,
-        subject: `${event === "cancelled" ? "Cancelled" : event === "changed" ? "Customer changed" : event === "status" ? "Status updated" : "New order"} #${o.order_no} — ${o.name} — ${money(o.total_cents)}`,
+        subject: `${ownerEventLabel} #${o.order_no} — ${o.name} — ${money(o.total_cents)}`,
         html: ownerEmail(o, site, event),
       },
       { idempotencyKey: `${keyBase}/owner` }
@@ -279,13 +359,8 @@ export default async (req) => {
         {
           from: FROM,
           to: o.email,
-          subject:
-            event === "cancelled"
-              ? `Your NectarFusions order #${o.order_no} is cancelled`
-              : event === "changed"
-                ? `NectarFusions order #${o.order_no} — updated`
-                : `NectarFusions order #${o.order_no} — confirmed`,
-          html: customerEmail(o, site),
+          subject: customerSubject,
+          html: customerEmail(o, site, event),
         },
         { idempotencyKey: `${keyBase}/customer` }
       )
