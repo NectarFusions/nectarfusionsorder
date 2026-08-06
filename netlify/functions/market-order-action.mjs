@@ -93,7 +93,7 @@ export default async (req) => {
 
   const { data: order, error: orderError } = await service
     .from("orders")
-    .select("*, market_dates(day, venues(name, hours)), customers(flagged, consecutive_noshows)")
+    .select("*, market_dates(*, venues(name, hours, where_at)), customers(flagged, consecutive_noshows)")
     .eq("id", orderId)
     .single();
 

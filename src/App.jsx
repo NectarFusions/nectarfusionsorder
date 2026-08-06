@@ -14398,7 +14398,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
 
                     <div className="nf-market-location">
                       <strong>{marketName}</strong>
-                      <span>{marketDay}{o.market_dates?.venues?.hours ? ` · ${o.market_dates.venues.hours}` : ""}</span>
+                      <span>{marketDay}{(o.market_dates?.hours || o.market_dates?.venues?.hours) ? ` · ${o.market_dates?.hours || o.market_dates?.venues?.hours}` : ""}</span>
                     </div>
 
                     <div style={{ fontSize: 12.5, color: c.tan, marginTop: 7 }}>{o.phone} · {o.email}</div>
@@ -15144,7 +15144,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
           <>
             <div className="eyebrow" style={{ marginBottom: 6 }}>Market venues</div>
             <p style={{ fontSize: 13, color: c.brown, margin: "0 0 10px", lineHeight: 1.55 }}>
-              Type a venue once. From then on you only add dates.
+              Save each venue once as a template. Every scheduled date keeps its own hours and location, so future weeks can be changed without rewriting earlier listings.
             </p>
             {cat.venues.map((v) => (
               <div key={v.id} className="card" style={{ padding: 11, marginBottom: 7, display: "grid", gap: 6 }}>
@@ -15168,19 +15168,69 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
             <div className="eyebrow" style={{ marginBottom: 6 }}>Market dates</div>
             {dates.map((m) => {
               const past = m.day < today;
+              const removed = m.active === false;
+              const savedWhere = m.where_at ?? m.venues?.where_at ?? "";
+              const savedHours = m.hours ?? m.venues?.hours ?? "";
               return (
-                <div key={m.id} className="card" style={{ padding: "10px 12px", marginBottom: 6, display: "flex",
-                  alignItems: "center", gap: 10, opacity: past ? .45 : 1 }}>
-                  <span className="num" style={{ fontSize: 19, color: c.darkBrown, whiteSpace: "nowrap" }}>{fmt(parseDay(m.day))}</span>
-                  <span style={{ flex: 1, fontSize: 13.5, minWidth: 0 }}>{m.venues?.name}</span>
-                  {past && <span style={{ fontSize: 10.5, color: c.tan, fontWeight: 700 }}>PAST</span>}
-                  <button className="btn ghost" aria-label="Remove" style={{ width: 26, color: c.tan }}
-                    onClick={() => guard(() => api.deleteMarketDate(m.id))}>×</button>
+                <div key={m.id} className="card" style={{
+                  padding: 12,
+                  marginBottom: 7,
+                  display: "grid",
+                  gap: 8,
+                  opacity: past || removed ? .58 : 1,
+                  borderColor: removed ? "#D8CCBA" : c.amber,
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span className="num" style={{ fontSize: 19, color: c.darkBrown, whiteSpace: "nowrap" }}>
+                      {fmt(parseDay(m.day))}
+                    </span>
+                    <span style={{ flex: 1, fontSize: 13.5, minWidth: 0 }}>{m.venues?.name}</span>
+                    {past && <span style={{ fontSize: 10.5, color: c.tan, fontWeight: 700 }}>PAST</span>}
+                    {removed && <span style={{ fontSize: 10.5, color: c.red, fontWeight: 800 }}>REMOVED</span>}
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7 }}>
+                    <input
+                      defaultValue={savedWhere}
+                      placeholder="Location for this date"
+                      onBlur={(event) => {
+                        if (event.target.value !== savedWhere) {
+                          guard(() => api.updateMarketDate(m.id, {
+                            where_at: event.target.value || null,
+                          }));
+                        }
+                      }}
+                    />
+                    <input
+                      defaultValue={savedHours}
+                      placeholder="Hours for this date"
+                      onBlur={(event) => {
+                        if (event.target.value !== savedHours) {
+                          guard(() => api.updateMarketDate(m.id, {
+                            hours: event.target.value || null,
+                          }));
+                        }
+                      }}
+                    />
+                  </div>
+
+                  <button
+                    className={removed ? "btn" : "btn ghost"}
+                    style={{ width: "100%", padding: 8, fontSize: 12, color: removed ? c.darkBrown : c.red }}
+                    onClick={() => guard(() => removed
+                      ? api.restoreMarketDate(m.id)
+                      : api.removeMarketDate(m.id))}
+                  >
+                    {removed ? "Restore to schedule" : "Remove from public schedule"}
+                  </button>
                 </div>
               );
             })}
             <div className="card" style={{ padding: 12, marginTop: 8, marginBottom: 26 }}>
-              <div className="eyebrow" style={{ marginBottom: 8 }}>Add a date</div>
+              <div className="eyebrow" style={{ marginBottom: 8 }}>Schedule another market date</div>
+              <p style={{ fontSize: 12.5, color: c.brown, margin: "0 0 8px", lineHeight: 1.5 }}>
+                Choose any future date, then select the venue. This creates a new occurrence and does not change dates already scheduled.
+              </p>
               <input type="date" min={today} value={newDay} onChange={(e) => setNewDay(e.target.value)} />
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
                 {cat.venues.map((v) => (
