@@ -122,29 +122,38 @@ export const stockCount = (flavor, sizeId, type) => {
 /* ---------- ordering (anonymous, via security-definer RPCs) ---------- */
 
 async function requestOrderConfirmationEmails(token) {
-  try {
-    const response = await fetch("/.netlify/functions/order-email", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token }),
-      keepalive: true,
-    });
+  let lastFailure = "Unknown email error";
 
-    if (!response.ok) {
-      console.error(
-        "Order confirmation email request failed:",
-        response.status,
-        await response.text()
-      );
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      const response = await fetch("/.netlify/functions/order-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+        keepalive: true,
+      });
+
+      if (response.ok) return true;
+
+      const detail = await response.text();
+      lastFailure = `${response.status} ${detail}`.trim();
+
+      // A new order can briefly be unavailable to the independent function.
+      // Retry server failures and the short-lived not-found race only.
+      if (response.status < 500 && response.status !== 404) break;
+    } catch (emailError) {
+      lastFailure = emailError?.message || String(emailError);
     }
-  } catch (emailError) {
-    // The order is already saved. Never make a customer place it twice
-    // because the independent email service was temporarily unavailable.
-    console.error(
-      "Order confirmation email request failed:",
-      emailError?.message || emailError
-    );
+
+    if (attempt < 3) {
+      await new Promise((resolve) => setTimeout(resolve, attempt * 450));
+    }
   }
+
+  // The order is already saved. Never make a customer place it twice
+  // because the independent email service was temporarily unavailable.
+  console.error("Order confirmation email request failed:", lastFailure);
+  return false;
 }
 
 export async function placeOrder(payload) {

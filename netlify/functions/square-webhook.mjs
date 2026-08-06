@@ -16,6 +16,7 @@
 import crypto from "node:crypto";
 import { Resend } from "resend";
 import { square, db, ok, bad } from "./_square.mjs";
+import { sendSubscriptionEmails } from "./_subscription-email.mjs";
 
 const BONUS_ALERT_FROM = "NectarFusions <orders@nectar-fusions.com>";
 const BONUS_ALERT_TO = () =>
@@ -148,7 +149,7 @@ export default async (req) => {
         //    the exact local subscription it belongs to.
         const exact = await supa
           .from("subscriptions")
-          .select("id")
+          .select("id,status")
           .eq("square_subscription_id", sub.id)
           .maybeSingle();
 
@@ -170,6 +171,7 @@ export default async (req) => {
               .from("subscriptions")
               .select(`
                 id,
+                status,
                 cadence,
                 customers!inner(email),
                 plans!inner(square_var_1mo, square_var_2mo)
@@ -259,10 +261,24 @@ export default async (req) => {
           patch.square_plan_variation_id = sub.plan_variation_id;
         }
 
-        await supa
+        const { error: subscriptionUpdateError } = await supa
           .from("subscriptions")
           .update(patch)
           .eq("id", row.id);
+
+        if (subscriptionUpdateError) throw subscriptionUpdateError;
+
+        if (status === "active") {
+          const { data: activatedSubscription, error: activationReadError } =
+            await supa
+              .from("subscriptions")
+              .select("*, customers(*), plans(*)")
+              .eq("id", row.id)
+              .single();
+
+          if (activationReadError) throw activationReadError;
+          await sendSubscriptionEmails(activatedSubscription, "activated");
+        }
 
         console.log("Subscription", row.id, "→", status);
         break;
