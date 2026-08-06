@@ -279,12 +279,19 @@ export default async (req) => {
     return new Response("Order not found", { status: 404 });
   }
 
+  const placedTimestamp = o.placed_at || o.created_at;
+
   if (!trustedWebhook) {
-    const createdAt = Date.parse(o.created_at);
-    const ageMs = Date.now() - createdAt;
+    const placedAt = Date.parse(placedTimestamp);
+    const ageMs = Date.now() - placedAt;
     const fifteenMinutes = 15 * 60 * 1000;
 
-    if (!Number.isFinite(createdAt) || ageMs < -60_000 || ageMs > fifteenMinutes) {
+    if (!Number.isFinite(placedAt)) {
+      console.error("Order email timestamp missing for order", o.id);
+      return new Response("Order timestamp unavailable", { status: 500 });
+    }
+
+    if (ageMs < -60_000 || ageMs > fifteenMinutes) {
       return new Response("Confirmation window expired", { status: 410 });
     }
 
@@ -304,7 +311,7 @@ export default async (req) => {
   // each recipient only one copy during its idempotency window.
   const eventVersion =
     event === "placed"
-      ? o.created_at
+      ? placedTimestamp
       : event === "paid"
         ? record?.paid_at || o.paid_at || record?.updated_at || o.updated_at
         : event === "changed"

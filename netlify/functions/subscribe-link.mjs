@@ -8,6 +8,7 @@
    ============================================================ */
 
 import { square, db, site, ok, bad } from "./_square.mjs";
+import { sendSubscriptionEmails } from "./_subscription-email.mjs";
 
 export default async (req) => {
   try {
@@ -31,7 +32,14 @@ export default async (req) => {
 
     if (error || !s) return bad("Subscription not found", 404);
     if (s.status === "cancelled") return bad("That subscription is cancelled");
-    if (s.square_checkout_url) return ok({ url: s.square_checkout_url });
+    if (s.square_checkout_url) {
+      try {
+        await sendSubscriptionEmails(s, "started");
+      } catch (emailError) {
+        console.error("Honey Club setup email failed:", emailError.message);
+      }
+      return ok({ url: s.square_checkout_url });
+    }
 
     const plan = s.plans;
     const variationId =
@@ -84,6 +92,21 @@ export default async (req) => {
       throw new Error(
         `Checkout was created, but saving its link failed: ${updateError.message}`
       );
+    }
+
+    try {
+      await sendSubscriptionEmails(
+        {
+          ...s,
+          square_checkout_url: url,
+          square_plan_variation_id: variationId,
+        },
+        "started"
+      );
+    } catch (emailError) {
+      // The secure Square checkout must remain usable even if email is
+      // temporarily unavailable. Reopening the same link retries safely.
+      console.error("Honey Club setup email failed:", emailError.message);
     }
 
     return ok({ url });
