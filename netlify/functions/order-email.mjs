@@ -52,7 +52,8 @@ function whenLine(o) {
   if (o.method === "market") {
     const m = o.market_dates;
     if (!m) return "Market pickup";
-    return `${esc(m.venues?.name ?? "Market")} — ${m.day}${m.venues?.hours ? `, ${esc(m.venues.hours)}` : ""}`;
+    const hours = m.hours || m.venues?.hours;
+    return `${esc(m.venues?.name ?? "Market")} — ${m.day}${hours ? `, ${esc(hours)}` : ""}`;
   }
   if (o.method === "ship") return "Ships in 2–3 business days";
   return `Delivery on ${o.delivery_day}`;
@@ -207,7 +208,7 @@ function ownerEmail(o, siteUrl, event) {
 /* ============================================================ */
 const ORDER_SELECT =
   "*, order_items(*), customers(flagged, consecutive_noshows), " +
-  "market_dates(day, venues(name, hours))";
+  "market_dates(*, venues(name, hours, where_at))";
 
 const safeKeyPart = (value) =>
   String(value ?? "unknown").replace(/[^a-zA-Z0-9._:-]/g, "-").slice(0, 100);

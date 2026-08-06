@@ -41,7 +41,20 @@ export async function getCatalog() {
       freeOver: z.free_over_cents / 100,
     })),
     venues,
-    marketDates: marketDates.map((m) => ({ ...m, venue: venues.find((v) => v.id === m.venue_id) }))
+    marketDates: marketDates
+      .filter((m) => m.active !== false)
+      .map((m) => {
+        const venue = venues.find((v) => v.id === m.venue_id);
+        if (!venue) return { ...m, venue: null };
+        return {
+          ...m,
+          venue: {
+            ...venue,
+            where_at: m.where_at ?? venue.where_at,
+            hours: m.hours ?? venue.hours,
+          },
+        };
+      })
       .filter((m) => m.venue),
     blockedDates: blocked.map((b) => b.day),
     plans: plans.map((p) => ({ ...p, price: p.price_cents / 100 })),
@@ -1290,7 +1303,7 @@ export async function updateAdminPartnerResource(id, patch) {
 
 export const listOrders = () =>
   supabase.from("orders")
-    .select("*, order_items(*), order_item_changes(*), customers(flagged, consecutive_noshows), market_dates(day, venues(name, hours))")
+    .select("*, order_items(*), order_item_changes(*), customers(flagged, consecutive_noshows), market_dates(*, venues(name, hours, where_at))")
     .order("placed_at", { ascending: false })
     .limit(200)
     .then(throwIf);
@@ -1602,14 +1615,68 @@ export const updateVenue = (id, patch) =>
 export const deleteVenue = (id) =>
   supabase.from("venues").delete().eq("id", id).then(throwIf);
 
-export const addMarketDate = (venue_id, day) =>
-  supabase.from("market_dates").insert({ venue_id, day }).select().single().then(throwIf);
+export async function addMarketDate(venue_id, day) {
+  const { data: venue, error: venueError } = await supabase
+    .from("venues")
+    .select("where_at,hours")
+    .eq("id", venue_id)
+    .single();
 
-export const deleteMarketDate = (id) =>
-  supabase.from("market_dates").delete().eq("id", id).then(throwIf);
+  if (venueError) throw new Error(venueError.message);
+
+  let result = await supabase
+    .from("market_dates")
+    .insert({
+      venue_id,
+      day,
+      active: true,
+      where_at: venue?.where_at || null,
+      hours: venue?.hours || null,
+    })
+    .select()
+    .single();
+
+  // The migration is additive and may be applied immediately after deploy.
+  // Until then, keep date creation working with the original schema.
+  if (
+    result.error &&
+    (result.error.code === "PGRST204" ||
+      /active|where_at|hours/i.test(result.error.message || ""))
+  ) {
+    result = await supabase
+      .from("market_dates")
+      .insert({ venue_id, day })
+      .select()
+      .single();
+  }
+
+  if (result.error?.code === "23505") {
+    throw new Error("That market is already scheduled for this date.");
+  }
+  if (result.error) throw new Error(result.error.message);
+  return result.data;
+}
+
+export const updateMarketDate = (id, patch) =>
+  supabase.from("market_dates").update(patch).eq("id", id).then(throwIf);
+
+export const removeMarketDate = (id) =>
+  supabase.from("market_dates")
+    .update({ active: false })
+    .eq("id", id)
+    .then(throwIf);
+
+export const restoreMarketDate = (id) =>
+  supabase.from("market_dates")
+    .update({ active: true })
+    .eq("id", id)
+    .then(throwIf);
 
 export const listAllMarketDates = () =>
-  supabase.from("market_dates").select("*, venues(name)").order("day").then(throwIf);
+  supabase.from("market_dates")
+    .select("*, venues(name, where_at, hours)")
+    .order("day")
+    .then(throwIf);
 
 export const blockDay = (day) =>
   supabase.from("blocked_dates").insert({ day }).then(throwIf);
