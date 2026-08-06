@@ -10894,6 +10894,8 @@ export default function App() {
   /* ================= RECEIPT ================= */
   if (receipt) {
     const cancelled = receipt.status === "cancelled";
+    const paymentPending =
+      !cancelled && receipt.requires_prepay && !receipt.paid;
     const left = receipt.change_minutes_left ?? receipt.minutes_left ?? 0;
     const canChange = !cancelled && receipt.can_change !== false && left > 0;
     if (receipt.method === "market") {
@@ -10946,10 +10948,19 @@ export default function App() {
           <div className="nf-wrap" style={{ paddingTop: 26, paddingBottom: 28, textAlign: "center" }}>
             <div style={{ display: "flex", justifyContent: "center" }}><Logo size={68} /></div>
             <div className="eyebrow" style={{ color: cancelled ? c.tan : c.amber, marginTop: 10 }}>
-              {cancelled ? "Cancelled" : "Order confirmed"}
+              {cancelled
+                ? "Cancelled"
+                : paymentPending
+                  ? "Payment required"
+                  : "Order confirmed"}
             </div>
             <div className="num" style={{ fontSize: 74, marginTop: 2, color: cancelled ? c.tan : c.black,
               textDecoration: cancelled ? "line-through" : "none" }}>#{receipt.order_no}</div>
+            {paymentPending && (
+              <p style={{ color: c.brown, fontSize: 14.5, margin: "4px auto 0", maxWidth: 360, lineHeight: 1.55 }}>
+                Your order is saved, but it is not confirmed until Square payment is complete.
+              </p>
+            )}
             {!cancelled && receipt.method === "market" && (
               <p style={{ color: c.brown, fontSize: 14.5, margin: "4px auto 0", maxWidth: 320, lineHeight: 1.55 }}>
                 Show this number at the table and we&rsquo;ll have your jars ready.
@@ -11018,7 +11029,8 @@ export default function App() {
               )}
 
               <p style={{ color: c.tan, fontSize: 13, marginTop: 14, lineHeight: 1.6, textAlign: "center" }}>
-                A confirmation is on its way to <strong style={{ color: c.brown }}>{receipt.email}</strong>.
+                {paymentPending ? "Payment instructions are" : "A confirmation is"} on the way to{" "}
+                <strong style={{ color: c.brown }}>{receipt.email}</strong>.
               </p>
 
               <div className="card" style={{ padding: 17, marginTop: 20, background: "#FFFBF0", borderColor: c.gold }}>
@@ -13842,6 +13854,10 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
     } catch (e) { setErr(e.message); }
   }, []);
   useEffect(() => { pull(); }, [pull]);
+  useEffect(() => {
+    const timer = setInterval(pull, 30000);
+    return () => clearInterval(timer);
+  }, [pull]);
 
   useEffect(() => {
     setSpunEnabledDraft(cat?.spunAvailability?.enabled !== false);
@@ -13978,10 +13994,33 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
 
   const activeOrders = orders.filter((o) => !o.archived_at);
   const archivedOrders = orders.filter((o) => !!o.archived_at);
-  const standardActiveOrders = activeOrders.filter((o) => o.method !== "market");
+  const isPaymentPending = (order) =>
+    Boolean(
+      order.requires_prepay &&
+      !order.paid &&
+      order.status === "open"
+    );
+  const standardPendingPaymentOrders = activeOrders.filter(
+    (o) => o.method !== "market" && isPaymentPending(o)
+  );
+  const standardActiveOrders = activeOrders.filter(
+    (o) => o.method !== "market" && !isPaymentPending(o)
+  );
   const standardArchivedOrders = archivedOrders.filter((o) => o.method !== "market");
   const marketPickupOrders = activeOrders.filter((o) => o.method === "market");
-  const orderPool = orderView === "archived" ? standardArchivedOrders : standardActiveOrders;
+  const marketPaymentPendingCount =
+    marketPickupOrders.filter(isPaymentPending).length;
+  const marketReadyCount = marketPickupOrders.filter(
+    (o) =>
+      !["done", "cancelled"].includes(o.status) &&
+      !isPaymentPending(o)
+  ).length;
+  const orderPool =
+    orderView === "archived"
+      ? standardArchivedOrders
+      : orderView === "pending"
+        ? standardPendingPaymentOrders
+        : standardActiveOrders;
   const shownOrders = orderPool.filter((o) => !q ||
     o.order_no.includes(q.trim()) || o.name.toLowerCase().includes(q.trim().toLowerCase()));
   const shownMarketPickups = marketPickupOrders.filter((o) => !q ||
@@ -14062,7 +14101,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
     ["marketPickups", `Market Pickups (${marketOpenCount})`],
     ["markets", "Market Schedule"],
     ["requests", `Order Help (${newRequestCount})`],
-    ["orders", `Orders (${standardActiveOrders.length})`],
+    ["orders", `Orders (${standardActiveOrders.length + standardPendingPaymentOrders.length})`],
     ["partnerProgram", "Partner Program"],
     ["partnerEvents", "Partner Events"],
     ["partnerResources", "Partner Resources"],
@@ -14108,12 +14147,19 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
 
         {adminTab === "orders" && (
           <>
-            <div className="eyebrow" style={{ marginBottom: 8 }}>Orders · {openCount} open</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+            <div className="eyebrow" style={{ marginBottom: 8 }}>
+              Orders · {openCount} active · {standardPendingPaymentOrders.length} payment pending
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 8, marginBottom: 10 }}>
               <button className={`btn ${orderView === "active" ? "on" : ""}`}
                 style={{ padding: 10, fontSize: 13 }}
                 onClick={() => { setOrderView("active"); setQ(""); }}>
                 Active · {standardActiveOrders.length}
+              </button>
+              <button className={`btn ${orderView === "pending" ? "on" : ""}`}
+                style={{ padding: 10, fontSize: 13 }}
+                onClick={() => { setOrderView("pending"); setQ(""); }}>
+                Payment Pending · {standardPendingPaymentOrders.length}
               </button>
               <button className={`btn ${orderView === "archived" ? "on" : ""}`}
                 style={{ padding: 10, fontSize: 13 }}
@@ -14127,18 +14173,39 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
             <div style={{ marginTop: 10, marginBottom: 32 }}>
               {shownOrders.length === 0 && (
                 <div className="card" style={{ padding: 20, textAlign: "center", color: c.tan, fontSize: 14 }}>
-                  {q ? "Nothing matches." : orderView === "archived" ? "No archived orders." : "No active orders."}
+                  {q
+                    ? "Nothing matches."
+                    : orderView === "archived"
+                      ? "No archived orders."
+                      : orderView === "pending"
+                        ? "No orders are waiting for payment."
+                        : "No active orders."}
                 </div>
               )}
               {shownOrders.map((o) => {
                 const done = o.status === "done", cx = o.status === "cancelled", ns = o.status === "noshow";
+                const paymentPending = isPaymentPending(o);
                 return (
                   <div key={o.id} className="card" style={{ padding: 13, marginBottom: 8, opacity: cx ? .5 : 1,
-                    borderColor: cx ? "#E2D6C4" : ns ? c.red : done ? c.tan : c.amber,
-                    background: done ? "#FBF7F1" : "#FFF" }}>
+                    borderColor: cx ? "#E2D6C4" : paymentPending ? "#D28A00" : ns ? c.red : done ? c.tan : c.amber,
+                    background: paymentPending ? "#FFFBF0" : done ? "#FBF7F1" : "#FFF" }}>
                     <div style={{ display: "flex", alignItems: "baseline", gap: 9 }}>
                       <span className="num" style={{ fontSize: 26, color: cx ? c.tan : c.darkBrown,
                         textDecoration: cx ? "line-through" : "none" }}>#{o.order_no}</span>
+                      {paymentPending && (
+                        <span style={{
+                          padding: "5px 8px",
+                          border: "1px solid #D28A00",
+                          borderRadius: 999,
+                          background: "#FFF2B8",
+                          color: "#6A4300",
+                          fontSize: 12.5,
+                          fontWeight: 900,
+                          whiteSpace: "nowrap",
+                        }}>
+                          PAYMENT PENDING
+                        </span>
+                      )}
                       {orderChanges(o).length > 0 && (
                         <span style={{
                           padding: "5px 8px",
@@ -14211,6 +14278,22 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                     )}
                     {o.notes && <div style={{ fontSize: 12.5, marginTop: 6, padding: "7px 9px", background: "#FBF7F1", borderRadius: 5 }}>{o.notes}</div>}
 
+                    {paymentPending && (
+                      <div style={{
+                        marginTop: 10,
+                        padding: "10px 11px",
+                        border: "1px solid #E2B62F",
+                        borderRadius: 8,
+                        background: "#FFF9DE",
+                        color: "#6A4300",
+                        fontSize: 13,
+                        fontWeight: 750,
+                        lineHeight: 1.5,
+                      }}>
+                        Do not prepare this order yet. It will move to Active after Square confirms payment.
+                      </div>
+                    )}
+
                     {orderView === "active" ? (
                       <div style={{ marginTop: 10 }}>
                         {!cx && (
@@ -14227,6 +14310,14 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                         )}
                         <button className="btn ghost" style={{ width: "100%", padding: "9px 12px", marginTop: 7, fontSize: 12.5 }}
                           onClick={() => confirm(`Archive order #${o.order_no}?`) && guard(() => api.archiveOrder(o.id))}>
+                          Archive order
+                        </button>
+                      </div>
+                    ) : orderView === "pending" ? (
+                      <div style={{ marginTop: 10 }}>
+                        <button className="btn ghost" style={{ width: "100%", padding: "9px 12px", fontSize: 12.5 }}
+                          onClick={() => confirm(`Archive payment-pending order #${o.order_no}?`) &&
+                            guard(() => api.archiveOrder(o.id))}>
                           Archive order
                         </button>
                       </div>
@@ -14256,7 +14347,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
         {adminTab === "marketPickups" && (
           <>
             <div className="eyebrow" style={{ marginBottom: 8 }}>
-              Market Pickups · {marketOpenCount} awaiting pickup
+              Market Pickups · {marketReadyCount} awaiting pickup · {marketPaymentPendingCount} payment pending
             </div>
             <input placeholder="Order #, customer, or market" value={q} onChange={(e) => setQ(e.target.value)} />
 
@@ -14270,6 +14361,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
               {shownMarketPickups.map((o) => {
                 const pickedUp = o.status === "done";
                 const cancelled = o.status === "cancelled";
+                const paymentPending = isPaymentPending(o);
                 const missed = Number(o.no_show_count || 0);
                 const marketName = o.market_dates?.venues?.name || "Market pickup";
                 const marketDay = o.market_dates?.day ? fmt(parseDay(o.market_dates.day)) : "Date unavailable";
@@ -14277,9 +14369,12 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                 return (
                   <div key={o.id} className="card nf-market-pickup-card" style={{
                     padding: 16, marginBottom: 10, opacity: cancelled ? .52 : 1,
-                    borderColor: missed >= 2 ? c.red : pickedUp ? "#7D9A68" : "#4F91C6",
+                    borderColor: paymentPending ? "#D28A00" : missed >= 2 ? c.red : pickedUp ? "#7D9A68" : "#4F91C6",
+                    background: paymentPending ? "#FFFBF0" : "#FFF",
                   }}>
-                    <div className="nf-market-pickup-banner">MARKET PICKUP</div>
+                    <div className="nf-market-pickup-banner">
+                      {paymentPending ? "PAYMENT PENDING" : "MARKET PICKUP"}
+                    </div>
 
                     <div style={{ display: "flex", alignItems: "baseline", gap: 9, marginTop: 10, flexWrap: "wrap" }}>
                       <span className="num" style={{ fontSize: 28, color: c.darkBrown }}>#{o.order_no}</span>
@@ -14358,13 +14453,29 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                       </div>
                     )}
 
+                    {paymentPending && (
+                      <div style={{
+                        marginTop: 10,
+                        padding: "10px 11px",
+                        border: "1px solid #E2B62F",
+                        borderRadius: 8,
+                        background: "#FFF9DE",
+                        color: "#6A4300",
+                        fontSize: 13,
+                        fontWeight: 750,
+                        lineHeight: 1.5,
+                      }}>
+                        Do not prepare this pickup yet. It will be ready after Square confirms payment.
+                      </div>
+                    )}
+
                     <div className={`nf-noshow-status ${missed >= 2 ? "final" : missed === 1 ? "warning" : ""}`}>
                       {missed === 0 && "No missed pickups"}
                       {missed === 1 && "First pickup missed · Order remains reserved"}
                       {missed >= 2 && "Second pickup missed · Inventory returned"}
                     </div>
 
-                    {!cancelled && !pickedUp && (
+                    {!cancelled && !pickedUp && !paymentPending && (
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7, marginTop: 11 }}>
                         <button className="btn on" style={{ padding: "10px 9px", fontSize: 12.5 }}
                           onClick={() => confirm(`Mark order #${o.order_no} as picked up?`) &&
