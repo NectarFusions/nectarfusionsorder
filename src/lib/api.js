@@ -597,6 +597,203 @@ export async function partnerReplenishmentAction(
 }
 
 
+/* ---------- partner foodservice & bulk ordering ---------- */
+
+export async function getPartnerBulkOrderCatalog() {
+  const { data, error } = await supabase.rpc(
+    "get_partner_bulk_order_catalog"
+  );
+
+  if (error) {
+    const message = String(error.message || "");
+    if (/get_partner_bulk_order_catalog|does not exist|schema cache/i.test(message)) {
+      return {
+        enabled: false,
+        eligible: false,
+        unavailable: true,
+        price_version: "bulk-2026-08",
+        sizes: [],
+        flavors: [],
+      };
+    }
+    throw new Error(message);
+  }
+
+  return {
+    enabled: data?.enabled === true,
+    eligible: data?.eligible === true,
+    unavailable: false,
+    price_version: data?.price_version || "bulk-2026-08",
+    sizes: Array.isArray(data?.sizes) ? data.sizes : [],
+    flavors: Array.isArray(data?.flavors) ? data.flavors : [],
+  };
+}
+
+export async function listPartnerBulkOrderRequests() {
+  const { data, error } = await supabase
+    .from("partner_bulk_order_requests")
+    .select(
+      "id,partner_id,status,needed_by,fulfillment_method," +
+      "preferred_delivery_days,request_notes,partner_response,partner_reply," +
+      "partner_replied_at,price_version,requested_subtotal_cents," +
+      "quote_subtotal_cents,fulfillment_charge_cents,confirmed_total_cents," +
+      "submitted_at,reviewed_at,created_at,updated_at,quoted_at,accepted_at," +
+      "paid_at,fulfilled_at,cancelled_at,declined_at," +
+      "items:partner_bulk_order_items(" +
+      "id,request_id,honey_type,flavor_id,flavor_name,size_id,size_label," +
+      "quantity,notes,unit_price_cents,price_version,line_total_cents" +
+      ")"
+    )
+    .order("submitted_at", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    const message = String(error.message || "");
+    if (/partner_bulk_order_requests|does not exist|schema cache/i.test(message)) {
+      return [];
+    }
+    throw new Error(message);
+  }
+  return data ?? [];
+}
+
+export async function submitPartnerBulkOrder(payload) {
+  const { data: sessionData, error: sessionError } =
+    await supabase.auth.getSession();
+
+  if (sessionError) throw new Error(sessionError.message);
+
+  const accessToken = sessionData?.session?.access_token;
+  if (!accessToken) throw new Error("Partner authentication is required.");
+
+  let response;
+  try {
+    response = await fetch("/.netlify/functions/partner-bulk-order-submit", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    const connectionError = new Error(
+      "The connection was interrupted before the bulk order submission could be confirmed."
+    );
+    connectionError.code = "BULK_ORDER_SUBMISSION_UNKNOWN";
+    throw connectionError;
+  }
+
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    const responseError = new Error(
+      "The bulk ordering service returned an incomplete response."
+    );
+    responseError.code = "BULK_ORDER_SUBMISSION_UNKNOWN";
+    throw responseError;
+  }
+
+  if (!response.ok) {
+    throw new Error(data?.error || "The bulk order request could not be submitted.");
+  }
+
+  if (!data?.requestId) {
+    const confirmationError = new Error(
+      "The bulk request may have been saved, but its confirmation could not be loaded."
+    );
+    confirmationError.code = "BULK_ORDER_SUBMISSION_UNKNOWN";
+    throw confirmationError;
+  }
+
+  return {
+    requestId: data.requestId,
+    emailWarning: data.emailWarning === true,
+  };
+}
+
+export async function partnerBulkOrderAction(
+  requestId,
+  action,
+  partnerReply = null
+) {
+  const { data, error } = await supabase.rpc("partner_bulk_order_action", {
+    p_request_id: requestId,
+    p_action: action,
+    p_partner_reply: partnerReply,
+  });
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function getAdminPartnerBulkOrderHistory(
+  partnerId = null,
+  requestId = null
+) {
+  const { data, error } = await supabase.rpc(
+    "get_admin_partner_bulk_order_history",
+    {
+      p_partner_id: partnerId,
+      p_request_id: requestId,
+    }
+  );
+
+  if (error) {
+    const message = String(error.message || "");
+    if (/get_admin_partner_bulk_order_history|does not exist|schema cache/i.test(message)) {
+      return [];
+    }
+    throw new Error(message);
+  }
+
+  return Array.isArray(data?.requests) ? data.requests : [];
+}
+
+export async function adminPartnerBulkOrderAction(
+  requestId,
+  action,
+  {
+    partnerResponse = null,
+    adminNotes = null,
+    fulfillmentChargeCents = null,
+  } = {}
+) {
+  if (!requestId) throw new Error("Choose a bulk order request.");
+
+  const allowedActions = [
+    "save_notes",
+    "under_review",
+    "needs_information",
+    "quote",
+    "mark_paid",
+    "fulfill",
+    "decline",
+    "cancel",
+  ];
+
+  if (!allowedActions.includes(action)) {
+    throw new Error("Choose a valid bulk order action.");
+  }
+
+  const { data, error } = await supabase.rpc(
+    "admin_partner_bulk_order_action",
+    {
+      p_request_id: requestId,
+      p_action: action,
+      p_partner_response: partnerResponse,
+      p_admin_notes: adminNotes,
+      p_fulfillment_charge_cents: fulfillmentChargeCents,
+    }
+  );
+
+  if (error) throw new Error(error.message);
+  if (!data?.id) throw new Error("The bulk order action returned no updated request.");
+  return data;
+}
+
+
 /* ---------- admin ---------- */
 
 const cleanAdminPatch = (patch, allowedFields) =>

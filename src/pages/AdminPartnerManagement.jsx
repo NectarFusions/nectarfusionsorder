@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import * as api from "../lib/api";
 import AdminPartnerReplenishmentPanel from "./AdminPartnerReplenishmentPanel";
+import AdminPartnerBulkOrderPanel from "./AdminPartnerBulkOrderPanel";
 
 const ADMIN_PARTNER_CSS = `
 .nf-apm {
@@ -1004,6 +1005,10 @@ export default function AdminPartnerManagement() {
                 onRequestsChanged={
                   handleReplenishmentRequestsChanged
                 }
+              />
+
+              <AdminPartnerBulkOrderPanel
+                partner={selectedAccount}
               />
 
               <div className="nf-apm-section">
