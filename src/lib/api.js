@@ -597,6 +597,333 @@ export async function partnerReplenishmentAction(
 }
 
 
+/* ---------- partner foodservice & bulk ordering ---------- */
+
+export async function getPartnerBulkOrderCatalog() {
+  const { data, error } = await supabase.rpc(
+    "get_partner_bulk_order_catalog"
+  );
+
+  if (error) {
+    const message = String(error.message || "");
+    if (/get_partner_bulk_order_catalog|does not exist|schema cache/i.test(message)) {
+      return {
+        enabled: false,
+        eligible: false,
+        unavailable: true,
+        price_version: "bulk-2026-08",
+        sizes: [],
+        flavors: [],
+        markets: [],
+        giftSetFlavors: [],
+      };
+    }
+    throw new Error(message);
+  }
+
+  return {
+    enabled: data?.enabled === true,
+    eligible: data?.eligible === true,
+    unavailable: false,
+    price_version: data?.price_version || "bulk-2026-08",
+    sizes: Array.isArray(data?.sizes) ? data.sizes : [],
+    flavors: Array.isArray(data?.flavors) ? data.flavors : [],
+    markets: Array.isArray(data?.markets) ? data.markets : [],
+    giftSetFlavors: Array.isArray(data?.gift_set_flavors)
+      ? data.gift_set_flavors
+      : [],
+  };
+}
+
+const PARTNER_LABEL_BUCKET = "partner-label-examples";
+const PARTNER_LABEL_MIME_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "application/pdf",
+]);
+
+export async function uploadPartnerLabelExamples(files) {
+  const selected = Array.from(files || []);
+  if (!selected.length) return [];
+  if (selected.length > 5) {
+    throw new Error("Upload no more than five custom-label examples at a time.");
+  }
+
+  const { data: sessionData, error: sessionError } =
+    await supabase.auth.getSession();
+  if (sessionError) throw new Error(sessionError.message);
+
+  const userId = sessionData?.session?.user?.id;
+  if (!userId) throw new Error("Partner authentication is required.");
+
+  const uploaded = [];
+  try {
+    for (const file of selected) {
+      const type = String(file?.type || "").toLowerCase();
+      if (!PARTNER_LABEL_MIME_TYPES.has(type)) {
+        throw new Error("Label examples must be JPG, PNG, WebP, or PDF files.");
+      }
+      if (
+        !Number.isFinite(file?.size) ||
+        file.size < 1 ||
+        file.size > 5 * 1024 * 1024
+      ) {
+        throw new Error("Each custom-label example must be 5 MB or smaller.");
+      }
+
+      const safeName =
+        String(file.name || "label-example")
+          .replace(/[^a-zA-Z0-9._-]+/g, "-")
+          .replace(/^-+|-+$/g, "")
+          .slice(0, 120) || "label-example";
+      const id =
+        globalThis.crypto?.randomUUID?.() ||
+        `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      const path = `${userId}/${id}/${safeName}`;
+
+      const { error } = await supabase.storage
+        .from(PARTNER_LABEL_BUCKET)
+        .upload(path, file, {
+          cacheControl: "3600",
+          upsert: false,
+          contentType: type,
+        });
+
+      if (error) throw new Error(error.message);
+
+      uploaded.push({
+        storage_path: path,
+        file_name: String(file.name || safeName).slice(0, 200),
+        mime_type: type,
+        size_bytes: Number(file.size),
+      });
+    }
+  } catch (error) {
+    if (uploaded.length) {
+      await supabase.storage
+        .from(PARTNER_LABEL_BUCKET)
+        .remove(uploaded.map((item) => item.storage_path));
+    }
+    throw error;
+  }
+
+  return uploaded;
+}
+
+export async function deletePartnerLabelExample(storagePath) {
+  const path = String(storagePath || "").trim();
+  if (!path) return;
+
+  const { error } = await supabase.storage
+    .from(PARTNER_LABEL_BUCKET)
+    .remove([path]);
+
+  if (error) throw new Error(error.message);
+}
+
+export async function getPartnerLabelExampleSignedUrl(storagePath) {
+  const path = String(storagePath || "").trim();
+  if (!path) throw new Error("Label example path is missing.");
+
+  const { data, error } = await supabase.storage
+    .from(PARTNER_LABEL_BUCKET)
+    .createSignedUrl(path, 10 * 60);
+
+  if (error) throw new Error(error.message);
+  if (!data?.signedUrl) {
+    throw new Error("The private label example could not be opened.");
+  }
+  return data.signedUrl;
+}
+
+export async function listPartnerBulkOrderRequests() {
+  const { data, error } = await supabase
+    .from("partner_bulk_order_requests")
+    .select(
+      "id,partner_id,status,needed_by,fulfillment_method," +
+      "pickup_market_date_id,pickup_market_name,pickup_market_day," +
+      "pickup_market_where_at,pickup_market_hours,gift_sets," +
+      "custom_labels_requested,custom_label_notes,label_examples,custom_item_charge_cents," +
+      "preferred_delivery_days,request_notes,partner_response,partner_reply," +
+      "partner_replied_at,price_version,requested_subtotal_cents," +
+      "quote_subtotal_cents,fulfillment_charge_cents,confirmed_total_cents," +
+      "submitted_at,reviewed_at,created_at,updated_at,quoted_at,accepted_at," +
+      "paid_at,fulfilled_at,cancelled_at,declined_at," +
+      "items:partner_bulk_order_items(" +
+      "id,request_id,honey_type,flavor_id,flavor_name,size_id,size_label," +
+      "quantity,notes,unit_price_cents,price_version,line_total_cents" +
+      ")"
+    )
+    .order("submitted_at", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    const message = String(error.message || "");
+    if (/partner_bulk_order_requests|does not exist|schema cache/i.test(message)) {
+      return [];
+    }
+    throw new Error(message);
+  }
+  return data ?? [];
+}
+
+export async function submitPartnerBulkOrder(payload) {
+  const { data: sessionData, error: sessionError } =
+    await supabase.auth.getSession();
+
+  if (sessionError) throw new Error(sessionError.message);
+
+  const accessToken = sessionData?.session?.access_token;
+  if (!accessToken) throw new Error("Partner authentication is required.");
+
+  let response;
+  try {
+    response = await fetch("/.netlify/functions/partner-bulk-order-submit", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    const connectionError = new Error(
+      "The connection was interrupted before the bulk order submission could be confirmed."
+    );
+    connectionError.code = "BULK_ORDER_SUBMISSION_UNKNOWN";
+    throw connectionError;
+  }
+
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    const responseError = new Error(
+      "The bulk ordering service returned an incomplete response."
+    );
+    responseError.code = "BULK_ORDER_SUBMISSION_UNKNOWN";
+    throw responseError;
+  }
+
+  if (!response.ok) {
+    throw new Error(data?.error || "The bulk order request could not be submitted.");
+  }
+
+  if (!data?.requestId) {
+    const confirmationError = new Error(
+      "The bulk request may have been saved, but its confirmation could not be loaded."
+    );
+    confirmationError.code = "BULK_ORDER_SUBMISSION_UNKNOWN";
+    throw confirmationError;
+  }
+
+  return {
+    requestId: data.requestId,
+    emailWarning: data.emailWarning === true,
+  };
+}
+
+export async function partnerBulkOrderAction(
+  requestId,
+  action,
+  partnerReply = null
+) {
+  const { data, error } = await supabase.rpc("partner_bulk_order_action", {
+    p_request_id: requestId,
+    p_action: action,
+    p_partner_reply: partnerReply,
+  });
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function getAdminPartnerBulkOrderHistory(
+  partnerId = null,
+  requestId = null
+) {
+  let query = supabase
+    .from("partner_bulk_order_requests")
+    .select(
+      "id,partner_id,submitted_by,status,needed_by,fulfillment_method," +
+        "pickup_market_date_id,pickup_market_name,pickup_market_day," +
+        "pickup_market_where_at,pickup_market_hours,gift_sets," +
+        "custom_labels_requested,custom_label_notes,label_examples,custom_item_charge_cents," +
+        "preferred_delivery_days,request_notes,partner_response,partner_reply," +
+        "partner_replied_at,admin_notes,reviewed_by,price_version," +
+        "requested_subtotal_cents,quote_subtotal_cents,fulfillment_charge_cents," +
+        "confirmed_total_cents,submitted_at,reviewed_at,created_at,updated_at," +
+        "quoted_at,accepted_at,paid_at,fulfilled_at,cancelled_at,declined_at," +
+        "items:partner_bulk_order_items(" +
+        "id,request_id,honey_type,flavor_id,flavor_name,size_id,size_label," +
+        "quantity,notes,unit_price_cents,price_version,line_total_cents" +
+        ")"
+    );
+
+  if (partnerId) query = query.eq("partner_id", partnerId);
+  if (requestId) query = query.eq("id", requestId);
+
+  const { data, error } = await query
+    .order("submitted_at", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    const message = String(error.message || "");
+    if (/partner_bulk_order_requests|does not exist|schema cache/i.test(message)) {
+      return [];
+    }
+    throw new Error(message);
+  }
+
+  return data ?? [];
+}
+
+export async function adminPartnerBulkOrderAction(
+  requestId,
+  action,
+  {
+    partnerResponse = null,
+    adminNotes = null,
+    fulfillmentChargeCents = null,
+    customItemChargeCents = null,
+  } = {}
+) {
+  if (!requestId) throw new Error("Choose a bulk order request.");
+
+  const allowedActions = [
+    "save_notes",
+    "under_review",
+    "needs_information",
+    "quote",
+    "mark_paid",
+    "fulfill",
+    "decline",
+    "cancel",
+  ];
+
+  if (!allowedActions.includes(action)) {
+    throw new Error("Choose a valid bulk order action.");
+  }
+
+  const { data, error } = await supabase.rpc(
+    "admin_partner_bulk_order_action_v2",
+    {
+      p_request_id: requestId,
+      p_action: action,
+      p_partner_response: partnerResponse,
+      p_admin_notes: adminNotes,
+      p_fulfillment_charge_cents: fulfillmentChargeCents,
+      p_custom_item_charge_cents: customItemChargeCents,
+    }
+  );
+
+  if (error) throw new Error(error.message);
+  if (!data?.id) throw new Error("The bulk order action returned no updated request.");
+  return data;
+}
+
+
 /* ---------- admin ---------- */
 
 const cleanAdminPatch = (patch, allowedFields) =>
