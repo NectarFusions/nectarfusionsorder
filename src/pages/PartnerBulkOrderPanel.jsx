@@ -11,10 +11,10 @@ const CSS = `
 .nf-bulk-days{grid-column:1/-1;margin:0;padding:14px;border:1px solid #E3D8CB;border-radius:14px;background:#FFFCF7}.nf-bulk-day-grid{display:flex;flex-wrap:wrap;gap:8px}.nf-bulk-day-grid label{display:flex;align-items:center;gap:7px;padding:8px 10px;border:1px solid #DDD0C0;border-radius:999px;background:#fff;color:#5E5147;font-size:12px;cursor:pointer}.nf-bulk-day-grid input{width:16px;height:16px;margin:0}
 .nf-bulk-fulfillment{grid-column:1/-1;padding:13px 14px;border-radius:12px;line-height:1.6}.nf-bulk-fulfillment.delivery{border-left:4px solid #D58A24;background:#FFF5E6;color:#704315}.nf-bulk-fulfillment.pickup{border-left:4px solid #4F6B3C;background:#F1F8EE;color:#31532B}.nf-bulk-fulfillment.shipping{border-left:4px solid #167BB6;background:#EFF8FD;color:#174F70}.nf-bulk-market-card{grid-column:1/-1;display:grid;gap:8px;padding:14px;border:1px solid #CFE1C8;border-radius:14px;background:#FAFFF8}.nf-bulk-market-detail{padding:10px 12px;border-radius:10px;background:#fff;color:#4D5D47;font-size:12px;line-height:1.55}
 .nf-bulk-items,.nf-bulk-gifts{display:grid;gap:10px}.nf-bulk-items-head{display:flex;justify-content:space-between;gap:12px;align-items:center}.nf-bulk-items-head h3{margin:0;color:#281A12;font-size:17px}.nf-bulk-items-head p{margin:3px 0 0;color:#75685E;font-size:12px;line-height:1.5}.nf-bulk-line{display:grid;grid-template-columns:minmax(140px,.8fr) minmax(140px,.9fr) minmax(190px,1.2fr) minmax(90px,.55fr) auto;gap:9px;align-items:end;padding:13px;border:1px solid #E0D5C8;border-radius:15px;background:#fff}.nf-bulk-line-field{display:grid;gap:5px}.nf-bulk-line-price{margin-top:5px;color:#3B6A4B;font-size:11px;font-weight:800}.nf-bulk-remove{min-height:47px;padding:9px 12px;border:1px solid #D8A5A5;border-radius:11px;background:#FFF6F6;color:#8C2525;font:inherit;font-size:12px;font-weight:850;cursor:pointer}.nf-bulk-line-notes{grid-column:1/-1}.nf-bulk-line-notes input{min-height:42px}
-.nf-bulk-gift{display:grid;grid-template-columns:minmax(220px,1.4fr) minmax(100px,.45fr) auto;gap:10px;align-items:end;padding:14px;border:1px solid #E0D5C8;border-radius:15px;background:#fff}.nf-bulk-gift-flavors{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;padding:12px;border:1px solid #E6DDD3;border-radius:12px;background:#FFFCF8}.nf-bulk-gift-flavors label{display:flex;align-items:center;gap:7px;padding:8px 10px;border:1px solid #DDD0C0;border-radius:999px;background:#fff;color:#5E5147;font-size:11px;letter-spacing:0;text-transform:none;cursor:pointer}.nf-bulk-gift-flavors input{width:16px;height:16px;min-height:0;padding:0;margin:0}.nf-bulk-gift-note{padding:12px 13px;border-left:4px solid #8C6CB4;border-radius:11px;background:#F8F2FC;color:#5E437A;line-height:1.55;font-size:12px}.nf-bulk-labels{display:grid;gap:12px;padding:14px;border:1px solid #D8CBE6;border-radius:15px;background:#FCF9FF}.nf-bulk-label-toggle{display:flex;align-items:center;gap:9px;color:#4A3313;font-size:13px;font-weight:850}.nf-bulk-label-toggle input{width:18px;height:18px;margin:0}.nf-bulk-upload{display:grid;gap:8px;padding:12px;border:1px dashed #B9A6CD;border-radius:12px;background:#fff}.nf-bulk-upload input[type="file"]{width:100%;font:inherit}.nf-bulk-files{display:grid;gap:7px}.nf-bulk-file{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:9px 10px;border:1px solid #E4D9EF;border-radius:10px;background:#fff}.nf-bulk-file span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#5E4B70;font-size:11.5px}.nf-bulk-file button{flex:0 0 auto;border:0;background:transparent;color:#8C2525;font-weight:850;cursor:pointer}
+.nf-bulk-gift{display:grid;grid-template-columns:minmax(220px,1.4fr) minmax(100px,.45fr) auto;gap:10px;align-items:end;padding:14px;border:1px solid #E0D5C8;border-radius:15px;background:#fff}.nf-bulk-gift-preview{grid-column:1/-1;display:grid;grid-template-columns:minmax(145px,210px) minmax(0,1fr);gap:16px;align-items:center;padding:13px;border:1px solid #E6DDD3;border-radius:13px;background:#FFFCF8}.nf-bulk-gift-preview img{display:block;width:100%;max-height:235px;object-fit:contain;border-radius:10px;background:#fff}.nf-bulk-gift-preview-copy strong{display:block;color:#3E2B17;font-size:14px}.nf-bulk-gift-preview-copy span{display:block;margin-top:6px;color:#75685E;font-size:12px;line-height:1.55}.nf-bulk-gift-detail{grid-column:1/-1}.nf-bulk-gift-detail textarea{width:100%;box-sizing:border-box;min-height:88px;padding:11px 12px;border:1.5px solid #CDB58D;border-radius:11px;background:#fff;color:#17120E;font:inherit;resize:vertical}.nf-bulk-gift-flavors{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;padding:12px;border:1px solid #E6DDD3;border-radius:12px;background:#FFFCF8}.nf-bulk-gift-flavors label{display:flex;align-items:center;gap:7px;padding:8px 10px;border:1px solid #DDD0C0;border-radius:999px;background:#fff;color:#5E5147;font-size:11px;letter-spacing:0;text-transform:none;cursor:pointer}.nf-bulk-gift-flavors input{width:16px;height:16px;min-height:0;padding:0;margin:0}.nf-bulk-gift-note{padding:12px 13px;border-left:4px solid #8C6CB4;border-radius:11px;background:#F8F2FC;color:#5E437A;line-height:1.55;font-size:12px}.nf-bulk-labels{display:grid;gap:12px;padding:14px;border:1px solid #D8CBE6;border-radius:15px;background:#FCF9FF}.nf-bulk-label-toggle{display:flex;align-items:center;gap:9px;color:#4A3313;font-size:13px;font-weight:850}.nf-bulk-label-toggle input{width:18px;height:18px;margin:0}.nf-bulk-upload{display:grid;gap:8px;padding:12px;border:1px dashed #B9A6CD;border-radius:12px;background:#fff}.nf-bulk-upload input[type="file"]{width:100%;font:inherit}.nf-bulk-files{display:grid;gap:7px}.nf-bulk-file{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:9px 10px;border:1px solid #E4D9EF;border-radius:10px;background:#fff}.nf-bulk-file span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#5E4B70;font-size:11.5px}.nf-bulk-file button{flex:0 0 auto;border:0;background:transparent;color:#8C2525;font-weight:850;cursor:pointer}
 .nf-bulk-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}.nf-bulk-summary div{padding:13px;border-radius:12px;background:#F0F7FB}.nf-bulk-summary span{display:block;color:#587386;font-size:9.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase}.nf-bulk-summary strong{display:block;margin-top:6px;color:#173C52;font-size:19px}.nf-bulk-note{padding:13px 14px;border-left:4px solid #F7C41C;border-radius:11px;background:#FFF9E8;color:#604A1C;line-height:1.6}
 .nf-bulk-history{display:grid;gap:12px;margin-top:20px}.nf-bulk-empty{margin-top:8px;padding:18px;border:1px dashed #CBB9A5;border-radius:15px;background:#fff;color:#6A5D52;line-height:1.65;text-align:center}.nf-bulk-request{overflow:hidden;border:1px solid #DDD0C0;border-radius:17px;background:#fff}.nf-bulk-request-head{display:flex;justify-content:space-between;gap:14px;padding:16px 17px;background:#F8F4EE}.nf-bulk-request-head h3{margin:0;color:#281A12;font-size:16px}.nf-bulk-request-head p{margin:5px 0 0;color:#74675D;font-size:11.5px}.nf-bulk-status{align-self:flex-start;padding:7px 10px;border-radius:999px;background:#E8F4FB;color:#175D85;font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase}.nf-bulk-status[data-status="accepted"],.nf-bulk-status[data-status="paid"],.nf-bulk-status[data-status="fulfilled"]{background:#EAF6ED;color:#285A37}.nf-bulk-status[data-status="needs_information"],.nf-bulk-status[data-status="quoted"]{background:#FFF2BF;color:#6A4E00}.nf-bulk-status[data-status="cancelled"],.nf-bulk-status[data-status="declined"]{background:#F8E6E6;color:#842C2C}.nf-bulk-request-body{display:grid;gap:14px;padding:16px 17px 18px}.nf-bulk-request-meta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.nf-bulk-request-meta div{padding:11px;border-radius:11px;background:#F6FAFC}.nf-bulk-request-meta span{display:block;color:#6B7D87;font-size:9px;font-weight:900;letter-spacing:.05em;text-transform:uppercase}.nf-bulk-request-meta strong{display:block;margin-top:5px;color:#173C52;font-size:12px}.nf-bulk-request-items{display:grid;gap:7px}.nf-bulk-request-item{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:10px 12px;border:1px solid #ECE3D8;border-radius:11px}.nf-bulk-request-item strong{color:#35251A;font-size:13px}.nf-bulk-request-item span{color:#74675D;font-size:11.5px}.nf-bulk-response{padding:13px 14px;border-left:4px solid #F7C41C;border-radius:11px;background:#FFF9E8;color:#604A1C;white-space:pre-wrap;line-height:1.6}.nf-bulk-actions{display:flex;gap:8px;flex-wrap:wrap}.nf-bulk-reply{display:grid;gap:8px}
-@media(max-width:850px){.nf-bulk-head{flex-direction:column}.nf-bulk-prices,.nf-bulk-meta,.nf-bulk-summary,.nf-bulk-request-meta{grid-template-columns:1fr}.nf-bulk-line{grid-template-columns:1fr 1fr}.nf-bulk-line-notes{grid-column:1/-1}.nf-bulk-gift{grid-template-columns:1fr 1fr}.nf-bulk-gift-flavors{grid-column:1/-1}}@media(max-width:520px){.nf-bulk-line,.nf-bulk-gift{grid-template-columns:1fr}.nf-bulk-line>*,.nf-bulk-gift>*{grid-column:auto}.nf-bulk-request-item{grid-template-columns:1fr;gap:4px}}
+@media(max-width:850px){.nf-bulk-head{flex-direction:column}.nf-bulk-prices,.nf-bulk-meta,.nf-bulk-summary,.nf-bulk-request-meta{grid-template-columns:1fr}.nf-bulk-line{grid-template-columns:1fr 1fr}.nf-bulk-line-notes{grid-column:1/-1}.nf-bulk-gift{grid-template-columns:1fr 1fr}.nf-bulk-gift-flavors,.nf-bulk-gift-preview,.nf-bulk-gift-detail{grid-column:1/-1}}@media(max-width:520px){.nf-bulk-line,.nf-bulk-gift{grid-template-columns:1fr}.nf-bulk-line>*,.nf-bulk-gift>*{grid-column:auto}.nf-bulk-gift-preview{grid-template-columns:1fr}.nf-bulk-gift-preview img{max-height:260px}.nf-bulk-gift-detail{grid-column:1/-1!important}.nf-bulk-request-item{grid-template-columns:1fr;gap:4px}}
 `;
 
 const DAYS = [
@@ -34,6 +34,8 @@ const emptyGiftSet = () => ({
   type: "Small Plastic Bear",
   quantity: 1,
   flavorIds: [],
+  lidColor: "",
+  customDetails: "",
 });
 
 const initialForm = () => ({
@@ -207,7 +209,10 @@ export default function PartnerBulkOrderPanel() {
       Number(gift.quantity) <= 999 &&
       gift.flavorIds.length > 0 &&
       gift.flavorIds.length <= 20 &&
-      gift.flavorIds.every((id) => giftFlavorById.has(String(id)))
+      gift.flavorIds.every((id) => giftFlavorById.has(String(id))) &&
+      String(gift.lidColor || "").length <= 120 &&
+      String(gift.customDetails || "").length <= 1000 &&
+      (gift.type === "Small Plastic Bear" || !String(gift.lidColor || "").trim())
   );
 
   const subtotalCents = form.items.reduce(
@@ -283,7 +288,15 @@ export default function PartnerBulkOrderPanel() {
     setForm((current) => ({
       ...current,
       giftSets: current.giftSets.map((gift, i) =>
-        i === index ? { ...gift, [key]: value } : gift
+        i === index
+          ? {
+              ...gift,
+              [key]: value,
+              ...(key === "type" && value !== "Small Plastic Bear"
+                ? { lidColor: "" }
+                : {}),
+            }
+          : gift
       ),
     }));
     setError("");
@@ -445,6 +458,11 @@ export default function PartnerBulkOrderPanel() {
           type: gift.type,
           quantity: Number(gift.quantity),
           flavor_ids: gift.flavorIds,
+          lid_color:
+            gift.type === "Small Plastic Bear"
+              ? gift.lidColor.trim() || null
+              : null,
+          custom_details: gift.customDetails.trim() || null,
         })),
         customLabelsRequested: form.customLabelsRequested,
         customLabelNotes: form.customLabelsRequested
@@ -907,7 +925,7 @@ export default function PartnerBulkOrderPanel() {
                       updateGift(index, "type", event.target.value)
                     }
                   >
-                    <option value="Small Plastic Bear">Small Plastic Bear</option>
+                    <option value="Small Plastic Bear">2 oz Plastic Bear</option>
                     <option value="Small Glass Hexagonal Container">Small Glass Hexagonal Container</option>
                   </select>
                 </div>
@@ -938,6 +956,59 @@ export default function PartnerBulkOrderPanel() {
                 >
                   Remove
                 </button>
+
+                <div className="nf-bulk-gift-preview">
+                  <img
+                    src={
+                      gift.type === "Small Plastic Bear"
+                        ? "/images/partner-gift-bear-2oz.jpg"
+                        : "/images/partner-gift-hexagonal.jpg"
+                    }
+                    alt={
+                      gift.type === "Small Plastic Bear"
+                        ? "2 oz plastic honey bear container"
+                        : "Small glass hexagonal honey container"
+                    }
+                  />
+                  <div className="nf-bulk-gift-preview-copy">
+                    <strong>
+                      {gift.type === "Small Plastic Bear"
+                        ? "2 oz Plastic Bear"
+                        : "Small Glass Hexagonal Container"}
+                    </strong>
+                    <span>
+                      {gift.type === "Small Plastic Bear"
+                        ? "Choose a preferred lid/top color below, then add any special presentation details."
+                        : "Add any special presentation or packaging details below."}
+                    </span>
+                  </div>
+                </div>
+
+                {gift.type === "Small Plastic Bear" && (
+                  <div className="nf-bulk-line-field nf-bulk-gift-detail">
+                    <label>Preferred lid / top color</label>
+                    <input
+                      maxLength={120}
+                      value={gift.lidColor}
+                      onChange={(event) =>
+                        updateGift(index, "lidColor", event.target.value)
+                      }
+                      placeholder="Example: yellow, black, white, or another requested color"
+                    />
+                  </div>
+                )}
+
+                <div className="nf-bulk-gift-detail">
+                  <label>Custom details / notes</label>
+                  <textarea
+                    maxLength={1000}
+                    value={gift.customDetails}
+                    onChange={(event) =>
+                      updateGift(index, "customDetails", event.target.value)
+                    }
+                    placeholder="Add special packaging, event, ribbon, presentation, quantity split, or other custom requests for this gift set."
+                  />
+                </div>
 
                 <div className="nf-bulk-gift-flavors">
                   {(catalog.giftSetFlavors || []).map((flavor) => {
@@ -1162,6 +1233,18 @@ export default function PartnerBulkOrderPanel() {
                           <span>
                             {(gift.flavor_names || []).join(", ") ||
                               "Flavors pending"}
+                            {gift.lid_color ? (
+                              <>
+                                <br />
+                                Lid / top: {gift.lid_color}
+                              </>
+                            ) : null}
+                            {gift.custom_details ? (
+                              <>
+                                <br />
+                                Details: {gift.custom_details}
+                              </>
+                            ) : null}
                           </span>
                           <span>
                             {gift.quantity} set

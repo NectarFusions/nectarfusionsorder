@@ -45,16 +45,24 @@ const cleanDays = (value) =>
 
 const cleanGiftSets = (value) =>
   Array.isArray(value)
-    ? value.slice(0, 20).map((gift) => ({
-        type: cleanOptional(gift?.type, 160),
-        quantity: Number(gift?.quantity),
-        flavor_ids: Array.isArray(gift?.flavor_ids)
-          ? gift.flavor_ids
-              .map((id) => String(id || "").trim())
-              .filter(Boolean)
-              .slice(0, 20)
-          : [],
-      }))
+    ? value.slice(0, 20).map((gift) => {
+        const type = cleanOptional(gift?.type, 160);
+        return {
+          type,
+          quantity: Number(gift?.quantity),
+          flavor_ids: Array.isArray(gift?.flavor_ids)
+            ? gift.flavor_ids
+                .map((id) => String(id || "").trim())
+                .filter(Boolean)
+                .slice(0, 20)
+            : [],
+          lid_color:
+            type === "Small Plastic Bear"
+              ? cleanOptional(gift?.lid_color, 120)
+              : null,
+          custom_details: cleanOptional(gift?.custom_details, 1000),
+        };
+      })
     : [];
 
 const cleanLabelExamples = (value) =>
@@ -103,6 +111,16 @@ const giftSetHtml = (giftSets) => {
                 ? gift.flavor_names.join(", ")
                 : "Flavors pending"
             )}</span>
+            ${
+              gift.lid_color
+                ? `<br><span style="font-size:12px;color:#7B5821"><strong>Lid / top:</strong> ${esc(gift.lid_color)}</span>`
+                : ""
+            }
+            ${
+              gift.custom_details
+                ? `<br><span style="font-size:12px;color:#7B5821"><strong>Custom details:</strong> ${esc(gift.custom_details)}</span>`
+                : ""
+            }
           </td>
           <td style="padding:10px;border-bottom:1px solid #E7DCC9;text-align:center">${esc(
             gift.quantity
@@ -323,7 +341,7 @@ export default async (req) => {
   };
 
   const { data: submitted, error: submissionError } = await userClient.rpc(
-    "submit_partner_bulk_order_v2",
+    "submit_partner_bulk_order_v3",
     payload
   );
 

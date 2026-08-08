@@ -659,6 +659,21 @@ export default function AdminPartnerBulkOrderPanel({
                         Flavors:{" "}
                         {(gift.flavor_names || []).join(", ") ||
                           "Not specified"}
+                        {gift.lid_color ? (
+                          <>
+                            <br />
+                            <strong>Requested lid / top color:</strong>{" "}
+                            {gift.lid_color}
+                          </>
+                        ) : null}
+                        {gift.custom_details ? (
+                          <>
+                            <br />
+                            <strong>Custom details / notes:</strong>
+                            <br />
+                            {gift.custom_details}
+                          </>
+                        ) : null}
                       </div>
                     ))}
                   </div>
