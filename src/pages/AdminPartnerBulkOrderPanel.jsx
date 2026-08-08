@@ -112,17 +112,29 @@ const requiresFreshPartnerResponse = (request) =>
   request?.status === "under_review" &&
   Boolean(request?.partner_reply);
 
-const draftFrom = (request) => ({
-  partnerResponse: requiresFreshPartnerResponse(request)
-    ? ""
-    : request?.partner_response || "",
-  adminNotes: request?.admin_notes || "",
-  fulfillmentCharge:
-    request?.fulfillment_charge_cents === null ||
-    request?.fulfillment_charge_cents === undefined
+const draftFrom = (request) => {
+  const payAtFulfillment = ["pickup", "delivery"].includes(
+    request?.fulfillment_method
+  );
+
+  return {
+    partnerResponse: requiresFreshPartnerResponse(request)
+      ? ""
+      : request?.partner_response || "",
+    adminNotes: request?.admin_notes || "",
+    customItemCharge:
+      request?.custom_item_charge_cents === null ||
+      request?.custom_item_charge_cents === undefined
+        ? "0.00"
+        : (Number(request.custom_item_charge_cents || 0) / 100).toFixed(2),
+    fulfillmentCharge: payAtFulfillment
       ? "0.00"
-      : (Number(request.fulfillment_charge_cents || 0) / 100).toFixed(2),
-});
+      : request?.fulfillment_charge_cents === null ||
+          request?.fulfillment_charge_cents === undefined
+        ? "0.00"
+        : (Number(request.fulfillment_charge_cents || 0) / 100).toFixed(2),
+  };
+};
 
 const notices = {
   save_notes: "Private Admin notes saved.",
@@ -176,6 +188,7 @@ export default function AdminPartnerBulkOrderPanel({
   const [draft, setDraft] = useState(draftFrom(null));
   const [loading, setLoading] = useState(true);
   const [busyAction, setBusyAction] = useState("");
+  const [labelBusyPath, setLabelBusyPath] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
@@ -245,15 +258,30 @@ export default function AdminPartnerBulkOrderPanel({
     setNotice("");
   }, [selected?.id]);
 
+  const payAtFulfillment = ["pickup", "delivery"].includes(
+    selected?.fulfillment_method
+  );
+
   const fulfillmentCents = useMemo(() => {
+    if (payAtFulfillment) return 0;
     const value = Number(draft.fulfillmentCharge);
     if (!Number.isFinite(value) || value < 0) return null;
     return Math.round(value * 100);
-  }, [draft.fulfillmentCharge]);
+  }, [draft.fulfillmentCharge, payAtFulfillment]);
+
+  const customItemCents = useMemo(() => {
+    const value = Number(draft.customItemCharge);
+    if (!Number.isFinite(value) || value < 0) return null;
+    return Math.round(value * 100);
+  }, [draft.customItemCharge]);
 
   const subtotal = selected ? itemSubtotal(selected) : 0;
+  const productQuoteSubtotal =
+    customItemCents === null ? subtotal : subtotal + customItemCents;
   const quoteTotal =
-    fulfillmentCents === null ? subtotal : subtotal + fulfillmentCents;
+    fulfillmentCents === null
+      ? productQuoteSubtotal
+      : productQuoteSubtotal + fulfillmentCents;
 
   const updateDraft = (patch) => {
     setDraft((current) => ({ ...current, ...patch }));
@@ -289,9 +317,16 @@ export default function AdminPartnerBulkOrderPanel({
       return;
     }
 
+    if (action === "quote" && customItemCents === null) {
+      setError(
+        "Enter a gift set/custom item charge of $0.00 or more before publishing the quote."
+      );
+      return;
+    }
+
     if (action === "quote" && fulfillmentCents === null) {
       setError(
-        "Enter a fulfillment charge of $0.00 or more before publishing the quote."
+        "Enter a shipping/fulfillment charge of $0.00 or more before publishing the quote."
       );
       return;
     }
@@ -314,6 +349,8 @@ export default function AdminPartnerBulkOrderPanel({
         adminNotes,
         fulfillmentChargeCents:
           action === "quote" ? fulfillmentCents : null,
+        customItemChargeCents:
+          action === "quote" ? customItemCents : null,
       });
       await loadRequests();
       setNotice(notices[action] || "Bulk order request updated.");
@@ -323,6 +360,28 @@ export default function AdminPartnerBulkOrderPanel({
       );
     } finally {
       setBusyAction("");
+    }
+  };
+
+  const openLabelExample = async (example) => {
+    const path = String(example?.storage_path || "").trim();
+    if (!path || labelBusyPath) return;
+
+    const previewWindow = window.open("", "_blank");
+    setLabelBusyPath(path);
+    setError("");
+    try {
+      const url = await api.getPartnerLabelExampleSignedUrl(path);
+      if (previewWindow) {
+        previewWindow.location = url;
+      } else {
+        window.location.assign(url);
+      }
+    } catch (openError) {
+      previewWindow?.close();
+      setError(openError.message);
+    } finally {
+      setLabelBusyPath("");
     }
   };
 
@@ -371,8 +430,9 @@ export default function AdminPartnerBulkOrderPanel({
 
       <div className="nf-abr-note">
         Bulk container pricing is isolated from retail inventory and Square.
-        Review timing and fulfillment here, publish the final quote, and only
-        mark paid after payment has been confirmed separately.
+        Gift sets are unpriced until you enter a custom-item amount here.
+        Market pickup is paid at the market table, and delivery fees stay
+        outside the product quote because they are charged at drop-off.
       </div>
 
       {error && (
@@ -502,6 +562,30 @@ export default function AdminPartnerBulkOrderPanel({
                   </div>
                 )}
 
+                {selected.fulfillment_method === "pickup" &&
+                  selected.pickup_market_name && (
+                    <div className="nf-abr-copy">
+                      <strong>Market pickup:</strong>{" "}
+                      {selected.pickup_market_name} ·{" "}
+                      {dateOnly(selected.pickup_market_day)}
+                      {selected.pickup_market_where_at
+                        ? ` · ${selected.pickup_market_where_at}`
+                        : ""}
+                      {selected.pickup_market_hours
+                        ? ` · ${selected.pickup_market_hours}`
+                        : ""}
+                      <br />
+                      <strong>Payment:</strong> Pay at the market table.
+                    </div>
+                  )}
+
+                {selected.fulfillment_method === "delivery" && (
+                  <div className="nf-abr-copy">
+                    <strong>Delivery fee:</strong> Not included in the product
+                    quote. Charge separately at drop-off.
+                  </div>
+                )}
+
                 {selected.request_notes && (
                   <div className="nf-abr-copy">
                     <strong>Partner request notes:</strong>
@@ -553,6 +637,72 @@ export default function AdminPartnerBulkOrderPanel({
                   </tbody>
                 </table>
               </div>
+
+              {Array.isArray(selected.gift_sets) &&
+                selected.gift_sets.length > 0 && (
+                  <div className="nf-abr-card">
+                    <h4>Small Gift Set Request</h4>
+                    <p className="nf-abr-help">
+                      A NectarFusions administrator will provide gift set pricing after review. Enter
+                      the combined gift set/custom item amount in the quote
+                      editor below.
+                    </p>
+                    {(selected.gift_sets || []).map((gift, index) => (
+                      <div
+                        className="nf-abr-copy"
+                        key={`admin-gift-${selected.id}-${index}`}
+                      >
+                        <strong>{gift.type || "Small gift set"}</strong>
+                        <br />
+                        Quantity: {gift.quantity}
+                        <br />
+                        Flavors:{" "}
+                        {(gift.flavor_names || []).join(", ") ||
+                          "Not specified"}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+              {selected.custom_labels_requested && (
+                <div className="nf-abr-card">
+                  <h4>Custom Label Request</h4>
+                  <p className="nf-abr-help">
+                    Label examples are stored privately. Open a temporary
+                    Admin-only view link below.
+                  </p>
+                  {selected.custom_label_notes && (
+                    <div className="nf-abr-copy">
+                      <strong>Partner label details:</strong>
+                      <br />
+                      {selected.custom_label_notes}
+                    </div>
+                  )}
+                  {Array.isArray(selected.label_examples) &&
+                  selected.label_examples.length > 0 ? (
+                    <div
+                      className="nf-abr-actions"
+                      style={{ justifyContent: "flex-start" }}
+                    >
+                      {selected.label_examples.map((example) => (
+                        <button
+                          key={example.storage_path}
+                          type="button"
+                          className="btn ghost"
+                          disabled={Boolean(labelBusyPath)}
+                          onClick={() => openLabelExample(example)}
+                        >
+                          {labelBusyPath === example.storage_path
+                            ? "Opening…"
+                            : `Open ${example.file_name || "label example"}`}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="nf-abr-copy">No example files uploaded.</div>
+                  )}
+                </div>
+              )}
 
               <div className="nf-abr-editor">
                 <h4>Admin Review and Response</h4>
@@ -609,28 +759,76 @@ export default function AdminPartnerBulkOrderPanel({
                   </label>
 
                   <label className="nf-abr-field">
-                    <span>Fulfillment charge</span>
+                    <span>Gift set / custom item charge</span>
                     <input
                       type="number"
                       min="0"
                       step="0.01"
                       inputMode="decimal"
-                      value={draft.fulfillmentCharge}
+                      value={draft.customItemCharge}
+                      onChange={(event) =>
+                        updateDraft({
+                          customItemCharge: event.target.value,
+                        })
+                      }
+                    />
+                    <small>
+                      Enter $0.00 when no unpriced gift sets or custom items are
+                      included.
+                    </small>
+                  </label>
+
+                  <label className="nf-abr-field">
+                    <span>
+                      {selected.fulfillment_method === "shipping"
+                        ? "Shipping charge"
+                        : "Fulfillment charge"}
+                    </span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      inputMode="decimal"
+                      value={payAtFulfillment ? "0.00" : draft.fulfillmentCharge}
+                      disabled={payAtFulfillment}
                       onChange={(event) =>
                         updateDraft({
                           fulfillmentCharge: event.target.value,
                         })
                       }
                     />
+                    {selected.fulfillment_method === "delivery" && (
+                      <small>
+                        Delivery fee is excluded from the quote and charged at
+                        drop-off.
+                      </small>
+                    )}
+                    {selected.fulfillment_method === "pickup" && (
+                      <small>
+                        Market pickup has no quoted fulfillment charge. Payment
+                        is collected at the market table.
+                      </small>
+                    )}
                   </label>
                 </div>
 
                 <div className="nf-abr-preview">
                   <span>
-                    Item subtotal: <strong>{money(subtotal)}</strong>
+                    Bulk subtotal: <strong>{money(subtotal)}</strong>
                   </span>
                   <span>
-                    Fulfillment:{" "}
+                    Gift/custom:{" "}
+                    <strong>
+                      {customItemCents === null
+                        ? "Invalid"
+                        : money(customItemCents)}
+                    </strong>
+                  </span>
+                  <span>
+                    {selected.fulfillment_method === "shipping"
+                      ? "Shipping"
+                      : "Fulfillment"}
+                    :{" "}
                     <strong>
                       {fulfillmentCents === null
                         ? "Invalid"
@@ -685,7 +883,9 @@ export default function AdminPartnerBulkOrderPanel({
                       type="button"
                       className="btn solid"
                       disabled={
-                        Boolean(busyAction) || fulfillmentCents === null
+                        Boolean(busyAction) ||
+                        fulfillmentCents === null ||
+                        customItemCents === null
                       }
                       onClick={() => runAction("quote")}
                     >
