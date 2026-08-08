@@ -4,17 +4,17 @@ import * as api from "../lib/api";
 const CSS = `
 .nf-bulk{margin-top:14px;padding:clamp(20px,3vw,30px);border:1px solid #D8C9B8;border-radius:22px;background:radial-gradient(circle at 96% 5%,rgba(247,196,28,.14),transparent 28%),linear-gradient(145deg,#FFFFFF,#FBF7F1)}
 .nf-bulk-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start}.nf-bulk-head h2{margin:6px 0 8px;color:#23170F;font-family:'Bebas Neue',Impact,sans-serif;font-size:38px;line-height:1}.nf-bulk-head p{max-width:760px;margin:0;color:#67594D;line-height:1.65}.nf-bulk-tag{flex:0 0 auto;padding:9px 13px;border:1px solid #E5C953;border-radius:999px;background:#FFF4BE;color:#59430F;font-size:11px;font-weight:900;letter-spacing:.05em;text-transform:uppercase}
-.nf-bulk-prices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:18px}.nf-bulk-price{padding:13px;border:1px solid #E4D8C9;border-radius:13px;background:#fff}.nf-bulk-price strong{display:block;color:#173C52}.nf-bulk-price span{display:block;margin-top:5px;color:#6F6258;font-size:12px;line-height:1.5}
+.nf-bulk-picker-wrap{margin-top:20px}.nf-bulk-picker-label{display:block;margin-bottom:9px;color:#6B594A;font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.nf-bulk-picker{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.nf-bulk-choice{position:relative;min-height:112px;padding:16px;border:1.5px solid #D7C7B5;border-radius:16px;background:#fff;color:#2C2119;text-align:left;font:inherit;cursor:pointer;transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease,background .16s ease}.nf-bulk-choice:hover{transform:translateY(-2px);border-color:#B89252;box-shadow:0 8px 20px rgba(64,42,22,.08)}.nf-bulk-choice[aria-pressed="true"]{border-color:#173C52;background:#F0F7FB;box-shadow:0 0 0 2px rgba(23,60,82,.08)}.nf-bulk-choice strong{display:block;color:#173C52;font-size:17px}.nf-bulk-choice span{display:block;margin-top:6px;color:#6F6258;font-size:11.5px;line-height:1.45}.nf-bulk-choice-count{position:absolute;top:10px;right:10px;min-width:22px;padding:4px 7px;border-radius:999px;background:#173C52!important;color:#fff!important;font-size:9px!important;font-weight:900;text-align:center}.nf-bulk-choice.gifts strong{color:#69458F}.nf-bulk-choice.gifts[aria-pressed="true"]{border-color:#8C6CB4;background:#FAF6FD;box-shadow:0 0 0 2px rgba(140,108,180,.08)}.nf-bulk-choice.gifts .nf-bulk-choice-count{background:#8C6CB4!important}
 .nf-bulk-tabs{display:flex;gap:9px;flex-wrap:wrap;margin-top:20px}.nf-bulk-tabs button{min-height:42px;padding:9px 14px;border:1px solid #CBB9A5;border-radius:999px;background:#fff;color:#5B493C;font:inherit;font-size:12px;font-weight:850;cursor:pointer}.nf-bulk-tabs button[aria-selected="true"]{border-color:#173C52;background:#173C52;color:#fff}
 .nf-bulk-message{margin-top:16px;padding:13px 15px;border-radius:13px;line-height:1.55}.nf-bulk-message[data-kind="error"]{border:1px solid #E1A3A3;background:#FFF2F2;color:#8C2525}.nf-bulk-message[data-kind="success"]{border:1px solid #A9D2B6;background:#F3FBF5;color:#285A37}
 .nf-bulk-form{display:grid;gap:18px;margin-top:20px}.nf-bulk-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.nf-bulk-field{display:grid;gap:6px}.nf-bulk-field.full{grid-column:1/-1}.nf-bulk-field label,.nf-bulk-days legend,.nf-bulk-line label,.nf-bulk-gift label{color:#4A3313;font-size:10.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase}.nf-bulk-field input,.nf-bulk-field select,.nf-bulk-field textarea,.nf-bulk-line input,.nf-bulk-line select,.nf-bulk-gift input,.nf-bulk-reply textarea{width:100%;box-sizing:border-box;border:1.5px solid #CDB58D;border-radius:11px;background:#fff;color:#17120E;font:inherit}.nf-bulk-field input,.nf-bulk-field select,.nf-bulk-line input,.nf-bulk-line select,.nf-bulk-gift input{min-height:47px;padding:10px 12px}.nf-bulk-field textarea,.nf-bulk-reply textarea{min-height:96px;padding:11px 12px;resize:vertical}
 .nf-bulk-days{grid-column:1/-1;margin:0;padding:14px;border:1px solid #E3D8CB;border-radius:14px;background:#FFFCF7}.nf-bulk-day-grid{display:flex;flex-wrap:wrap;gap:8px}.nf-bulk-day-grid label{display:flex;align-items:center;gap:7px;padding:8px 10px;border:1px solid #DDD0C0;border-radius:999px;background:#fff;color:#5E5147;font-size:12px;cursor:pointer}.nf-bulk-day-grid input{width:16px;height:16px;margin:0}
 .nf-bulk-fulfillment{grid-column:1/-1;padding:13px 14px;border-radius:12px;line-height:1.6}.nf-bulk-fulfillment.delivery{border-left:4px solid #D58A24;background:#FFF5E6;color:#704315}.nf-bulk-fulfillment.pickup{border-left:4px solid #4F6B3C;background:#F1F8EE;color:#31532B}.nf-bulk-fulfillment.shipping{border-left:4px solid #167BB6;background:#EFF8FD;color:#174F70}.nf-bulk-market-card{grid-column:1/-1;display:grid;gap:8px;padding:14px;border:1px solid #CFE1C8;border-radius:14px;background:#FAFFF8}.nf-bulk-market-detail{padding:10px 12px;border-radius:10px;background:#fff;color:#4D5D47;font-size:12px;line-height:1.55}
-.nf-bulk-items,.nf-bulk-gifts{display:grid;gap:10px}.nf-bulk-items-head{display:flex;justify-content:space-between;gap:12px;align-items:center}.nf-bulk-items-head h3{margin:0;color:#281A12;font-size:17px}.nf-bulk-items-head p{margin:3px 0 0;color:#75685E;font-size:12px;line-height:1.5}.nf-bulk-line{display:grid;grid-template-columns:minmax(140px,.8fr) minmax(140px,.9fr) minmax(190px,1.2fr) minmax(90px,.55fr) auto;gap:9px;align-items:end;padding:13px;border:1px solid #E0D5C8;border-radius:15px;background:#fff}.nf-bulk-line-field{display:grid;gap:5px}.nf-bulk-line-price{margin-top:5px;color:#3B6A4B;font-size:11px;font-weight:800}.nf-bulk-remove{min-height:47px;padding:9px 12px;border:1px solid #D8A5A5;border-radius:11px;background:#FFF6F6;color:#8C2525;font:inherit;font-size:12px;font-weight:850;cursor:pointer}.nf-bulk-line-notes{grid-column:1/-1}.nf-bulk-line-notes input{min-height:42px}
-.nf-bulk-gift{display:grid;grid-template-columns:minmax(220px,1.4fr) minmax(100px,.45fr) auto;gap:10px;align-items:end;padding:14px;border:1px solid #E0D5C8;border-radius:15px;background:#fff}.nf-bulk-gift-preview{grid-column:1/-1;display:grid;grid-template-columns:minmax(145px,210px) minmax(0,1fr);gap:16px;align-items:center;padding:13px;border:1px solid #E6DDD3;border-radius:13px;background:#FFFCF8}.nf-bulk-gift-preview img{display:block;width:100%;max-height:235px;object-fit:contain;border-radius:10px;background:#fff}.nf-bulk-gift-preview-copy strong{display:block;color:#3E2B17;font-size:14px}.nf-bulk-gift-preview-copy span{display:block;margin-top:6px;color:#75685E;font-size:12px;line-height:1.55}.nf-bulk-gift-detail{grid-column:1/-1}.nf-bulk-gift-detail textarea{width:100%;box-sizing:border-box;min-height:88px;padding:11px 12px;border:1.5px solid #CDB58D;border-radius:11px;background:#fff;color:#17120E;font:inherit;resize:vertical}.nf-bulk-gift-flavors{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;padding:12px;border:1px solid #E6DDD3;border-radius:12px;background:#FFFCF8}.nf-bulk-gift-flavors label{display:flex;align-items:center;gap:7px;padding:8px 10px;border:1px solid #DDD0C0;border-radius:999px;background:#fff;color:#5E5147;font-size:11px;letter-spacing:0;text-transform:none;cursor:pointer}.nf-bulk-gift-flavors input{width:16px;height:16px;min-height:0;padding:0;margin:0}.nf-bulk-gift-note{padding:12px 13px;border-left:4px solid #8C6CB4;border-radius:11px;background:#F8F2FC;color:#5E437A;line-height:1.55;font-size:12px}.nf-bulk-labels{display:grid;gap:12px;padding:14px;border:1px solid #D8CBE6;border-radius:15px;background:#FCF9FF}.nf-bulk-label-toggle{display:flex;align-items:center;gap:9px;color:#4A3313;font-size:13px;font-weight:850}.nf-bulk-label-toggle input{width:18px;height:18px;margin:0}.nf-bulk-upload{display:grid;gap:8px;padding:12px;border:1px dashed #B9A6CD;border-radius:12px;background:#fff}.nf-bulk-upload input[type="file"]{width:100%;font:inherit}.nf-bulk-files{display:grid;gap:7px}.nf-bulk-file{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:9px 10px;border:1px solid #E4D9EF;border-radius:10px;background:#fff}.nf-bulk-file span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#5E4B70;font-size:11.5px}.nf-bulk-file button{flex:0 0 auto;border:0;background:transparent;color:#8C2525;font-weight:850;cursor:pointer}
+.nf-bulk-items,.nf-bulk-gifts{display:grid;gap:10px}.nf-bulk-items-head{display:flex;justify-content:space-between;gap:12px;align-items:center}.nf-bulk-items-head h3{margin:0;color:#281A12;font-size:17px}.nf-bulk-items-head p{margin:3px 0 0;color:#75685E;font-size:12px;line-height:1.5}.nf-bulk-line{display:grid;grid-template-columns:minmax(150px,.9fr) minmax(210px,1.3fr) minmax(90px,.5fr) auto;gap:9px;align-items:end;padding:13px;border:1px solid #E0D5C8;border-radius:15px;background:#fff}.nf-bulk-line-field{display:grid;gap:5px}.nf-bulk-line-price{margin-top:5px;color:#3B6A4B;font-size:11px;font-weight:800}.nf-bulk-remove{min-height:47px;padding:9px 12px;border:1px solid #D8A5A5;border-radius:11px;background:#FFF6F6;color:#8C2525;font:inherit;font-size:12px;font-weight:850;cursor:pointer}.nf-bulk-line-notes{grid-column:1/-1}.nf-bulk-line-notes input{min-height:42px}
+.nf-bulk-gift{display:grid;grid-template-columns:minmax(220px,1.4fr) minmax(100px,.45fr) auto;gap:10px;align-items:end;padding:14px;border:1px solid #E0D5C8;border-radius:15px;background:#fff}.nf-bulk-gift-preview{grid-column:1/-1;display:grid;grid-template-columns:minmax(145px,210px) minmax(0,1fr);gap:16px;align-items:center;padding:13px;border:1px solid #E6DDD3;border-radius:13px;background:#FFFCF8}.nf-bulk-gift-preview img{display:block;width:100%;max-height:235px;object-fit:contain;border-radius:10px;background:#fff}.nf-bulk-gift-preview-copy strong{display:block;color:#3E2B17;font-size:14px}.nf-bulk-gift-preview-copy span{display:block;margin-top:6px;color:#75685E;font-size:12px;line-height:1.55}.nf-bulk-gift-detail{grid-column:1/-1}.nf-bulk-gift-detail textarea{width:100%;box-sizing:border-box;min-height:88px;padding:11px 12px;border:1.5px solid #CDB58D;border-radius:11px;background:#fff;color:#17120E;font:inherit;resize:vertical}.nf-bulk-gift-flavors{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;padding:12px;border:1px solid #E6DDD3;border-radius:12px;background:#FFFCF8}.nf-bulk-gift-flavors label{display:flex;align-items:center;gap:7px;padding:8px 10px;border:1px solid #DDD0C0;border-radius:999px;background:#fff;color:#5E5147;font-size:11px;letter-spacing:0;text-transform:none;cursor:pointer}.nf-bulk-gift-flavors input{width:16px;height:16px;min-height:0;padding:0;margin:0}.nf-bulk-gift-note{padding:12px 13px;border-left:4px solid #8C6CB4;border-radius:11px;background:#F8F2FC;color:#5E437A;line-height:1.55;font-size:12px}.nf-bulk-step-title{display:flex;gap:11px;align-items:flex-start}.nf-bulk-step-number{flex:0 0 auto;display:grid;place-items:center;width:27px;height:27px;border-radius:999px;background:#173C52;color:#fff;font-size:11px;font-weight:900}.nf-bulk-step-title h3{margin:1px 0 2px;color:#281A12;font-size:17px}.nf-bulk-step-title p{margin:0;color:#75685E;font-size:12px;line-height:1.5}.nf-bulk-workspace{display:grid;gap:12px;padding:16px;border:1px solid #D9CBB9;border-radius:17px;background:#fff}.nf-bulk-workspace-head{display:flex;justify-content:space-between;gap:14px;align-items:center}.nf-bulk-workspace-head h3{margin:0;color:#281A12;font-size:18px}.nf-bulk-workspace-head p{margin:4px 0 0;color:#75685E;font-size:12px;line-height:1.5}.nf-bulk-add-primary{min-height:45px;padding:10px 15px;border:0;border-radius:11px;background:#173C52;color:#fff;font:inherit;font-size:12px;font-weight:900;cursor:pointer}.nf-bulk-add-primary:disabled{opacity:.5;cursor:not-allowed}.nf-bulk-gift-add-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.nf-bulk-gift-add{min-height:58px;padding:12px 14px;border:1.5px solid #B9A6CD;border-radius:13px;background:#FCF9FF;color:#5E437A;text-align:left;font:inherit;font-weight:900;cursor:pointer}.nf-bulk-gift-add span{display:block;margin-top:4px;color:#806D90;font-size:10.5px;font-weight:600}.nf-bulk-cart{display:grid;gap:8px;padding:15px;border:1px solid #C9DCE7;border-radius:15px;background:#F8FCFE}.nf-bulk-cart-head{display:flex;justify-content:space-between;gap:10px;align-items:center}.nf-bulk-cart-head h3{margin:0;color:#173C52;font-size:16px}.nf-bulk-cart-head span{color:#6B7D87;font-size:11px}.nf-bulk-cart-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:10px 11px;border-radius:11px;background:#fff}.nf-bulk-cart-row strong{color:#35251A;font-size:12.5px}.nf-bulk-cart-row span{color:#74675D;font-size:11px}.nf-bulk-cart-row button{border:0;background:transparent;color:#175D85;font:inherit;font-size:11px;font-weight:900;cursor:pointer}.nf-bulk-labels{display:grid;gap:12px;padding:14px;border:1px solid #D8CBE6;border-radius:15px;background:#FCF9FF}.nf-bulk-label-toggle{display:flex;align-items:center;gap:9px;color:#4A3313;font-size:13px;font-weight:850}.nf-bulk-label-toggle input{width:18px;height:18px;margin:0}.nf-bulk-upload{display:grid;gap:8px;padding:12px;border:1px dashed #B9A6CD;border-radius:12px;background:#fff}.nf-bulk-upload input[type="file"]{width:100%;font:inherit}.nf-bulk-files{display:grid;gap:7px}.nf-bulk-file{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:9px 10px;border:1px solid #E4D9EF;border-radius:10px;background:#fff}.nf-bulk-file span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#5E4B70;font-size:11.5px}.nf-bulk-file button{flex:0 0 auto;border:0;background:transparent;color:#8C2525;font-weight:850;cursor:pointer}
 .nf-bulk-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}.nf-bulk-summary div{padding:13px;border-radius:12px;background:#F0F7FB}.nf-bulk-summary span{display:block;color:#587386;font-size:9.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase}.nf-bulk-summary strong{display:block;margin-top:6px;color:#173C52;font-size:19px}.nf-bulk-note{padding:13px 14px;border-left:4px solid #F7C41C;border-radius:11px;background:#FFF9E8;color:#604A1C;line-height:1.6}
 .nf-bulk-history{display:grid;gap:12px;margin-top:20px}.nf-bulk-empty{margin-top:8px;padding:18px;border:1px dashed #CBB9A5;border-radius:15px;background:#fff;color:#6A5D52;line-height:1.65;text-align:center}.nf-bulk-request{overflow:hidden;border:1px solid #DDD0C0;border-radius:17px;background:#fff}.nf-bulk-request-head{display:flex;justify-content:space-between;gap:14px;padding:16px 17px;background:#F8F4EE}.nf-bulk-request-head h3{margin:0;color:#281A12;font-size:16px}.nf-bulk-request-head p{margin:5px 0 0;color:#74675D;font-size:11.5px}.nf-bulk-status{align-self:flex-start;padding:7px 10px;border-radius:999px;background:#E8F4FB;color:#175D85;font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase}.nf-bulk-status[data-status="accepted"],.nf-bulk-status[data-status="paid"],.nf-bulk-status[data-status="fulfilled"]{background:#EAF6ED;color:#285A37}.nf-bulk-status[data-status="needs_information"],.nf-bulk-status[data-status="quoted"]{background:#FFF2BF;color:#6A4E00}.nf-bulk-status[data-status="cancelled"],.nf-bulk-status[data-status="declined"]{background:#F8E6E6;color:#842C2C}.nf-bulk-request-body{display:grid;gap:14px;padding:16px 17px 18px}.nf-bulk-request-meta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.nf-bulk-request-meta div{padding:11px;border-radius:11px;background:#F6FAFC}.nf-bulk-request-meta span{display:block;color:#6B7D87;font-size:9px;font-weight:900;letter-spacing:.05em;text-transform:uppercase}.nf-bulk-request-meta strong{display:block;margin-top:5px;color:#173C52;font-size:12px}.nf-bulk-request-items{display:grid;gap:7px}.nf-bulk-request-item{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:10px 12px;border:1px solid #ECE3D8;border-radius:11px}.nf-bulk-request-item strong{color:#35251A;font-size:13px}.nf-bulk-request-item span{color:#74675D;font-size:11.5px}.nf-bulk-response{padding:13px 14px;border-left:4px solid #F7C41C;border-radius:11px;background:#FFF9E8;color:#604A1C;white-space:pre-wrap;line-height:1.6}.nf-bulk-actions{display:flex;gap:8px;flex-wrap:wrap}.nf-bulk-reply{display:grid;gap:8px}
-@media(max-width:850px){.nf-bulk-head{flex-direction:column}.nf-bulk-prices,.nf-bulk-meta,.nf-bulk-summary,.nf-bulk-request-meta{grid-template-columns:1fr}.nf-bulk-line{grid-template-columns:1fr 1fr}.nf-bulk-line-notes{grid-column:1/-1}.nf-bulk-gift{grid-template-columns:1fr 1fr}.nf-bulk-gift-flavors,.nf-bulk-gift-preview,.nf-bulk-gift-detail{grid-column:1/-1}}@media(max-width:520px){.nf-bulk-line,.nf-bulk-gift{grid-template-columns:1fr}.nf-bulk-line>*,.nf-bulk-gift>*{grid-column:auto}.nf-bulk-gift-preview{grid-template-columns:1fr}.nf-bulk-gift-preview img{max-height:260px}.nf-bulk-gift-detail{grid-column:1/-1!important}.nf-bulk-request-item{grid-template-columns:1fr;gap:4px}}
+@media(max-width:850px){.nf-bulk-head{flex-direction:column}.nf-bulk-picker{grid-template-columns:1fr 1fr}.nf-bulk-meta,.nf-bulk-summary,.nf-bulk-request-meta{grid-template-columns:1fr}.nf-bulk-line{grid-template-columns:1fr 1fr}.nf-bulk-line-notes{grid-column:1/-1}.nf-bulk-gift{grid-template-columns:1fr 1fr}.nf-bulk-gift-flavors,.nf-bulk-gift-preview,.nf-bulk-gift-detail{grid-column:1/-1}.nf-bulk-workspace-head{align-items:flex-start;flex-direction:column}.nf-bulk-cart-row{grid-template-columns:1fr auto}}@media(max-width:520px){.nf-bulk-picker,.nf-bulk-gift-add-grid{grid-template-columns:1fr}.nf-bulk-line,.nf-bulk-gift{grid-template-columns:1fr}.nf-bulk-line>*,.nf-bulk-gift>*{grid-column:auto}.nf-bulk-gift-preview{grid-template-columns:1fr}.nf-bulk-gift-preview img{max-height:260px}.nf-bulk-gift-detail{grid-column:1/-1!important}.nf-bulk-request-item,.nf-bulk-cart-row{grid-template-columns:1fr;gap:4px}}
 `;
 
 const DAYS = [
@@ -22,16 +22,16 @@ const DAYS = [
   ["thursday", "Thursday"], ["friday", "Friday"], ["saturday", "Saturday"], ["sunday", "Sunday"],
 ];
 
-const emptyLine = () => ({
+const emptyLine = (sizeId = "half_gallon") => ({
   honeyType: "natural",
-  sizeId: "half_gallon",
+  sizeId,
   flavorId: "",
   quantity: 1,
   notes: "",
 });
 
-const emptyGiftSet = () => ({
-  type: "Small Plastic Bear",
+const emptyGiftSet = (type = "Small Plastic Bear") => ({
+  type,
   quantity: 1,
   flavorIds: [],
   lidColor: "",
@@ -44,7 +44,7 @@ const initialForm = () => ({
   pickupMarketDateId: "",
   preferredDeliveryDays: [],
   requestNotes: "",
-  items: [emptyLine()],
+  items: [],
   giftSets: [],
   customLabelsRequested: false,
   customLabelNotes: "",
@@ -123,6 +123,7 @@ export default function PartnerBulkOrderPanel() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [replyById, setReplyById] = useState({});
+  const [activeOrderSection, setActiveOrderSection] = useState("");
   const [form, setForm] = useState(initialForm);
 
   const load = useCallback(async () => {
@@ -170,6 +171,10 @@ export default function PartnerBulkOrderPanel() {
   );
 
   const selectedMarket = marketById.get(String(form.pickupMarketDateId || ""));
+  const activeSize = sizeById.get(activeOrderSection);
+  const visibleBulkLines = form.items
+    .map((line, index) => ({ line, index }))
+    .filter(({ line }) => line.sizeId === activeOrderSection);
 
   const priceFor = (line) => {
     const size = sizeById.get(line.sizeId);
@@ -249,6 +254,33 @@ export default function PartnerBulkOrderPanel() {
 
   const updateForm = (key, value) => {
     setForm((current) => ({ ...current, [key]: value }));
+    setError("");
+    setSuccess("");
+  };
+
+  const chooseOrderSection = (section) => {
+    setActiveOrderSection(section);
+    setTab("new");
+    setError("");
+    setSuccess("");
+  };
+
+  const addBulkLine = (sizeId) => {
+    if (!sizeById.has(sizeId) || form.items.length >= 50) return;
+    setForm((current) => ({
+      ...current,
+      items: [...current.items, emptyLine(sizeId)],
+    }));
+    setError("");
+    setSuccess("");
+  };
+
+  const addGiftSet = (type) => {
+    if (form.giftSets.length >= 20) return;
+    setForm((current) => ({
+      ...current,
+      giftSets: [...current.giftSets, emptyGiftSet(type)],
+    }));
     setError("");
     setSuccess("");
   };
@@ -477,6 +509,7 @@ export default function PartnerBulkOrderPanel() {
           : `Partner request ${submission.requestId} was submitted and NectarFusions was notified.`
       );
       setForm(initialForm());
+      setActiveOrderSection("");
       await load();
       setTab("history");
     } catch (submitError) {
@@ -578,16 +611,43 @@ export default function PartnerBulkOrderPanel() {
         </div>
       </div>
 
-      <div className="nf-bulk-prices">
-        {(catalog.sizes || []).map((size) => (
-          <div className="nf-bulk-price" key={size.id}>
-            <strong>{size.label}</strong>
-            <span>
-              Natural {money(size.natural_price_cents)} · Infused{" "}
-              {money(size.infused_price_cents)}
-            </span>
-          </div>
-        ))}
+      <div className="nf-bulk-picker-wrap">
+        <span className="nf-bulk-picker-label">What are you ordering?</span>
+        <div className="nf-bulk-picker">
+          {(catalog.sizes || []).map((size) => {
+            const added = form.items.filter((line) => line.sizeId === size.id).length;
+            return (
+              <button
+                type="button"
+                className="nf-bulk-choice"
+                key={size.id}
+                aria-pressed={activeOrderSection === size.id}
+                onClick={() => chooseOrderSection(size.id)}
+              >
+                {added > 0 && <span className="nf-bulk-choice-count">{added}</span>}
+                <strong>{size.label}</strong>
+                <span>
+                  Natural {money(size.natural_price_cents)}
+                  <br />
+                  Infused {money(size.infused_price_cents)}
+                </span>
+              </button>
+            );
+          })}
+
+          <button
+            type="button"
+            className="nf-bulk-choice gifts"
+            aria-pressed={activeOrderSection === "gift_sets"}
+            onClick={() => chooseOrderSection("gift_sets")}
+          >
+            {form.giftSets.length > 0 && (
+              <span className="nf-bulk-choice-count">{form.giftSets.length}</span>
+            )}
+            <strong>Gift Sets & Custom Requests</strong>
+            <span>Small favors, custom labels, packaging details & special requests</span>
+          </button>
+        </div>
       </div>
 
       <div className="nf-bulk-tabs" role="tablist">
@@ -628,6 +688,381 @@ export default function PartnerBulkOrderPanel() {
             <strong>No retail or Square pricing is changed by this request.</strong>{" "}
             Bulk container totals below are product subtotals only. A NectarFusions
             administrator will reach out with gift set pricing after review.
+          </div>
+
+          <div className="nf-bulk-step-title">
+            <span className="nf-bulk-step-number">1</span>
+            <div>
+              <h3>Build your order</h3>
+              <p>
+                Choose a size or Gift Sets & Custom Requests above. Only the
+                selected order section appears here.
+              </p>
+            </div>
+          </div>
+
+          {!activeOrderSection ? (
+            <div className="nf-bulk-empty">
+              Choose ½ Gallon, 1 Gallon, 5 Gallon, or Gift Sets & Custom
+              Requests above to begin.
+            </div>
+          ) : activeOrderSection === "gift_sets" ? (
+            <div className="nf-bulk-workspace">
+              <div className="nf-bulk-workspace-head">
+                <div>
+                  <h3>Gift Sets & Custom Requests</h3>
+                  <p>
+                    Choose a gift container below. Pricing is provided by a
+                    NectarFusions administrator after review.
+                  </p>
+                </div>
+              </div>
+
+              <div className="nf-bulk-gift-add-grid">
+                <button
+                  type="button"
+                  className="nf-bulk-gift-add"
+                  disabled={form.giftSets.length >= 20}
+                  onClick={() => addGiftSet("Small Plastic Bear")}
+                >
+                  + Add 2 oz Plastic Bear
+                  <span>Bear image, lid/top color, flavors & custom details</span>
+                </button>
+                <button
+                  type="button"
+                  className="nf-bulk-gift-add"
+                  disabled={form.giftSets.length >= 20}
+                  onClick={() => addGiftSet("Small Glass Hexagonal Container")}
+                >
+                  + Add Glass Hexagonal Container
+                  <span>Hex image, flavors, custom packaging & details</span>
+                </button>
+              </div>
+
+              <div className="nf-bulk-gift-note">
+                <strong>Gift set pricing will be provided after review.</strong>{" "}
+                Add the quantities, flavors, and custom requests you need.
+              </div>
+
+              {form.giftSets.length === 0 ? (
+                <div className="nf-bulk-empty">
+                  No gift sets added yet. Choose one of the two container
+                  options above.
+                </div>
+              ) : (
+                form.giftSets.map((gift, index) => (
+                  <div className="nf-bulk-gift" key={`gift-set-${index}`}>
+                    <div className="nf-bulk-line-field">
+                      <label>Gift container</label>
+                      <select
+                        value={gift.type}
+                        onChange={(event) =>
+                          updateGift(index, "type", event.target.value)
+                        }
+                      >
+                        <option value="Small Plastic Bear">2 oz Plastic Bear</option>
+                        <option value="Small Glass Hexagonal Container">
+                          Small Glass Hexagonal Container
+                        </option>
+                      </select>
+                    </div>
+
+                    <div className="nf-bulk-line-field">
+                      <label>How many sets</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="999"
+                        step="1"
+                        value={gift.quantity}
+                        onChange={(event) =>
+                          updateGift(index, "quantity", event.target.value)
+                        }
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      className="nf-bulk-remove"
+                      onClick={() =>
+                        setForm((current) => ({
+                          ...current,
+                          giftSets: current.giftSets.filter((_, i) => i !== index),
+                        }))
+                      }
+                    >
+                      Remove
+                    </button>
+
+                    <div className="nf-bulk-gift-preview">
+                      <img
+                        src={
+                          gift.type === "Small Plastic Bear"
+                            ? "/images/partner-gift-bear-2oz.jpg"
+                            : "/images/partner-gift-hexagonal.jpg"
+                        }
+                        alt={
+                          gift.type === "Small Plastic Bear"
+                            ? "2 oz plastic honey bear container"
+                            : "Small glass hexagonal honey container"
+                        }
+                      />
+                      <div className="nf-bulk-gift-preview-copy">
+                        <strong>
+                          {gift.type === "Small Plastic Bear"
+                            ? "2 oz Plastic Bear"
+                            : "Small Glass Hexagonal Container"}
+                        </strong>
+                        <span>
+                          {gift.type === "Small Plastic Bear"
+                            ? "Choose a preferred lid/top color below, then add any special presentation details."
+                            : "Add any special presentation or packaging details below."}
+                        </span>
+                      </div>
+                    </div>
+
+                    {gift.type === "Small Plastic Bear" && (
+                      <div className="nf-bulk-line-field nf-bulk-gift-detail">
+                        <label>Preferred lid / top color</label>
+                        <input
+                          maxLength={120}
+                          value={gift.lidColor}
+                          onChange={(event) =>
+                            updateGift(index, "lidColor", event.target.value)
+                          }
+                          placeholder="Example: yellow, black, white, or another requested color"
+                        />
+                      </div>
+                    )}
+
+                    <div className="nf-bulk-gift-detail">
+                      <label>Custom details / notes</label>
+                      <textarea
+                        maxLength={1000}
+                        value={gift.customDetails}
+                        onChange={(event) =>
+                          updateGift(index, "customDetails", event.target.value)
+                        }
+                        placeholder="Add special packaging, event, ribbon, presentation, quantity split, or other custom requests for this gift set."
+                      />
+                    </div>
+
+                    <div className="nf-bulk-gift-flavors">
+                      {(catalog.giftSetFlavors || []).map((flavor) => {
+                        const id = String(flavor.id);
+                        return (
+                          <label key={id}>
+                            <input
+                              type="checkbox"
+                              checked={gift.flavorIds.includes(id)}
+                              onChange={() => toggleGiftFlavor(index, id)}
+                            />
+                            <span>{flavor.name}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))
+              )}
+
+              {form.giftSets.length > 0 && (
+                <div className="nf-bulk-labels">
+                  <label className="nf-bulk-label-toggle">
+                    <input
+                      type="checkbox"
+                      checked={form.customLabelsRequested}
+                      onChange={(event) =>
+                        changeCustomLabels(event.target.checked)
+                      }
+                    />
+                    <span>Request custom labels for these gift sets</span>
+                  </label>
+
+                  {form.customLabelsRequested && (
+                    <>
+                      <div className="nf-bulk-field full">
+                        <label htmlFor="gift-label-notes">
+                          Custom label details
+                        </label>
+                        <textarea
+                          id="gift-label-notes"
+                          maxLength={3000}
+                          value={form.customLabelNotes}
+                          onChange={(event) =>
+                            updateForm("customLabelNotes", event.target.value)
+                          }
+                          placeholder="Describe the business name, event, wording, colors, logo placement, or other label ideas."
+                        />
+                      </div>
+
+                      <div className="nf-bulk-upload">
+                        <strong>Upload label examples</strong>
+                        <span>
+                          Optional. Add up to 5 JPG, PNG, WebP, or PDF examples,
+                          maximum 5 MB each. Files are private to your partner
+                          request.
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,application/pdf"
+                          multiple
+                          disabled={
+                            uploadingLabels || form.labelExamples.length >= 5
+                          }
+                          onChange={uploadLabelExamples}
+                        />
+                        {uploadingLabels && (
+                          <span>Uploading private examples…</span>
+                        )}
+
+                        {form.labelExamples.length > 0 && (
+                          <div className="nf-bulk-files">
+                            {form.labelExamples.map((example) => (
+                              <div
+                                className="nf-bulk-file"
+                                key={example.storage_path}
+                              >
+                                <span>{example.file_name}</span>
+                                <button
+                                  type="button"
+                                  disabled={uploadingLabels}
+                                  onClick={() => removeLabelExample(example)}
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          ) : activeSize ? (
+            <div className="nf-bulk-workspace">
+              <div className="nf-bulk-workspace-head">
+                <div>
+                  <h3>{activeSize.label} Honey</h3>
+                  <p>
+                    Natural {money(activeSize.natural_price_cents)} each ·
+                    Infused {money(activeSize.infused_price_cents)} each
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="nf-bulk-add-primary"
+                  disabled={form.items.length >= 50}
+                  onClick={() => addBulkLine(activeSize.id)}
+                >
+                  + Add {activeSize.label} Item
+                </button>
+              </div>
+
+              {visibleBulkLines.length === 0 ? (
+                <div className="nf-bulk-empty">
+                  No {activeSize.label} items added yet. Use the button above to
+                  add Natural or Infused honey.
+                </div>
+              ) : (
+                visibleBulkLines.map(({ line, index }) => {
+                  const unitPrice = priceFor(line);
+
+                  return (
+                    <div className="nf-bulk-line" key={`bulk-line-${index}`}>
+                      <div className="nf-bulk-line-field">
+                        <label>Honey</label>
+                        <select
+                          value={line.honeyType}
+                          onChange={(event) =>
+                            updateLine(index, "honeyType", event.target.value)
+                          }
+                        >
+                          <option value="natural">Natural</option>
+                          <option value="infused">Infused</option>
+                        </select>
+                        <span className="nf-bulk-line-price">
+                          {activeSize.label} · {money(unitPrice)} each
+                        </span>
+                      </div>
+
+                      <div className="nf-bulk-line-field">
+                        <label>
+                          Flavor{" "}
+                          {line.honeyType === "infused" ? "" : "(not needed)"}
+                        </label>
+                        {line.honeyType === "infused" ? (
+                          <select
+                            value={line.flavorId}
+                            onChange={(event) =>
+                              updateLine(index, "flavorId", event.target.value)
+                            }
+                          >
+                            <option value="">Choose an infused flavor</option>
+                            {(catalog.flavors || []).map((flavor) => (
+                              <option key={flavor.id} value={flavor.id}>
+                                {flavor.name}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input value="Natural Raw Honey" disabled />
+                        )}
+                      </div>
+
+                      <div className="nf-bulk-line-field">
+                        <label>How many</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="999"
+                          step="1"
+                          value={line.quantity}
+                          onChange={(event) =>
+                            updateLine(index, "quantity", event.target.value)
+                          }
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        className="nf-bulk-remove"
+                        onClick={() =>
+                          setForm((current) => ({
+                            ...current,
+                            items: current.items.filter((_, i) => i !== index),
+                          }))
+                        }
+                      >
+                        Remove
+                      </button>
+
+                      <div className="nf-bulk-line-notes">
+                        <input
+                          aria-label={`Notes for bulk product ${index + 1}`}
+                          maxLength={1000}
+                          value={line.notes}
+                          onChange={(event) =>
+                            updateLine(index, "notes", event.target.value)
+                          }
+                          placeholder="Optional item notes"
+                        />
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          ) : null}
+
+          <div className="nf-bulk-step-title">
+            <span className="nf-bulk-step-number">2</span>
+            <div>
+              <h3>Fulfillment & timing</h3>
+              <p>Tell us when you need it and how you would like to receive it.</p>
+            </div>
           </div>
 
           <div className="nf-bulk-meta">
@@ -747,351 +1182,73 @@ export default function PartnerBulkOrderPanel() {
             </div>
           </div>
 
-          <div className="nf-bulk-items">
-            <div className="nf-bulk-items-head">
-              <div>
-                <h3>Bulk containers</h3>
-                <p>
-                  Add one line for each size and flavor combination. Example:
-                  2 × 1 Gallon Blueberry plus 1 × 1 Gallon Strawberry.
-                </p>
-              </div>
-              <button
-                type="button"
-                className="btn ghost"
-                disabled={form.items.length >= 50}
-                onClick={() =>
-                  setForm((current) => ({
-                    ...current,
-                    items: [...current.items, emptyLine()],
-                  }))
-                }
-              >
-                Add Size / Flavor
-              </button>
+
+          <div className="nf-bulk-step-title">
+            <span className="nf-bulk-step-number">3</span>
+            <div>
+              <h3>Review your request</h3>
+              <p>
+                Switching categories above does not remove anything. Everything
+                you added stays in this request.
+              </p>
             </div>
+          </div>
 
-            {form.items.length === 0 ? (
-              <div className="nf-bulk-empty">
-                No bulk containers added. You can submit a gift-set-only request
-                or add a bulk size and flavor.
+          {hasRequestedProducts ? (
+            <div className="nf-bulk-cart">
+              <div className="nf-bulk-cart-head">
+                <h3>Your request so far</h3>
+                <span>
+                  {totalContainers} bulk container
+                  {totalContainers === 1 ? "" : "s"} · {totalGiftSets} gift set
+                  {totalGiftSets === 1 ? "" : "s"}
+                </span>
               </div>
-            ) : (
-              form.items.map((line, index) => {
+
+              {form.items.map((line, index) => {
                 const size = sizeById.get(line.sizeId);
-                const unitPrice = priceFor(line);
-
+                const flavor =
+                  line.honeyType === "natural"
+                    ? "Natural Raw Honey"
+                    : flavorById.get(line.flavorId)?.name || "Choose flavor";
                 return (
-                  <div className="nf-bulk-line" key={`bulk-line-${index}`}>
-                    <div className="nf-bulk-line-field">
-                      <label>Honey</label>
-                      <select
-                        value={line.honeyType}
-                        onChange={(event) =>
-                          updateLine(index, "honeyType", event.target.value)
-                        }
-                      >
-                        <option value="natural">Natural</option>
-                        <option value="infused">Infused</option>
-                      </select>
-                    </div>
-
-                    <div className="nf-bulk-line-field">
-                      <label>Container</label>
-                      <select
-                        value={line.sizeId}
-                        onChange={(event) =>
-                          updateLine(index, "sizeId", event.target.value)
-                        }
-                      >
-                        {(catalog.sizes || []).map((option) => (
-                          <option key={option.id} value={option.id}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                      {size && (
-                        <span className="nf-bulk-line-price">
-                          {money(unitPrice)} each
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="nf-bulk-line-field">
-                      <label>
-                        Flavor{" "}
-                        {line.honeyType === "infused" ? "" : "(not needed)"}
-                      </label>
-                      {line.honeyType === "infused" ? (
-                        <select
-                          value={line.flavorId}
-                          onChange={(event) =>
-                            updateLine(index, "flavorId", event.target.value)
-                          }
-                        >
-                          <option value="">Choose an infused flavor</option>
-                          {(catalog.flavors || []).map((flavor) => (
-                            <option key={flavor.id} value={flavor.id}>
-                              {flavor.name}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <input value="Natural Raw Honey" disabled />
-                      )}
-                    </div>
-
-                    <div className="nf-bulk-line-field">
-                      <label>How many</label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="999"
-                        step="1"
-                        value={line.quantity}
-                        onChange={(event) =>
-                          updateLine(index, "quantity", event.target.value)
-                        }
-                      />
-                    </div>
-
+                  <div className="nf-bulk-cart-row" key={`cart-bulk-${index}`}>
+                    <strong>
+                      {line.quantity} × {size?.label || line.sizeId} · {flavor}
+                    </strong>
+                    <span>{money(priceFor(line) * Number(line.quantity || 0))}</span>
                     <button
                       type="button"
-                      className="nf-bulk-remove"
-                      onClick={() =>
-                        setForm((current) => ({
-                          ...current,
-                          items: current.items.filter((_, i) => i !== index),
-                        }))
-                      }
+                      onClick={() => chooseOrderSection(line.sizeId)}
                     >
-                      Remove
+                      Edit
                     </button>
-
-                    <div className="nf-bulk-line-notes">
-                      <input
-                        aria-label={`Notes for bulk product ${index + 1}`}
-                        maxLength={1000}
-                        value={line.notes}
-                        onChange={(event) =>
-                          updateLine(index, "notes", event.target.value)
-                        }
-                        placeholder="Optional item notes"
-                      />
-                    </div>
                   </div>
                 );
-              })
-            )}
-          </div>
+              })}
 
-          <div className="nf-bulk-gifts">
-            <div className="nf-bulk-items-head">
-              <div>
-                <h3>Small gift sets</h3>
-                <p>
-                  Choose the container style, quantity, and all flavors you want.
-                  A NectarFusions administrator will reach out with pricing after review.
-                </p>
-              </div>
-              <button
-                type="button"
-                className="btn ghost"
-                disabled={form.giftSets.length >= 20}
-                onClick={() =>
-                  setForm((current) => ({
-                    ...current,
-                    giftSets: [...current.giftSets, emptyGiftSet()],
-                  }))
-                }
-              >
-                Add Gift Set
-              </button>
-            </div>
-
-            <div className="nf-bulk-gift-note">
-              <strong>Gift set pricing will be provided after review.</strong>{" "}
-              Submit the container type, quantity, and requested flavors now. A
-              NectarFusions administrator will reach out with pricing.
-            </div>
-
-            {form.giftSets.map((gift, index) => (
-              <div className="nf-bulk-gift" key={`gift-set-${index}`}>
-                <div className="nf-bulk-line-field">
-                  <label>Gift container</label>
-                  <select
-                    value={gift.type}
-                    onChange={(event) =>
-                      updateGift(index, "type", event.target.value)
-                    }
+              {form.giftSets.map((gift, index) => (
+                <div className="nf-bulk-cart-row" key={`cart-gift-${index}`}>
+                  <strong>
+                    {gift.quantity} ×{" "}
+                    {gift.type === "Small Plastic Bear"
+                      ? "2 oz Plastic Bear"
+                      : "Glass Hexagonal Container"}
+                  </strong>
+                  <span>Pricing after review</span>
+                  <button
+                    type="button"
+                    onClick={() => chooseOrderSection("gift_sets")}
                   >
-                    <option value="Small Plastic Bear">2 oz Plastic Bear</option>
-                    <option value="Small Glass Hexagonal Container">Small Glass Hexagonal Container</option>
-                  </select>
+                    Edit
+                  </button>
                 </div>
-
-                <div className="nf-bulk-line-field">
-                  <label>How many sets</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="999"
-                    step="1"
-                    value={gift.quantity}
-                    onChange={(event) =>
-                      updateGift(index, "quantity", event.target.value)
-                    }
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  className="nf-bulk-remove"
-                  onClick={() =>
-                    setForm((current) => ({
-                      ...current,
-                      giftSets: current.giftSets.filter((_, i) => i !== index),
-                    }))
-                  }
-                >
-                  Remove
-                </button>
-
-                <div className="nf-bulk-gift-preview">
-                  <img
-                    src={
-                      gift.type === "Small Plastic Bear"
-                        ? "/images/partner-gift-bear-2oz.jpg"
-                        : "/images/partner-gift-hexagonal.jpg"
-                    }
-                    alt={
-                      gift.type === "Small Plastic Bear"
-                        ? "2 oz plastic honey bear container"
-                        : "Small glass hexagonal honey container"
-                    }
-                  />
-                  <div className="nf-bulk-gift-preview-copy">
-                    <strong>
-                      {gift.type === "Small Plastic Bear"
-                        ? "2 oz Plastic Bear"
-                        : "Small Glass Hexagonal Container"}
-                    </strong>
-                    <span>
-                      {gift.type === "Small Plastic Bear"
-                        ? "Choose a preferred lid/top color below, then add any special presentation details."
-                        : "Add any special presentation or packaging details below."}
-                    </span>
-                  </div>
-                </div>
-
-                {gift.type === "Small Plastic Bear" && (
-                  <div className="nf-bulk-line-field nf-bulk-gift-detail">
-                    <label>Preferred lid / top color</label>
-                    <input
-                      maxLength={120}
-                      value={gift.lidColor}
-                      onChange={(event) =>
-                        updateGift(index, "lidColor", event.target.value)
-                      }
-                      placeholder="Example: yellow, black, white, or another requested color"
-                    />
-                  </div>
-                )}
-
-                <div className="nf-bulk-gift-detail">
-                  <label>Custom details / notes</label>
-                  <textarea
-                    maxLength={1000}
-                    value={gift.customDetails}
-                    onChange={(event) =>
-                      updateGift(index, "customDetails", event.target.value)
-                    }
-                    placeholder="Add special packaging, event, ribbon, presentation, quantity split, or other custom requests for this gift set."
-                  />
-                </div>
-
-                <div className="nf-bulk-gift-flavors">
-                  {(catalog.giftSetFlavors || []).map((flavor) => {
-                    const id = String(flavor.id);
-                    return (
-                      <label key={id}>
-                        <input
-                          type="checkbox"
-                          checked={gift.flavorIds.includes(id)}
-                          onChange={() => toggleGiftFlavor(index, id)}
-                        />
-                        <span>{flavor.name}</span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {form.giftSets.length > 0 && (
-            <div className="nf-bulk-labels">
-              <label className="nf-bulk-label-toggle">
-                <input
-                  type="checkbox"
-                  checked={form.customLabelsRequested}
-                  onChange={(event) => changeCustomLabels(event.target.checked)}
-                />
-                <span>Request custom labels for these gift sets</span>
-              </label>
-
-              {form.customLabelsRequested && (
-                <>
-                  <div className="nf-bulk-field full">
-                    <label htmlFor="gift-label-notes">Custom label details</label>
-                    <textarea
-                      id="gift-label-notes"
-                      maxLength={3000}
-                      value={form.customLabelNotes}
-                      onChange={(event) =>
-                        updateForm("customLabelNotes", event.target.value)
-                      }
-                      placeholder="Describe the business name, event, wording, colors, logo placement, or other label ideas."
-                    />
-                  </div>
-
-                  <div className="nf-bulk-upload">
-                    <strong>Upload label examples</strong>
-                    <span>
-                      Optional. Add up to 5 JPG, PNG, WebP, or PDF examples,
-                      maximum 5 MB each. Files are private to your partner request.
-                    </span>
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp,application/pdf"
-                      multiple
-                      disabled={uploadingLabels || form.labelExamples.length >= 5}
-                      onChange={uploadLabelExamples}
-                    />
-                    {uploadingLabels && <span>Uploading private examples…</span>}
-
-                    {form.labelExamples.length > 0 && (
-                      <div className="nf-bulk-files">
-                        {form.labelExamples.map((example) => (
-                          <div
-                            className="nf-bulk-file"
-                            key={example.storage_path}
-                          >
-                            <span>{example.file_name}</span>
-                            <button
-                              type="button"
-                              disabled={uploadingLabels}
-                              onClick={() => removeLabelExample(example)}
-                            >
-                              Remove
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
+              ))}
+            </div>
+          ) : (
+            <div className="nf-bulk-empty">
+              Your request is empty. Choose a product category above and add at
+              least one item.
             </div>
           )}
 
