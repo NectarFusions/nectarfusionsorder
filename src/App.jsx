@@ -7,6 +7,8 @@ import AdminPartnerManagement from "./pages/AdminPartnerManagement";
 import AdminPartnerEvents from "./pages/AdminPartnerEvents";
 import AdminPartnerResources from "./pages/AdminPartnerResources";
 import MarketConfirmationPage from "./pages/MarketConfirmationPage";
+import ReviewsPage, { HONEY_HIVE_URL, ReviewHomeCard } from "./pages/ReviewsPage";
+import AdminReviewsPanel from "./pages/AdminReviewsPanel";
 
 /* ============================================================
    NECTARFUSIONS — ORDER SYSTEM
@@ -10441,7 +10443,8 @@ export default function App() {
       },
       { terms: ["market", "markets", "near me", "store", "stores", "retail", "find us", "location"], view: "find" },
       { terms: ["about", "story", "difference", "quality", "ingredients", "raw", "unfiltered", "michigan"], view: "about" },
-      { terms: ["help", "order help", "cancel", "skip", "special request", "contact support"], view: "help" },
+      { terms: ["review", "reviews", "testimonial", "testimonials", "feedback", "buzz", "rate", "rating"], view: "reviews" },
+      { terms: ["help", "order help", "faq", "frequently asked", "cancel", "skip", "special request", "contact support"], view: "help" },
       { terms: ["club", "membership", "subscription", "subscribe", "bonus jar"], view: "subscribe" },
       { terms: ["policy", "policies", "privacy", "terms", "refund"], view: "policy" },
       { terms: ["shop", "honey", "flavor", "flavors", "order", "4 oz", "7 oz", "1 lb"], view: "shop" },
@@ -10657,7 +10660,15 @@ export default function App() {
                     className={view === "help" ? "selected" : ""}
                     onClick={() => setView("help")}
                   >
-                    Order Help
+                    Order Help | FAQ
+                  </button>
+
+                  <button
+                    type="button"
+                    className={view === "reviews" ? "selected" : ""}
+                    onClick={() => setView("reviews")}
+                  >
+                    Reviews
                   </button>
                 </div>
 
@@ -10811,7 +10822,8 @@ export default function App() {
       <button className="btn ghost" onClick={() => setView("about")}>About</button>
       <button className="btn ghost" onClick={() => setView("find")}>Find Us</button>
       <button className="btn ghost" onClick={() => setView("subscribe")}>Honey Club</button>
-      <button className="btn ghost" onClick={() => setView("help")}>Order Help</button>
+      <button className="btn ghost" onClick={() => setView("help")}>Order Help | FAQ</button>
+      <button className="btn ghost" onClick={() => setView("reviews")}>Reviews</button>
       <button className="btn ghost" onClick={() => setView("partner")}>Partner</button>
       <button className="btn ghost" onClick={() => setView("policy")}>Policies</button>
     </>
@@ -10865,6 +10877,15 @@ export default function App() {
   /* ================= FIND NECTARFUSIONS ================= */
   if (view === "find") {
     return <FindNectarFusions Header={Header} onBack={() => setView("shop")} marketDates={cat.marketDates ?? []} />;
+  }
+
+  /* ================= REVIEWS ================= */
+  if (view === "reviews") {
+    return <ReviewsPage
+      Header={Header}
+      styles={CSS}
+      onBack={() => setView("shop")}
+    />;
   }
 
   /* ================= ORDER HELP ================= */
@@ -12197,6 +12218,19 @@ export default function App() {
         )}
 
         </div>
+
+        <ReviewHomeCard
+          onRead={() => setView("reviews")}
+          onLeave={() => {
+            setView("reviews");
+            window.setTimeout(() => {
+              document.getElementById("nf-leave-review")?.scrollIntoView({
+                behavior: "smooth",
+                block: "start",
+              });
+            }, 100);
+          }}
+        />
 
         <div style={{ borderTop: "1px solid #E7DCC9", marginTop: 26, paddingTop: 18, textAlign: "center" }}>
           <button className="btn ghost" onClick={() => setView("policy")} style={{ padding: "8px 14px", fontSize: 12.5 }}>
@@ -13545,7 +13579,7 @@ function OrderHelp({ Header, onBack, onOrderFound, initialOrderNo}) {
 
   return (
     <div className="nf"><style>{CSS}</style>
-      <Header eyebrow="Customer care" title="ORDER HELP"
+      <Header eyebrow="Customer care" title="ORDER HELP | FAQ"
         right={<button className="btn ghost nf-back-to-shop" onClick={onBack}>Back to shop</button>} />
 
       <div className="nf-wrap" style={{ paddingTop: 26 }}>
@@ -13733,6 +13767,18 @@ function OrderHelp({ Header, onBack, onOrderFound, initialOrderNo}) {
                 "Are NectarFusions honeys made with artificial flavors or syrups?",
                 "No. Our infusions use real fruits, herbs, spices, peppers, coffee, and vanilla—never artificial flavors or syrups.",
               ],
+              [
+                "What is the difference between Regular and Spun honey?",
+                "Regular honey is pourable and drizzly. Spun honey is the same honey crystallized on purpose into a smooth, thick, spreadable texture.",
+              ],
+              [
+                "What if my raw honey crystallizes?",
+                "Crystallization is natural. Set the sealed jar in warm water until it loosens back up. Avoid very hot water if you want to preserve the character of raw honey.",
+              ],
+              [
+                "Where can I share recipes or get ideas for using my honey?",
+                "Join the NectarFusions Honey Hive Facebook group for recipes, pairings, drinks, marinades, baking ideas, and ways other honey lovers are using their jars.",
+              ],
             ].map(([question, answer]) => (
               <details key={question} className="nf-help-faq-item">
                 <summary>{question}</summary>
@@ -13740,6 +13786,25 @@ function OrderHelp({ Header, onBack, onOrderFound, initialOrderNo}) {
               </details>
             ))}
           </div>
+        </section>
+
+        <section className="nf-honey-hive nf-help-reveal" style={{ marginTop: 20 }}>
+          <div className="nf-modern-kicker">Recipes, pairings & honey ideas</div>
+          <h2 style={{ margin: "7px 0 10px", fontFamily: "'Bebas Neue',Impact,sans-serif", fontSize: 42 }}>
+            JOIN THE HONEY HIVE
+          </h2>
+          <p style={{ margin: "0 0 14px", color: c.brown, fontSize: 16, lineHeight: 1.7 }}>
+            Share recipes and discover new ways to use your NectarFusions honey with our Facebook community.
+          </p>
+          <a
+            className="btn solid"
+            href={HONEY_HIVE_URL}
+            target="_blank"
+            rel="noreferrer"
+            style={{ display: "inline-flex", padding: "11px 16px", textDecoration: "none" }}
+          >
+            Visit the Honey Hive
+          </a>
         </section>
 
         <section className="nf-help-contact nf-help-reveal">
@@ -14101,6 +14166,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
     ["marketPickups", `Market Pickups (${marketOpenCount})`],
     ["markets", "Market Schedule"],
     ["requests", `Order Help (${newRequestCount})`],
+    ["reviews", "Reviews"],
     ["orders", `Orders (${standardActiveOrders.length + standardPendingPaymentOrders.length})`],
     ["partnerProgram", "Partner Program"],
     ["partnerEvents", "Partner Events"],
@@ -14144,6 +14210,10 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
             </button>
           ))}
         </div>
+
+        {adminTab === "reviews" && (
+          <AdminReviewsPanel />
+        )}
 
         {adminTab === "orders" && (
           <>
