@@ -87,6 +87,18 @@ export default async (req) => {
       });
     }
 
+    if (
+      s.method === "delivery" &&
+      s.prepaid_first_box_plan_id &&
+      s.recurring_start_date &&
+      !s.square_subscription_id
+    ) {
+      return bad(
+        "This membership already has a paid first box. Complete secure recurring card setup from the Honey Club page instead of starting a new immediate-charge checkout.",
+        409
+      );
+    }
+
     if (s.square_checkout_url) {
       try {
         await sendSubscriptionEmails(s, "started");

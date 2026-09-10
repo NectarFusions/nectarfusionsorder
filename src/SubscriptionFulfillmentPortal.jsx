@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "./lib/supabase";
+import SubscriptionCardSetup from "./SubscriptionCardSetup";
 
 const colors = {
   ink: "#17120C",
@@ -706,6 +707,7 @@ function FulfillmentForm({
 
         {!admin &&
           needsCardSetup &&
+          !initial.hasPrepaidFirstBox &&
           (success || savedDeliverySetupComplete) && (
           <button
             type="button"
@@ -786,6 +788,17 @@ function CustomerPortal({ token }) {
         markets={state.data.markets || []}
         onSaved={load}
       />
+
+      {state.data.subscription.method === "delivery" &&
+        state.data.subscription.billingMode ===
+          "card_setup_required" &&
+        state.data.subscription.hasPrepaidFirstBox &&
+        state.data.subscription.recurringStartDate && (
+          <SubscriptionCardSetup
+            token={token}
+            onComplete={load}
+          />
+        )}
     </div>
   );
 }
