@@ -406,7 +406,7 @@ export default async (req) => {
           const { data: activatedSubscription, error: activationReadError } =
             await supa
               .from("subscriptions")
-              .select("*, customers(*), plans(*)")
+              .select("*, customers(*), plans!subscriptions_plan_id_fkey(*)")
               .eq("id", row.id)
               .single();
 

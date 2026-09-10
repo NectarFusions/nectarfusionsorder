@@ -48,7 +48,7 @@ export default async (req) => {
     const supa = db();
     const { data: s, error } = await supa
       .from("subscriptions")
-      .select("*, plans(*), customers(*)")
+      .select("*, plans!subscriptions_plan_id_fkey(*), customers(*)")
       .eq("token", token)
       .single();
 

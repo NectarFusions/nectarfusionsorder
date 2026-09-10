@@ -134,7 +134,7 @@ export default async (req) => {
 
   const { data: subscription, error } = await supabase
     .from("subscriptions")
-    .select("*, plans(*), customers(*)")
+    .select("*, plans!subscriptions_plan_id_fkey(*), customers(*)")
     .eq("token", token)
     .maybeSingle();
 

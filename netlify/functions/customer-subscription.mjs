@@ -47,7 +47,7 @@ export default async (req) => {
 
   const { data: subscription, error } = await supabase
     .from("subscriptions")
-    .select("*, plans(*), customers(*), market_dates(id, day, where_at, hours, venues(name, where_at, hours))")
+    .select("*, plans!subscriptions_plan_id_fkey(*), customers(*), market_dates(id, day, where_at, hours, venues(name, where_at, hours))")
     .eq("token", token)
     .maybeSingle();
 

@@ -99,7 +99,7 @@ async function deliveryZoneForZip(supa, zip) {
 async function subscriptionByToken(supa, token) {
   const { data, error } = await supa
     .from("subscriptions")
-    .select("*, plans(*), customers(*), market_dates(id, day, where_at, hours, venues(name, where_at, hours))")
+    .select("*, plans!subscriptions_plan_id_fkey(*), customers(*), market_dates(id, day, where_at, hours, venues(name, where_at, hours))")
     .eq("token", token)
     .maybeSingle();
 
@@ -110,7 +110,7 @@ async function subscriptionByToken(supa, token) {
 async function subscriptionById(supa, id) {
   const { data, error } = await supa
     .from("subscriptions")
-    .select("*, plans(*), customers(*), market_dates(id, day, where_at, hours, venues(name, where_at, hours))")
+    .select("*, plans!subscriptions_plan_id_fkey(*), customers(*), market_dates(id, day, where_at, hours, venues(name, where_at, hours))")
     .eq("id", id)
     .maybeSingle();
 
@@ -1116,7 +1116,7 @@ export default async (req) => {
       const [result, markets, plansResult] = await Promise.all([
         supa
           .from("subscriptions")
-          .select("*, plans(*), customers(*), market_dates(id, day, where_at, hours, venues(name, where_at, hours))")
+          .select("*, plans!subscriptions_plan_id_fkey(*), customers(*), market_dates(id, day, where_at, hours, venues(name, where_at, hours))")
           .is("archived_at", null)
           .order("started_at", { ascending: false }),
         upcomingMarkets(supa),
