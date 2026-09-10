@@ -897,14 +897,6 @@ async function handleAdminPlanChange(req, body) {
     );
   }
 
-  const effectiveDate = addDays(sq?.charged_through_date, 1);
-  if (!effectiveDate) {
-    return bad(
-      "Square did not provide the paid-through date, so the next safe renewal date could not be determined.",
-      409
-    );
-  }
-
   const cardId = sq?.card_id || s.saved_square_card_id;
   if (!cardId || !sq?.customer_id || !sq?.location_id) {
     return bad(
@@ -915,10 +907,40 @@ async function handleAdminPlanChange(req, body) {
 
   await deleteSavedCheckoutLink(s);
 
-  await square(`/v2/subscriptions/${s.square_subscription_id}/cancel`, {
-    method: "POST",
-    body: {},
-  });
+  const cancelResult = await square(
+    `/v2/subscriptions/${s.square_subscription_id}/cancel`,
+    {
+      method: "POST",
+      body: {},
+    }
+  );
+
+  const cancelAction =
+    (cancelResult.actions || []).find(
+      (action) => action.type === "CANCEL"
+    ) || null;
+
+  // Square's cancellation response is authoritative for the end of the
+  // current paid billing period. Start the replacement the following day.
+  const cancelDate = cancelResult.subscription?.canceled_date || null;
+  const effectiveDate = addDays(cancelDate, 1);
+
+  if (!cancelAction?.id || !effectiveDate) {
+    if (cancelAction?.id) {
+      try {
+        await deleteAction(s.square_subscription_id, cancelAction.id);
+      } catch (rollbackError) {
+        console.error(
+          "CRITICAL: incomplete plan-change cancellation rollback failed:",
+          rollbackError
+        );
+      }
+    }
+    return bad(
+      "Square did not confirm the end-of-cycle cancellation date. The subscription change was not scheduled.",
+      502
+    );
+  }
 
   const { error: updateError } = await supa
     .from("subscriptions")
@@ -937,15 +959,15 @@ async function handleAdminPlanChange(req, body) {
 
   if (updateError) {
     try {
-      await square(`/v2/subscriptions/${s.square_subscription_id}`, {
-        method: "PUT",
-        body: { subscription: { canceled_date: null } },
-      });
+      await deleteAction(s.square_subscription_id, cancelAction.id);
     } catch (rollbackError) {
-      console.error("CRITICAL: plan-change cancellation rollback failed:", rollbackError);
+      console.error(
+        "CRITICAL: plan-change cancellation rollback failed:",
+        rollbackError
+      );
     }
     throw new Error(
-      "The plan change could not be saved. The Square cancellation rollback was attempted; verify this member before retrying."
+      "The plan change could not be saved. The scheduled Square cancellation rollback was attempted; verify this member before retrying."
     );
   }
 
