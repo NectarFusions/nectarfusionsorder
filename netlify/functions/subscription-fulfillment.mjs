@@ -22,6 +22,17 @@ const clean = (value, max = 5000) => {
 const relationRow = (value) =>
   Array.isArray(value) ? value[0] || {} : value || {};
 
+const variationForPlan = (plan, cadence) =>
+  cadence === "1mo" ? plan?.square_var_1mo : plan?.square_var_2mo;
+
+const addDays = (iso, days) => {
+  const [y, m, d] = String(iso || "").split("-").map(Number);
+  if (!y || !m || !d) return null;
+  const date = new Date(Date.UTC(y, m - 1, d));
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+};
+
 const localDate = () =>
   new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Detroit",
@@ -107,6 +118,54 @@ async function subscriptionById(supa, id) {
   return data || null;
 }
 
+async function planById(supa, id) {
+  const { data, error } = await supa
+    .from("plans")
+    .select("id, name, price_cents, square_var_1mo, square_var_2mo")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return data || null;
+}
+
+async function recordPlanChangeEvent(supa, values) {
+  const { error } = await supa
+    .from("subscription_plan_change_events")
+    .insert(values);
+
+  if (error) {
+    console.error("Could not record subscription plan change audit event:", error);
+  }
+}
+
+async function createSquareSubscription({
+  customerId,
+  locationId,
+  cardId,
+  variationId,
+  startDate,
+  idempotencyKey,
+}) {
+  const result = await square("/v2/subscriptions", {
+    method: "POST",
+    body: {
+      idempotency_key: idempotencyKey,
+      location_id: locationId,
+      customer_id: customerId,
+      plan_variation_id: variationId,
+      card_id: cardId,
+      ...(startDate ? { start_date: startDate } : {}),
+    },
+  });
+
+  if (!result.subscription?.id) {
+    throw new Error("Square did not create the replacement subscription.");
+  }
+
+  return result.subscription;
+}
+
 function selectedMarket(s) {
   const market = relationRow(s.market_dates);
   const venue = relationRow(market.venues);
@@ -133,6 +192,7 @@ function serializeSubscription(s, { admin = false } = {}) {
   const base = {
     subNo: s.sub_no,
     memberName: customer.name || "",
+    planId: s.plan_id,
     planName: plan.name || "NectarFusions Honey Club",
     price: Number(plan.price_cents || 0) / 100,
     cadence: s.cadence,
@@ -158,6 +218,11 @@ function serializeSubscription(s, { admin = false } = {}) {
     termsAcceptedAt: s.terms_accepted_at || null,
     termsVersion: s.terms_version || null,
     fulfillmentUpdatedAt: s.fulfillment_updated_at || null,
+    pendingPlanId: s.pending_plan_id || null,
+    pendingCadence: s.pending_cadence || null,
+    planChangeEffectiveDate: s.plan_change_effective_date || null,
+    planChangeStatus: s.plan_change_status || null,
+    planChangeRequestedAt: s.plan_change_requested_at || null,
     needsCardSetup:
       s.method === "delivery" &&
       (!s.square_subscription_id || s.billing_mode === "card_setup_required"),
@@ -194,6 +259,49 @@ async function deleteAction(squareSubscriptionId, actionId) {
   await square(
     `/v2/subscriptions/${squareSubscriptionId}/actions/${actionId}`,
     { method: "DELETE" }
+  );
+}
+
+async function deleteSavedCheckoutLink(s) {
+  if (!s?.square_checkout_url && !s?.square_checkout_link_id) return;
+
+  if (s.square_checkout_link_id) {
+    await square(
+      `/v2/online-checkout/payment-links/${s.square_checkout_link_id}`,
+      { method: "DELETE" }
+    );
+    return;
+  }
+
+  let cursor = null;
+  for (let page = 0; page < 10; page += 1) {
+    const query = cursor
+      ? `?limit=100&cursor=${encodeURIComponent(cursor)}`
+      : "?limit=100";
+    const result = await square(
+      `/v2/online-checkout/payment-links${query}`,
+      { method: "GET" }
+    );
+
+    const match = (result.payment_links || []).find(
+      (link) =>
+        link.url === s.square_checkout_url ||
+        link.long_url === s.square_checkout_url
+    );
+
+    if (match?.id) {
+      await square(`/v2/online-checkout/payment-links/${match.id}`, {
+        method: "DELETE",
+      });
+      return;
+    }
+
+    cursor = result.cursor || null;
+    if (!cursor) return;
+  }
+
+  throw new Error(
+    "The prior Square setup link could not be safely verified. No subscription change was made."
   );
 }
 
@@ -295,6 +403,33 @@ async function prepareMarketBilling(s) {
 
 async function prepareDeliveryBilling(s) {
   if (!s.square_subscription_id) {
+    const plan = relationRow(s.plans);
+    const variationId = variationForPlan(plan, s.cadence);
+
+    if (
+      s.saved_square_card_id &&
+      s.square_customer_id &&
+      variationId &&
+      process.env.SQUARE_LOCATION_ID
+    ) {
+      const created = await createSquareSubscription({
+        customerId: s.square_customer_id,
+        locationId: process.env.SQUARE_LOCATION_ID,
+        cardId: s.saved_square_card_id,
+        variationId,
+        startDate: localDate(),
+        idempotencyKey: `delivery-restart-${s.id}-${variationId}-${localDate()}`,
+      });
+
+      return {
+        billingMode: "card",
+        pauseActionId: null,
+        needsCardSetup: false,
+        squareSubscriptionId: created.id,
+        squarePlanVariationId: variationId,
+      };
+    }
+
     return {
       billingMode: "card_setup_required",
       pauseActionId: null,
@@ -529,6 +664,13 @@ async function handleUpdate(req, body) {
     fulfillment_updated_by: isAdminUpdate ? "admin" : "customer",
   });
 
+  if (billing.squareSubscriptionId) {
+    patch.square_subscription_id = billing.squareSubscriptionId;
+  }
+  if (billing.squarePlanVariationId) {
+    patch.square_plan_variation_id = billing.squarePlanVariationId;
+  }
+
   // Market memberships remain active locally even when Square reports PAUSED.
   if (targetMethod === "market" && s.status !== "cancelled") {
     patch.status = "active";
@@ -568,6 +710,342 @@ async function handleUpdate(req, body) {
         : updated.square_subscription_id
           ? "Home Delivery is saved and recurring Square billing is active."
           : "Home Delivery is saved. Secure Square card setup is required before recurring delivery billing can begin.",
+  });
+}
+
+
+async function handleAdminPlanChange(req, body) {
+  const admin = await requireAdmin(req);
+  if (!admin) return bad("Not an admin", 403);
+
+  const subscriptionId = String(body.subscriptionId || "");
+  if (!UUID_RE.test(subscriptionId)) return bad("Invalid subscription ID.");
+
+  if (!body.adminConfirmedAuthorization) {
+    return bad(
+      "Confirm that the customer requested and authorized this subscription change."
+    );
+  }
+
+  const targetPlanId = String(body.planId || "").trim();
+  const targetCadence = String(body.cadence || "").trim();
+
+  if (!["1mo", "2mo"].includes(targetCadence)) {
+    return bad("Choose Monthly or Every 2 months.");
+  }
+
+  const supa = db();
+  const [s, targetPlan] = await Promise.all([
+    subscriptionById(supa, subscriptionId),
+    planById(supa, targetPlanId),
+  ]);
+
+  if (!s) return bad("Subscription not found.", 404);
+  if (!targetPlan) return bad("Choose a valid Honey Club plan.");
+  if (s.status === "cancelled") {
+    return bad("Cancelled memberships cannot change subscription plans.", 409);
+  }
+  if (s.plan_change_status === "scheduled" || s.pending_plan_id) {
+    return bad(
+      "This membership already has a subscription change scheduled.",
+      409
+    );
+  }
+  if (s.plan_id === targetPlanId && s.cadence === targetCadence) {
+    return bad("That member is already on this subscription and cadence.");
+  }
+
+  const variationId = variationForPlan(targetPlan, targetCadence);
+  if (!variationId) {
+    return bad(
+      "That Honey Club plan is missing its Square billing variation. No change was made.",
+      500
+    );
+  }
+
+  const requestedAt = new Date().toISOString();
+
+  if (s.billing_mode === "market_manual") {
+    await deleteSavedCheckoutLink(s);
+
+    let savedCardId = s.saved_square_card_id || null;
+    const oldSquareSubscriptionId = s.square_subscription_id || null;
+
+    if (oldSquareSubscriptionId) {
+      const detail = await squareSubscriptionDetail(oldSquareSubscriptionId);
+      const sq = detail?.subscription;
+      const actions = detail?.actions || [];
+
+      if (actions.some((action) => action.type === "RESUME")) {
+        return bad(
+          "This Market Pickup membership still has an automatic Square resume scheduled. Remove that resume before changing the subscription tier.",
+          409
+        );
+      }
+
+      savedCardId = sq?.card_id || savedCardId;
+    }
+
+    const { error: updateError } = await supa
+      .from("subscriptions")
+      .update({
+        plan_id: targetPlanId,
+        cadence: targetCadence,
+        square_subscription_id: null,
+        square_checkout_url: null,
+        square_checkout_link_id: null,
+        square_plan_variation_id: variationId,
+        saved_square_card_id: savedCardId,
+        pending_plan_id: null,
+        pending_cadence: null,
+        plan_change_effective_date: null,
+        plan_change_status: null,
+        plan_change_requested_at: requestedAt,
+        plan_change_requested_by: admin.id,
+      })
+      .eq("id", s.id);
+
+    if (updateError) throw new Error(updateError.message);
+
+    await recordPlanChangeEvent(supa, {
+      subscription_id: s.id,
+      old_plan_id: s.plan_id,
+      new_plan_id: targetPlanId,
+      old_cadence: s.cadence,
+      new_cadence: targetCadence,
+      effective_date: localDate(),
+      status: "completed",
+      requested_by: admin.id,
+      old_square_subscription_id: oldSquareSubscriptionId,
+      note:
+        "Market Pickup plan change applied immediately. Any prior paused Square subscription remains paused and unlinked.",
+      completed_at: requestedAt,
+    });
+
+    return ok({
+      ok: true,
+      effective: "immediate",
+      message: `${targetPlan.name} is now the member's Honey Club plan. Market Pickup remains pay-at-market.`,
+    });
+  }
+
+  if (!s.square_subscription_id || s.billing_mode === "card_setup_required") {
+    await deleteSavedCheckoutLink(s);
+
+    const { error: updateError } = await supa
+      .from("subscriptions")
+      .update({
+        plan_id: targetPlanId,
+        cadence: targetCadence,
+        square_checkout_url: null,
+        square_checkout_link_id: null,
+        square_plan_variation_id: variationId,
+        billing_mode: "card_setup_required",
+        pending_plan_id: null,
+        pending_cadence: null,
+        plan_change_effective_date: null,
+        plan_change_status: null,
+        plan_change_requested_at: requestedAt,
+        plan_change_requested_by: admin.id,
+      })
+      .eq("id", s.id);
+
+    if (updateError) throw new Error(updateError.message);
+
+    await recordPlanChangeEvent(supa, {
+      subscription_id: s.id,
+      old_plan_id: s.plan_id,
+      new_plan_id: targetPlanId,
+      old_cadence: s.cadence,
+      new_cadence: targetCadence,
+      effective_date: localDate(),
+      status: "completed",
+      requested_by: admin.id,
+      old_square_subscription_id: s.square_subscription_id || null,
+      note:
+        "Plan changed before recurring card setup. Prior checkout URL invalidated.",
+      completed_at: requestedAt,
+    });
+
+    return ok({
+      ok: true,
+      effective: "immediate",
+      needsCardSetup: true,
+      message: `${targetPlan.name} is saved. Secure card setup is required before recurring billing begins.`,
+    });
+  }
+
+  const detail = await squareSubscriptionDetail(s.square_subscription_id);
+  const sq = detail?.subscription;
+  const actions = detail?.actions || [];
+  const status = String(sq?.status || "").toUpperCase();
+
+  if (status !== "ACTIVE") {
+    return bad(
+      `Square billing is currently ${status || "unavailable"}. Plan changes can only be scheduled while recurring billing is active.`,
+      409
+    );
+  }
+
+  const conflicting = actions.find((action) =>
+    ["PAUSE", "RESUME", "CANCEL", "SWAP_PLAN"].includes(action.type)
+  );
+  if (conflicting) {
+    return bad(
+      `Square already has a ${conflicting.type.toLowerCase()} scheduled for this member. Finish or remove that scheduled action before changing their subscription.`,
+      409
+    );
+  }
+
+  const effectiveDate = addDays(sq?.charged_through_date, 1);
+  if (!effectiveDate) {
+    return bad(
+      "Square did not provide the paid-through date, so the next safe renewal date could not be determined.",
+      409
+    );
+  }
+
+  const cardId = sq?.card_id || s.saved_square_card_id;
+  if (!cardId || !sq?.customer_id || !sq?.location_id) {
+    return bad(
+      "Square does not have enough saved billing information to automate this change.",
+      409
+    );
+  }
+
+  await deleteSavedCheckoutLink(s);
+
+  await square(`/v2/subscriptions/${s.square_subscription_id}/cancel`, {
+    method: "POST",
+    body: {},
+  });
+
+  const { error: updateError } = await supa
+    .from("subscriptions")
+    .update({
+      pending_plan_id: targetPlanId,
+      pending_cadence: targetCadence,
+      plan_change_effective_date: effectiveDate,
+      plan_change_status: "scheduled",
+      plan_change_requested_at: requestedAt,
+      plan_change_requested_by: admin.id,
+      saved_square_card_id: cardId,
+      square_checkout_url: null,
+      square_checkout_link_id: null,
+    })
+    .eq("id", s.id);
+
+  if (updateError) {
+    try {
+      await square(`/v2/subscriptions/${s.square_subscription_id}`, {
+        method: "PUT",
+        body: { subscription: { canceled_date: null } },
+      });
+    } catch (rollbackError) {
+      console.error("CRITICAL: plan-change cancellation rollback failed:", rollbackError);
+    }
+    throw new Error(
+      "The plan change could not be saved. The Square cancellation rollback was attempted; verify this member before retrying."
+    );
+  }
+
+  await recordPlanChangeEvent(supa, {
+    subscription_id: s.id,
+    old_plan_id: s.plan_id,
+    new_plan_id: targetPlanId,
+    old_cadence: s.cadence,
+    new_cadence: targetCadence,
+    effective_date: effectiveDate,
+    status: "scheduled",
+    requested_by: admin.id,
+    old_square_subscription_id: s.square_subscription_id,
+    note:
+      "Old Square subscription finishes the paid billing period; replacement is created automatically when Square reports it canceled.",
+  });
+
+  return ok({
+    ok: true,
+    effective: "next_renewal",
+    effectiveDate,
+    message: `${targetPlan.name} is scheduled for ${effectiveDate}. The current paid box and price stay unchanged until then.`,
+  });
+}
+
+
+async function handleAdminCancelPlanChange(req, body) {
+  const admin = await requireAdmin(req);
+  if (!admin) return bad("Not an admin", 403);
+
+  const subscriptionId = String(body.subscriptionId || "");
+  if (!UUID_RE.test(subscriptionId)) return bad("Invalid subscription ID.");
+
+  const supa = db();
+  const s = await subscriptionById(supa, subscriptionId);
+
+  if (!s) return bad("Subscription not found.", 404);
+  if (s.plan_change_status !== "scheduled" || !s.pending_plan_id) {
+    return bad("This membership does not have a scheduled subscription change.", 409);
+  }
+  if (!s.square_subscription_id) {
+    return bad("The scheduled Square subscription could not be found.", 409);
+  }
+
+  const detail = await squareSubscriptionDetail(s.square_subscription_id);
+  const sq = detail?.subscription;
+  const actions = detail?.actions || [];
+  const status = String(sq?.status || "").toUpperCase();
+
+  if (["CANCELED", "COMPLETED"].includes(status)) {
+    return bad(
+      "This plan change has already reached its Square transition date and can no longer be undone here.",
+      409
+    );
+  }
+
+  const cancelAction = actions.find((action) => action.type === "CANCEL");
+  if (!cancelAction?.id) {
+    return bad(
+      "Square no longer shows the scheduled cancellation for this plan change. No local records were altered.",
+      409
+    );
+  }
+
+  await deleteAction(s.square_subscription_id, cancelAction.id);
+
+  const { error: updateError } = await supa
+    .from("subscriptions")
+    .update({
+      pending_plan_id: null,
+      pending_cadence: null,
+      plan_change_effective_date: null,
+      plan_change_status: null,
+    })
+    .eq("id", s.id);
+
+  if (updateError) {
+    throw new Error(
+      "Square removed the scheduled change, but the Honey Club record could not be cleared. Verify this membership before retrying."
+    );
+  }
+
+  const { error: auditError } = await supa
+    .from("subscription_plan_change_events")
+    .update({
+      status: "cancelled",
+      note: "Scheduled plan change was cancelled by an administrator before it became effective.",
+      completed_at: new Date().toISOString(),
+    })
+    .eq("subscription_id", s.id)
+    .eq("status", "scheduled");
+
+  if (auditError) {
+    console.error("Plan-change cancellation audit update failed:", auditError);
+  }
+
+  return ok({
+    ok: true,
+    message:
+      "Scheduled subscription change cancelled. The member remains on the current plan and Square billing schedule.",
   });
 }
 
@@ -613,16 +1091,22 @@ export default async (req) => {
       if (!admin) return bad("Not an admin", 403);
 
       const supa = db();
-      const [result, markets] = await Promise.all([
+      const [result, markets, plansResult] = await Promise.all([
         supa
           .from("subscriptions")
           .select("*, plans(*), customers(*), market_dates(id, day, where_at, hours, venues(name, where_at, hours))")
           .is("archived_at", null)
           .order("started_at", { ascending: false }),
         upcomingMarkets(supa),
+        supa
+          .from("plans")
+          .select("id, name, price_cents, sort")
+          .eq("is_bulk", false)
+          .order("sort", { ascending: true }),
       ]);
 
       if (result.error) throw new Error(result.error.message);
+      if (plansResult.error) throw new Error(plansResult.error.message);
 
       return ok({
         ok: true,
@@ -631,7 +1115,20 @@ export default async (req) => {
           serializeSubscription(s, { admin: true })
         ),
         markets,
+        plans: (plansResult.data || []).map((plan) => ({
+          id: plan.id,
+          name: plan.name,
+          price: Number(plan.price_cents || 0) / 100,
+        })),
       });
+    }
+
+    if (action === "admin-change-plan") {
+      return await handleAdminPlanChange(req, body);
+    }
+
+    if (action === "admin-cancel-plan-change") {
+      return await handleAdminCancelPlanChange(req, body);
     }
 
     if (action === "admin-mark-pickup") {

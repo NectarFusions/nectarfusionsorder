@@ -61,6 +61,15 @@ export default async (req) => {
   if (error || !s) return bad("Subscription not found", 404);
 
   const sqId = s.square_subscription_id;
+  const hasScheduledPlanChange =
+    s.plan_change_status === "scheduled" && Boolean(s.pending_plan_id);
+
+  if (action === "skip" && hasScheduledPlanChange) {
+    return bad(
+      "A subscription change is already scheduled for this member. Cancel that scheduled change before skipping a billing cycle.",
+      409
+    );
+  }
 
   if (!sqId) {
     if (action === "cancel") {
@@ -70,10 +79,26 @@ export default async (req) => {
           status: "cancelled",
           cancelled_at: new Date().toISOString(),
           paused_until: null,
+          pending_plan_id: null,
+          pending_cadence: null,
+          plan_change_effective_date: null,
+          plan_change_status: null,
         })
         .eq("id", subId);
 
       if (updateError) return bad(updateError.message, 500);
+
+      if (hasScheduledPlanChange) {
+        await supa
+          .from("subscription_plan_change_events")
+          .update({
+            status: "cancelled",
+            note: "Membership was cancelled before the scheduled plan change became effective.",
+            completed_at: new Date().toISOString(),
+          })
+          .eq("subscription_id", subId)
+          .eq("status", "scheduled");
+      }
 
       return ok({
         status: "cancelled",
@@ -114,6 +139,10 @@ export default async (req) => {
         status: "cancelled",
         cancelled_at: new Date().toISOString(),
         paused_until: null,
+        pending_plan_id: null,
+        pending_cadence: null,
+        plan_change_effective_date: null,
+        plan_change_status: null,
       })
       .eq("id", subId);
 
@@ -131,6 +160,22 @@ export default async (req) => {
           : "Square accepted the cancellation, but the Admin record did not update.",
         500
       );
+    }
+
+    if (hasScheduledPlanChange) {
+      const { error: planAuditError } = await supa
+        .from("subscription_plan_change_events")
+        .update({
+          status: "cancelled",
+          note: "Membership was cancelled before the scheduled plan change became effective.",
+          completed_at: new Date().toISOString(),
+        })
+        .eq("subscription_id", subId)
+        .eq("status", "scheduled");
+
+      if (planAuditError) {
+        console.error("Plan-change cancellation audit update failed:", planAuditError);
+      }
     }
 
     return ok({

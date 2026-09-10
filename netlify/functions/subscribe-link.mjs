@@ -107,9 +107,16 @@ export default async (req) => {
       );
     }
 
+    const checkoutGeneration = String(
+      s.plan_change_requested_at || s.started_at || "initial"
+    )
+      .replace(/[^0-9A-Za-z]/g, "")
+      .slice(-32);
+
     const res = await square("/v2/online-checkout/payment-links", {
       body: {
-        idempotency_key: `sub-link-${s.id}`,
+        idempotency_key:
+          `sub-link-${s.id}-${variationId}-${checkoutGeneration}`,
         description: `Honey Club — ${plan.name}`,
         quick_pay: {
           name: `${plan.name} — ${
@@ -134,6 +141,7 @@ export default async (req) => {
     });
 
     const url = res.payment_link?.url;
+    const paymentLinkId = res.payment_link?.id || null;
     if (!url) {
       throw new Error("Square did not return a subscription checkout URL.");
     }
@@ -142,6 +150,7 @@ export default async (req) => {
       .from("subscriptions")
       .update({
         square_checkout_url: url,
+        square_checkout_link_id: paymentLinkId,
         square_plan_variation_id: variationId,
         billing_mode: "card_setup_required",
       })

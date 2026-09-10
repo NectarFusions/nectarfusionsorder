@@ -85,6 +85,8 @@ const formatDay = (iso) => {
 const cadenceLabel = (cadence) =>
   cadence === "1mo" ? "Monthly" : "Every 2 months";
 
+const money = (value) => `$${Number(value || 0).toFixed(2)}`;
+
 const billingLabel = (mode) => {
   if (mode === "market_manual") return "Pay at market";
   if (mode === "card_setup_required") return "Card setup required";
@@ -788,6 +790,122 @@ function CustomerPortal({ token }) {
   );
 }
 
+
+function PlanChangeForm({ subscription, plans, onDone, onCancel }) {
+  const [planId, setPlanId] = useState(subscription.planId || "");
+  const [cadence, setCadence] = useState(subscription.cadence || "2mo");
+  const [confirmed, setConfirmed] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const targetPlan = plans.find((plan) => plan.id === planId);
+
+  async function submit(event) {
+    event.preventDefault();
+    setSaving(true);
+    setError("");
+
+    try {
+      const data = await callFunction(
+        {
+          action: "admin-change-plan",
+          subscriptionId: subscription.id,
+          planId,
+          cadence,
+          adminConfirmedAuthorization: confirmed,
+        },
+        { admin: true }
+      );
+      await onDone(data);
+    } catch (changeError) {
+      setError(changeError.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <form onSubmit={submit} style={{ display: "grid", gap: 18 }}>
+      <button type="button" style={{ ...secondaryButton, justifySelf: "start" }} onClick={onCancel}>
+        ← All Honey Club Members
+      </button>
+
+      <div>
+        <div style={{ fontSize: 12, fontWeight: 900, color: colors.amber, textTransform: "uppercase", letterSpacing: ".08em" }}>
+          Change Subscription
+        </div>
+        <h2 style={{ margin: "5px 0" }}>{subscription.memberName}</h2>
+        <div style={{ color: "#655A4D", lineHeight: 1.55 }}>
+          Current: <strong>{subscription.planName}</strong> · {cadenceLabel(subscription.cadence)} · {billingLabel(subscription.billingMode)}
+        </div>
+      </div>
+
+      <label style={labelStyle}>
+        New Honey Club subscription
+        <select value={planId} onChange={(e) => setPlanId(e.target.value)} style={inputStyle} required>
+          {plans.map((plan) => (
+            <option key={plan.id} value={plan.id}>
+              {plan.name} · {money(plan.price)}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label style={labelStyle}>
+        Billing cadence
+        <select value={cadence} onChange={(e) => setCadence(e.target.value)} style={inputStyle} required>
+          <option value="1mo">Monthly</option>
+          <option value="2mo">Every 2 months</option>
+        </select>
+      </label>
+
+      <div style={{
+        padding: 14,
+        borderRadius: 12,
+        background: subscription.billingMode === "card" ? "#EEF8FE" : "#FFF8DD",
+        border: `1px solid ${subscription.billingMode === "card" ? "#8FC5E3" : colors.amber}`,
+        lineHeight: 1.55,
+        fontSize: 13,
+      }}>
+        {subscription.billingMode === "card"
+          ? "Recurring card member: the current paid billing period stays unchanged. The new subscription and price begin at the next renewal. There is no immediate upgrade charge, downgrade refund, or second charge today."
+          : subscription.billingMode === "market_manual"
+            ? "Market Pickup member: the new tier applies immediately to the next unpaid market box. Market billing remains manual."
+            : "Card setup is not complete yet: the new tier applies immediately and the old secure setup link is replaced."}
+      </div>
+
+      {targetPlan && (
+        <div style={{ fontWeight: 850 }}>
+          New selection: {targetPlan.name} · {cadenceLabel(cadence)} · {money(targetPlan.price)} per box
+        </div>
+      )}
+
+      <label style={{ padding: 13, borderRadius: 10, background: "#F7F4EF", lineHeight: 1.5 }}>
+        <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} required />{" "}
+        I confirm this customer requested and authorized this Honey Club subscription change.
+      </label>
+
+      {error && (
+        <div style={{ padding: 12, borderRadius: 10, background: "#FDECEA", color: colors.red, fontWeight: 700 }}>
+          {error}
+        </div>
+      )}
+
+      <button
+        type="submit"
+        disabled={saving || !confirmed || (planId === subscription.planId && cadence === subscription.cadence)}
+        style={{
+          ...primaryButton,
+          justifySelf: "start",
+          opacity: saving || !confirmed || (planId === subscription.planId && cadence === subscription.cadence) ? 0.55 : 1,
+        }}
+      >
+        {saving ? "Saving Change..." : "Confirm Subscription Change"}
+      </button>
+    </form>
+  );
+}
+
 function AdminPortal() {
   const [state, setState] = useState({
     loading: true,
@@ -796,6 +914,7 @@ function AdminPortal() {
   });
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState(null);
+  const [changingPlan, setChangingPlan] = useState(null);
   const [notice, setNotice] = useState("");
 
   const load = useCallback(async () => {
@@ -837,6 +956,33 @@ function AdminPortal() {
     );
   }, [search, state.data]);
 
+  async function cancelPlanChange(sub) {
+    if (
+      !window.confirm(
+        `Cancel the scheduled subscription change for ${sub.memberName}? They will remain on ${sub.planName} and their current Square billing schedule.`
+      )
+    ) {
+      return;
+    }
+
+    setNotice("");
+
+    try {
+      const data = await callFunction(
+        {
+          action: "admin-cancel-plan-change",
+          subscriptionId: sub.id,
+        },
+        { admin: true }
+      );
+
+      setNotice(data.message || "Scheduled subscription change cancelled.");
+      await load();
+    } catch (error) {
+      setNotice(error.message);
+    }
+  }
+
   async function markPickup(sub) {
     if (
       !window.confirm(
@@ -873,6 +1019,23 @@ function AdminPortal() {
     return (
       <div style={{ ...cardStyle, color: colors.red }}>
         {state.error}
+      </div>
+    );
+  }
+
+  if (changingPlan) {
+    return (
+      <div style={cardStyle}>
+        <PlanChangeForm
+          subscription={changingPlan}
+          plans={state.data.plans || []}
+          onCancel={() => setChangingPlan(null)}
+          onDone={async (data) => {
+            setNotice(data.message || "Subscription change saved.");
+            await load();
+            setChangingPlan(null);
+          }}
+        />
       </div>
     );
   }
@@ -1042,6 +1205,23 @@ function AdminPortal() {
                 ? ` · ${sub.bonusEvery || 3}th-box bonus milestone`
                 : ""}
             </div>
+
+            {sub.planChangeStatus === "scheduled" && sub.pendingPlanId && (
+              <div style={{
+                marginTop: 5,
+                padding: 11,
+                borderRadius: 10,
+                background: "#EEF8FE",
+                border: "1px solid #8FC5E3",
+                color: colors.blue,
+                fontWeight: 800,
+              }}>
+                <strong>Pending subscription change:</strong>{" "}
+                {state.data.plans?.find((plan) => plan.id === sub.pendingPlanId)?.name || sub.pendingPlanId}
+                {" · "}{cadenceLabel(sub.pendingCadence)}
+                {sub.planChangeEffectiveDate ? ` · effective ${formatDay(sub.planChangeEffectiveDate)}` : ""}
+              </div>
+            )}
           </div>
 
           <div
@@ -1059,6 +1239,27 @@ function AdminPortal() {
             >
               Edit Fulfillment
             </button>
+
+            <button
+              type="button"
+              style={{ ...secondaryButton, opacity: sub.planChangeStatus === "scheduled" ? 0.55 : 1 }}
+              disabled={sub.planChangeStatus === "scheduled"}
+              onClick={() => setChangingPlan(sub)}
+            >
+              {sub.planChangeStatus === "scheduled"
+                ? "Subscription Change Scheduled"
+                : "Change Subscription"}
+            </button>
+
+            {sub.planChangeStatus === "scheduled" && (
+              <button
+                type="button"
+                style={secondaryButton}
+                onClick={() => cancelPlanChange(sub)}
+              >
+                Cancel Scheduled Change
+              </button>
+            )}
 
             {sub.method === "market" &&
               sub.billingMode === "market_manual" && (

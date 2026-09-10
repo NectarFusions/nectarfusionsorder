@@ -22,6 +22,17 @@ const BONUS_ALERT_FROM = "NectarFusions <orders@nectar-fusions.com>";
 const BONUS_ALERT_TO = () =>
   process.env.BONUS_JAR_ALERT_EMAIL || "info@nectar-fusions.com";
 
+const localDate = () =>
+  new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Detroit",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+
+const variationForPlan = (plan, cadence) =>
+  cadence === "1mo" ? plan?.square_var_1mo : plan?.square_var_2mo;
+
 const esc = (value) =>
   String(value ?? "").replace(
     /[<>&"]/g,
@@ -149,7 +160,7 @@ export default async (req) => {
         //    the exact local subscription it belongs to.
         const exact = await supa
           .from("subscriptions")
-          .select("id,status,billing_mode")
+          .select("id,status,billing_mode,pending_plan_id,pending_cadence,plan_change_effective_date,plan_change_status,saved_square_card_id")
           .eq("square_subscription_id", sub.id)
           .maybeSingle();
 
@@ -200,6 +211,102 @@ export default async (req) => {
             sub.id,
             sub.customer_id,
             sub.plan_variation_id
+          );
+          break;
+        }
+
+        if (
+          String(sub.status || "").toUpperCase() === "CANCELED" &&
+          row.plan_change_status === "scheduled" &&
+          row.pending_plan_id &&
+          row.pending_cadence
+        ) {
+          const { data: targetPlan, error: targetPlanError } = await supa
+            .from("plans")
+            .select("id,name,square_var_1mo,square_var_2mo")
+            .eq("id", row.pending_plan_id)
+            .maybeSingle();
+
+          if (targetPlanError) throw targetPlanError;
+          if (!targetPlan) {
+            throw new Error(`Pending Honey Club plan ${row.pending_plan_id} no longer exists.`);
+          }
+
+          const variationId = variationForPlan(targetPlan, row.pending_cadence);
+          const cardId = row.saved_square_card_id || sub.card_id;
+          const customerId = sub.customer_id;
+          const locationId = sub.location_id || process.env.SQUARE_LOCATION_ID;
+
+          if (!variationId || !cardId || !customerId || !locationId) {
+            throw new Error(
+              "The scheduled Honey Club plan change is missing Square billing information."
+            );
+          }
+
+          const today = localDate();
+          const requestedStart = row.plan_change_effective_date || today;
+          const startDate = requestedStart > today ? requestedStart : today;
+
+          const created = await square("/v2/subscriptions", {
+            method: "POST",
+            body: {
+              idempotency_key:
+                `plan-change-activate-${row.id}-${row.pending_plan_id}-${row.pending_cadence}-${requestedStart}`,
+              location_id: locationId,
+              customer_id: customerId,
+              plan_variation_id: variationId,
+              card_id: cardId,
+              start_date: startDate,
+            },
+          });
+
+          const replacement = created.subscription;
+          if (!replacement?.id) {
+            throw new Error("Square did not create the scheduled replacement subscription.");
+          }
+
+          const { error: planChangeUpdateError } = await supa
+            .from("subscriptions")
+            .update({
+              plan_id: row.pending_plan_id,
+              cadence: row.pending_cadence,
+              square_customer_id: customerId,
+              square_subscription_id: replacement.id,
+              square_plan_variation_id: variationId,
+              billing_mode: "card",
+              status: "active",
+              pending_plan_id: null,
+              pending_cadence: null,
+              plan_change_effective_date: null,
+              plan_change_status: null,
+              paused_until: null,
+              market_pause_action_id: null,
+            })
+            .eq("id", row.id);
+
+          if (planChangeUpdateError) throw planChangeUpdateError;
+
+          const { error: auditUpdateError } = await supa
+            .from("subscription_plan_change_events")
+            .update({
+              status: "completed",
+              new_square_subscription_id: replacement.id,
+              completed_at: new Date().toISOString(),
+            })
+            .eq("subscription_id", row.id)
+            .eq("status", "scheduled");
+
+          if (auditUpdateError) {
+            console.error("Plan change completed but audit update failed:", auditUpdateError);
+          }
+
+          console.log(
+            "Honey Club plan change completed:",
+            row.id,
+            "->",
+            row.pending_plan_id,
+            row.pending_cadence,
+            replacement.id
           );
           break;
         }
