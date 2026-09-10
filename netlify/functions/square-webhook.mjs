@@ -186,7 +186,7 @@ export default async (req) => {
                 cadence,
                 billing_mode,
                 customers!inner(email),
-                plans!inner(square_var_1mo, square_var_2mo)
+                plans!subscriptions_plan_id_fkey!inner(square_var_1mo, square_var_2mo)
               `)
               .ilike("customers.email", email)
               .eq("status", "pending")
