@@ -33,7 +33,7 @@ export default function SubscriptionBonusNotifier() {
           status,
           archived_at,
           customers(name, email),
-          plans(name)
+          plans!subscriptions_plan_id_fkey(name)
         )
       `)
       .eq("bonus_jar_due", true)
