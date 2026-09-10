@@ -83,18 +83,104 @@ const parseDay = (s) => { const [y,m,d] = s.split("-").map(Number); return new D
 const fmt = (d) => `${DAYS[d.getDay()]} · ${MONTHS[d.getMonth()]} ${d.getDate()}`;
 const iso = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 
-function deliveryDays(zone, blocked, count = 6) {
-  const out = [], now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  for (let i = 0; out.length < count && i < 60; i++) {
-    const d = new Date(start); d.setDate(start.getDate() + i);
+const DELIVERY_TIME_ZONE = "America/Detroit";
+const DEFAULT_SAME_DAY_LEAD_MINUTES = 120;
+
+function deliveryClock(now = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: DELIVERY_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(now);
+
+  const values = Object.fromEntries(
+    parts
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, Number(part.value)])
+  );
+
+  return {
+    year: values.year,
+    month: values.month,
+    day: values.day,
+    hour: values.hour,
+    minute: values.minute,
+  };
+}
+
+function sameDayLeadMinutes(zone) {
+  const configured = Number(zone?.same_day_lead_minutes);
+  return Number.isFinite(configured) && configured >= 0
+    ? configured
+    : DEFAULT_SAME_DAY_LEAD_MINUTES;
+}
+
+function sameDayCutoffMinutes(zone) {
+  const deliveryStartHour = Number(zone?.cutoff_hour);
+  if (!Number.isFinite(deliveryStartHour)) return 0;
+  return Math.max(
+    0,
+    Math.round(deliveryStartHour * 60) - sameDayLeadMinutes(zone)
+  );
+}
+
+function clockLabel(totalMinutes) {
+  const safe = ((Math.round(totalMinutes) % 1440) + 1440) % 1440;
+  const hour24 = Math.floor(safe / 60);
+  const minute = safe % 60;
+  const suffix = hour24 >= 12 ? "PM" : "AM";
+  const hour12 = hour24 % 12 || 12;
+  return `${hour12}:${String(minute).padStart(2, "0")} ${suffix}`;
+}
+
+function leadTimeLabel(minutes) {
+  if (minutes % 60 === 0) {
+    const hours = minutes / 60;
+    return `${hours} hour${hours === 1 ? "" : "s"}`;
+  }
+  return `${minutes} minutes`;
+}
+
+function deliveryAvailability(zone, blocked, count = 6, now = new Date()) {
+  const out = [];
+  const clock = deliveryClock(now);
+  const currentMinutes = clock.hour * 60 + clock.minute;
+  const cutoffMinutes = sameDayCutoffMinutes(zone);
+  const leadMinutes = sameDayLeadMinutes(zone);
+  const start = new Date(clock.year, clock.month - 1, clock.day, 12);
+  const todayIsScheduled =
+    zone.days.includes(start.getDay()) &&
+    !blocked.includes(iso(start));
+  const sameDayOpen =
+    todayIsScheduled &&
+    zone.same_day_ok === true &&
+    currentMinutes < cutoffMinutes;
+
+  for (let i = 0; out.length < count && i < 60; i += 1) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+
     if (!zone.days.includes(d.getDay())) continue;
     if (blocked.includes(iso(d))) continue;
-    if (i === 0 && !(zone.same_day_ok && now.getHours() < zone.cutoff_hour)) continue;
-    if (i === 1 && now.getHours() >= zone.cutoff_hour && !zone.same_day_ok) continue;
+    if (i === 0 && !sameDayOpen) continue;
+
     out.push(d);
   }
-  return out;
+
+  return {
+    slots: out,
+    sameDayClosed:
+      todayIsScheduled &&
+      zone.same_day_ok === true &&
+      currentMinutes >= cutoffMinutes,
+    nextAvailable: out[0] ?? null,
+    cutoffMinutes,
+    leadMinutes,
+  };
 }
 
 const Logo = ({ size = 72 }) => (
@@ -9956,10 +10042,36 @@ export default function App() {
   const fee = method === "delivery" && zone ? (price.sub >= zone.freeOver ? 0 : zone.fee) : 0;
   const belowMin = method === "delivery" && zone && price.sub < zone.minimum;
   const total = price.sub + fee;
-  const slots = zone && cat ? deliveryDays(zone, cat.blockedDates ?? []) : [];
+  const delivery =
+    zone && cat
+      ? deliveryAvailability(zone, cat.blockedDates ?? [])
+      : {
+          slots: [],
+          sameDayClosed: false,
+          nextAvailable: null,
+          cutoffMinutes: 0,
+          leadMinutes: DEFAULT_SAME_DAY_LEAD_MINUTES,
+        };
+  const slots = delivery.slots;
+  const deliverySlotKeys = slots.map(iso).join("|");
+  const sameDayRuleLabel =
+    zone?.same_day_ok === true
+      ? `Same-day orders close at ${clockLabel(delivery.cutoffMinutes)} · ${leadTimeLabel(delivery.leadMinutes)} notice`
+      : zone?.cutoff_label;
 
   useEffect(() => { if (method === "ship" && !shipOK) { setMethod(null); setSlot(null); } }, [shipOK, method]);
   useEffect(() => { setSlot(method === "ship" ? { kind: "ship" } : null); }, [method, zone?.id]);
+
+  useEffect(() => {
+    if (method !== "delivery" || slot?.kind !== "delivery") return;
+    if (deliverySlotKeys.split("|").filter(Boolean).includes(iso(slot.date))) return;
+
+    setSlot(null);
+    setReviewOpen(false);
+    setContinueHelp(
+      "That delivery window has closed. Choose the next available delivery date."
+    );
+  }, [tick, method, zone?.id, deliverySlotKeys, slot?.kind, slot?.date]);
 
   useEffect(() => {
     if (view === "admin" || typeof window === "undefined") return undefined;
@@ -10158,6 +10270,26 @@ export default function App() {
           : "One or more selected textures are no longer available. Please update those jars."
       );
       return;
+    }
+
+    if (method === "delivery" && zone && slot?.kind === "delivery") {
+      const currentDelivery = deliveryAvailability(
+        zone,
+        cat.blockedDates ?? []
+      );
+      const selectedDay = iso(slot.date);
+      const stillAvailable = currentDelivery.slots.some(
+        (availableDay) => iso(availableDay) === selectedDay
+      );
+
+      if (!stillAvailable) {
+        setReviewOpen(false);
+        setSlot(null);
+        setErr(
+          "That delivery window has closed. Please choose the next available delivery date."
+        );
+        return;
+      }
     }
 
     setBusy(true); setErr(null);
@@ -10762,6 +10894,8 @@ export default function App() {
   /* ================= RECEIPT ================= */
   if (receipt) {
     const cancelled = receipt.status === "cancelled";
+    const paymentPending =
+      !cancelled && receipt.requires_prepay && !receipt.paid;
     const left = receipt.change_minutes_left ?? receipt.minutes_left ?? 0;
     const canChange = !cancelled && receipt.can_change !== false && left > 0;
     if (receipt.method === "market") {
@@ -10814,10 +10948,19 @@ export default function App() {
           <div className="nf-wrap" style={{ paddingTop: 26, paddingBottom: 28, textAlign: "center" }}>
             <div style={{ display: "flex", justifyContent: "center" }}><Logo size={68} /></div>
             <div className="eyebrow" style={{ color: cancelled ? c.tan : c.amber, marginTop: 10 }}>
-              {cancelled ? "Cancelled" : "Order confirmed"}
+              {cancelled
+                ? "Cancelled"
+                : paymentPending
+                  ? "Payment required"
+                  : "Order confirmed"}
             </div>
             <div className="num" style={{ fontSize: 74, marginTop: 2, color: cancelled ? c.tan : c.black,
               textDecoration: cancelled ? "line-through" : "none" }}>#{receipt.order_no}</div>
+            {paymentPending && (
+              <p style={{ color: c.brown, fontSize: 14.5, margin: "4px auto 0", maxWidth: 360, lineHeight: 1.55 }}>
+                Your order is saved, but it is not confirmed until Square payment is complete.
+              </p>
+            )}
             {!cancelled && receipt.method === "market" && (
               <p style={{ color: c.brown, fontSize: 14.5, margin: "4px auto 0", maxWidth: 320, lineHeight: 1.55 }}>
                 Show this number at the table and we&rsquo;ll have your jars ready.
@@ -10886,7 +11029,8 @@ export default function App() {
               )}
 
               <p style={{ color: c.tan, fontSize: 13, marginTop: 14, lineHeight: 1.6, textAlign: "center" }}>
-                A confirmation is on its way to <strong style={{ color: c.brown }}>{receipt.email}</strong>.
+                {paymentPending ? "Payment instructions are" : "A confirmation is"} on the way to{" "}
+                <strong style={{ color: c.brown }}>{receipt.email}</strong>.
               </p>
 
               <div className="card" style={{ padding: 17, marginTop: 20, background: "#FFFBF0", borderColor: c.gold }}>
@@ -11917,10 +12061,35 @@ export default function App() {
                     <div className="card" style={{ padding: 14, marginTop: 10 }}>
                       <div className="eyebrow">{zone.name} · {zone.day_label}</div>
                       <div style={{ fontSize: 13.5, color: c.darkBrown, marginTop: 6, lineHeight: 1.6 }}>
-                        {zone.window_label} · {zone.cutoff_label}<br />
+                        {zone.window_label}{sameDayRuleLabel ? ` · ${sameDayRuleLabel}` : ""}<br />
                         {money(zone.fee)} delivery, free over {money(zone.freeOver)} · {money(zone.minimum)} minimum
                       </div>
                     </div>
+                    {delivery.sameDayClosed && (
+                      <div
+                        className="card"
+                        role="status"
+                        aria-live="polite"
+                        style={{
+                          padding: 14,
+                          marginTop: 10,
+                          borderColor: c.amber,
+                          background: "#FFFBF0",
+                          color: c.darkBrown,
+                          fontSize: 13.5,
+                          lineHeight: 1.55,
+                        }}
+                      >
+                        <strong>Today&rsquo;s delivery window has closed.</strong>
+                        <div style={{ marginTop: 4 }}>
+                          Same-day delivery requires at least{" "}
+                          <strong>{leadTimeLabel(delivery.leadMinutes)} notice</strong>.
+                          {delivery.nextAvailable
+                            ? <> The earliest available delivery is <strong>{fmt(delivery.nextAvailable)}</strong>.</>
+                            : " Choose the next delivery date when one becomes available."}
+                        </div>
+                      </div>
+                    )}
                     {belowMin && (
                       <div className="err" style={{ marginTop: 10 }}>
                         <strong>{money(price.sub)} merchandise subtotal</strong> — add <strong>{money(zone.minimum - price.sub)}</strong> more to qualify for local delivery.
@@ -11946,7 +12115,11 @@ export default function App() {
                           style={{ width: "100%", padding: "12px 14px", marginBottom: 7, textAlign: "left",
                             display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                           <span className="num" style={{ fontSize: 19 }}>{fmt(d)}</span>
-                          <span style={{ fontSize: 12.5, opacity: .7, fontWeight: 600 }}>{zone.window_label}</span>
+                          <span style={{ fontSize: 12.5, opacity: .7, fontWeight: 600, textAlign: "right" }}>
+                            {i === 0 && delivery.sameDayClosed
+                              ? `Earliest available · ${zone.window_label}`
+                              : zone.window_label}
+                          </span>
                         </button>
                       ))}
                     </div>
@@ -11997,10 +12170,6 @@ export default function App() {
                     Still needed: <strong style={{ color: c.darkBrown }}>{missing.join(", ")}</strong>.
                   </div>
                 )}
-
-                <div style={{ fontSize: 12.5, color: c.brown, marginTop: 12, lineHeight: 1.55 }}>
-                  You&rsquo;ll get an order number and an email, and you can cancel free for {cat.cancelMinutes} minutes.
-                </div>
 
                 <button
                   type="button"
@@ -13685,6 +13854,10 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
     } catch (e) { setErr(e.message); }
   }, []);
   useEffect(() => { pull(); }, [pull]);
+  useEffect(() => {
+    const timer = setInterval(pull, 30000);
+    return () => clearInterval(timer);
+  }, [pull]);
 
   useEffect(() => {
     setSpunEnabledDraft(cat?.spunAvailability?.enabled !== false);
@@ -13821,10 +13994,33 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
 
   const activeOrders = orders.filter((o) => !o.archived_at);
   const archivedOrders = orders.filter((o) => !!o.archived_at);
-  const standardActiveOrders = activeOrders.filter((o) => o.method !== "market");
+  const isPaymentPending = (order) =>
+    Boolean(
+      order.requires_prepay &&
+      !order.paid &&
+      order.status === "open"
+    );
+  const standardPendingPaymentOrders = activeOrders.filter(
+    (o) => o.method !== "market" && isPaymentPending(o)
+  );
+  const standardActiveOrders = activeOrders.filter(
+    (o) => o.method !== "market" && !isPaymentPending(o)
+  );
   const standardArchivedOrders = archivedOrders.filter((o) => o.method !== "market");
   const marketPickupOrders = activeOrders.filter((o) => o.method === "market");
-  const orderPool = orderView === "archived" ? standardArchivedOrders : standardActiveOrders;
+  const marketPaymentPendingCount =
+    marketPickupOrders.filter(isPaymentPending).length;
+  const marketReadyCount = marketPickupOrders.filter(
+    (o) =>
+      !["done", "cancelled"].includes(o.status) &&
+      !isPaymentPending(o)
+  ).length;
+  const orderPool =
+    orderView === "archived"
+      ? standardArchivedOrders
+      : orderView === "pending"
+        ? standardPendingPaymentOrders
+        : standardActiveOrders;
   const shownOrders = orderPool.filter((o) => !q ||
     o.order_no.includes(q.trim()) || o.name.toLowerCase().includes(q.trim().toLowerCase()));
   const shownMarketPickups = marketPickupOrders.filter((o) => !q ||
@@ -13905,7 +14101,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
     ["marketPickups", `Market Pickups (${marketOpenCount})`],
     ["markets", "Market Schedule"],
     ["requests", `Order Help (${newRequestCount})`],
-    ["orders", `Orders (${standardActiveOrders.length})`],
+    ["orders", `Orders (${standardActiveOrders.length + standardPendingPaymentOrders.length})`],
     ["partnerProgram", "Partner Program"],
     ["partnerEvents", "Partner Events"],
     ["partnerResources", "Partner Resources"],
@@ -13951,12 +14147,19 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
 
         {adminTab === "orders" && (
           <>
-            <div className="eyebrow" style={{ marginBottom: 8 }}>Orders · {openCount} open</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+            <div className="eyebrow" style={{ marginBottom: 8 }}>
+              Orders · {openCount} active · {standardPendingPaymentOrders.length} payment pending
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 8, marginBottom: 10 }}>
               <button className={`btn ${orderView === "active" ? "on" : ""}`}
                 style={{ padding: 10, fontSize: 13 }}
                 onClick={() => { setOrderView("active"); setQ(""); }}>
                 Active · {standardActiveOrders.length}
+              </button>
+              <button className={`btn ${orderView === "pending" ? "on" : ""}`}
+                style={{ padding: 10, fontSize: 13 }}
+                onClick={() => { setOrderView("pending"); setQ(""); }}>
+                Payment Pending · {standardPendingPaymentOrders.length}
               </button>
               <button className={`btn ${orderView === "archived" ? "on" : ""}`}
                 style={{ padding: 10, fontSize: 13 }}
@@ -13970,18 +14173,39 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
             <div style={{ marginTop: 10, marginBottom: 32 }}>
               {shownOrders.length === 0 && (
                 <div className="card" style={{ padding: 20, textAlign: "center", color: c.tan, fontSize: 14 }}>
-                  {q ? "Nothing matches." : orderView === "archived" ? "No archived orders." : "No active orders."}
+                  {q
+                    ? "Nothing matches."
+                    : orderView === "archived"
+                      ? "No archived orders."
+                      : orderView === "pending"
+                        ? "No orders are waiting for payment."
+                        : "No active orders."}
                 </div>
               )}
               {shownOrders.map((o) => {
                 const done = o.status === "done", cx = o.status === "cancelled", ns = o.status === "noshow";
+                const paymentPending = isPaymentPending(o);
                 return (
                   <div key={o.id} className="card" style={{ padding: 13, marginBottom: 8, opacity: cx ? .5 : 1,
-                    borderColor: cx ? "#E2D6C4" : ns ? c.red : done ? c.tan : c.amber,
-                    background: done ? "#FBF7F1" : "#FFF" }}>
+                    borderColor: cx ? "#E2D6C4" : paymentPending ? "#D28A00" : ns ? c.red : done ? c.tan : c.amber,
+                    background: paymentPending ? "#FFFBF0" : done ? "#FBF7F1" : "#FFF" }}>
                     <div style={{ display: "flex", alignItems: "baseline", gap: 9 }}>
                       <span className="num" style={{ fontSize: 26, color: cx ? c.tan : c.darkBrown,
                         textDecoration: cx ? "line-through" : "none" }}>#{o.order_no}</span>
+                      {paymentPending && (
+                        <span style={{
+                          padding: "5px 8px",
+                          border: "1px solid #D28A00",
+                          borderRadius: 999,
+                          background: "#FFF2B8",
+                          color: "#6A4300",
+                          fontSize: 12.5,
+                          fontWeight: 900,
+                          whiteSpace: "nowrap",
+                        }}>
+                          PAYMENT PENDING
+                        </span>
+                      )}
                       {orderChanges(o).length > 0 && (
                         <span style={{
                           padding: "5px 8px",
@@ -14054,6 +14278,22 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                     )}
                     {o.notes && <div style={{ fontSize: 12.5, marginTop: 6, padding: "7px 9px", background: "#FBF7F1", borderRadius: 5 }}>{o.notes}</div>}
 
+                    {paymentPending && (
+                      <div style={{
+                        marginTop: 10,
+                        padding: "10px 11px",
+                        border: "1px solid #E2B62F",
+                        borderRadius: 8,
+                        background: "#FFF9DE",
+                        color: "#6A4300",
+                        fontSize: 13,
+                        fontWeight: 750,
+                        lineHeight: 1.5,
+                      }}>
+                        Do not prepare this order yet. It will move to Active after Square confirms payment.
+                      </div>
+                    )}
+
                     {orderView === "active" ? (
                       <div style={{ marginTop: 10 }}>
                         {!cx && (
@@ -14070,6 +14310,14 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                         )}
                         <button className="btn ghost" style={{ width: "100%", padding: "9px 12px", marginTop: 7, fontSize: 12.5 }}
                           onClick={() => confirm(`Archive order #${o.order_no}?`) && guard(() => api.archiveOrder(o.id))}>
+                          Archive order
+                        </button>
+                      </div>
+                    ) : orderView === "pending" ? (
+                      <div style={{ marginTop: 10 }}>
+                        <button className="btn ghost" style={{ width: "100%", padding: "9px 12px", fontSize: 12.5 }}
+                          onClick={() => confirm(`Archive payment-pending order #${o.order_no}?`) &&
+                            guard(() => api.archiveOrder(o.id))}>
                           Archive order
                         </button>
                       </div>
@@ -14099,7 +14347,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
         {adminTab === "marketPickups" && (
           <>
             <div className="eyebrow" style={{ marginBottom: 8 }}>
-              Market Pickups · {marketOpenCount} awaiting pickup
+              Market Pickups · {marketReadyCount} awaiting pickup · {marketPaymentPendingCount} payment pending
             </div>
             <input placeholder="Order #, customer, or market" value={q} onChange={(e) => setQ(e.target.value)} />
 
@@ -14113,6 +14361,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
               {shownMarketPickups.map((o) => {
                 const pickedUp = o.status === "done";
                 const cancelled = o.status === "cancelled";
+                const paymentPending = isPaymentPending(o);
                 const missed = Number(o.no_show_count || 0);
                 const marketName = o.market_dates?.venues?.name || "Market pickup";
                 const marketDay = o.market_dates?.day ? fmt(parseDay(o.market_dates.day)) : "Date unavailable";
@@ -14120,9 +14369,12 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                 return (
                   <div key={o.id} className="card nf-market-pickup-card" style={{
                     padding: 16, marginBottom: 10, opacity: cancelled ? .52 : 1,
-                    borderColor: missed >= 2 ? c.red : pickedUp ? "#7D9A68" : "#4F91C6",
+                    borderColor: paymentPending ? "#D28A00" : missed >= 2 ? c.red : pickedUp ? "#7D9A68" : "#4F91C6",
+                    background: paymentPending ? "#FFFBF0" : "#FFF",
                   }}>
-                    <div className="nf-market-pickup-banner">MARKET PICKUP</div>
+                    <div className="nf-market-pickup-banner">
+                      {paymentPending ? "PAYMENT PENDING" : "MARKET PICKUP"}
+                    </div>
 
                     <div style={{ display: "flex", alignItems: "baseline", gap: 9, marginTop: 10, flexWrap: "wrap" }}>
                       <span className="num" style={{ fontSize: 28, color: c.darkBrown }}>#{o.order_no}</span>
@@ -14146,7 +14398,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
 
                     <div className="nf-market-location">
                       <strong>{marketName}</strong>
-                      <span>{marketDay}{o.market_dates?.venues?.hours ? ` · ${o.market_dates.venues.hours}` : ""}</span>
+                      <span>{marketDay}{(o.market_dates?.hours || o.market_dates?.venues?.hours) ? ` · ${o.market_dates?.hours || o.market_dates?.venues?.hours}` : ""}</span>
                     </div>
 
                     <div style={{ fontSize: 12.5, color: c.tan, marginTop: 7 }}>{o.phone} · {o.email}</div>
@@ -14201,13 +14453,29 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                       </div>
                     )}
 
+                    {paymentPending && (
+                      <div style={{
+                        marginTop: 10,
+                        padding: "10px 11px",
+                        border: "1px solid #E2B62F",
+                        borderRadius: 8,
+                        background: "#FFF9DE",
+                        color: "#6A4300",
+                        fontSize: 13,
+                        fontWeight: 750,
+                        lineHeight: 1.5,
+                      }}>
+                        Do not prepare this pickup yet. It will be ready after Square confirms payment.
+                      </div>
+                    )}
+
                     <div className={`nf-noshow-status ${missed >= 2 ? "final" : missed === 1 ? "warning" : ""}`}>
                       {missed === 0 && "No missed pickups"}
                       {missed === 1 && "First pickup missed · Order remains reserved"}
                       {missed >= 2 && "Second pickup missed · Inventory returned"}
                     </div>
 
-                    {!cancelled && !pickedUp && (
+                    {!cancelled && !pickedUp && !paymentPending && (
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7, marginTop: 11 }}>
                         <button className="btn on" style={{ padding: "10px 9px", fontSize: 12.5 }}
                           onClick={() => confirm(`Mark order #${o.order_no} as picked up?`) &&
@@ -14876,7 +15144,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
           <>
             <div className="eyebrow" style={{ marginBottom: 6 }}>Market venues</div>
             <p style={{ fontSize: 13, color: c.brown, margin: "0 0 10px", lineHeight: 1.55 }}>
-              Type a venue once. From then on you only add dates.
+              Save each venue once as a template. Every scheduled date keeps its own hours and location, so future weeks can be changed without rewriting earlier listings.
             </p>
             {cat.venues.map((v) => (
               <div key={v.id} className="card" style={{ padding: 11, marginBottom: 7, display: "grid", gap: 6 }}>
@@ -14900,19 +15168,69 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
             <div className="eyebrow" style={{ marginBottom: 6 }}>Market dates</div>
             {dates.map((m) => {
               const past = m.day < today;
+              const removed = m.active === false;
+              const savedWhere = m.where_at ?? m.venues?.where_at ?? "";
+              const savedHours = m.hours ?? m.venues?.hours ?? "";
               return (
-                <div key={m.id} className="card" style={{ padding: "10px 12px", marginBottom: 6, display: "flex",
-                  alignItems: "center", gap: 10, opacity: past ? .45 : 1 }}>
-                  <span className="num" style={{ fontSize: 19, color: c.darkBrown, whiteSpace: "nowrap" }}>{fmt(parseDay(m.day))}</span>
-                  <span style={{ flex: 1, fontSize: 13.5, minWidth: 0 }}>{m.venues?.name}</span>
-                  {past && <span style={{ fontSize: 10.5, color: c.tan, fontWeight: 700 }}>PAST</span>}
-                  <button className="btn ghost" aria-label="Remove" style={{ width: 26, color: c.tan }}
-                    onClick={() => guard(() => api.deleteMarketDate(m.id))}>×</button>
+                <div key={m.id} className="card" style={{
+                  padding: 12,
+                  marginBottom: 7,
+                  display: "grid",
+                  gap: 8,
+                  opacity: past || removed ? .58 : 1,
+                  borderColor: removed ? "#D8CCBA" : c.amber,
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span className="num" style={{ fontSize: 19, color: c.darkBrown, whiteSpace: "nowrap" }}>
+                      {fmt(parseDay(m.day))}
+                    </span>
+                    <span style={{ flex: 1, fontSize: 13.5, minWidth: 0 }}>{m.venues?.name}</span>
+                    {past && <span style={{ fontSize: 10.5, color: c.tan, fontWeight: 700 }}>PAST</span>}
+                    {removed && <span style={{ fontSize: 10.5, color: c.red, fontWeight: 800 }}>REMOVED</span>}
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7 }}>
+                    <input
+                      defaultValue={savedWhere}
+                      placeholder="Location for this date"
+                      onBlur={(event) => {
+                        if (event.target.value !== savedWhere) {
+                          guard(() => api.updateMarketDate(m.id, {
+                            where_at: event.target.value || null,
+                          }));
+                        }
+                      }}
+                    />
+                    <input
+                      defaultValue={savedHours}
+                      placeholder="Hours for this date"
+                      onBlur={(event) => {
+                        if (event.target.value !== savedHours) {
+                          guard(() => api.updateMarketDate(m.id, {
+                            hours: event.target.value || null,
+                          }));
+                        }
+                      }}
+                    />
+                  </div>
+
+                  <button
+                    className={removed ? "btn" : "btn ghost"}
+                    style={{ width: "100%", padding: 8, fontSize: 12, color: removed ? c.darkBrown : c.red }}
+                    onClick={() => guard(() => removed
+                      ? api.restoreMarketDate(m.id)
+                      : api.removeMarketDate(m.id))}
+                  >
+                    {removed ? "Restore to schedule" : "Remove from public schedule"}
+                  </button>
                 </div>
               );
             })}
             <div className="card" style={{ padding: 12, marginTop: 8, marginBottom: 26 }}>
-              <div className="eyebrow" style={{ marginBottom: 8 }}>Add a date</div>
+              <div className="eyebrow" style={{ marginBottom: 8 }}>Schedule another market date</div>
+              <p style={{ fontSize: 12.5, color: c.brown, margin: "0 0 8px", lineHeight: 1.5 }}>
+                Choose any future date, then select the venue. This creates a new occurrence and does not change dates already scheduled.
+              </p>
               <input type="date" min={today} value={newDay} onChange={(e) => setNewDay(e.target.value)} />
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
                 {cat.venues.map((v) => (

@@ -9,6 +9,7 @@
    ============================================================ */
 
 import { square, db, site, ok, bad } from "./_square.mjs";
+import { sendSubscriptionEmails } from "./_subscription-email.mjs";
 
 const absolute = (path) => `${site()}${path}`;
 
@@ -87,6 +88,11 @@ export default async (req) => {
     }
 
     if (s.square_checkout_url) {
+      try {
+        await sendSubscriptionEmails(s, "started");
+      } catch (emailError) {
+        console.error("Honey Club setup email failed:", emailError.message);
+      }
       return ok({ url: s.square_checkout_url });
     }
 
@@ -145,6 +151,20 @@ export default async (req) => {
       throw new Error(
         `Checkout was created, but saving its link failed: ${updateError.message}`
       );
+    }
+
+    try {
+      await sendSubscriptionEmails(
+        {
+          ...s,
+          square_checkout_url: url,
+          square_plan_variation_id: variationId,
+          billing_mode: "card_setup_required",
+        },
+        "started"
+      );
+    } catch (emailError) {
+      console.error("Honey Club setup email failed:", emailError.message);
     }
 
     return ok({ url });

@@ -1,13 +1,85 @@
 /* ============================================================
-   SQUARE WEBHOOK — /.netlify/functions/square-webhook
+   SQUARE WEBHOOK  —  /.netlify/functions/square-webhook
 
-   Square is authoritative for payments and recurring billing state.
-   Every request is signature verified.
+   Square tells us when money actually moved. Nothing else does.
+
+   WHY WE DON'T TRUST THE REDIRECT:
+   After paying, Square sends the customer back to our /order/<token>
+   page. It would be easy to mark the order paid right there. Don't.
+   Anyone can type that URL. The redirect means "a browser came back",
+   not "a card was charged." Only this webhook knows the difference.
+
+   EVERY REQUEST IS SIGNATURE-VERIFIED. Without that check, this URL
+   is a button anyone on the internet can press to mark orders paid.
    ============================================================ */
 
 import crypto from "node:crypto";
+import { Resend } from "resend";
 import { square, db, ok, bad } from "./_square.mjs";
+import { sendSubscriptionEmails } from "./_subscription-email.mjs";
 
+const BONUS_ALERT_FROM = "NectarFusions <orders@nectar-fusions.com>";
+const BONUS_ALERT_TO = () =>
+  process.env.BONUS_JAR_ALERT_EMAIL || "info@nectar-fusions.com";
+
+const esc = (value) =>
+  String(value ?? "").replace(
+    /[<>&"]/g,
+    (character) =>
+      ({
+        "<": "&lt;",
+        ">": "&gt;",
+        "&": "&amp;",
+        '"': "&quot;",
+      })[character]
+  );
+
+async function sendBonusJarAlert(record) {
+  if (!record?.bonus_jar_due || record?.duplicate) return;
+
+  const resendKey = String(process.env.RESEND_API_KEY || "").trim();
+  if (!resendKey) {
+    console.error(
+      "Bonus jar email skipped: RESEND_API_KEY is missing. The admin notification alert remains active."
+    );
+    return;
+  }
+
+  try {
+    const resend = new Resend(resendKey);
+    const result = await resend.emails.send({
+      from: BONUS_ALERT_FROM,
+      to: BONUS_ALERT_TO(),
+      subject: `Bonus jar due — Honey Club #${record.sub_no} — box #${record.box_number}`,
+      html: `
+        <div style="font-family:Arial,sans-serif;line-height:1.55;color:#3E2B17">
+          <h1 style="font-size:24px;margin:0 0 12px">Bonus jar due</h1>
+          <p style="font-size:17px;margin:0 0 14px">
+            Add one bonus jar to <strong>Honey Club #${esc(record.sub_no)}</strong>
+            for <strong>${esc(record.customer_name || "the member")}</strong>.
+          </p>
+          <p style="margin:0 0 8px"><strong>Paid box:</strong> #${esc(record.box_number)}</p>
+          <p style="margin:0 0 8px"><strong>Plan:</strong> ${esc(record.plan_name)}</p>
+          <p style="margin:18px 0 0">
+            This reminder remains open in the NectarFusions Admin Honey Club screen
+            until you select <strong>Mark bonus jar packed</strong>.
+          </p>
+        </div>
+      `,
+    });
+
+    if (result?.error) {
+      console.error(
+        "Bonus jar email failed:",
+        result.error.message || "Unknown Resend error"
+      );
+    }
+  } catch (emailError) {
+    console.error("Bonus jar email failed:", emailError.message);
+  }
+}
+
+/* Square signs (notification_url + raw body) with your signature key. */
 function verify(rawBody, signature) {
   const key = process.env.SQUARE_WEBHOOK_SIGNATURE_KEY;
   const url = process.env.SQUARE_NOTIFICATION_URL;
@@ -20,6 +92,7 @@ function verify(rawBody, signature) {
 
   const a = Buffer.from(expected);
   const b = Buffer.from(signature);
+  // Constant-time compare — a plain === leaks timing information.
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
@@ -35,11 +108,7 @@ export default async (req) => {
   }
 
   let evt;
-  try {
-    evt = JSON.parse(raw);
-  } catch {
-    return bad("Bad JSON");
-  }
+  try { evt = JSON.parse(raw); } catch { return bad("Bad JSON"); }
 
   const supa = db();
   const type = evt.type;
@@ -47,30 +116,28 @@ export default async (req) => {
 
   try {
     switch (type) {
+      /* ---------- one-off orders ---------- */
       case "payment.created":
       case "payment.updated": {
         const p = obj.payment;
         if (!p || p.status !== "COMPLETED") break;
 
+        // Match on the Square order this payment settled.
         const { data: order } = await supa
-          .from("orders")
-          .select("id, paid")
-          .eq("square_order_id", p.order_id)
-          .maybeSingle();
+          .from("orders").select("id, paid").eq("square_order_id", p.order_id).maybeSingle();
 
         if (order && !order.paid) {
-          await supa
-            .from("orders")
-            .update({
-              paid: true,
-              paid_at: new Date().toISOString(),
-              square_payment_id: p.id,
-            })
-            .eq("id", order.id);
+          await supa.from("orders").update({
+            paid: true,
+            paid_at: new Date().toISOString(),
+            square_payment_id: p.id,
+          }).eq("id", order.id);
+          console.log("Order paid:", order.id);
         }
         break;
       }
 
+      /* ---------- subscriptions ---------- */
       case "subscription.created":
       case "subscription.updated": {
         const sub = obj.subscription;
@@ -78,14 +145,19 @@ export default async (req) => {
 
         let row = null;
 
+        // 1. An already-linked Square subscription must only update
+        //    the exact local subscription it belongs to.
         const exact = await supa
           .from("subscriptions")
-          .select("id, billing_mode")
+          .select("id,status,billing_mode")
           .eq("square_subscription_id", sub.id)
           .maybeSingle();
 
         row = exact.data ?? null;
 
+        // 2. For the first webhook from hosted checkout, identify the
+        //    customer's newest pending local subscription whose selected
+        //    cadence maps to this exact Square plan variation.
         if (!row && sub.customer_id && sub.plan_variation_id) {
           const result = await square(
             `/v2/customers/${sub.customer_id}`,
@@ -99,6 +171,7 @@ export default async (req) => {
               .from("subscriptions")
               .select(`
                 id,
+                status,
                 cadence,
                 billing_mode,
                 customers!inner(email),
@@ -142,11 +215,28 @@ export default async (req) => {
         let status = map[sub.status] ?? "pending";
 
         // Market Pickup remains an active Honey Club membership even while
-        // the underlying Square subscription is intentionally paused.
-        if (row.billing_mode === "market_manual" && status === "paused") {
+        // Square is intentionally paused or deactivated for card billing.
+        if (
+          row.billing_mode === "market_manual" &&
+          ["PAUSED", "DEACTIVATED"].includes(
+            String(sub.status || "").toUpperCase()
+          )
+        ) {
           status = "active";
         }
 
+        /*
+          The webhook payload does not include Square's scheduled actions.
+          Retrieve them so paused_until always mirrors the currently
+          scheduled RESUME action:
+
+          - one-cycle skip scheduled or active -> exact automatic resume date
+          - automatic resume completed -> null
+          - cancellation or an indefinite/manual pause -> null
+
+          If this retrieval fails, leave paused_until untouched instead of
+          accidentally erasing a valid future resume date.
+        */
         let actionsLoaded = false;
         let scheduledResumeDate = null;
 
@@ -158,8 +248,8 @@ export default async (req) => {
 
           const actions = detail.actions || [];
           scheduledResumeDate =
-            actions.find((action) => action.type === "RESUME")
-              ?.effective_date ?? null;
+            actions.find((action) => action.type === "RESUME")?.effective_date ??
+            null;
           actionsLoaded = true;
         } catch (actionError) {
           console.error(
@@ -193,53 +283,160 @@ export default async (req) => {
           patch.square_plan_variation_id = sub.plan_variation_id;
         }
 
-        await supa
+        const { error: subscriptionUpdateError } = await supa
           .from("subscriptions")
           .update(patch)
           .eq("id", row.id);
 
+        if (subscriptionUpdateError) throw subscriptionUpdateError;
+
+        if (
+          status === "active" &&
+          sub.status === "ACTIVE" &&
+          row.billing_mode !== "market_manual"
+        ) {
+          const { data: activatedSubscription, error: activationReadError } =
+            await supa
+              .from("subscriptions")
+              .select("*, customers(*), plans(*)")
+              .eq("id", row.id)
+              .single();
+
+          if (activationReadError) throw activationReadError;
+          await sendSubscriptionEmails(activatedSubscription, "activated");
+        }
+
+        console.log("Subscription", row.id, "→", status);
         break;
       }
 
+      /* ---------- a subscription box was actually paid for ---------- */
       case "invoice.payment_made": {
         const inv = obj.invoice;
-        const squareSubscriptionId = inv?.subscription_id;
-        if (!squareSubscriptionId || !inv?.id) break;
+        const subId = inv?.subscription_id;
+        const invoiceId = inv?.id;
+        const eventId = evt.event_id || (invoiceId ? `${type}:${invoiceId}` : null);
 
-        const eventId =
-          evt.event_id ||
-          evt.id ||
-          `square-invoice:${inv.id}`;
+        // Square's generic sample invoice has no subscription_id. A real
+        // Honey Club invoice must have all three identifiers below.
+        if (!subId) break;
+        if (!invoiceId || !eventId) {
+          throw new Error("Subscription invoice webhook is missing its Square identifiers.");
+        }
 
+        /*
+          One atomic database function now owns all box counting:
+
+          - Square event IDs and invoice IDs are unique
+          - a replay returns duplicate=true without incrementing
+          - boxes_sent and the event row commit together
+          - a third/sixth/ninth paid box creates a persistent bonus alert
+          - an invoice arriving before subscription.created returns 500 so
+            Square retries after the subscription link exists
+        */
         const { data, error } = await supa.rpc(
           "record_subscription_invoice_payment",
           {
             p_event_id: eventId,
-            p_invoice_id: inv.id,
-            p_square_subscription_id: squareSubscriptionId,
-            p_paid_at: new Date().toISOString(),
+            p_invoice_id: invoiceId,
+            p_square_subscription_id: subId,
+            p_paid_at: inv.updated_at || evt.created_at || new Date().toISOString(),
           }
         );
 
-        if (error) {
-          throw new Error(error.message);
+        let record = Array.isArray(data) ? data[0] : data;
+
+        const trackingMigrationMissing =
+          error &&
+          (error.code === "PGRST202" ||
+            error.code === "42883" ||
+            String(error.message || "").includes(
+              "Could not find the function public.record_subscription_invoice_payment"
+            ));
+
+        if (trackingMigrationMissing) {
+          /*
+            Deployment safety: Netlify may publish this function before the
+            Supabase migration is applied. Keep the current production path
+            working rather than rejecting real payments. The migration must
+            still be applied to enable duplicate protection and bonus alerts.
+          */
+          console.error(
+            "Subscription box tracking migration is not applied yet; using the legacy counter."
+          );
+
+          const { data: legacyRow, error: legacyReadError } = await supa
+            .from("subscriptions")
+            .select("id, boxes_sent")
+            .eq("square_subscription_id", subId)
+            .maybeSingle();
+
+          if (legacyReadError) throw legacyReadError;
+          if (!legacyRow) {
+            throw new Error(
+              `Subscription is not linked yet for Square subscription ${subId}.`
+            );
+          }
+
+          const nextBox = Number(legacyRow.boxes_sent || 0) + 1;
+          const { error: legacyUpdateError } = await supa
+            .from("subscriptions")
+            .update({
+              boxes_sent: nextBox,
+              last_invoice_at:
+                inv.updated_at || evt.created_at || new Date().toISOString(),
+              status: "active",
+            })
+            .eq("id", legacyRow.id);
+
+          if (legacyUpdateError) throw legacyUpdateError;
+
+          record = {
+            duplicate: false,
+            legacy: true,
+            subscription_id: legacyRow.id,
+            box_number: nextBox,
+            bonus_jar_due: false,
+          };
+        } else if (error) {
+          throw error;
+        }
+
+        if (!record) {
+          throw new Error("Subscription invoice was not recorded.");
+        }
+
+        if (record.duplicate) {
+          console.log(
+            "Duplicate subscription invoice ignored:",
+            invoiceId,
+            "box",
+            record.box_number
+          );
+          break;
         }
 
         console.log(
-          "Honey Club paid box recorded",
-          data?.subscription_id,
-          data?.box_number,
-          data?.bonus_jar_due ? "BONUS DUE" : ""
+          "Box billed for subscription",
+          record.subscription_id,
+          "→",
+          record.box_number,
+          record.bonus_jar_due ? "(bonus jar due)" : ""
         );
+
+        await sendBonusJarAlert(record);
         break;
       }
 
       default:
+        // Everything else we simply don't care about.
         break;
     }
-  } catch (error) {
-    console.error("Webhook handler failed:", error.message);
-    return bad(error.message, 500);
+  } catch (e) {
+    console.error("Webhook handler failed:", e.message);
+    // 500 makes Square retry. Losing a payment confirmation is worse
+    // than handling the same one twice — every branch above is idempotent.
+    return bad(e.message, 500);
   }
 
   return ok({ received: true });

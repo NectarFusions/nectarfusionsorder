@@ -214,7 +214,7 @@ async function prepareMarketBilling(s) {
 
   const status = String(sq?.status || "").toUpperCase();
 
-  if (["CANCELED", "DEACTIVATED"].includes(status)) {
+  if (["CANCELED", "COMPLETED"].includes(status)) {
     throw new Error("This Square subscription is no longer active.");
   }
 
@@ -253,8 +253,8 @@ async function prepareMarketBilling(s) {
     };
   }
 
-  if (status === "PAUSED") {
-    // If this pause previously had an automatic resume, remove the resume so
+  if (["PAUSED", "DEACTIVATED"].includes(status)) {
+    // If this pause/deactivation has an automatic resume, remove the resume so
     // market billing remains manual until the member changes it back.
     for (const action of actions) {
       if (action.type === "RESUME") {

@@ -3,6 +3,9 @@ import ReactDOM from "react-dom/client";
 import "./index.css";
 
 const rootElement = document.getElementById("root");
+const SubscriptionBonusNotifier = React.lazy(() =>
+  import("./SubscriptionBonusNotifier.jsx")
+);
 
 function ErrorScreen({ title, error }) {
   const message = error?.message || String(error || "Unknown error");
@@ -91,6 +94,25 @@ class ErrorBoundary extends React.Component {
   }
 }
 
+class NonFatalNotifierBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { failed: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  componentDidCatch(error, info) {
+    console.error("Honey Club reminder unavailable:", error, info);
+  }
+
+  render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
+
 function isFulfillmentRoute() {
   const path = window.location.pathname.replace(/\/+$/, "");
 
@@ -140,6 +162,11 @@ if (!rootElement) {
               <App />
               <Launcher />
             </ErrorBoundary>
+            <NonFatalNotifierBoundary>
+              <React.Suspense fallback={null}>
+                <SubscriptionBonusNotifier />
+              </React.Suspense>
+            </NonFatalNotifierBoundary>
           </React.StrictMode>
         );
       })
