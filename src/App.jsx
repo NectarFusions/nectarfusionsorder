@@ -15001,6 +15001,36 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
         {adminTab === "subscriptions" && (
           <>
             <div className="eyebrow" style={{ marginBottom: 8 }}>Honey Club · {activeSubCount} active</div>
+
+            <div
+              className="card"
+              style={{
+                padding: 14,
+                marginBottom: 12,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 12,
+                flexWrap: "wrap",
+              }}
+            >
+              <div>
+                <div style={{ fontWeight: 900, fontSize: 14 }}>
+                  Fulfillment & Billing
+                </div>
+                <div style={{ marginTop: 3, fontSize: 12, color: c.brown, lineHeight: 1.45 }}>
+                  Manage Home Delivery, Market Pickup, delivery details, and market-paid boxes.
+                </div>
+              </div>
+              <a
+                className="btn solid"
+                href="/admin/honey-club"
+                style={{ padding: "10px 13px", fontSize: 12.5, textDecoration: "none" }}
+              >
+                Open Fulfillment Admin
+              </a>
+            </div>
+
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
               <button className={`btn ${subView === "active" ? "on" : ""}`} style={{ padding: 10, fontSize: 13 }}
                 onClick={() => setSubView("active")}>Active · {activeSubs.length}</button>
