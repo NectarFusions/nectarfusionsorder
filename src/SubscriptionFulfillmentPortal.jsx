@@ -906,6 +906,202 @@ function PlanChangeForm({ subscription, plans, onDone, onCancel }) {
   );
 }
 
+function PrepaidFirstBoxForm({
+  subscription,
+  plans,
+  onDone,
+  onCancel,
+}) {
+  const [paidPlanId, setPaidPlanId] = useState("");
+  const [paidCadence, setPaidCadence] = useState(subscription.cadence || "2mo");
+  const [paidOn, setPaidOn] = useState("");
+  const [confirmed, setConfirmed] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const paidPlan = plans.find((plan) => plan.id === paidPlanId);
+
+  async function submit(event) {
+    event.preventDefault();
+    setSaving(true);
+    setError("");
+
+    try {
+      const data = await callFunction(
+        {
+          action: "admin-record-prepaid-first-box",
+          subscriptionId: subscription.id,
+          paidPlanId,
+          paidCadence,
+          paidOn,
+          adminConfirmedPayment: confirmed,
+        },
+        { admin: true }
+      );
+
+      await onDone(data);
+    } catch (saveError) {
+      setError(saveError.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <form onSubmit={submit} style={{ display: "grid", gap: 18 }}>
+      <button
+        type="button"
+        style={{ ...secondaryButton, justifySelf: "start" }}
+        onClick={onCancel}
+      >
+        ← All Honey Club Members
+      </button>
+
+      <div>
+        <div
+          style={{
+            fontSize: 12,
+            fontWeight: 900,
+            color: colors.amber,
+            textTransform: "uppercase",
+            letterSpacing: ".08em",
+          }}
+        >
+          Already-Paid First Box
+        </div>
+
+        <h2 style={{ margin: "5px 0" }}>{subscription.memberName}</h2>
+
+        <div style={{ color: "#655A4D", lineHeight: 1.55 }}>
+          Current recurring plan: <strong>{subscription.planName}</strong> ·{" "}
+          {cadenceLabel(subscription.cadence)}
+        </div>
+      </div>
+
+      <div
+        style={{
+          padding: 14,
+          borderRadius: 12,
+          background: "#FFF8DD",
+          border: `1px solid ${colors.amber}`,
+          lineHeight: 1.55,
+          fontSize: 13,
+        }}
+      >
+        Use this only when the customer already paid for their first Honey
+        Club box separately, but recurring card billing was never established.
+        Recording it counts Box #1 and calculates when recurring billing should
+        begin. It does not charge the customer.
+      </div>
+
+      <label style={labelStyle}>
+        Honey Club plan already paid
+        <select
+          value={paidPlanId}
+          onChange={(e) => setPaidPlanId(e.target.value)}
+          style={inputStyle}
+          required
+        >
+          <option value="">Choose the paid plan</option>
+          {plans.map((plan) => (
+            <option key={plan.id} value={plan.id}>
+              {plan.name} · {money(plan.price)}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label style={labelStyle}>
+        Cadence that was already paid
+        <select
+          value={paidCadence}
+          onChange={(e) => setPaidCadence(e.target.value)}
+          style={inputStyle}
+          required
+        >
+          <option value="1mo">Monthly</option>
+          <option value="2mo">Every 2 months</option>
+        </select>
+      </label>
+
+      <label style={labelStyle}>
+        Date first box was paid
+        <input
+          type="date"
+          value={paidOn}
+          onChange={(e) => setPaidOn(e.target.value)}
+          style={inputStyle}
+          required
+        />
+      </label>
+
+      {paidPlan && paidOn && (
+        <div
+          style={{
+            padding: 14,
+            borderRadius: 12,
+            background: "#EEF8FE",
+            border: "1px solid #8FC5E3",
+            lineHeight: 1.55,
+          }}
+        >
+          <strong>Already paid:</strong> {paidPlan.name} ·{" "}
+          {cadenceLabel(paidCadence)} · {formatDay(paidOn)}
+          <br />
+          <strong>Next recurring plan:</strong> {subscription.planName} ·{" "}
+          {cadenceLabel(subscription.cadence)}
+        </div>
+      )}
+
+      <label
+        style={{
+          padding: 13,
+          borderRadius: 10,
+          background: "#F7F4EF",
+          lineHeight: 1.5,
+        }}
+      >
+        <input
+          type="checkbox"
+          checked={confirmed}
+          onChange={(e) => setConfirmed(e.target.checked)}
+          required
+        />{" "}
+        I confirm this first Honey Club box was already paid and should be
+        counted as Box #1.
+      </label>
+
+      {error && (
+        <div
+          style={{
+            padding: 12,
+            borderRadius: 10,
+            background: "#FDECEA",
+            color: colors.red,
+            fontWeight: 700,
+          }}
+        >
+          {error}
+        </div>
+      )}
+
+      <button
+        type="submit"
+        disabled={saving || !confirmed || !paidPlanId || !paidOn}
+        style={{
+          ...primaryButton,
+          justifySelf: "start",
+          opacity:
+            saving || !confirmed || !paidPlanId || !paidOn ? 0.55 : 1,
+        }}
+      >
+        {saving ? "Recording..." : "Record Already-Paid First Box"}
+      </button>
+    </form>
+  );
+}
+
+
 function AdminPortal() {
   const [state, setState] = useState({
     loading: true,
@@ -915,6 +1111,7 @@ function AdminPortal() {
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState(null);
   const [changingPlan, setChangingPlan] = useState(null);
+  const [recordingPrepaid, setRecordingPrepaid] = useState(null);
   const [notice, setNotice] = useState("");
 
   const load = useCallback(async () => {
@@ -1019,6 +1216,23 @@ function AdminPortal() {
     return (
       <div style={{ ...cardStyle, color: colors.red }}>
         {state.error}
+      </div>
+    );
+  }
+
+  if (recordingPrepaid) {
+    return (
+      <div style={cardStyle}>
+        <PrepaidFirstBoxForm
+          subscription={recordingPrepaid}
+          plans={state.data.plans || []}
+          onCancel={() => setRecordingPrepaid(null)}
+          onDone={async (data) => {
+            setNotice(data.message || "Already-paid first box recorded.");
+            await load();
+            setRecordingPrepaid(null);
+          }}
+        />
       </div>
     );
   }
@@ -1198,6 +1412,30 @@ function AdminPortal() {
               </>
             )}
 
+            {sub.hasPrepaidFirstBox && (
+              <div
+                style={{
+                  padding: 11,
+                  borderRadius: 10,
+                  background: "#FFF8DD",
+                  border: `1px solid ${colors.amber}`,
+                }}
+              >
+                <strong>Box #1 already paid:</strong>{" "}
+                {state.data.plans?.find(
+                  (plan) => plan.id === sub.prepaidFirstBoxPlanId
+                )?.name || sub.prepaidFirstBoxPlanId}
+                {" · "}
+                {cadenceLabel(sub.prepaidFirstBoxCadence)}
+                {sub.prepaidFirstBoxPaidAt
+                  ? ` · ${formatDay(sub.prepaidFirstBoxPaidAt.slice(0, 10))}`
+                  : ""}
+                {sub.recurringStartDate
+                  ? ` · recurring billing begins ${formatDay(sub.recurringStartDate)}`
+                  : ""}
+              </div>
+            )}
+
             <div>
               <strong>Boxes counted:</strong> {sub.boxesSent}
               {sub.boxesSent > 0 &&
@@ -1239,6 +1477,20 @@ function AdminPortal() {
             >
               Edit Fulfillment
             </button>
+
+            {sub.method === "delivery" &&
+              sub.billingMode === "card_setup_required" &&
+              Number(sub.boxesSent || 0) === 0 &&
+              !sub.hasPrepaidFirstBox &&
+              !sub.hasSquareSubscription && (
+                <button
+                  type="button"
+                  style={secondaryButton}
+                  onClick={() => setRecordingPrepaid(sub)}
+                >
+                  Record Already-Paid First Box
+                </button>
+              )}
 
             <button
               type="button"

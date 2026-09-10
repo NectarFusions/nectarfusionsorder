@@ -223,6 +223,12 @@ function serializeSubscription(s, { admin = false } = {}) {
     planChangeEffectiveDate: s.plan_change_effective_date || null,
     planChangeStatus: s.plan_change_status || null,
     planChangeRequestedAt: s.plan_change_requested_at || null,
+    prepaidFirstBoxPlanId: s.prepaid_first_box_plan_id || null,
+    prepaidFirstBoxCadence: s.prepaid_first_box_cadence || null,
+    prepaidFirstBoxPaidAt: s.prepaid_first_box_paid_at || null,
+    prepaidFirstBoxRecordedAt: s.prepaid_first_box_recorded_at || null,
+    recurringStartDate: s.recurring_start_date || null,
+    hasPrepaidFirstBox: Boolean(s.prepaid_first_box_plan_id),
     needsCardSetup:
       s.method === "delivery" &&
       (!s.square_subscription_id || s.billing_mode === "card_setup_required"),
@@ -236,6 +242,7 @@ function serializeSubscription(s, { admin = false } = {}) {
       phone: customer.phone || "",
       token: s.token,
       customerSettingsUrl: `${site()}/club/${s.token}/fulfillment?setup=1`,
+      hasSquareSubscription: Boolean(s.square_subscription_id),
     };
   }
 
@@ -1147,6 +1154,64 @@ export default async (req) => {
 
     if (action === "admin-change-plan") {
       return await handleAdminPlanChange(req, body);
+    }
+
+    if (action === "admin-record-prepaid-first-box") {
+      const admin = await requireAdmin(req);
+      if (!admin) return bad("Not an admin", 403);
+
+      const subscriptionId = String(body.subscriptionId || "");
+      if (!UUID_RE.test(subscriptionId)) {
+        return bad("Invalid subscription ID.");
+      }
+
+      const paidPlanId = String(body.paidPlanId || "").trim();
+      const paidCadence = String(body.paidCadence || "").trim();
+      const paidOn = String(body.paidOn || "").trim();
+
+      if (!body.adminConfirmedPayment) {
+        return bad(
+          "Confirm that this first Honey Club box was already paid before recording it."
+        );
+      }
+
+      if (!["taster", "signature", "hive", "apiary"].includes(paidPlanId)) {
+        return bad("Choose the Honey Club plan that was already paid.");
+      }
+
+      if (!["1mo", "2mo"].includes(paidCadence)) {
+        return bad("Choose the cadence that was already paid.");
+      }
+
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(paidOn)) {
+        return bad("Choose the date the first box was paid.");
+      }
+
+      const supa = db();
+      const subscription = await subscriptionById(supa, subscriptionId);
+      if (!subscription) return bad("Subscription not found.", 404);
+
+      await deleteSavedCheckoutLink(subscription);
+
+      const { data, error } = await supa.rpc(
+        "record_prepaid_first_subscription_box",
+        {
+          p_subscription_id: subscriptionId,
+          p_paid_plan_id: paidPlanId,
+          p_paid_cadence: paidCadence,
+          p_paid_on: paidOn,
+          p_recorded_by: admin.id,
+        }
+      );
+
+      if (error) return bad(error.message, 409);
+
+      return ok({
+        ok: true,
+        result: data,
+        message:
+          `Box 1 recorded as already paid. Recurring billing is scheduled to begin ${data?.recurring_start_date || "on the next renewal date"}.`,
+      });
     }
 
     if (action === "admin-cancel-plan-change") {
