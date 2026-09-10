@@ -1,13 +1,35 @@
 /* ============================================================
    SUBSCRIBE LINK  —  /.netlify/functions/subscribe-link
 
-   POST { token }  →  { url }
+   POST { token } → { url }
 
-   Creates a Square hosted checkout page that stores the card and
-   starts the selected Honey Club subscription.
+   Delivery members complete fulfillment details first, then Square
+   securely stores the card and starts recurring billing.
+   Market Pickup members never enter recurring Square billing.
    ============================================================ */
 
 import { square, db, site, ok, bad } from "./_square.mjs";
+
+const absolute = (path) => `${site()}${path}`;
+
+const fulfillmentComplete = (s) => {
+  if (!s.terms_accepted_at || !s.terms_version) return false;
+
+  if (s.method === "market") {
+    return Boolean(s.market_date_id);
+  }
+
+  if (s.method === "delivery") {
+    return Boolean(
+      s.address &&
+        s.delivery_zip &&
+        s.delivery_location_type &&
+        s.preferred_contact_method
+    );
+  }
+
+  return true;
+};
 
 export default async (req) => {
   try {
@@ -31,7 +53,42 @@ export default async (req) => {
 
     if (error || !s) return bad("Subscription not found", 404);
     if (s.status === "cancelled") return bad("That subscription is cancelled");
-    if (s.square_checkout_url) return ok({ url: s.square_checkout_url });
+
+    if (!fulfillmentComplete(s)) {
+      return ok({
+        url: absolute(`/club/${s.token}/fulfillment?setup=1`),
+        fulfillment_required: true,
+      });
+    }
+
+    if (s.method === "market") {
+      const { error: updateError } = await supa
+        .from("subscriptions")
+        .update({
+          status: "active",
+          billing_mode: "market_manual",
+          fulfillment_updated_at: new Date().toISOString(),
+        })
+        .eq("id", s.id);
+
+      if (updateError) throw new Error(updateError.message);
+
+      return ok({
+        url: absolute(`/club/${s.token}`),
+        market_manual: true,
+      });
+    }
+
+    if (s.method === "delivery" && s.square_subscription_id) {
+      return ok({
+        url: absolute(`/club/${s.token}`),
+        billing_active: true,
+      });
+    }
+
+    if (s.square_checkout_url) {
+      return ok({ url: s.square_checkout_url });
+    }
 
     const plan = s.plans;
     const variationId =
@@ -52,12 +109,15 @@ export default async (req) => {
           name: `${plan.name} — ${
             s.cadence === "1mo" ? "monthly" : "every 2 months"
           }`,
-          price_money: { amount: plan.price_cents, currency: "USD" },
+          price_money: {
+            amount: plan.price_cents,
+            currency: "USD",
+          },
           location_id: process.env.SQUARE_LOCATION_ID,
         },
         checkout_options: {
           subscription_plan_id: variationId,
-          redirect_url: `${site()}/club/${s.token}`,
+          redirect_url: absolute(`/club/${s.token}`),
           ask_for_shipping_address: s.method === "ship",
           merchant_support_email: "info@nectar-fusions.com",
         },
@@ -77,6 +137,7 @@ export default async (req) => {
       .update({
         square_checkout_url: url,
         square_plan_variation_id: variationId,
+        billing_mode: "card_setup_required",
       })
       .eq("id", s.id);
 

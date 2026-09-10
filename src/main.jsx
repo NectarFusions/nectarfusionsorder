@@ -80,10 +80,26 @@ class ErrorBoundary extends React.Component {
 
   render() {
     if (this.state.error) {
-      return <ErrorScreen title="NectarFusions could not render" error={this.state.error} />;
+      return (
+        <ErrorScreen
+          title="NectarFusions could not render"
+          error={this.state.error}
+        />
+      );
     }
     return this.props.children;
   }
+}
+
+function isFulfillmentRoute() {
+  const path = window.location.pathname.replace(/\/+$/, "");
+
+  return (
+    path === "/admin/honey-club" ||
+    /^\/club\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/fulfillment$/i.test(
+      path
+    )
+  );
 }
 
 if (!rootElement) {
@@ -92,18 +108,49 @@ if (!rootElement) {
 } else {
   const root = ReactDOM.createRoot(rootElement);
 
-  import("./App.jsx")
-    .then(({ default: App }) => {
-      root.render(
-        <React.StrictMode>
-          <ErrorBoundary>
-            <App />
-          </ErrorBoundary>
-        </React.StrictMode>
-      );
-    })
-    .catch((error) => {
-      console.error("NectarFusions startup error:", error);
-      root.render(<ErrorScreen title="NectarFusions could not start" error={error} />);
-    });
+  if (isFulfillmentRoute()) {
+    import("./SubscriptionFulfillmentPortal.jsx")
+      .then(({ default: SubscriptionFulfillmentPortal }) => {
+        root.render(
+          <React.StrictMode>
+            <ErrorBoundary>
+              <SubscriptionFulfillmentPortal />
+            </ErrorBoundary>
+          </React.StrictMode>
+        );
+      })
+      .catch((error) => {
+        console.error("Honey Club fulfillment startup error:", error);
+        root.render(
+          <ErrorScreen
+            title="Honey Club settings could not start"
+            error={error}
+          />
+        );
+      });
+  } else {
+    Promise.all([
+      import("./App.jsx"),
+      import("./SubscriptionFulfillmentLauncher.jsx"),
+    ])
+      .then(([{ default: App }, { default: Launcher }]) => {
+        root.render(
+          <React.StrictMode>
+            <ErrorBoundary>
+              <App />
+              <Launcher />
+            </ErrorBoundary>
+          </React.StrictMode>
+        );
+      })
+      .catch((error) => {
+        console.error("NectarFusions startup error:", error);
+        root.render(
+          <ErrorScreen
+            title="NectarFusions could not start"
+            error={error}
+          />
+        );
+      });
+  }
 }

@@ -27,10 +27,7 @@ export default async (req) => {
   try {
     ({ token } = await req.json());
   } catch {
-    return json(
-      { error: "The Honey Club link is invalid." },
-      400
-    );
+    return json({ error: "The Honey Club link is invalid." }, 400);
   }
 
   token = String(token || "").trim();
@@ -40,10 +37,7 @@ export default async (req) => {
       token
     )
   ) {
-    return json(
-      { error: "The Honey Club link is invalid." },
-      400
-    );
+    return json({ error: "The Honey Club link is invalid." }, 400);
   }
 
   const supabase = createClient(
@@ -53,100 +47,104 @@ export default async (req) => {
 
   const { data: subscription, error } = await supabase
     .from("subscriptions")
-    .select("*, plans(*), customers(*)")
+    .select("*, plans(*), customers(*), market_dates(id, day, where_at, hours, venues(name, where_at, hours))")
     .eq("token", token)
     .maybeSingle();
 
   if (error) {
-    console.error(
-      "Customer subscription lookup failed:",
-      error.message
-    );
-
+    console.error("Customer subscription lookup failed:", error.message);
     return json(
-      {
-        error:
-          "Your Honey Club membership could not be loaded.",
-      },
+      { error: "Your Honey Club membership could not be loaded." },
       500
     );
   }
 
   if (!subscription) {
-    return json(
-      {
-        error:
-          "This Honey Club link could not be found.",
-      },
-      404
-    );
+    return json({ error: "This Honey Club link could not be found." }, 404);
   }
 
   const customer = relationRow(subscription.customers);
   const plan = relationRow(subscription.plans);
+  const market = relationRow(subscription.market_dates);
+  const venue = relationRow(market.venues);
 
-  const {
-    data: cancellationRequests,
-    error: requestError,
-  } = await supabase
+  const { data: cancellationRequests, error: requestError } = await supabase
     .from("customer_requests")
-    .select(
-      "status, order_or_subscription_no, created_at"
-    )
-    .eq(
-      "request_kind",
-      "continue_with_cancellation"
-    )
+    .select("status, order_or_subscription_no, created_at")
+    .eq("request_kind", "continue_with_cancellation")
     .eq("account_kind", "subscription")
     .neq("status", "resolved")
     .order("created_at", { ascending: false })
     .limit(100);
 
   if (requestError) {
-    console.error(
-      "Cancellation request lookup failed:",
-      requestError.message
-    );
-
+    console.error("Cancellation request lookup failed:", requestError.message);
     return json(
-      {
-        error:
-          "Your Honey Club membership could not be loaded.",
-      },
+      { error: "Your Honey Club membership could not be loaded." },
       500
     );
   }
 
-  const cancellationRequest =
-    (cancellationRequests || []).find(
-      (request) =>
-        normalizeNumber(
-          request.order_or_subscription_no
-        ) === String(subscription.sub_no)
-    );
+  const cancellationRequest = (cancellationRequests || []).find(
+    (request) =>
+      normalizeNumber(request.order_or_subscription_no) ===
+      String(subscription.sub_no)
+  );
+
+  const rawStatus = String(subscription.status || "pending").toLowerCase();
+  const status =
+    subscription.billing_mode === "market_manual" && rawStatus === "paused"
+      ? "active"
+      : rawStatus;
 
   return json({
     ok: true,
     subscription: {
       subNo: subscription.sub_no,
       memberName: customer.name || "",
-      planName:
-        plan.name || "NectarFusions Honey Club",
-      price:
-        Number(plan.price_cents || 0) / 100,
+      planName: plan.name || "NectarFusions Honey Club",
+      price: Number(plan.price_cents || 0) / 100,
       cadence: subscription.cadence,
       method: subscription.method,
-      status: String(
-        subscription.status || "pending"
-      ).toLowerCase(),
+      status,
+      billingMode:
+        subscription.billing_mode ||
+        (subscription.square_subscription_id
+          ? "card"
+          : "card_setup_required"),
       pausedUntil: subscription.paused_until,
-      boxesSent: Number(
-        subscription.boxes_sent || 0
-      ),
-      cancellationRequested:
-        Boolean(cancellationRequest),
-      cancellationRequestStatus:
-        cancellationRequest?.status || null,
+      boxesSent: Number(subscription.boxes_sent || 0),
+      cancellationRequested: Boolean(cancellationRequest),
+      cancellationRequestStatus: cancellationRequest?.status || null,
+      address: subscription.address || "",
+      deliveryZip: subscription.delivery_zip || "",
+      deliveryLocationType: subscription.delivery_location_type || "",
+      buildingDetails: subscription.building_details || "",
+      gateCode: subscription.gate_code || "",
+      deliveryNotes: subscription.delivery_notes || "",
+      temporaryDeliveryNotes:
+        subscription.temporary_delivery_notes || "",
+      preferredContactMethod:
+        subscription.preferred_contact_method || "",
+      preferredDeliveryTiming:
+        subscription.preferred_delivery_timing || "",
+      selectedMarket: market.id
+        ? {
+            id: market.id,
+            day: market.day,
+            name: venue.name || "NectarFusions Market",
+            whereAt: market.where_at ?? venue.where_at ?? "",
+            hours: market.hours ?? venue.hours ?? "",
+          }
+        : null,
+      isGift: Boolean(subscription.is_gift),
+      recipientName: subscription.recipient_name || "",
+      giftMessage: subscription.gift_message || "",
+      fulfillmentSettingsUrl: `/club/${subscription.token}/fulfillment`,
+      needsCardSetup:
+        subscription.method === "delivery" &&
+        (!subscription.square_subscription_id ||
+          subscription.billing_mode === "card_setup_required"),
     },
   });
 };
