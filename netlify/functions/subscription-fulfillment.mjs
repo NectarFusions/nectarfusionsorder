@@ -1191,6 +1191,41 @@ export default async (req) => {
       const subscription = await subscriptionById(supa, subscriptionId);
       if (!subscription) return bad("Subscription not found.", 404);
 
+      if (String(subscription.status || "").toLowerCase() === "cancelled") {
+        return bad("Cancelled memberships cannot record a prepaid first box.");
+      }
+
+      if (subscription.method !== "delivery") {
+        return bad(
+          "Prepaid first-box setup is only available for Home Delivery memberships."
+        );
+      }
+
+      if (subscription.billing_mode !== "card_setup_required") {
+        return bad(
+          "This membership is not waiting for recurring card setup."
+        );
+      }
+
+      if (subscription.square_subscription_id) {
+        return bad(
+          "This membership already has a linked Square subscription."
+        );
+      }
+
+      if (Number(subscription.boxes_sent || 0) !== 0) {
+        return bad("The first Honey Club box has already been counted.");
+      }
+
+      if (subscription.prepaid_first_box_plan_id) {
+        return bad("A prepaid first box has already been recorded.");
+      }
+
+      const paidPlan = await planById(supa, paidPlanId);
+      if (!paidPlan) {
+        return bad("The paid Honey Club plan could not be found.");
+      }
+
       await deleteSavedCheckoutLink(subscription);
 
       const { data, error } = await supa.rpc(
