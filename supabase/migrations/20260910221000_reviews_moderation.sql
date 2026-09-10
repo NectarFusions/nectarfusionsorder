@@ -23,6 +23,34 @@ create table if not exists public.reviews (
   updated_at timestamptz not null default now()
 );
 
+alter table public.reviews enable row level security;
+
+-- Drop any earlier direct-browser policies before renaming or changing column
+-- types. PostgreSQL will otherwise block a type change while a policy depends
+-- on that column.
+do $$
+declare
+  p record;
+begin
+  for p in
+    select policyname
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'reviews'
+  loop
+    execute format(
+      'drop policy %I on public.reviews',
+      p.policyname
+    );
+  end loop;
+end
+$$;
+
+-- The earlier partial storage setup allowed direct authenticated deletion.
+-- The current admin endpoint performs image cleanup with service-role access.
+drop policy if exists "Admins can delete review images"
+  on storage.objects;
+
 -- Earlier partial implementation used reviewer_name + review_text.
 -- Rename those columns in place so any existing records are preserved.
 do $$
@@ -72,6 +100,18 @@ alter table public.reviews
   add column if not exists created_at timestamptz not null default now(),
   add column if not exists updated_at timestamptz not null default now();
 
+-- Remove old/partial checks before altering dependent column types.
+alter table public.reviews
+  drop constraint if exists reviews_rating_check,
+  drop constraint if exists reviews_review_text_check,
+  drop constraint if exists reviews_status_check,
+  drop constraint if exists reviews_display_name_length_check,
+  drop constraint if exists reviews_body_not_blank_check,
+  drop constraint if exists reviews_title_length_check,
+  drop constraint if exists reviews_product_text_length_check,
+  drop constraint if exists reviews_image_pair_check,
+  drop constraint if exists reviews_source_check;
+
 alter table public.reviews
   alter column display_name type text using display_name::text,
   alter column body type text using body::text,
@@ -86,18 +126,6 @@ update public.reviews
 set image_bucket = 'review-images'
 where image_path is not null
   and image_bucket is null;
-
--- Replace old/partial checks with the current server contract.
-alter table public.reviews
-  drop constraint if exists reviews_rating_check,
-  drop constraint if exists reviews_review_text_check,
-  drop constraint if exists reviews_status_check,
-  drop constraint if exists reviews_display_name_length_check,
-  drop constraint if exists reviews_body_not_blank_check,
-  drop constraint if exists reviews_title_length_check,
-  drop constraint if exists reviews_product_text_length_check,
-  drop constraint if exists reviews_image_pair_check,
-  drop constraint if exists reviews_source_check;
 
 alter table public.reviews
   add constraint reviews_rating_check
@@ -127,29 +155,6 @@ create index if not exists reviews_status_approved_at_idx
 create index if not exists reviews_status_submitted_at_idx
   on public.reviews (status, submitted_at desc);
 
-alter table public.reviews enable row level security;
-
--- Remove the earlier direct-browser policies. The current design intentionally
--- routes public submission, public approved reads, and admin moderation through
--- reviewed Netlify functions instead.
-do $$
-declare
-  p record;
-begin
-  for p in
-    select policyname
-    from pg_policies
-    where schemaname = 'public'
-      and tablename = 'reviews'
-  loop
-    execute format(
-      'drop policy %I on public.reviews',
-      p.policyname
-    );
-  end loop;
-end
-$$;
-
 revoke all on table public.reviews from public, anon, authenticated;
 grant select, insert, update, delete on table public.reviews to service_role;
 
@@ -173,11 +178,6 @@ set
   file_size_limit = excluded.file_size_limit,
   allowed_mime_types = excluded.allowed_mime_types;
 
--- The earlier partial setup included direct authenticated deletion for this
--- bucket. The new admin endpoint performs image cleanup using service role.
-drop policy if exists "Admins can delete review images"
-  on storage.objects;
-
 comment on table public.reviews is
   'Moderated NectarFusions customer reviews. Customer submissions remain pending until an authenticated admin approves them.';
 
@@ -186,4 +186,3 @@ comment on column public.reviews.email is
 
 comment on column public.reviews.rating is
   'NectarFusions bee rating from 1 through 5.';
-
