@@ -1123,7 +1123,7 @@ export default async (req) => {
         supa
           .from("plans")
           .select("id, name, price_cents, sort")
-          .eq("is_bulk", false)
+          .in("id", ["taster", "signature", "hive", "apiary"])
           .order("sort", { ascending: true }),
       ]);
 
