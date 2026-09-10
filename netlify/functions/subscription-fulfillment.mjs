@@ -185,7 +185,7 @@ async function squareSubscriptionDetail(squareSubscriptionId) {
   );
   return {
     subscription: detail.subscription || null,
-    actions: detail.actions || [],
+    actions: detail.subscription?.actions || detail.actions || [],
   };
 }
 
@@ -218,11 +218,30 @@ async function prepareMarketBilling(s) {
     throw new Error("This Square subscription is no longer active.");
   }
 
-  // A one-cycle skip is no longer meaningful after switching to pay-at-market.
-  // Remove its scheduled PAUSE/RESUME pair before creating the market pause.
+  // If a one-cycle skip is already scheduled, Square already has the PAUSE
+  // we need. Remove only its automatic RESUME so that PAUSE becomes indefinite
+  // while the member remains on Market Pickup.
   if (status === "ACTIVE") {
+    const existingPause =
+      actions.find((action) => action.type === "PAUSE") || null;
+
+    if (existingPause) {
+      for (const action of actions) {
+        if (action.type === "RESUME") {
+          await deleteAction(s.square_subscription_id, action.id);
+        }
+      }
+
+      return {
+        billingMode: "market_manual",
+        pauseActionId: existingPause.id,
+      };
+    }
+
+    // A RESUME without a PAUSE should not normally exist, but remove any stale
+    // resume action before creating the new indefinite market pause.
     for (const action of actions) {
-      if (action.type === "PAUSE" || action.type === "RESUME") {
+      if (action.type === "RESUME") {
         await deleteAction(s.square_subscription_id, action.id);
       }
     }

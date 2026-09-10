@@ -246,7 +246,8 @@ export default async (req) => {
             { method: "GET" }
           );
 
-          const actions = detail.actions || [];
+          const actions =
+            detail.subscription?.actions || detail.actions || [];
           scheduledResumeDate =
             actions.find((action) => action.type === "RESUME")?.effective_date ??
             null;
