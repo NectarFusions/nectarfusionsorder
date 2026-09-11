@@ -9655,6 +9655,8 @@ export default function App() {
   const [flavorMode, setFlavorMode] = useState("surprise");
   const [flavorPreferences, setFlavorPreferences] = useState([]);
   const [flavorRequests, setFlavorRequests] = useState("");
+  const [subMarketDateId, setSubMarketDateId] = useState("");
+  const [subMarketPopupStep, setSubMarketPopupStep] = useState(0);
 
   useEffect(() => {
     if (!reviewOpen && !typeInfo) return undefined;
@@ -11129,6 +11131,8 @@ export default function App() {
                 setFlavorMode("surprise");
                 setFlavorPreferences([]);
                 setFlavorRequests("");
+                setSubMarketDateId("");
+                setSubMarketPopupStep(0);
                 setView("shop");
               }}>
               Back to the shop
@@ -11140,7 +11144,9 @@ export default function App() {
 
     const p = cat.plans.find((x) => x.id === plan);
     const planShipOK = p && p.price >= cat.shipFreeOver;
-    const subOK = p && subMethod && (subMethod !== "delivery" || subZone) &&
+    const subOK = p && subMethod &&
+      (subMethod !== "delivery" || subZone) &&
+      (subMethod !== "market" || subMarketDateId) &&
       cust.name.trim() && cust.phone.trim() && cust.email.trim() &&
       (subMethod === "market" || cust.address.trim()) && !busy;
 
@@ -11151,6 +11157,7 @@ export default function App() {
           planId: p.id, cadence, method: subMethod,
           name: cust.name, phone: cust.phone, email: cust.email,
           address: cust.address || null, zip: subMethod === "delivery" ? subZip : null,
+          marketDateId: subMethod === "market" ? subMarketDateId : null,
           flavorMode,
           flavorPreferences,
           flavorRequests: flavorRequests.trim() || null,
@@ -11166,6 +11173,125 @@ export default function App() {
 
     return (
       <div className="nf"><style>{CSS}</style>
+        {subMarketPopupStep > 0 && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Market pickup availability"
+            onClick={() => setSubMarketPopupStep(0)}
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 420,
+              display: "grid",
+              placeItems: "center",
+              padding: 16,
+              background: "rgba(27,16,5,.58)",
+            }}
+          >
+            <div
+              className="card"
+              onClick={(event) => event.stopPropagation()}
+              style={{
+                width: "min(520px,100%)",
+                padding: 24,
+                borderColor: c.gold,
+                boxShadow: "0 24px 60px rgba(0,0,0,.24)",
+              }}
+            >
+              {subMarketPopupStep === 1 ? (
+                <>
+                  <div className="eyebrow">Market Pickup</div>
+                  <div className="display" style={{ fontSize: 31, marginTop: 6 }}>
+                    NO MARKETS ARE AVAILABLE RIGHT NOW
+                  </div>
+                  <p style={{ color: c.brown, lineHeight: 1.65, margin: "10px 0 16px" }}>
+                    There are no active upcoming market dates on the NectarFusions calendar.
+                  </p>
+                  <button
+                    type="button"
+                    className="btn solid"
+                    style={{ width: "100%", padding: 13 }}
+                    onClick={() => setSubMarketPopupStep(2)}
+                  >
+                    Show Me My Other Options
+                  </button>
+                  <button
+                    type="button"
+                    className="btn ghost"
+                    style={{ width: "100%", padding: 11, marginTop: 8 }}
+                    onClick={() => setSubMarketPopupStep(0)}
+                  >
+                    Close
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="eyebrow">Available alternatives</div>
+                  <div className="display" style={{ fontSize: 31, marginTop: 6 }}>
+                    HOW WOULD YOU LIKE YOUR HONEY?
+                  </div>
+                  <div style={{ display: "grid", gap: 9, marginTop: 16 }}>
+                    <button
+                      type="button"
+                      className="btn"
+                      style={{ padding: 14, textAlign: "left" }}
+                      onClick={() => {
+                        setSubMethod("delivery");
+                        setSubMarketDateId("");
+                        setSubMarketPopupStep(0);
+                      }}
+                    >
+                      <strong>Local Delivery</strong>
+                      <span style={{ display: "block", marginTop: 3 }}>
+                        Free for Honey Club members. Enter your ZIP to confirm your delivery area.
+                      </span>
+                    </button>
+                    {planShipOK ? (
+                      <button
+                        type="button"
+                        className="btn"
+                        style={{ padding: 14, textAlign: "left", borderColor: c.sky }}
+                        onClick={() => {
+                          setSubMethod("ship");
+                          setSubMarketDateId("");
+                          setSubMarketPopupStep(0);
+                        }}
+                      >
+                        <strong>Free Shipping</strong>
+                        <span style={{ display: "block", marginTop: 3 }}>
+                          This box qualifies for free shipping in Michigan.
+                        </span>
+                      </button>
+                    ) : (
+                      <div
+                        className="card"
+                        style={{
+                          padding: 13,
+                          background: "#F6F8FA",
+                          color: c.brown,
+                          fontSize: 13,
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        Shipping is not available for this box size under the current Honey Club shipping rules.
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    className="btn ghost"
+                    style={{ width: "100%", padding: 11, marginTop: 10 }}
+                    onClick={() => setSubMarketPopupStep(0)}
+                  >
+                    Close
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
         <Header eyebrow="The Honey Club" title="SUBSCRIBE"
           right={<button className="btn ghost nf-back-to-shop" onClick={() => setView("shop")}>Back to shop</button>} />
         <div className="nf-wrap" style={{ paddingTop: 24 }}>
@@ -11296,12 +11422,30 @@ export default function App() {
 
               <div className="eyebrow" style={{ margin: "26px 0 10px" }}>How do you want it?</div>
               <div style={{ display: "grid", gap: 8 }}>
-                <button className={`btn ${subMethod === "market" ? "on" : ""}`} onClick={() => setSubMethod("market")}
+                <button
+                  className={`btn ${subMethod === "market" ? "on" : ""}`}
+                  onClick={() => {
+                    if (!(cat.marketDates?.length)) {
+                      setSubMethod(null);
+                      setSubMarketDateId("");
+                      setSubMarketPopupStep(1);
+                      return;
+                    }
+                    setSubMethod("market");
+                    setSubZip("");
+                    setSubMarketPopupStep(0);
+                  }}
                   style={{ padding: 14, textAlign: "left" }}>
                   <div className="display" style={{ fontSize: 21 }}>MARKET PICKUP</div>
                   <div style={{ fontSize: 12, opacity: .72, marginTop: 2 }}>Grab it from our table. Free.</div>
                 </button>
-                <button className={`btn ${subMethod === "delivery" ? "on" : ""}`} onClick={() => setSubMethod("delivery")}
+                <button
+                  className={`btn ${subMethod === "delivery" ? "on" : ""}`}
+                  onClick={() => {
+                    setSubMethod("delivery");
+                    setSubMarketDateId("");
+                    setSubMarketPopupStep(0);
+                  }}
                   style={{ padding: 14, textAlign: "left" }}>
                   <div className="display" style={{ fontSize: 21 }}>LOCAL DELIVERY</div>
                   <div style={{ fontSize: 12, opacity: .72, marginTop: 2 }}>
@@ -11309,13 +11453,66 @@ export default function App() {
                   </div>
                 </button>
                 {planShipOK && (
-                  <button className={`btn ${subMethod === "ship" ? "on" : ""}`} onClick={() => setSubMethod("ship")}
+                  <button
+                    className={`btn ${subMethod === "ship" ? "on" : ""}`}
+                    onClick={() => {
+                      setSubMethod("ship");
+                      setSubMarketDateId("");
+                      setSubMarketPopupStep(0);
+                    }}
                     style={{ padding: 14, textAlign: "left", borderColor: subMethod === "ship" ? c.amber : c.sky }}>
                     <div className="display" style={{ fontSize: 21 }}>FREE SHIPPING</div>
                     <div style={{ fontSize: 12, opacity: .72, marginTop: 2 }}>Anywhere in Michigan</div>
                   </button>
                 )}
               </div>
+
+              {subMethod === "market" && (
+                <div style={{ marginTop: 12 }}>
+                  <div
+                    className="card"
+                    style={{
+                      padding: 14,
+                      borderColor: c.gold,
+                      background: "#FFFBF0",
+                    }}
+                  >
+                    <div className="eyebrow">Choose your pickup market</div>
+                    <p style={{ margin: "6px 0 12px", color: c.brown, fontSize: 13.5, lineHeight: 1.55 }}>
+                      Your selected market will be saved with your Honey Club membership.
+                    </p>
+                    <div style={{ display: "grid", gap: 7 }}>
+                      {cat.marketDates.map((market) => (
+                        <button
+                          key={market.id}
+                          type="button"
+                          className={`btn ${subMarketDateId === market.id ? "on" : ""}`}
+                          style={{
+                            padding: "11px 12px",
+                            textAlign: "left",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            gap: 10,
+                            alignItems: "center",
+                          }}
+                          onClick={() => setSubMarketDateId(market.id)}
+                        >
+                          <span>
+                            <strong>{market.venue?.name || "NectarFusions Market"}</strong>
+                            <span style={{ display: "block", marginTop: 3, fontSize: 12, opacity: .72 }}>
+                              {market.venue?.where_at}
+                              {market.venue?.hours ? ` · ${market.venue.hours}` : ""}
+                            </span>
+                          </span>
+                          <span className="num" style={{ fontSize: 16, whiteSpace: "nowrap" }}>
+                            {fmt(parseDay(market.day))}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {subMethod === "delivery" && (
                 <div style={{ marginTop: 12 }}>

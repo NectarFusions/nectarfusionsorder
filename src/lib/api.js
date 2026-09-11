@@ -2068,7 +2068,7 @@ export const deleteCustomerRequest = (id) =>
 /* ---------- subscriptions (enrolment only; Square does the billing) ---------- */
 
 export async function startSubscription(s) {
-  const { data, error } = await supabase.rpc("start_subscription", {
+  const { data, error } = await supabase.rpc("start_subscription_v2", {
     p_plan_id: s.planId,
     p_cadence: s.cadence,        // '1mo' | '2mo'
     p_method: s.method,          // 'market' | 'delivery' | 'ship'
@@ -2077,6 +2077,7 @@ export async function startSubscription(s) {
     p_email: s.email,
     p_address: s.address ?? null,
     p_zip: s.zip ?? null,
+    p_market_date_id: s.marketDateId ?? null,
   });
   if (error) throw new Error(error.message);
   const row = Array.isArray(data) ? data[0] : data;
