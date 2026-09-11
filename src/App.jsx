@@ -9,6 +9,7 @@ import AdminPartnerResources from "./pages/AdminPartnerResources";
 import MarketConfirmationPage from "./pages/MarketConfirmationPage";
 import ReviewsPage, { HONEY_HIVE_URL, ReviewHomeCard } from "./pages/ReviewsPage";
 import AdminReviewsPanel from "./pages/AdminReviewsPanel";
+import AdminFlavorRequestsPanel from "./pages/AdminFlavorRequestsPanel";
 
 /* ============================================================
    NECTARFUSIONS — ORDER SYSTEM
@@ -14392,6 +14393,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
     ["markets", "Market Schedule"],
     ["requests", `Order Help (${newRequestCount})`],
     ["reviews", "Reviews"],
+    ["flavorRequests", "Flavor Requests"],
     ["orders", `Orders (${standardActiveOrders.length + standardPendingPaymentOrders.length})`],
     ["partnerProgram", "Partner Program"],
     ["partnerEvents", "Partner Events"],
@@ -14438,6 +14440,10 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
 
         {adminTab === "reviews" && (
           <AdminReviewsPanel flavors={cat.flavors ?? []} />
+        )}
+
+        {adminTab === "flavorRequests" && (
+          <AdminFlavorRequestsPanel />
         )}
 
         {adminTab === "orders" && (
