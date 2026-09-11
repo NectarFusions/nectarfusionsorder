@@ -10886,7 +10886,35 @@ export default function App() {
     return <ReviewsPage
       Header={Header}
       styles={CSS}
+      flavors={cat.flavors ?? []}
       onBack={() => setView("shop")}
+      onShopFlavor={(flavorId) => {
+        const flavor = cat.flavors.find((item) => item.id === flavorId);
+        if (flavor) {
+          const choice = (cat.sizes ?? [])
+            .flatMap((size) => [
+              { sizeId: size.id, typeId: "regular" },
+              ...(spunEnabled ? [{ sizeId: size.id, typeId: "spun" }] : []),
+            ])
+            .find((item) => {
+              if (!flavorAvailableForType(flavor, item.sizeId, item.typeId)) return false;
+              const limit = inventoryLimit(flavor.id, item.sizeId, item.typeId);
+              return limit === null || limit > 0;
+            });
+          if (choice) {
+            setPickSize(choice.sizeId);
+            setPickType(choice.typeId);
+          }
+        }
+        setView("shop");
+        setTopPickFocusId(flavorId);
+        window.setTimeout(() => {
+          document.getElementById(`flavor-card-${flavorId}`)?.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+        }, 180);
+      }}
     />;
   }
 
@@ -14409,7 +14437,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
         </div>
 
         {adminTab === "reviews" && (
-          <AdminReviewsPanel />
+          <AdminReviewsPanel flavors={cat.flavors ?? []} />
         )}
 
         {adminTab === "orders" && (

@@ -4,6 +4,7 @@ import { db, ok, bad } from "./_square.mjs";
 const IMAGE_BUCKET = "review-images";
 const IMAGE_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const text = (value) => String(value ?? "").trim();
 
@@ -62,6 +63,7 @@ export default async (req) => {
     const productText = text(form.get("productText"));
     const title = text(form.get("title"));
     const body = text(form.get("body"));
+    const flavorId = text(form.get("flavorId"));
     const rating = Number.parseInt(form.get("rating"), 10);
     const image = form.get("image");
 
@@ -76,8 +78,14 @@ export default async (req) => {
     if (!body) return bad("Your review is required.");
     if (title.length > 180) return bad("Please shorten the review title.");
     if (productText.length > 220) return bad("Please shorten the product or flavor description.");
+    if (flavorId && !UUID_RE.test(flavorId)) return bad("Choose a valid flavor.");
 
     const supa = db();
+    if (flavorId) {
+      const { data: flavor, error: flavorError } = await supa.from("flavors").select("id").eq("id", flavorId).maybeSingle();
+      if (flavorError) throw new Error(flavorError.message);
+      if (!flavor) return bad("That flavor is no longer listed.");
+    }
     const id = randomUUID();
     let imagePath = null;
 
@@ -92,6 +100,7 @@ export default async (req) => {
         title: title || null,
         body,
         product_text: productText || null,
+        flavor_id: flavorId || null,
         image_bucket: imagePath ? IMAGE_BUCKET : null,
         image_path: imagePath,
         status: "pending",

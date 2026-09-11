@@ -478,7 +478,7 @@ export function ReviewHomeCard({ onRead, onLeave }) {
   );
 }
 
-export default function ReviewsPage({ Header, onBack, styles }) {
+export default function ReviewsPage({ Header, onBack, styles, flavors = [], onShopFlavor }) {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -487,6 +487,7 @@ export default function ReviewsPage({ Header, onBack, styles }) {
     displayName: "",
     email: "",
     productText: "",
+    flavorId: "",
     title: "",
     body: "",
   });
@@ -497,6 +498,7 @@ export default function ReviewsPage({ Header, onBack, styles }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [requestState, setRequestState] = useState({});
 
   useEffect(() => {
     let active = true;
@@ -551,6 +553,7 @@ export default function ReviewsPage({ Header, onBack, styles }) {
       body.append("displayName", form.displayName.trim());
       body.append("email", form.email.trim());
       body.append("productText", form.productText.trim());
+      body.append("flavorId", form.flavorId || "");
       body.append("title", form.title.trim());
       body.append("body", form.body.trim());
       body.append("rating", String(rating));
@@ -571,6 +574,7 @@ export default function ReviewsPage({ Header, onBack, styles }) {
         displayName: "",
         email: "",
         productText: "",
+        flavorId: "",
         title: "",
         body: "",
       });
@@ -581,6 +585,39 @@ export default function ReviewsPage({ Header, onBack, styles }) {
       setSubmitError(error.message);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const requestFlavor = async (review) => {
+    if (!review?.flavorId || requestState[review.flavorId] === "sending") return;
+    setRequestState((current) => ({ ...current, [review.flavorId]: "sending" }));
+
+    try {
+      let requesterKey = "";
+      try {
+        requesterKey = localStorage.getItem("nfFlavorRequestKey") || "";
+        if (!requesterKey) {
+          requesterKey =
+            globalThis.crypto?.randomUUID?.() ||
+            `nf-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+          localStorage.setItem("nfFlavorRequestKey", requesterKey);
+        }
+      } catch {
+        requesterKey =
+          globalThis.crypto?.randomUUID?.() ||
+          `nf-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      }
+
+      const response = await fetch("/.netlify/functions/flavor-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ flavorId: review.flavorId, reviewId: review.id, requesterKey }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "That flavor request could not be saved.");
+      setRequestState((current) => ({ ...current, [review.flavorId]: "sent" }));
+    } catch (error) {
+      setRequestState((current) => ({ ...current, [review.flavorId]: error.message }));
     }
   };
 
@@ -687,8 +724,54 @@ export default function ReviewsPage({ Header, onBack, styles }) {
                 {review.title && <h3>{review.title}</h3>}
                 <p>{review.body}</p>
 
-                {review.productText && (
-                  <span className="nf-review-product">{review.productText}</span>
+                {(review.flavorName || review.productText) && (
+                  <span className="nf-review-product">
+                    {review.flavorName || review.productText}
+                  </span>
+                )}
+
+                {review.flavorId && (
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: 13 }}>
+                    {review.flavorAvailable ? (
+                      <button
+                        type="button"
+                        className="btn solid"
+                        style={{ padding: "8px 12px", fontSize: 12.5 }}
+                        onClick={() => onShopFlavor?.(review.flavorId)}
+                      >
+                        Shop {review.flavorName || "This Flavor"} →
+                      </button>
+                    ) : (
+                      <>
+                        <span style={{
+                          display: "inline-flex",
+                          padding: "6px 9px",
+                          borderRadius: 999,
+                          background: review.popularRequest ? "#F7C41C" : "#FFF0A8",
+                          color: "#6A4300",
+                          fontSize: 12,
+                          fontWeight: 900,
+                        }}>
+                          {review.popularRequest
+                            ? "Popular Request · Currently Out"
+                            : "Popular Pick · Currently Out"}
+                        </span>
+                        <button
+                          type="button"
+                          className="btn"
+                          style={{ padding: "8px 12px", fontSize: 12.5, borderColor: "#D28A00", background: "#FFF7D8", color: "#6A4300" }}
+                          disabled={requestState[review.flavorId] === "sending"}
+                          onClick={() => requestFlavor(review)}
+                        >
+                          {requestState[review.flavorId] === "sending"
+                            ? "Requesting…"
+                            : requestState[review.flavorId] === "sent"
+                              ? "Requested ✓"
+                              : `Request ${review.flavorName || "This Flavor"}`}
+                        </button>
+                      </>
+                    )}
+                  </div>
                 )}
 
                 <div className="nf-review-meta">
@@ -785,10 +868,30 @@ export default function ReviewsPage({ Header, onBack, styles }) {
               </label>
 
               <label className="nf-review-label wide">
-                What did you try? (optional)
+                Flavor reviewed (optional)
+                <select
+                  value={form.flavorId}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, flavorId: event.target.value }))
+                  }
+                >
+                  <option value="">Choose a NectarFusions flavor</option>
+                  {flavors
+                    .slice()
+                    .sort((a, b) => String(a.name).localeCompare(String(b.name)))
+                    .map((flavor) => (
+                      <option key={flavor.id} value={flavor.id}>
+                        {flavor.name}{flavor.active === false ? " · currently unavailable" : ""}
+                      </option>
+                    ))}
+                </select>
+              </label>
+
+              <label className="nf-review-label wide">
+                Anything else they tried? (optional)
                 <input
                   value={form.productText}
-                  placeholder="Example: Blueberry, Cinnamon, Honey Club box..."
+                  placeholder="Example: Honey Club box, gift set..."
                   onChange={(event) =>
                     setForm((current) => ({
                       ...current,

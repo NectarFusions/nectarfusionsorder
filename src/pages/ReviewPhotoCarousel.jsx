@@ -279,7 +279,7 @@ export default function ReviewPhotoCarousel({
                 </button>
                 <div className="nf-review-carousel-caption">
                   <strong>
-                    {review.productText || "NectarFusions"}
+                    {review.flavorName || review.productText || "NectarFusions"}
                     {" · "}
                     {review.displayName}
                   </strong>

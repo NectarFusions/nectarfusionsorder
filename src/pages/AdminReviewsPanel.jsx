@@ -125,7 +125,7 @@ async function adminRequest({ method = "GET", body = null }) {
   return data;
 }
 
-export default function AdminReviewsPanel() {
+export default function AdminReviewsPanel({ flavors = [] }) {
   const [reviews, setReviews] = useState([]);
   const [view, setView] = useState("pending");
   const [loading, setLoading] = useState(true);
@@ -139,6 +139,7 @@ export default function AdminReviewsPanel() {
     title: "",
     body: "",
     productText: "",
+    flavorId: "",
     publishNow: true,
   });
   const [manualImage, setManualImage] = useState(null);
@@ -230,6 +231,7 @@ export default function AdminReviewsPanel() {
       body.append("title", manual.title.trim());
       body.append("body", manual.body.trim());
       body.append("productText", manual.productText.trim());
+      body.append("flavorId", manual.flavorId || "");
       body.append("publishNow", manual.publishNow ? "true" : "false");
       if (optimizedImage) body.append("image", optimizedImage);
 
@@ -242,6 +244,7 @@ export default function AdminReviewsPanel() {
         title: "",
         body: "",
         productText: "",
+        flavorId: "",
         publishNow: true,
       });
       setManualImage(null);
@@ -322,10 +325,28 @@ export default function AdminReviewsPanel() {
             </label>
 
             <label className="wide">
-              What they tried (optional)
+              NectarFusions flavor (optional)
+              <select
+                value={manual.flavorId}
+                onChange={(event) =>
+                  setManual((current) => ({ ...current, flavorId: event.target.value }))
+                }
+              >
+                <option value="">Choose a flavor</option>
+                {flavors
+                  .slice()
+                  .sort((a, b) => String(a.name).localeCompare(String(b.name)))
+                  .map((flavor) => (
+                    <option key={flavor.id} value={flavor.id}>{flavor.name}</option>
+                  ))}
+              </select>
+            </label>
+
+            <label className="wide">
+              Other product details (optional)
               <input
                 value={manual.productText}
-                placeholder="Blueberry, Honey Club box..."
+                placeholder="Honey Club box, gift set..."
                 onChange={(event) =>
                   setManual((current) => ({
                     ...current,
@@ -454,9 +475,9 @@ export default function AdminReviewsPanel() {
               </div>
             </div>
 
-            {review.productText && (
+            {(review.flavorName || review.productText) && (
               <div style={{ marginTop: 7, color: "#17628E", fontSize: 12.5, fontWeight: 800 }}>
-                Tried: {review.productText}
+                Tried: {[review.flavorName, review.productText].filter(Boolean).join(" · ")}
               </div>
             )}
 
