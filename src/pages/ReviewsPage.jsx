@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { optimizeReviewImage } from "../lib/reviewImage";
+import ReviewPhotoCarousel from "./ReviewPhotoCarousel";
 
 export const HONEY_HIVE_URL =
   "https://www.facebook.com/groups/2081346676100136";
@@ -406,6 +407,25 @@ const publicReview = async () => {
 };
 
 export function ReviewHomeCard({ onRead, onLeave }) {
+  const [photoReviews, setPhotoReviews] = useState([]);
+
+  useEffect(() => {
+    let active = true;
+    publicReview()
+      .then((rows) => {
+        if (active) {
+          setPhotoReviews(
+            rows.filter((review) => review.imageUrl).slice(0, 12)
+          );
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   return (
     <section className="nf-review-home-card">
       <style>{HOME_CARD_CSS}</style>
@@ -415,6 +435,29 @@ export function ReviewHomeCard({ onRead, onLeave }) {
         See what people are saying about NectarFusions, leave your own bee rating,
         or swap recipes and honey ideas with the Honey Hive community.
       </p>
+
+      {photoReviews.length > 0 && (
+        <div style={{ marginTop: 18 }}>
+          <div
+            style={{
+              marginBottom: 10,
+              color: "#A56800",
+              fontSize: 12,
+              fontWeight: 950,
+              letterSpacing: ".09em",
+              textTransform: "uppercase",
+            }}
+          >
+            See what the hive is buzzing about · tap a photo
+          </div>
+          <ReviewPhotoCarousel
+            reviews={photoReviews}
+            compact
+            onSelect={() => onRead?.()}
+          />
+        </div>
+      )}
+
       <div className="nf-review-home-actions">
         <button type="button" className="primary" onClick={onRead}>
           See what people are saying
@@ -579,6 +622,35 @@ export default function ReviewsPage({ Header, onBack, styles }) {
             )}
           </div>
         </section>
+
+        {!loading && reviews.some((review) => review.imageUrl) && (
+          <section
+            style={{
+              marginTop: 22,
+              padding: 22,
+              border: "2px solid #72B7E4",
+              borderRadius: 24,
+              background: "linear-gradient(145deg,#EAF7FE,#FFF9DF)",
+            }}
+          >
+            <div className="nf-modern-kicker">Customer photos</div>
+            <h2
+              style={{
+                margin: "6px 0 9px",
+                fontFamily: "'Bebas Neue',Impact,sans-serif",
+                fontSize: 40,
+                lineHeight: .95,
+              }}
+            >
+              REAL HONEY. REAL PEOPLE. REAL BUZZ.
+            </h2>
+            <p style={{ margin: "0 0 14px", color: "#5D5148", lineHeight: 1.6 }}>
+              Approved customer photos move automatically, pause while you
+              interact, and expand when you tap or click them.
+            </p>
+            <ReviewPhotoCarousel reviews={reviews} />
+          </section>
+        )}
 
         {loadError && (
           <div className="err" style={{ marginTop: 16 }}>
