@@ -11,9 +11,33 @@
    owes. If it could, someone would tell us $0.00.
    ============================================================ */
 
-import { square, db, idem, site, ok, bad } from "./_square.mjs";
+import { square, db, site, ok, bad } from "./_square.mjs";
 
 const typeName = (t) => (t === "spun" ? "Spun" : "Regular");
+
+const squareOnlineRate = () => {
+  const value = Number(process.env.SQUARE_ONLINE_PROCESSING_RATE ?? "0.033");
+  return Number.isFinite(value) && value >= 0 && value < 1 ? value : 0.033;
+};
+
+const squareOnlineFixedCents = () => {
+  const value = Number.parseInt(
+    process.env.SQUARE_ONLINE_PROCESSING_FIXED_CENTS ?? "30",
+    10
+  );
+  return Number.isFinite(value) && value >= 0 ? value : 30;
+};
+
+const onlineCheckoutServiceFee = (baseCents) => {
+  const amount = Number(baseCents);
+  if (!Number.isFinite(amount) || amount <= 0) return 0;
+
+  const rate = squareOnlineRate();
+  const fixed = squareOnlineFixedCents();
+  const grossCents = Math.ceil((amount + fixed) / (1 - rate));
+
+  return Math.max(0, grossCents - amount);
+};
 
 export default async (req) => {
   if (req.method !== "POST") return bad("POST only", 405);
@@ -48,6 +72,27 @@ export default async (req) => {
   const listTotal = o.order_items.reduce((s, i) => s + i.qty * i.unit_cents, 0);
   const discount = listTotal - o.subtotal_cents;
 
+  const checkoutBaseCents =
+    Number(o.subtotal_cents || 0) + Number(o.fee_cents || 0);
+  const serviceFeeCents = onlineCheckoutServiceFee(checkoutBaseCents);
+
+  const serviceCharges = [
+    ...(o.fee_cents > 0
+      ? [{
+          name: "Local delivery",
+          amount_money: { amount: o.fee_cents, currency: "USD" },
+          calculation_phase: "TOTAL_PHASE",
+        }]
+      : []),
+    ...(serviceFeeCents > 0
+      ? [{
+          name: "Online Checkout Service Fee",
+          amount_money: { amount: serviceFeeCents, currency: "USD" },
+          calculation_phase: "TOTAL_PHASE",
+        }]
+      : []),
+  ];
+
   const orderBody = {
     location_id: process.env.SQUARE_LOCATION_ID,
     reference_id: o.order_no,
@@ -59,12 +104,8 @@ export default async (req) => {
         scope: "ORDER",
       }],
     }),
-    ...(o.fee_cents > 0 && {
-      service_charges: [{
-        name: "Local delivery",
-        amount_money: { amount: o.fee_cents, currency: "USD" },
-        calculation_phase: "TOTAL_PHASE",
-      }],
+    ...(serviceCharges.length > 0 && {
+      service_charges: serviceCharges,
     }),
   };
 
