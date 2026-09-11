@@ -24,8 +24,8 @@ async function uploadImage(supa, reviewId, file) {
     throw new Error("Review photos must be PNG, JPG, or WebP images.");
   }
 
-  if (file.size > 8 * 1024 * 1024) {
-    throw new Error("Review photos must be 8 MB or smaller.");
+  if (file.size > 2 * 1024 * 1024) {
+    throw new Error("Review photos must be 2 MB or smaller after optimization.");
   }
 
   const path = `${reviewId}/${randomUUID()}-${safeImageName(file.name)}`;
@@ -116,7 +116,7 @@ export default async (req) => {
 
     if (
       message.includes("PNG") ||
-      message.includes("8 MB") ||
+      message.includes("2 MB") ||
       message.includes("valid email") ||
       message.includes("required") ||
       message.includes("bee rating") ||

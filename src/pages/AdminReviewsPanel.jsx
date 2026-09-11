@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import * as api from "../lib/api";
+import { downloadReviewImage, optimizeReviewImage } from "../lib/reviewImage";
 
 const ADMIN_REVIEW_CSS = `
 .nf-admin-reviews-toolbar {
@@ -179,6 +180,15 @@ export default function AdminReviewsPanel() {
     }
   };
 
+  const downloadImage = async (review) => {
+    try {
+      await downloadReviewImage(review.imageUrl, review.displayName);
+    } catch (err) {
+      setError(err.message);
+      window.open(review.imageUrl, "_blank", "noopener,noreferrer");
+    }
+  };
+
   const remove = async (review) => {
     if (!window.confirm(`Delete this review from ${review.displayName}?`)) return;
 
@@ -208,6 +218,10 @@ export default function AdminReviewsPanel() {
     setError("");
 
     try {
+      const optimizedImage = manualImage
+        ? await optimizeReviewImage(manualImage)
+        : null;
+
       const body = new FormData();
       body.append("action", "create");
       body.append("displayName", manual.displayName.trim());
@@ -217,7 +231,7 @@ export default function AdminReviewsPanel() {
       body.append("body", manual.body.trim());
       body.append("productText", manual.productText.trim());
       body.append("publishNow", manual.publishNow ? "true" : "false");
-      if (manualImage) body.append("image", manualImage);
+      if (optimizedImage) body.append("image", optimizedImage);
 
       await adminRequest({ method: "POST", body });
 
@@ -377,6 +391,9 @@ export default function AdminReviewsPanel() {
               onChange={(event) => setManualImage(event.target.files?.[0] || null)}
             />
           </label>
+          <div style={{ marginTop: 6, color: "#7B6E62", fontSize: 12.5 }}>
+            Photos are automatically resized and compressed before upload.
+          </div>
 
           <label
             style={{
@@ -472,6 +489,17 @@ export default function AdminReviewsPanel() {
                   onClick={() => approve(review)}
                 >
                   {busyId === review.id ? "Working…" : "Approve & Publish"}
+                </button>
+              )}
+
+              {review.imageUrl && (
+                <button
+                  className="btn"
+                  style={{ padding: "9px 14px" }}
+                  disabled={busyId === review.id}
+                  onClick={() => downloadImage(review)}
+                >
+                  Download Image
                 </button>
               )}
 

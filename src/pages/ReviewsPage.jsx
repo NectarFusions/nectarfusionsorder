@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { optimizeReviewImage } from "../lib/reviewImage";
 
 export const HONEY_HIVE_URL =
   "https://www.facebook.com/groups/2081346676100136";
@@ -501,6 +502,8 @@ export default function ReviewsPage({ Header, onBack, styles }) {
     setSubmitError("");
 
     try {
+      const optimizedImage = image ? await optimizeReviewImage(image) : null;
+
       const body = new FormData();
       body.append("displayName", form.displayName.trim());
       body.append("email", form.email.trim());
@@ -510,7 +513,7 @@ export default function ReviewsPage({ Header, onBack, styles }) {
       body.append("rating", String(rating));
       body.append("website", website);
       body.append("formStartedAt", String(formStartedAt));
-      if (image) body.append("image", image);
+      if (optimizedImage) body.append("image", optimizedImage);
 
       const response = await fetch("/.netlify/functions/review-submit", {
         method: "POST",
@@ -778,6 +781,10 @@ export default function ReviewsPage({ Header, onBack, styles }) {
                 onChange={(event) => setImage(event.target.files?.[0] || null)}
               />
             </label>
+
+            <div style={{ marginTop: 7, color: "#7B5821", fontSize: 12.5 }}>
+              Photos are automatically resized and compressed for fast web loading before upload.
+            </div>
 
             {imagePreview && (
               <img
