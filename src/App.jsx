@@ -10667,7 +10667,7 @@ export default function App() {
                     className={view === "help" ? "selected" : ""}
                     onClick={() => setView("help")}
                   >
-                    Order Help | FAQ
+                    Help | FAQ
                   </button>
 
                   <button
