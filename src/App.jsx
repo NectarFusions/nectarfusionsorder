@@ -9643,7 +9643,7 @@ export default function App() {
   const [method, setMethod] = useState(null);
   const [zip, setZip] = useState("");
   const [slot, setSlot] = useState(null);
-  const [cust, setCust] = useState({ name: "", phone: "", email: "", address: "", notes: "" });
+  const [cust, setCust] = useState({ name: "", phone: "", email: "", address: "", city: "", notes: "" });
   const [receipt, setReceipt] = useState(null);
   const [ctaOff, setCtaOff] = useState(false);
   const [tick, setTick] = useState(0);
@@ -10253,7 +10253,11 @@ export default function App() {
     if (!cust.name.trim()) missing.push("your name");
     if (!cust.phone.trim()) missing.push("a phone number");
     if (!cust.email.trim()) missing.push("an email");
-    if (method !== "market" && !cust.address.trim()) missing.push("an address");
+    if (method !== "market") {
+      if (!cust.address.trim()) missing.push("an address");
+      if (!cust.city.trim()) missing.push("a city");
+      if (zip.length !== 5) missing.push("a ZIP code");
+    }
   }
   const canPlace = cart.length && slot && !missing.length && !belowMin && !busy;
   const unresolvedTypeItems = cart.filter((item) => item.type === "undecided");
@@ -10302,8 +10306,8 @@ export default function App() {
       const r = await api.placeOrder({
         items: cart.map(({ flavor_id, size_id, type, qty }) => ({ flavor_id, size_id, type, qty })),
         method, name: cust.name, phone: cust.phone, email: cust.email,
-        address: cust.address || null, notes: cust.notes || null,
-        zip: method === "delivery" ? zip : null,
+        address: cust.address || null, city: cust.city || null, notes: cust.notes || null,
+        zip: method !== "market" ? zip : null,
         day: slot.kind === "delivery" ? iso(slot.date) : null,
         marketDateId: slot.kind === "market" ? slot.m.id : null,
       });
@@ -10314,7 +10318,7 @@ export default function App() {
       // Supabase can occasionally return an empty response while the new order is becoming
       // available to the confirmation lookup. Retry that lookup before showing an error.
       const full = await api.getOrderWithRetry(r.token);
-      setReceipt({ ...full, token: r.token, email: cust.email, address: cust.address });
+      setReceipt({ ...full, token: r.token, email: cust.email, address: cust.address, city: cust.city, zip });
       setCart([]); setSlot(null); setMethod(null); setZip(""); setCtaOff(false); setReviewOpen(false);
       reload();  // stock may have moved
     } catch (e) { setErr(e.message); }
@@ -12403,8 +12407,16 @@ export default function App() {
                   <Field placeholder="Phone — we'll text to confirm" type="tel" value={cust.phone} onChange={(e) => setCust({ ...cust, phone: e.target.value })} />
                   <Field placeholder="Email — for your confirmation" type="email" value={cust.email} onChange={(e) => setCust({ ...cust, email: e.target.value })} />
                   {method !== "market" && (
-                    <Field placeholder={method === "ship" ? "Shipping address" : "Street address"} value={cust.address}
-                      onChange={(e) => setCust({ ...cust, address: e.target.value })} />
+                    <>
+                      <Field placeholder={method === "ship" ? "Shipping address" : "Street address"} value={cust.address}
+                        onChange={(e) => setCust({ ...cust, address: e.target.value })} />
+                      <Field placeholder="City" value={cust.city}
+                        onChange={(e) => setCust({ ...cust, city: e.target.value })} />
+                      {method === "ship" && (
+                        <Field placeholder="ZIP code" value={zip} maxLength={5} inputMode="numeric"
+                          onChange={(e) => setZip(e.target.value.replace(/\D/g, ""))} />
+                      )}
+                    </>
                   )}
                   <Field required={false} rows={2}
                     placeholder={method === "delivery" ? "Optional — gate code, porch, shade…" : "Optional — anything we should know?"}
@@ -12625,7 +12637,12 @@ export default function App() {
                   <strong>{cust.name}</strong>
                   <span>{cust.phone}</span>
                   <span>{cust.email}</span>
-                  {method !== "market" && <span>{cust.address}</span>}
+                  {method !== "market" && (
+                    <>
+                      <span>{cust.address}</span>
+                      <span>{cust.city}{zip ? `, MI ${zip}` : ""}</span>
+                    </>
+                  )}
                   {cust.notes && <span className="nf-final-review-notes">Note: {cust.notes}</span>}
                 </div>
 
@@ -14530,6 +14547,12 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                     </div>
                     <div style={{ fontSize: 12.5, color: c.tan }}>{o.phone} · {o.email}</div>
                     {o.address && <div style={{ fontSize: 12.5, color: c.tan }}>{o.address}</div>}
+                    {(o.city || o.zip) && (
+                      <div style={{ fontSize: 12.5, color: c.tan }}>
+                        <strong>City / ZIP:</strong>{" "}
+                        {o.city && o.zip ? `${o.city}, MI ${o.zip}` : o.city || o.zip}
+                      </div>
+                    )}
                     <div style={{ fontSize: 13, marginTop: 8, lineHeight: 1.55 }}>
                       {o.order_items?.map((it) => (
                         <div key={it.id}>{it.qty}× {it.size_label} <strong>{it.type === "spun" ? "Spun" : "Regular"}</strong> — {it.flavor_name}</div>

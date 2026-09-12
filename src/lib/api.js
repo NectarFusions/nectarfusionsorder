@@ -158,13 +158,14 @@ async function requestOrderConfirmationEmails(token) {
 
 export async function placeOrder(payload) {
   try {
-    const { data, error } = await supabase.rpc("place_order", {
+    const { data, error } = await supabase.rpc("place_order_v2", {
       p_items: payload.items,          // [{flavor_id, size_id, type, qty}]
       p_method: payload.method,        // 'market' | 'delivery' | 'ship'
       p_name: payload.name,
       p_phone: payload.phone,
       p_email: payload.email,
       p_address: payload.address ?? null,
+      p_city: payload.city ?? null,
       p_notes: payload.notes ?? null,
       p_zip: payload.zip ?? null,
       p_day: payload.day ?? null,                  // 'YYYY-MM-DD'
