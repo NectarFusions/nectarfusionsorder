@@ -2455,61 +2455,6 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
   align-items:end;
   gap:8px;
 }
-.nf-bundle-jar-stage {
-  position:relative;
-  width:min(100%,360px);
-  justify-self:center;
-  aspect-ratio:.86 / 1;
-}
-.nf-bundle-jar-stage img {
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  object-fit:contain;
-  z-index:2;
-  pointer-events:none;
-}
-.nf-bundle-honey-fill {
-  position:absolute;
-  left:19.5%;
-  right:19.5%;
-  bottom:13%;
-  max-height:57%;
-  min-height:0;
-  border-radius:8px 8px 22px 22px;
-  background:linear-gradient(180deg,#FFCB36 0%,#E69700 100%);
-  opacity:.84;
-  mix-blend-mode:multiply;
-  transition:height 1.35s cubic-bezier(.22,1,.36,1);
-  z-index:3;
-  pointer-events:none;
-}
-@keyframes nfBundleDemoFill {
-  0% { transform:scaleY(0); }
-  42% { transform:scaleY(1); }
-  58% { transform:scaleY(1); }
-  100% { transform:scaleY(0); }
-}
-.nf-bundle-honey-fill.nf-bundle-demo {
-  height:57% !important;
-  transform-origin:center bottom;
-  animation:nfBundleDemoFill 3.2s cubic-bezier(.22,1,.36,1) both;
-  transition:none !important;
-  will-change:transform;
-}
-
-.nf-bundle-honey-fill::before {
-  content:"";
-  position:absolute;
-  top:-5px;
-  left:0;
-  right:0;
-  height:12px;
-  border-radius:50%;
-  background:#FFD85C;
-  opacity:.92;
-}
 .nf-bundle-copy {
   align-self:center;
   padding:16px 0 24px;
@@ -2573,7 +2518,6 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
     text-align:center;
     padding-top:0;
   }
-  .nf-bundle-jar-stage { width:min(100%,290px); }
 }
 
 
@@ -10184,54 +10128,6 @@ export default function App() {
     };
   }, [view, Boolean(cat), Boolean(receipt)]);
 
-  useEffect(() => {
-    if (view !== "shop" || !cat || typeof window === "undefined") return undefined;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined;
-
-    const section = document.querySelector(".nf-bundle-builder");
-    const fill = section?.querySelector(".nf-bundle-honey-fill");
-    if (
-      !section ||
-      !fill ||
-      section.dataset.bundleDemoPlayed === "true" ||
-      document.documentElement.dataset.nfBundleDemoPlayed
-    ) return undefined;
-
-    document.documentElement.dataset.nfBundleDemoPlayed = "armed";
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries.find((item) => item.isIntersecting);
-        if (!entry) return;
-
-        section.dataset.bundleDemoPlayed = "true";
-        document.documentElement.dataset.nfBundleDemoPlayed = "played";
-        observer.disconnect();
-
-        fill.classList.remove("nf-bundle-demo");
-        void fill.offsetWidth;
-        fill.classList.add("nf-bundle-demo");
-
-        const finish = () => {
-          fill.classList.remove("nf-bundle-demo");
-          fill.removeEventListener("animationend", finish);
-        };
-
-        fill.addEventListener("animationend", finish);
-      },
-      {
-        threshold: 0.35,
-        rootMargin: "0px 0px -8% 0px",
-      }
-    );
-
-    observer.observe(section);
-
-    return () => {
-      observer.disconnect();
-      fill.classList.remove("nf-bundle-demo");
-    };
-  }, [view, Boolean(cat)]);
 
   if (boot) {
     return <div className="nf"><style>{CSS}</style>
@@ -12058,26 +11954,14 @@ export default function App() {
             </div>
 
             {pickSize === B.size ? (
-              <div className="nf-bundle-visual">
-                <div className="nf-bundle-jar-stage">
-                  <div
-                    className="nf-bundle-honey-fill"
-                    style={{
-                      height: `${Math.min(
-                        100,
-                        ((price.jars % B.count === 0 && price.jars > 0
-                          ? B.count
-                          : price.jars % B.count) / B.count) * 100
-                      )}%`
-                    }}
-                  />
-                  <img
-                    src="/nf-empty-bundle-jar.png"
-                    alt="Honey jar showing 4 ounce bundle progress"
-                  />
-                </div>
-
-                <div className="nf-bundle-copy">
+              <div
+                className="nf-bundle-visual"
+                style={{
+                  minHeight: 0, padding: 18, borderRadius: 14,
+                  border: "1px solid #E7C869", background: "#FFF", display: "block",
+                }}
+              >
+                <div className="nf-bundle-copy" style={{ width: "100%" }}>
                   <strong>Mix any three 4 oz jars</strong>
                   <p>Regular and Spun both count.</p>
                   <div className="nf-bundle-progress">
