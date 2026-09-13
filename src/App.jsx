@@ -16208,6 +16208,30 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
   const shownSubs = subView === "archived" ? archivedSubs : activeSubs;
   const activeSubCount = activeSubs.filter((s) => s.status === "active").length;
 
+  const subscriptionDeliveryZone = (subscription) => {
+    if (!subscription || subscription.method !== "delivery") return null;
+
+    const zip = String(subscription.delivery_zip || "")
+      .replace(/\D/g, "")
+      .slice(0, 5);
+
+    if (zip) {
+      const zipMatch = (cat?.zones || []).find(
+        (zone) =>
+          Array.isArray(zone.zips) &&
+          zone.zips.map(String).includes(zip)
+      );
+
+      if (zipMatch) return zipMatch;
+    }
+
+    return (
+      (cat?.zones || []).find(
+        (zone) => zone.id === subscription.zone_id
+      ) || null
+    );
+  };
+
   const openRequests = customerRequests.filter((request) => request.status !== "resolved");
   const resolvedRequests = customerRequests.filter((request) => request.status === "resolved");
   const shownRequests = requestView === "resolved" ? resolvedRequests : openRequests;
@@ -17225,6 +17249,37 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                   const skipScheduled = !!s.paused_until && s.paused_until >= api.today();
                   const canDelete = !s.square_subscription_id && (pending || cx);
 
+                  const deliveryZip = String(s.delivery_zip || "")
+                    .replace(/\D/g, "")
+                    .slice(0, 5);
+
+                  const deliveryZone = subscriptionDeliveryZone(s);
+
+                  const deliveryDate = String(
+                    s.next_delivery_date || ""
+                  );
+
+                  const deliveryActive =
+                    s.method === "delivery" &&
+                    s.status === "active";
+
+                  const deliveryWaiting =
+                    s.method === "delivery" &&
+                    s.status === "pending";
+
+                  const deliverySkipped =
+                    deliveryActive && skipScheduled;
+
+                  const deliveryReady =
+                    deliveryActive &&
+                    !deliverySkipped &&
+                    Boolean(deliveryDate) &&
+                    deliveryDate <= api.today();
+
+                  const deliveryOverdue =
+                    deliveryReady &&
+                    deliveryDate < api.today();
+
                   const cancellationRequest = openRequests.find(
                     (request) =>
                       request.request_kind ===
@@ -17278,6 +17333,334 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                           } sent`}
                       </div>
                       <div style={{ fontSize: 12.5, color: c.tan }}>{s.customers?.phone} · {s.customers?.email}</div>
+
+                      {s.method === "delivery" && (
+                        <div
+                          style={{
+                            marginTop: 10,
+                            padding: "12px 13px",
+                            border: "1px solid #A8D3EA",
+                            borderRadius: 11,
+                            background: "#F2FAFE",
+                            color: "#173C52",
+                          }}
+                        >
+                          <div
+                            style={{
+                              color: "#147FBE",
+                              fontSize: 12,
+                              fontWeight: 900,
+                              letterSpacing: ".07em",
+                              textTransform: "uppercase",
+                            }}
+                          >
+                            Delivery Schedule
+                          </div>
+
+                          {deliveryZone ? (
+                            <>
+                              <div
+                                style={{
+                                  marginTop: 5,
+                                  fontSize: 16,
+                                  fontWeight: 900,
+                                  lineHeight: 1.35,
+                                  color: c.darkBrown,
+                                }}
+                              >
+                                {deliveryZone.day_label || "Delivery days"}
+                                {" · "}
+                                {deliveryZone.window_label || "Delivery window"}
+                              </div>
+
+                              <div
+                                style={{
+                                  marginTop: 4,
+                                  fontSize: 13.5,
+                                  lineHeight: 1.45,
+                                  color: c.brown,
+                                }}
+                              >
+                                {deliveryZip ? `ZIP ${deliveryZip} · ` : ""}
+                                {deliveryZone.name}
+                              </div>
+
+                              {deliveryZone.cutoff_label && (
+                                <div
+                                  style={{
+                                    marginTop: 3,
+                                    fontSize: 13.5,
+                                    fontWeight: 700,
+                                    lineHeight: 1.45,
+                                    color: "#315E78",
+                                  }}
+                                >
+                                  {deliveryZone.cutoff_label}
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <div
+                              style={{
+                                marginTop: 5,
+                                fontSize: 14,
+                                fontWeight: 750,
+                                lineHeight: 1.45,
+                                color: c.red,
+                              }}
+                            >
+                              {deliveryZip
+                                ? `No delivery schedule is configured for ZIP ${deliveryZip}.`
+                                : "Delivery ZIP is not available for this membership."}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {s.method === "delivery" && deliveryZone && !cx && (
+                        <div
+                          style={{
+                            marginTop: 10,
+                            padding: "12px 14px",
+                            border: deliveryOverdue
+                              ? `2px solid ${c.red}`
+                              : deliveryReady
+                                ? `2px solid ${c.gold}`
+                                : deliveryWaiting
+                                  ? "1px solid #E5BE58"
+                                  : "1px solid #B9D9E9",
+                            borderRadius: 12,
+                            background: deliveryOverdue
+                              ? "#FFF4F4"
+                              : deliveryReady
+                                ? "#FFFBED"
+                                : deliveryWaiting
+                                  ? "#FFFBEE"
+                                  : "#F5FBFE",
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "minmax(0,1fr) auto",
+                              gap: 12,
+                              alignItems: "center",
+                            }}
+                          >
+                            <div style={{ minWidth: 0 }}>
+                              <div
+                                style={{
+                                  color: deliveryWaiting
+                                    ? "#A36D00"
+                                    : "#147FBE",
+                                  fontSize: 12,
+                                  fontWeight: 900,
+                                  letterSpacing: ".08em",
+                                  textTransform: "uppercase",
+                                }}
+                              >
+                                Delivery Tracking
+                              </div>
+
+                              {deliveryWaiting ? (
+                                <>
+                                  <div
+                                    style={{
+                                      marginTop: 3,
+                                      color: c.darkBrown,
+                                      fontSize: 16,
+                                      fontWeight: 900,
+                                      lineHeight: 1.35,
+                                    }}
+                                  >
+                                    Waiting for membership activation
+                                  </div>
+
+                                  <div
+                                    style={{
+                                      marginTop: 3,
+                                      color: c.brown,
+                                      fontSize: 14,
+                                      lineHeight: 1.45,
+                                    }}
+                                  >
+                                    A delivery date will populate automatically
+                                    after Square confirms the membership.
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  <div
+                                    style={{
+                                      marginTop: 3,
+                                      color: c.darkBrown,
+                                      fontSize: 16,
+                                      fontWeight: 900,
+                                      lineHeight: 1.35,
+                                    }}
+                                  >
+                                    {deliverySkipped
+                                      ? "Next planned delivery: "
+                                      : "Next delivery: "}
+
+                                    {deliveryDate
+                                      ? fmt(parseDay(deliveryDate))
+                                      : "Schedule unavailable"}
+                                  </div>
+
+                                  <div
+                                    style={{
+                                      marginTop: 3,
+                                      color: c.brown,
+                                      fontSize: 14,
+                                      lineHeight: 1.45,
+                                    }}
+                                  >
+                                    {deliveryZone.day_label}
+
+                                    {deliveryZone.window_label
+                                      ? ` · ${deliveryZone.window_label}`
+                                      : ""}
+                                  </div>
+                                </>
+                              )}
+                            </div>
+
+                            <span
+                              style={{
+                                padding: "6px 9px",
+                                borderRadius: 999,
+                                background: deliveryOverdue
+                                  ? c.red
+                                  : deliveryReady
+                                    ? c.gold
+                                    : deliveryWaiting
+                                      ? "#FFF0B8"
+                                      : deliverySkipped
+                                        ? "#E9E0F5"
+                                        : "#DCEFF8",
+                                color: deliveryOverdue
+                                  ? "#FFF"
+                                  : c.darkBrown,
+                                fontSize: 11.5,
+                                fontWeight: 900,
+                                letterSpacing: ".04em",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {deliveryOverdue
+                                ? "OVERDUE"
+                                : deliveryReady
+                                  ? "READY TO DELIVER"
+                                  : deliveryWaiting
+                                    ? "WAITING FOR ACTIVATION"
+                                    : deliverySkipped
+                                      ? "SKIPPED"
+                                      : "UPCOMING"}
+                            </span>
+                          </div>
+
+                          {deliveryActive &&
+                            !deliveryWaiting &&
+                            s.last_delivered_at && (
+                              <div
+                                style={{
+                                  marginTop: 8,
+                                  paddingTop: 8,
+                                  borderTop: "1px solid #D6E8F0",
+                                  color: c.brown,
+                                  fontSize: 13.5,
+                                  lineHeight: 1.45,
+                                }}
+                              >
+                                Last delivered:{" "}
+                                <strong>
+                                  {new Date(
+                                    s.last_delivered_at
+                                  ).toLocaleString(undefined, {
+                                    month: "short",
+                                    day: "numeric",
+                                    year: "numeric",
+                                  })}
+                                </strong>
+                              </div>
+                            )}
+
+                          {deliverySkipped && deliveryDate && (
+                            <div
+                              style={{
+                                marginTop: 8,
+                                paddingTop: 8,
+                                borderTop: "1px solid #D6E8F0",
+                                color: c.brown,
+                                fontSize: 13.5,
+                                lineHeight: 1.45,
+                              }}
+                            >
+                              The skipped box has already been removed
+                              from the delivery schedule. The date above
+                              is the next box to deliver.
+                            </div>
+                          )}
+
+                          {deliveryActive &&
+                            !deliverySkipped &&
+                            deliveryDate && (
+                              <button
+                                type="button"
+                                className={
+                                  deliveryReady
+                                    ? "btn solid"
+                                    : "btn ghost"
+                                }
+                                disabled={
+                                  !deliveryReady ||
+                                  pending ||
+                                  late ||
+                                  cx
+                                }
+                                style={{
+                                  width: "100%",
+                                  minHeight: 42,
+                                  marginTop: 10,
+                                  padding: "8px 13px",
+                                  fontSize: 15,
+                                  fontWeight: 900,
+                                }}
+                                onClick={async () => {
+                                  if (
+                                    !confirm(
+                                      `Mark Honey Club #${s.sub_no} as delivered?`
+                                    )
+                                  ) {
+                                    return;
+                                  }
+
+                                  try {
+                                    await api.markSubscriptionDelivered(
+                                      s.id
+                                    );
+
+                                    await pull();
+                                    setErr(null);
+                                  } catch (error) {
+                                    setErr(
+                                      error.message ||
+                                        "The delivery could not be recorded."
+                                    );
+                                  }
+                                }}
+                              >
+                                {deliveryReady
+                                  ? "Mark Delivered"
+                                  : `Available ${fmt(
+                                      parseDay(deliveryDate)
+                                    )}`}
+                              </button>
+                            )}
+                        </div>
+                      )}
+
                       {(s.flavor_mode || s.flavor_preferences?.length || s.flavor_requests) && (
                         <div className="nf-admin-flavor-preferences">
                           <strong>{s.flavor_mode === "request" ? "Flavor requests" : "Surprise preference"}</strong>
@@ -17287,9 +17670,87 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                           {s.flavor_requests && <em>{s.flavor_requests}</em>}
                         </div>
                       )}
-                      {pending && <div style={{ fontSize: 11.5, color: c.orange, fontWeight: 700, marginTop: 6 }}>
-                        NO CARD ON FILE YET — don&rsquo;t pack a box until Square confirms.
-                      </div>}
+                      {pending && (
+                        <div
+                          style={{
+                            marginTop: 9,
+                            padding: "11px 12px",
+                            border: "1px solid #E2B62F",
+                            borderRadius: 10,
+                            background: "#FFF9DE",
+                          }}
+                        >
+                          <div
+                            style={{
+                              color: "#8A5900",
+                              fontSize: 13,
+                              fontWeight: 900,
+                              lineHeight: 1.4,
+                            }}
+                          >
+                            {s.square_subscription_id
+                              ? "SQUARE MEMBERSHIP FOUND — waiting for Square activation."
+                              : "SQUARE PAYMENT STATUS NOT YET SYNCED"}
+                          </div>
+
+                          <div
+                            style={{
+                              marginTop: 4,
+                              color: c.brown,
+                              fontSize: 13.5,
+                              lineHeight: 1.5,
+                            }}
+                          >
+                            {s.square_subscription_id
+                              ? "The Square subscription exists, but it is not active yet. Do not prepare the box until activation is confirmed."
+                              : "If this customer already completed Square checkout, check Square now to repair a missed confirmation."}
+                          </div>
+
+                          <button
+                            type="button"
+                            className="btn"
+                            style={{
+                              width: "100%",
+                              marginTop: 9,
+                              padding: "9px 12px",
+                              fontSize: 13.5,
+                              fontWeight: 850,
+                              borderColor: "#D8A800",
+                            }}
+                            onClick={async () => {
+                              try {
+                                const result =
+                                  await api.syncSubscriptionSquare(
+                                    s.id
+                                  );
+
+                                if (!result.synced) {
+                                  setErr(
+                                    result.message ||
+                                      "Square has not confirmed this membership yet."
+                                  );
+                                  return;
+                                }
+
+                                await pull();
+                                setErr(null);
+
+                                alert(
+                                  result.message ||
+                                    "Square status synchronized."
+                                );
+                              } catch (error) {
+                                setErr(
+                                  error.message ||
+                                    "Square status could not be checked."
+                                );
+                              }
+                            }}
+                          >
+                            Check Square Status
+                          </button>
+                        </div>
+                      )}
                       {skipScheduled && <div style={{ fontSize: 11.5, color: c.brown, fontWeight: 700, marginTop: 6 }}>
                         NEXT BOX SKIPPED — resumes after {s.paused_until}.
                       </div>}

@@ -1704,6 +1704,53 @@ export async function subAction(subId, action) {   // 'pause' | 'resume' | 'canc
   return j;
 }
 
+export async function syncSubscriptionSquare(subscriptionId) {
+  const { data } = await supabase.auth.getSession();
+  const token = data?.session?.access_token;
+
+  if (!token) {
+    throw new Error("Not signed in.");
+  }
+
+  const response = await fetch(
+    "/.netlify/functions/subscription-square-sync",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        subId: subscriptionId,
+      }),
+    }
+  );
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      result.error ||
+        "Square status could not be checked."
+    );
+  }
+
+  return result;
+}
+
+export async function markSubscriptionDelivered(subscriptionId) {
+  const { data, error } = await supabase.rpc(
+    "mark_subscription_delivered_admin",
+    {
+      p_subscription_id: subscriptionId,
+    }
+  );
+
+  if (error) throw new Error(error.message);
+
+  return Array.isArray(data) ? data[0] : data;
+}
+
 export async function archiveSubscription(id) {
   const { error } = await supabase.rpc("archive_subscription_admin", { p_subscription_id: id });
   if (error) throw new Error(error.message);
