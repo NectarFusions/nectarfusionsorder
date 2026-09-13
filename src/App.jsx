@@ -390,8 +390,8 @@ const HoneyJarProgress = ({ filled = 0, total = 3, size = 72 }) => {
 
         <path d="M29 40h26" stroke="rgba(255,255,255,.6)" strokeWidth="2.5" strokeLinecap="round" />
       </svg>
-      <div style={{ color: "#FFFFFF", fontSize: 12, fontWeight: 800, letterSpacing: ".08em" }}>
-        {filled}/{safeTotal} JARS
+      <div style={{ color: "#FFFFFF", fontSize: 16, fontWeight: 900, letterSpacing: ".03em" }}>
+        {filled}/{safeTotal}
       </div>
     </div>
   );
@@ -2426,10 +2426,10 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
   position:relative;
   z-index:2;
   display:grid;
-  grid-template-columns:minmax(190px,.72fr) minmax(300px,1.28fr);
-  align-items:end;
-  gap:28px;
-  padding-top:118px;
+  grid-template-columns:minmax(220px,.72fr) minmax(320px,1.28fr);
+  align-items:start;
+  gap:22px;
+  padding-top:0;
 }
 .nf-size-stack {
   display:grid;
@@ -2520,6 +2520,47 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
   }
 }
 
+
+/* Desktop bundle purchase flow */
+@media (min-width:781px) {
+  .nf-bundle-grid {
+    display:grid;
+    grid-template-columns:1fr !important;
+    align-items:stretch;
+    gap:16px;
+    padding-top:0 !important;
+  }
+
+  .nf-bundle-visual {
+    grid-row:1;
+    width:100%;
+    min-height:0 !important;
+  }
+
+  .nf-size-stack {
+    grid-row:2;
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    gap:12px;
+    width:100%;
+  }
+
+  .nf-size-stack .btn {
+    min-height:88px;
+  }
+
+  .nf-bundle-grid.size-only {
+    padding-top:0 !important;
+  }
+
+  .nf-bundle-grid.size-only .nf-size-stack {
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  }
+
+  .nf-bundle-grid.size-only .nf-nonbundle-note {
+    grid-row:1;
+  }
+}
 
 @media (max-width:900px) {
   .nf-modern-hero-grid { grid-template-columns:1fr; }
@@ -9108,6 +9149,1713 @@ html {
 }
 
 
+/* FLOATING TEXT US + RESPONSIVE BOTTOM DOCK */
+
+.nf-universal-dock,
+.nf-universal-dock-inner {
+  overflow:visible !important;
+}
+
+.nf-universal-dock-inner {
+  position:relative;
+}
+
+.nf-text-us-fab {
+  position:absolute;
+  right:0;
+  bottom:calc(100% + 4px);
+  z-index:15;
+
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+
+  min-height:48px;
+  padding:11px 18px;
+
+  border:2px solid #F2B400;
+  border-radius:999px;
+
+  background:#FFFFFF;
+  color:#2F2117;
+
+  font-size:14px;
+  font-weight:900;
+  line-height:1;
+  text-decoration:none;
+  white-space:nowrap;
+
+  box-shadow:
+    0 12px 30px rgba(51,35,20,.16),
+    0 3px 8px rgba(51,35,20,.08);
+
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease,
+    background .18s ease;
+}
+
+.nf-text-us-fab:hover {
+  transform:translateY(-2px);
+  background:#FFFDF5;
+  box-shadow:
+    0 15px 34px rgba(51,35,20,.20),
+    0 4px 10px rgba(51,35,20,.10);
+}
+
+.nf-text-us-fab svg {
+  flex:0 0 auto;
+}
+
+
+/* Tablet / smaller laptop */
+@media (max-width:900px) {
+  .nf-universal-dock-inner {
+    gap:7px !important;
+    padding-left:10px !important;
+    padding-right:10px !important;
+  }
+
+  .nf-site-search {
+    min-width:0 !important;
+    flex:1 1 auto !important;
+  }
+
+  .nf-site-search-row {
+    min-width:0 !important;
+  }
+
+  .nf-site-search-row input {
+    min-width:0 !important;
+    width:100% !important;
+    font-size:14px !important;
+  }
+
+  .nf-text-us-fab {
+    right:10px;
+  }
+}
+
+
+/* Phones */
+@media (max-width:600px) {
+  .nf-universal-dock-inner {
+    width:100% !important;
+    max-width:none !important;
+    gap:6px !important;
+    padding:7px 8px !important;
+  }
+
+  .nf-dock-social,
+  .nf-dock-cart-reopen {
+    width:38px !important;
+    height:38px !important;
+    flex:0 0 38px !important;
+  }
+
+  .nf-site-search {
+    flex:1 1 0 !important;
+    min-width:0 !important;
+  }
+
+  .nf-site-search-row {
+    display:flex !important;
+    width:100% !important;
+    min-width:0 !important;
+    gap:5px !important;
+  }
+
+  .nf-site-search-row input {
+    height:42px !important;
+    min-width:0 !important;
+    padding:0 11px !important;
+    font-size:13px !important;
+  }
+
+  .nf-site-search-submit {
+    height:42px !important;
+    flex:0 0 auto !important;
+    padding:0 10px !important;
+    font-size:12px !important;
+  }
+
+  .nf-text-us-fab {
+    right:10px;
+    bottom:calc(100% + 4px);
+    min-height:44px;
+    padding:9px 14px;
+    font-size:13px;
+  }
+
+  .nf-text-us-fab svg {
+    width:17px;
+    height:17px;
+  }
+}
+
+
+/* Narrow phones: keep shopping controls usable.
+   Social links remain accessible elsewhere on the site. */
+@media (max-width:480px) {
+  .nf-universal-dock .nf-dock-social {
+    display:none !important;
+  }
+
+  .nf-dock-cart-reopen {
+    width:40px !important;
+    height:40px !important;
+    flex-basis:40px !important;
+  }
+
+  .nf-site-search-row input {
+    font-size:12.5px !important;
+    padding-left:10px !important;
+    padding-right:8px !important;
+  }
+
+  .nf-site-search-submit {
+    padding:0 9px !important;
+    font-size:11.5px !important;
+  }
+}
+
+
+/* ICON-ONLY FLOATING TEXT BUTTON */
+.nf-text-us-fab {
+  width:48px !important;
+  height:48px !important;
+  min-height:48px !important;
+  padding:0 !important;
+  gap:0 !important;
+  border-radius:50% !important;
+}
+
+@media (max-width:600px) {
+  .nf-text-us-fab {
+    width:44px !important;
+    height:44px !important;
+    min-height:44px !important;
+    padding:0 !important;
+  }
+}
+
+/* TOP PICKS — UNIFIED FEATURED COLLECTION */
+
+.nf-top-grid {
+  display:grid !important;
+  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+  gap:18px !important;
+  align-items:stretch !important;
+  margin-top:18px !important;
+}
+
+/* All Top Picks now use one consistent card silhouette. */
+.nf-top-card,
+.nf-top-card-limited,
+.nf-top-card:not(.nf-top-card-limited) {
+  position:relative !important;
+  isolation:isolate;
+  display:flex !important;
+  flex-direction:column !important;
+  align-self:stretch !important;
+  width:100% !important;
+  height:100% !important;
+  min-height:520px !important;
+  margin:0 !important;
+  padding:18px !important;
+
+  border:1px solid #E7D8B0 !important;
+  border-radius:20px !important;
+
+  background:
+    linear-gradient(180deg,#FFFDF7 0%,#FFF8E8 100%) !important;
+
+  box-shadow:
+    0 12px 28px rgba(74,51,19,.09),
+    0 2px 6px rgba(74,51,19,.05) !important;
+
+  overflow:visible !important;
+
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease,
+    border-color .18s ease !important;
+}
+
+.nf-top-card:hover:not(:disabled) {
+  transform:translateY(-4px) !important;
+  border-color:#E3B72A !important;
+  box-shadow:
+    0 18px 36px rgba(74,51,19,.13),
+    0 4px 10px rgba(74,51,19,.06) !important;
+}
+
+/* Remove the strong honeycomb texture that currently makes the
+   regular cards feel visually separate from the Limited card. */
+.nf-top-card:not(.nf-top-card-limited)::before {
+  opacity:.045 !important;
+}
+
+/* Limited flavor = same card, just with a deliberate red accent. */
+.nf-top-card-limited,
+.nf-top-card-limited:hover,
+.nf-top-card-limited.selected {
+  border:2px solid #D63A3A !important;
+  background:
+    linear-gradient(180deg,#FFFDF8 0%,#FFF5E4 100%) !important;
+  padding:18px !important;
+}
+
+.nf-top-card-limited .nf-top-limited-badge,
+.nf-top-card-limited:hover .nf-top-limited-badge,
+.nf-top-card-limited.selected .nf-top-limited-badge {
+  position:absolute !important;
+  top:12px !important;
+  left:12px !important;
+  right:auto !important;
+  transform:none !important;
+  z-index:10;
+
+  padding:7px 12px !important;
+  border:2px solid #FFF !important;
+  border-radius:999px !important;
+
+  background:#C9272D !important;
+  color:#FFF !important;
+
+  font-size:10px !important;
+  font-weight:950 !important;
+  letter-spacing:.09em !important;
+
+  box-shadow:0 5px 14px rgba(111,16,20,.18) !important;
+  animation:none !important;
+}
+
+/* Consistent product names */
+.nf-top-name,
+.nf-top-name-above,
+.nf-top-card-limited .nf-top-name,
+.nf-top-card:not(.nf-top-card-limited) .nf-top-name-above {
+  order:1 !important;
+  min-height:52px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+
+  margin:0 0 10px !important;
+
+  color:#17120E !important;
+  font-size:clamp(22px,1.6vw,28px) !important;
+  font-weight:950 !important;
+  line-height:1.02 !important;
+  letter-spacing:-.015em !important;
+  text-align:center !important;
+}
+
+/* Leave room for the limited badge without making the whole card taller. */
+.nf-top-card-limited .nf-top-name {
+  margin-top:28px !important;
+}
+
+/* Selected size pricing gets its own clean line. */
+.nf-top-selected-price {
+  order:2;
+  margin:0 0 12px;
+  color:#8D6932;
+  font-size:13px;
+  font-weight:700;
+  line-height:1.2;
+  text-align:center;
+}
+
+.nf-top-selected-price strong {
+  color:#2E2116;
+  font-size:14px;
+  font-weight:950;
+}
+
+/* Every card gets the exact same image footprint. */
+.nf-top-image-shell,
+.nf-top-card:not(.nf-top-card-limited) .nf-top-image-shell {
+  order:3 !important;
+  width:100% !important;
+  height:270px !important;
+  min-height:270px !important;
+  flex:0 0 270px !important;
+
+  display:grid !important;
+  place-items:center !important;
+
+  margin:0 !important;
+  padding:12px !important;
+
+  overflow:hidden !important;
+  border:1px solid #EEE6D8 !important;
+  border-radius:16px !important;
+  background:#FFF !important;
+}
+
+.nf-top-image-shell > img,
+.nf-top-card:not(.nf-top-card-limited) img {
+  width:100% !important;
+  height:100% !important;
+  max-height:none !important;
+  aspect-ratio:auto !important;
+  object-fit:contain !important;
+}
+
+/* Make sold-out messaging readable but not overpower the entire card. */
+.nf-top-sold-out-overlay {
+  padding:16px !important;
+  border-radius:15px !important;
+  background:rgba(18,46,63,.91) !important;
+}
+
+.nf-top-sold-out-overlay strong {
+  padding:9px 14px !important;
+  border-width:2px !important;
+  font-size:22px !important;
+  letter-spacing:.055em !important;
+}
+
+.nf-top-sold-out-overlay > span {
+  max-width:190px !important;
+  padding:6px 10px !important;
+  font-size:12px !important;
+}
+
+/* Tagline is now a quiet supporting detail instead of another headline. */
+.nf-top-tagline,
+.nf-top-card:not(.nf-top-card-limited) .nf-top-tagline,
+.nf-top-card-limited .nf-top-tagline {
+  order:4 !important;
+
+  margin:13px 0 0 !important;
+
+  color:#946400 !important;
+  font-size:12px !important;
+  font-weight:900 !important;
+  line-height:1.25 !important;
+  letter-spacing:.08em !important;
+  text-align:center !important;
+  text-transform:uppercase !important;
+}
+
+/* Compact the Limited Flavor urgency block dramatically. */
+.nf-top-card-limited .nf-top-limited-copy {
+  order:5 !important;
+  margin:12px 0 0 !important;
+  padding:11px 12px !important;
+
+  border:1px solid #E9C8C1 !important;
+  border-radius:14px !important;
+
+  background:#FFF8F4 !important;
+}
+
+.nf-top-limited-message,
+.nf-top-card-limited .nf-top-limited-message,
+.nf-top-limited-message > span {
+  display:block !important;
+  margin:0 !important;
+
+  color:#55360A !important;
+  font-size:12px !important;
+  font-weight:800 !important;
+  line-height:1.35 !important;
+  text-align:center !important;
+}
+
+.nf-top-limited-message b {
+  font-size:13px !important;
+}
+
+.nf-top-limited-size-label {
+  margin-top:7px !important;
+
+  color:#A22D31 !important;
+  font-size:10px !important;
+  font-weight:950 !important;
+  letter-spacing:.08em !important;
+}
+
+/* Countdown becomes one compact horizontal row. */
+.nf-top-limited-countdown {
+  display:flex !important;
+  align-items:baseline !important;
+  justify-content:center !important;
+  gap:6px !important;
+
+  margin-top:7px !important;
+  padding-top:7px !important;
+
+  border-top:1px solid #EBD7CE !important;
+}
+
+.nf-top-limited-count-label,
+.nf-top-limited-count-unit {
+  max-width:none !important;
+  color:#A72228 !important;
+  font-size:10px !important;
+  font-weight:950 !important;
+  line-height:1 !important;
+}
+
+.nf-top-limited-count-number {
+  color:#C9272D !important;
+  font-size:30px !important;
+  font-weight:950 !important;
+  line-height:.9 !important;
+}
+
+/* Inventory status sits consistently at the bottom of every card. */
+.nf-top-price,
+.nf-top-card-limited .nf-top-price,
+.nf-top-card:not(.nf-top-card-limited) .nf-top-price {
+  order:6 !important;
+  margin-top:auto !important;
+  padding-top:14px !important;
+
+  color:#173C52 !important;
+  font-size:13px !important;
+  font-weight:900 !important;
+  line-height:1.3 !important;
+  text-align:center !important;
+}
+
+/* Tablet */
+@media (max-width:1050px) {
+  .nf-top-grid {
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:16px !important;
+  }
+
+  .nf-top-card,
+  .nf-top-card-limited,
+  .nf-top-card:not(.nf-top-card-limited) {
+    min-height:500px !important;
+  }
+}
+
+/* Mobile */
+@media (max-width:620px) {
+  .nf-top-grid {
+    grid-template-columns:1fr !important;
+    gap:14px !important;
+  }
+
+  .nf-top-card,
+  .nf-top-card-limited,
+  .nf-top-card:not(.nf-top-card-limited) {
+    min-height:0 !important;
+    padding:15px !important;
+    border-radius:18px !important;
+  }
+
+  .nf-top-card-limited,
+  .nf-top-card-limited:hover,
+  .nf-top-card-limited.selected {
+    padding:15px !important;
+  }
+
+  .nf-top-image-shell,
+  .nf-top-card:not(.nf-top-card-limited) .nf-top-image-shell {
+    height:245px !important;
+    min-height:245px !important;
+    flex-basis:245px !important;
+  }
+
+  .nf-top-name,
+  .nf-top-name-above,
+  .nf-top-card-limited .nf-top-name,
+  .nf-top-card:not(.nf-top-card-limited) .nf-top-name-above {
+    min-height:0 !important;
+    font-size:23px !important;
+  }
+}
+
+/* TOP PICKS — IMAGE + READABILITY REFINEMENT */
+
+/* Remove the framed / shadowed image-box appearance. */
+.nf-top-image-shell,
+.nf-top-card:not(.nf-top-card-limited) .nf-top-image-shell {
+  width:100% !important;
+  height:auto !important;
+  min-height:0 !important;
+  flex:0 0 auto !important;
+  aspect-ratio:1 / 1 !important;
+
+  margin:0 !important;
+  padding:0 !important;
+
+  border:0 !important;
+  outline:0 !important;
+  border-radius:14px !important;
+
+  background:transparent !important;
+  box-shadow:none !important;
+
+  display:grid !important;
+  place-items:center !important;
+  overflow:hidden !important;
+}
+
+/* Let the artwork use the full available area without cropping. */
+.nf-top-image-shell > img,
+.nf-top-card:not(.nf-top-card-limited) img,
+.nf-top-card-limited img {
+  display:block !important;
+  width:100% !important;
+  height:100% !important;
+  max-width:100% !important;
+  max-height:none !important;
+
+  object-fit:contain !important;
+  object-position:center !important;
+
+  border:0 !important;
+  outline:0 !important;
+  border-radius:0 !important;
+
+  background:transparent !important;
+  box-shadow:none !important;
+  filter:none !important;
+}
+
+/* ---------------------------------------------------------
+   READABILITY
+   Supporting text throughout the cards is now at least 16px.
+   Product names remain larger for hierarchy.
+   --------------------------------------------------------- */
+
+.nf-top-selected-price {
+  font-size:16px !important;
+  line-height:1.35 !important;
+}
+
+.nf-top-selected-price strong {
+  font-size:16px !important;
+}
+
+.nf-top-tagline,
+.nf-top-card:not(.nf-top-card-limited) .nf-top-tagline,
+.nf-top-card-limited .nf-top-tagline {
+  font-size:16px !important;
+  line-height:1.35 !important;
+}
+
+.nf-top-price,
+.nf-top-card:not(.nf-top-card-limited) .nf-top-price,
+.nf-top-card-limited .nf-top-price {
+  font-size:16px !important;
+  line-height:1.4 !important;
+}
+
+.nf-top-limited-message,
+.nf-top-card-limited .nf-top-limited-message,
+.nf-top-limited-message > span,
+.nf-top-limited-message b {
+  font-size:16px !important;
+  line-height:1.4 !important;
+}
+
+.nf-top-limited-size-label {
+  font-size:16px !important;
+  line-height:1.25 !important;
+}
+
+.nf-top-limited-count-label,
+.nf-top-limited-count-unit {
+  font-size:16px !important;
+  line-height:1.1 !important;
+}
+
+.nf-top-limited-count-number {
+  font-size:38px !important;
+}
+
+/* Keep product names clearly above the supporting information. */
+.nf-top-name,
+.nf-top-name-above,
+.nf-top-card-limited .nf-top-name,
+.nf-top-card:not(.nf-top-card-limited) .nf-top-name-above {
+  font-size:clamp(25px,1.65vw,30px) !important;
+  line-height:1.1 !important;
+}
+
+/* Limited badge stays compact, but readable. */
+.nf-top-card-limited .nf-top-limited-badge,
+.nf-top-card-limited:hover .nf-top-limited-badge,
+.nf-top-card-limited.selected .nf-top-limited-badge {
+  font-size:13px !important;
+  line-height:1.15 !important;
+}
+
+
+/* TABLET */
+@media (max-width:900px) {
+  .nf-top-image-shell,
+  .nf-top-card:not(.nf-top-card-limited) .nf-top-image-shell {
+    width:100% !important;
+    height:auto !important;
+    aspect-ratio:1 / 1 !important;
+  }
+
+  .nf-top-image-shell > img,
+  .nf-top-card:not(.nf-top-card-limited) img,
+  .nf-top-card-limited img {
+    width:100% !important;
+    height:100% !important;
+    object-fit:contain !important;
+  }
+}
+
+
+/* MOBILE — prevent all image cropping */
+@media (max-width:620px) {
+  .nf-top-image-shell,
+  .nf-top-card:not(.nf-top-card-limited) .nf-top-image-shell {
+    width:100% !important;
+    height:auto !important;
+    min-height:0 !important;
+    flex-basis:auto !important;
+
+    aspect-ratio:1 / 1 !important;
+
+    padding:0 !important;
+    border:0 !important;
+    box-shadow:none !important;
+    overflow:hidden !important;
+  }
+
+  .nf-top-image-shell > img,
+  .nf-top-card:not(.nf-top-card-limited) img,
+  .nf-top-card-limited img {
+    width:100% !important;
+    height:100% !important;
+    max-height:none !important;
+
+    object-fit:contain !important;
+    object-position:center !important;
+
+    box-shadow:none !important;
+    filter:none !important;
+  }
+
+  .nf-top-name,
+  .nf-top-name-above,
+  .nf-top-card-limited .nf-top-name,
+  .nf-top-card:not(.nf-top-card-limited) .nf-top-name-above {
+    font-size:25px !important;
+  }
+
+  .nf-top-selected-price,
+  .nf-top-selected-price strong,
+  .nf-top-tagline,
+  .nf-top-price,
+  .nf-top-limited-message,
+  .nf-top-limited-message > span,
+  .nf-top-limited-message b,
+  .nf-top-limited-size-label,
+  .nf-top-limited-count-label,
+  .nf-top-limited-count-unit {
+    font-size:16px !important;
+  }
+}
+
+/* PICK YOUR FLAVORS — IMAGE + READABILITY REFINEMENT */
+
+/* Remove the floating/drop-shadow image treatment */
+.nf-pick-image-wrap {
+  width:100% !important;
+  height:auto !important;
+  min-height:0 !important;
+  flex:0 0 auto !important;
+  aspect-ratio:1 / 1 !important;
+
+  padding:0 !important;
+  border-bottom:1px solid #DFEAF0 !important;
+
+  background:#FFFFFF !important;
+  box-shadow:none !important;
+
+  display:grid !important;
+  place-items:center !important;
+  overflow:hidden !important;
+}
+
+/* Fill the image area while always preserving the complete artwork */
+.nf-pick-image {
+  display:block !important;
+
+  width:100% !important;
+  height:100% !important;
+  max-width:100% !important;
+  max-height:none !important;
+
+  padding:0 !important;
+  margin:0 !important;
+
+  object-fit:contain !important;
+  object-position:center !important;
+
+  filter:none !important;
+  box-shadow:none !important;
+
+  transform:none !important;
+}
+
+.nf-pick-card:hover .nf-pick-image {
+  transform:none !important;
+  filter:none !important;
+}
+
+/* ---------------------------------------------------------
+   READABILITY — 16px minimum for shopping information
+   --------------------------------------------------------- */
+
+.nf-pick-name {
+  min-height:0 !important;
+  font-size:18px !important;
+  line-height:1.3 !important;
+}
+
+/* Selected jar size + price */
+.nf-pick-body [aria-label*="selected jar size pricing"] {
+  font-size:16px !important;
+  line-height:1.4 !important;
+}
+
+.nf-pick-body [aria-label*="selected jar size pricing"] strong {
+  font-size:16px !important;
+}
+
+/* Covers low-stock / supporting text added inside card body */
+.nf-pick-body > div:not(.nf-pick-name):not(.nf-pick-stock):not(.nf-pick-controls) {
+  font-size:16px !important;
+  line-height:1.4 !important;
+}
+
+/* Inventory box */
+.nf-pick-stock {
+  min-height:44px !important;
+  margin:9px 0 13px !important;
+  padding:9px 11px !important;
+
+  font-size:16px !important;
+  line-height:1.35 !important;
+}
+
+/* Add button */
+.nf-pick-add {
+  min-height:48px !important;
+  font-size:16px !important;
+  line-height:1.2 !important;
+}
+
+/* Quantity selector */
+.nf-pick-qty {
+  font-size:18px !important;
+}
+
+/* Selected item badge */
+.nf-pick-selected-badge {
+  font-size:12px !important;
+  line-height:1.1 !important;
+}
+
+
+/* TABLET */
+@media (max-width:980px) {
+  .nf-pick-image-wrap {
+    height:auto !important;
+    aspect-ratio:1 / 1 !important;
+  }
+
+  .nf-pick-image {
+    width:100% !important;
+    height:100% !important;
+    object-fit:contain !important;
+  }
+}
+
+
+/* MOBILE — prevent any product artwork from being cropped */
+@media (max-width:680px) {
+  .nf-pick-image-wrap {
+    width:100% !important;
+    height:auto !important;
+    min-height:0 !important;
+    aspect-ratio:1 / 1 !important;
+
+    padding:0 !important;
+    overflow:hidden !important;
+  }
+
+  .nf-pick-image {
+    width:100% !important;
+    height:100% !important;
+    max-height:none !important;
+
+    padding:0 !important;
+
+    object-fit:contain !important;
+    object-position:center !important;
+
+    filter:none !important;
+  }
+
+  .nf-pick-body {
+    padding:15px 13px 14px !important;
+  }
+
+  .nf-pick-name {
+    min-height:0 !important;
+    font-size:18px !important;
+  }
+
+  .nf-pick-stock,
+  .nf-pick-add,
+  .nf-pick-body [aria-label*="selected jar size pricing"],
+  .nf-pick-body [aria-label*="selected jar size pricing"] strong,
+  .nf-pick-body > div:not(.nf-pick-name):not(.nf-pick-stock):not(.nf-pick-controls) {
+    font-size:16px !important;
+  }
+}
+
+
+/* Extra-narrow phones: override the old fixed 145px image height */
+@media (max-width:390px) {
+  .nf-pick-image-wrap {
+    height:auto !important;
+    aspect-ratio:1 / 1 !important;
+  }
+
+  .nf-pick-image {
+    object-fit:contain !important;
+  }
+}
+
+/* CART TRAY — POLISHED CHECKOUT DOCK */
+
+/* Main dock */
+.nf-cart-tray {
+  background:
+    linear-gradient(135deg, #1698DC 0%, #249FDF 55%, #168ED0 100%) !important;
+  border-top:1px solid rgba(255,255,255,.38) !important;
+  box-shadow:0 -14px 34px rgba(14,68,100,.20) !important;
+}
+
+.nf-cart-tray-inner {
+  width:min(100%,1440px) !important;
+  margin:0 auto !important;
+  padding:18px 24px 20px !important;
+}
+
+/* ---------------------------------------------------------
+   HEADER
+   --------------------------------------------------------- */
+.nf-cart-tray-actions {
+  display:flex !important;
+  align-items:center !important;
+  gap:12px !important;
+  width:100% !important;
+  margin-bottom:14px !important;
+}
+
+.nf-cart-tray-actions .nf-cart-tray-toggle {
+  flex:1 1 auto !important;
+  min-width:0 !important;
+
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:18px !important;
+
+  padding:0 !important;
+  border:0 !important;
+  background:transparent !important;
+  color:#FFF !important;
+  box-shadow:none !important;
+  text-align:left !important;
+}
+
+.nf-cart-tray-label {
+  display:flex !important;
+  align-items:center !important;
+  gap:10px !important;
+
+  color:#FFF !important;
+  font-size:18px !important;
+  font-weight:950 !important;
+  line-height:1.2 !important;
+  letter-spacing:.04em !important;
+  text-transform:uppercase !important;
+}
+
+.nf-cart-tray-count {
+  min-width:30px !important;
+  height:30px !important;
+  padding:0 8px !important;
+
+  display:grid !important;
+  place-items:center !important;
+
+  border-radius:999px !important;
+  background:#FFF2B4 !important;
+  color:#173C52 !important;
+
+  font-size:16px !important;
+  font-weight:950 !important;
+}
+
+.nf-cart-tray-review-action {
+  flex:0 0 auto !important;
+
+  padding:9px 14px !important;
+  border:1px solid rgba(255,255,255,.68) !important;
+  border-radius:999px !important;
+
+  background:rgba(255,255,255,.12) !important;
+  color:#FFF !important;
+
+  font-size:16px !important;
+  font-weight:850 !important;
+  line-height:1.2 !important;
+  white-space:nowrap !important;
+}
+
+/* Close button: clean and obvious */
+.nf-cart-tray-close {
+  width:44px !important;
+  height:44px !important;
+  flex:0 0 44px !important;
+
+  border:1px solid rgba(255,255,255,.72) !important;
+  background:rgba(255,255,255,.12) !important;
+  color:#FFF !important;
+
+  font-size:25px !important;
+}
+
+.nf-cart-tray-close:hover {
+  background:rgba(255,255,255,.22) !important;
+}
+
+
+/* ---------------------------------------------------------
+   INDIVIDUAL CART ITEMS WHEN EXPANDED
+   --------------------------------------------------------- */
+.nf-cart-items {
+  display:grid !important;
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr)) !important;
+  gap:10px !important;
+  margin:0 0 14px !important;
+  padding:14px !important;
+
+  border:1px solid rgba(255,255,255,.30) !important;
+  border-radius:16px !important;
+  background:rgba(255,255,255,.10) !important;
+}
+
+.nf-cart-item {
+  min-height:54px !important;
+  padding:8px 10px !important;
+  border-radius:12px !important;
+  background:rgba(255,255,255,.10) !important;
+}
+
+.nf-cart-item-name,
+.nf-cart-item-name strong,
+.nf-cart-item-name small,
+.nf-cart-item-qty {
+  font-size:16px !important;
+  line-height:1.3 !important;
+}
+
+
+/* ---------------------------------------------------------
+   MAIN SUMMARY — 3 CLEAR AREAS
+   --------------------------------------------------------- */
+.nf-cart-tray .nf-cart-summary {
+  display:grid !important;
+  grid-template-columns:
+    minmax(380px,1.45fr)
+    minmax(250px,.7fr)
+    minmax(190px,.45fr) !important;
+
+  align-items:stretch !important;
+  gap:16px !important;
+  width:100% !important;
+}
+
+/* Bundle progress card */
+.nf-cart-tray .nf-cart-bundle-rail {
+  min-width:0 !important;
+  margin:0 !important;
+  padding:16px 18px !important;
+
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) auto !important;
+  align-items:center !important;
+  gap:18px !important;
+
+  border:1px solid rgba(255,255,255,.34) !important;
+  border-radius:16px !important;
+
+  background:rgba(255,255,255,.11) !important;
+}
+
+.nf-cart-bundle-rail-copy {
+  min-width:0 !important;
+  display:grid !important;
+  gap:7px !important;
+}
+
+.nf-cart-bundle-rail-heading {
+  color:#FFF1AE !important;
+  font-size:16px !important;
+  font-weight:950 !important;
+  line-height:1.25 !important;
+  letter-spacing:.07em !important;
+  text-transform:uppercase !important;
+}
+
+.nf-cart-bundle-rail-status {
+  display:grid !important;
+  gap:4px !important;
+  color:#FFF !important;
+}
+
+.nf-cart-bundle-rail-status strong {
+  color:#FFF !important;
+  font-size:20px !important;
+  font-weight:950 !important;
+  line-height:1.15 !important;
+}
+
+.nf-cart-bundle-rail-status span {
+  color:rgba(255,255,255,.92) !important;
+  font-size:16px !important;
+  font-weight:700 !important;
+  line-height:1.35 !important;
+}
+
+.nf-cart-bundle-rail-jars {
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  gap:8px !important;
+}
+
+/* Make jar caption readable */
+.nf-cart-bundle-rail-jar span {
+  color:#FFF !important;
+  font-size:16px !important;
+  font-weight:850 !important;
+}
+
+
+/* ---------------------------------------------------------
+   TOTALS CARD
+   --------------------------------------------------------- */
+.nf-cart-tray .nf-cart-totals {
+  display:flex !important;
+  flex-direction:column !important;
+  justify-content:center !important;
+
+  min-width:0 !important;
+  margin:0 !important;
+  padding:15px 18px !important;
+
+  border:1px solid rgba(255,255,255,.34) !important;
+  border-radius:16px !important;
+
+  background:rgba(9,75,113,.18) !important;
+  color:#FFF !important;
+}
+
+.nf-cart-totals > div {
+  color:rgba(255,255,255,.92) !important;
+  font-size:16px !important;
+  font-weight:650 !important;
+  line-height:1.4 !important;
+}
+
+.nf-cart-totals > span {
+  margin-top:7px !important;
+
+  color:#FFF1AE !important;
+  font-size:16px !important;
+  font-weight:900 !important;
+  line-height:1.2 !important;
+  letter-spacing:.07em !important;
+  text-transform:uppercase !important;
+}
+
+.nf-cart-totals > strong {
+  margin-top:2px !important;
+
+  color:#FFF !important;
+  font-size:38px !important;
+  font-weight:950 !important;
+  line-height:1 !important;
+}
+
+
+/* ---------------------------------------------------------
+   PRIMARY ACTION
+   --------------------------------------------------------- */
+.nf-cart-tray .nf-guided-order-button {
+  align-self:stretch !important;
+
+  min-width:190px !important;
+  min-height:100% !important;
+  margin:0 !important;
+  padding:15px 22px !important;
+
+  border:2px solid #DDA900 !important;
+  border-radius:16px !important;
+
+  background:
+    linear-gradient(145deg,#FFE050 0%,#FFC91D 100%) !important;
+
+  color:#17120E !important;
+
+  font-size:20px !important;
+  font-weight:950 !important;
+  line-height:1.15 !important;
+
+  box-shadow:
+    0 8px 18px rgba(89,57,0,.20),
+    inset 0 1px 0 rgba(255,255,255,.65) !important;
+
+  transition:
+    transform .16s ease,
+    box-shadow .16s ease !important;
+}
+
+.nf-cart-tray .nf-guided-order-button:hover:not(:disabled) {
+  transform:translateY(-2px) !important;
+  box-shadow:
+    0 11px 22px rgba(89,57,0,.26),
+    inset 0 1px 0 rgba(255,255,255,.65) !important;
+}
+
+
+/* ---------------------------------------------------------
+   SAVINGS / WARNINGS
+   --------------------------------------------------------- */
+.nf-cart-savings,
+.nf-cart-delivery-warning,
+.nf-cart-delivery-warning-copy,
+.nf-cart-delivery-warning-note {
+  font-size:16px !important;
+  line-height:1.4 !important;
+}
+
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+@media (max-width:980px) {
+  .nf-cart-tray-inner {
+    padding:15px 16px 17px !important;
+  }
+
+  .nf-cart-tray .nf-cart-summary {
+    grid-template-columns:minmax(0,1fr) minmax(220px,.65fr) !important;
+  }
+
+  .nf-cart-tray .nf-guided-order-button {
+    grid-column:1 / -1 !important;
+    min-height:54px !important;
+  }
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+@media (max-width:680px) {
+  .nf-cart-tray {
+    max-height:72vh !important;
+    overflow-y:auto !important;
+    overscroll-behavior:contain !important;
+  }
+
+  .nf-cart-tray-inner {
+    padding:13px 12px 15px !important;
+  }
+
+  .nf-cart-tray-actions {
+    gap:8px !important;
+    margin-bottom:11px !important;
+  }
+
+  .nf-cart-tray-actions .nf-cart-tray-toggle {
+    gap:8px !important;
+  }
+
+  .nf-cart-tray-label {
+    font-size:16px !important;
+    letter-spacing:.025em !important;
+  }
+
+  .nf-cart-tray-count {
+    min-width:27px !important;
+    height:27px !important;
+    font-size:16px !important;
+  }
+
+  .nf-cart-tray-review-action {
+    padding:8px 10px !important;
+    font-size:16px !important;
+  }
+
+  .nf-cart-tray-close {
+    width:40px !important;
+    height:40px !important;
+    flex-basis:40px !important;
+  }
+
+  .nf-cart-tray .nf-cart-summary {
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+  }
+
+  .nf-cart-tray .nf-cart-bundle-rail {
+    grid-template-columns:minmax(0,1fr) auto !important;
+    gap:10px !important;
+    padding:13px !important;
+  }
+
+  .nf-cart-bundle-rail-heading,
+  .nf-cart-bundle-rail-status span,
+  .nf-cart-bundle-rail-jar span,
+  .nf-cart-totals > div,
+  .nf-cart-totals > span {
+    font-size:16px !important;
+  }
+
+  .nf-cart-bundle-rail-status strong {
+    font-size:18px !important;
+  }
+
+  .nf-cart-tray .nf-cart-totals {
+    padding:13px 14px !important;
+  }
+
+  .nf-cart-totals > strong {
+    font-size:32px !important;
+  }
+
+  .nf-cart-tray .nf-guided-order-button {
+    grid-column:auto !important;
+    min-width:0 !important;
+    min-height:52px !important;
+    font-size:18px !important;
+  }
+
+  .nf-cart-items {
+    grid-template-columns:1fr !important;
+    padding:10px !important;
+  }
+}
+
+
+/* Very narrow phones:
+   stack the header cleanly instead of squeezing controls. */
+@media (max-width:460px) {
+  .nf-cart-tray-actions {
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) auto !important;
+  }
+
+  .nf-cart-tray-actions .nf-cart-tray-toggle {
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    gap:7px !important;
+  }
+
+  .nf-cart-tray-review-action {
+    justify-self:start !important;
+  }
+
+  .nf-cart-tray-close {
+    grid-column:2 !important;
+    grid-row:1 / span 2 !important;
+    align-self:center !important;
+  }
+
+  .nf-cart-tray .nf-cart-bundle-rail {
+    grid-template-columns:1fr !important;
+  }
+
+  .nf-cart-bundle-rail-jars {
+    justify-content:flex-start !important;
+  }
+}
+
+/* CART TRAY — FINAL CTA + BUNDLE ICON POLISH */
+
+@media (min-width:981px) {
+  .nf-cart-tray .nf-cart-summary {
+    grid-template-columns:
+      minmax(380px,1.5fr)
+      minmax(250px,.72fr)
+      170px !important;
+    align-items:center !important;
+  }
+
+  .nf-cart-tray .nf-guided-order-button {
+    width:170px !important;
+    min-width:170px !important;
+    max-width:170px !important;
+    min-height:58px !important;
+    height:58px !important;
+
+    align-self:center !important;
+    justify-self:end !important;
+
+    padding:10px 18px !important;
+    border-radius:14px !important;
+
+    font-size:16px !important;
+    line-height:1.1 !important;
+  }
+}
+
+.nf-cart-bundle-rail-jar > span {
+  font-size:16px !important;
+  font-weight:900 !important;
+  line-height:1.1 !important;
+  letter-spacing:.03em !important;
+  text-transform:none !important;
+}
+
+/* Completed bundle = icon only */
+.nf-cart-bundle-rail-jar.is-complete > span {
+  display:none !important;
+}
+
+@media (max-width:980px) {
+  .nf-cart-tray .nf-guided-order-button {
+    width:auto !important;
+    min-width:140px !important;
+    max-width:180px !important;
+    min-height:54px !important;
+    height:54px !important;
+
+    align-self:center !important;
+    justify-self:end !important;
+
+    font-size:16px !important;
+  }
+}
+
+@media (max-width:680px) {
+  .nf-cart-tray .nf-guided-order-button {
+    width:100% !important;
+    min-width:0 !important;
+    max-width:none !important;
+    min-height:52px !important;
+    height:52px !important;
+
+    justify-self:stretch !important;
+    font-size:16px !important;
+  }
+}
+
+/* EXPANDED ORDER REVIEW — COLLAPSE + SAVINGS + USE IDEAS */
+
+/* When expanded, Review Order becomes a compact collapse control. */
+.nf-cart-tray-review-action.is-collapse {
+  width:46px !important;
+  height:42px !important;
+  padding:0 !important;
+
+  display:grid !important;
+  place-items:center !important;
+
+  border:1px solid rgba(255,255,255,.76) !important;
+  border-radius:50% !important;
+
+  background:rgba(255,255,255,.12) !important;
+  color:#FFFFFF !important;
+}
+
+.nf-cart-tray-review-action.is-collapse svg {
+  width:22px;
+  height:22px;
+}
+
+/* Make the expanded area useful instead of one huge empty blue panel. */
+.nf-cart-tray.open .nf-cart-items {
+  display:grid !important;
+  grid-template-columns:minmax(300px,1.15fr) minmax(300px,.85fr) !important;
+  grid-auto-rows:auto !important;
+  align-items:start !important;
+
+  gap:14px 18px !important;
+
+  min-height:0 !important;
+  max-height:min(48vh,520px) !important;
+
+  margin:0 0 16px !important;
+  padding:16px !important;
+
+  overflow-y:auto !important;
+
+  border:1px solid rgba(255,255,255,.32) !important;
+  border-radius:18px !important;
+  background:rgba(255,255,255,.08) !important;
+}
+
+/* Selected products form a clean list in the left column. */
+.nf-cart-tray.open .nf-cart-item {
+  grid-column:1 !important;
+
+  min-height:68px !important;
+  padding:13px 14px !important;
+
+  border:1px solid rgba(255,255,255,.24) !important;
+  border-radius:13px !important;
+
+  background:rgba(255,255,255,.10) !important;
+}
+
+.nf-cart-tray.open .nf-cart-item-name,
+.nf-cart-tray.open .nf-cart-item-name strong,
+.nf-cart-tray.open .nf-cart-item-name small,
+.nf-cart-tray.open .nf-cart-item-qty {
+  font-size:16px !important;
+  line-height:1.35 !important;
+}
+
+/* ---------------------------------------------------------
+   SAVINGS
+   --------------------------------------------------------- */
+.nf-cart-tray.open .nf-cart-savings {
+  grid-column:2 !important;
+  grid-row:1 !important;
+
+  justify-self:stretch !important;
+
+  display:grid !important;
+  grid-template-columns:1fr auto !important;
+  align-items:center !important;
+  gap:2px 12px !important;
+
+  margin:0 !important;
+  padding:15px 17px !important;
+
+  border:2px solid #F3C019 !important;
+  border-radius:15px !important;
+
+  background:
+    linear-gradient(135deg,#FFF6C8 0%,#FFE681 100%) !important;
+
+  color:#4A3313 !important;
+
+  box-shadow:
+    0 8px 22px rgba(86,54,0,.18),
+    inset 0 1px 0 rgba(255,255,255,.72) !important;
+
+  text-align:left !important;
+}
+
+.nf-cart-savings > span {
+  grid-column:1 !important;
+
+  color:#8A5900 !important;
+  font-size:16px !important;
+  font-weight:950 !important;
+  line-height:1.1 !important;
+  letter-spacing:.08em !important;
+}
+
+.nf-cart-savings > strong {
+  grid-column:2 !important;
+  grid-row:1 / span 2 !important;
+
+  color:#173C52 !important;
+  font-size:30px !important;
+  font-weight:950 !important;
+  line-height:1 !important;
+}
+
+.nf-cart-savings > small {
+  grid-column:1 !important;
+
+  color:#6C5320 !important;
+  font-size:16px !important;
+  font-weight:700 !important;
+  line-height:1.25 !important;
+}
+
+/* ---------------------------------------------------------
+   WAYS TO USE THE SELECTED HONEY
+   --------------------------------------------------------- */
+.nf-cart-use-ideas {
+  grid-column:2 !important;
+  grid-row:2 / span 50 !important;
+
+  padding:18px !important;
+
+  border:1px solid rgba(255,255,255,.34) !important;
+  border-radius:16px !important;
+
+  background:rgba(8,83,125,.18) !important;
+  color:#FFFFFF !important;
+}
+
+.nf-cart-use-ideas-kicker {
+  margin-bottom:5px !important;
+
+  color:#FFF0A6 !important;
+  font-size:16px !important;
+  font-weight:950 !important;
+  line-height:1.2 !important;
+  letter-spacing:.08em !important;
+  text-transform:uppercase !important;
+}
+
+.nf-cart-use-ideas > strong {
+  display:block !important;
+
+  color:#FFFFFF !important;
+  font-size:20px !important;
+  font-weight:950 !important;
+  line-height:1.2 !important;
+}
+
+.nf-cart-use-ideas ul {
+  display:grid !important;
+  gap:9px !important;
+
+  margin:14px 0 0 !important;
+  padding-left:21px !important;
+}
+
+.nf-cart-use-ideas li {
+  padding-left:2px !important;
+
+  color:rgba(255,255,255,.96) !important;
+  font-size:16px !important;
+  font-weight:650 !important;
+  line-height:1.45 !important;
+}
+
+.nf-cart-use-ideas li::marker {
+  color:#FFE05B !important;
+}
+
+
+/* TABLET */
+@media (max-width:900px) {
+  .nf-cart-tray.open .nf-cart-items {
+    grid-template-columns:1fr 1fr !important;
+    max-height:52vh !important;
+  }
+}
+
+
+/* MOBILE */
+@media (max-width:680px) {
+  .nf-cart-tray.open .nf-cart-items {
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+
+    max-height:55vh !important;
+    padding:11px !important;
+  }
+
+  .nf-cart-tray.open .nf-cart-item,
+  .nf-cart-tray.open .nf-cart-savings,
+  .nf-cart-tray.open .nf-cart-use-ideas {
+    grid-column:1 !important;
+    grid-row:auto !important;
+  }
+
+  .nf-cart-savings > span,
+  .nf-cart-savings > small,
+  .nf-cart-use-ideas-kicker,
+  .nf-cart-use-ideas li {
+    font-size:16px !important;
+  }
+
+  .nf-cart-savings > strong {
+    font-size:28px !important;
+  }
+
+  .nf-cart-use-ideas > strong {
+    font-size:19px !important;
+  }
+}
+
+/* CART DISMISS + REOPEN */
+.nf-cart-tray-close {
+  order:99;
+  width:42px;
+  height:42px;
+  flex:0 0 42px;
+  display:grid;
+  place-items:center;
+  padding:0;
+  border:1px solid rgba(255,255,255,.72);
+  border-radius:50%;
+  background:rgba(255,255,255,.14);
+  color:#FFF;
+  font:inherit;
+  font-size:27px;
+  font-weight:500;
+  line-height:1;
+  cursor:pointer;
+  transition:background .18s ease, transform .18s ease;
+}
+
+.nf-cart-tray-close:hover {
+  background:rgba(255,255,255,.25);
+  transform:scale(1.04);
+}
+
+.nf-dock-cart-reopen {
+  position:relative;
+  width:44px;
+  height:44px;
+  flex:0 0 44px;
+  display:grid;
+  place-items:center;
+  padding:0;
+  border:1px solid #E2D6C4;
+  border-radius:50%;
+  background:#FFF;
+  color:#147FBE;
+  font:inherit;
+  cursor:pointer;
+  box-shadow:0 4px 12px rgba(15,73,108,.14);
+}
+
+.nf-dock-cart-reopen > span {
+  position:absolute;
+  top:-5px;
+  right:-5px;
+  min-width:19px;
+  height:19px;
+  padding:0 5px;
+  display:grid;
+  place-items:center;
+  border-radius:999px;
+  border:2px solid #FFF;
+  background:#FFD43B;
+  color:#082C5C;
+  font-size:10px;
+  font-weight:900;
+  line-height:1;
+}
+
 /* MOBILE CART — CONDENSABLE SUMMARY */
 .nf-cart-tray-actions {
   display:flex;
@@ -9573,6 +11321,7 @@ export default function App() {
   const [typeNotice, setTypeNotice] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(true);
+  const [cartTrayDismissed, setCartTrayDismissed] = useState(false);
   const [cartSummaryCompact, setCartSummaryCompact] = useState(false);
   const [dockHasEntered, setDockHasEntered] = useState(false);
   const siteSearchRef = useRef(null);
@@ -9624,6 +11373,12 @@ export default function App() {
   }, []);
 
   useEffect(() => { reload(); }, [reload]);
+
+  useEffect(() => {
+    if (cart.length === 0) {
+      setCartTrayDismissed(false);
+    }
+  }, [cart]);
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
@@ -10254,6 +12009,7 @@ export default function App() {
 
   const cartCount = cart.reduce((sum, item) => sum + Number(item.qty || 0), 0);
 
+
   const scrollToOrderStep = (id) => {
     setCartOpen(false);
     window.requestAnimationFrame(() => {
@@ -10347,6 +12103,7 @@ export default function App() {
       { terms: ["market", "markets", "near me", "store", "stores", "retail", "find us", "location"], view: "find" },
       { terms: ["about", "story", "difference", "quality", "ingredients", "raw", "unfiltered", "michigan"], view: "about" },
       { terms: ["review", "reviews", "testimonial", "testimonials", "feedback", "buzz", "rate", "rating"], view: "reviews" },
+      { terms: ["event", "events", "wedding", "weddings", "shower", "party", "parties", "corporate", "favors", "favours"], view: "events" },
       { terms: ["help", "order help", "faq", "frequently asked", "cancel", "skip", "special request", "contact support"], view: "help" },
       { terms: ["club", "membership", "subscription", "subscribe", "bonus jar"], view: "subscribe" },
       { terms: ["policy", "policies", "privacy", "terms", "refund"], view: "policy" },
@@ -10403,11 +12160,14 @@ export default function App() {
                 type="button"
                 className="nf-cart-button"
                 onClick={() => {
+                  setCartTrayDismissed(false);
+                  setCartSummaryCompact(false);
+
                   if (view !== "shop") {
                     setView("shop");
                     window.requestAnimationFrame(() => setCartOpen(true));
                   } else {
-                    setCartOpen((open) => !open);
+                    setCartOpen(true);
                   }
                 }}
                 aria-label={`Open cart with ${cartCount} item${cartCount === 1 ? "" : "s"}`}
@@ -10534,171 +12294,51 @@ export default function App() {
           </section>
         )}
 
-        {view !== "admin" && view !== "login" && !receipt && !(view === "shop" && cartCount > 0) && (
+        {view !== "admin" && view !== "login" && !receipt && !(view === "shop" && cartCount > 0 && !cartTrayDismissed) && (
           <nav
             className={`nf-universal-dock ${dockHasEntered ? "settled" : "entering"} ${view === "shop" ? "home-dock" : ""}`}
             aria-label="NectarFusions website navigation"
           >
-            <div className="nf-universal-dock-inner">
-              <div className={`nf-universal-dock-links ${siteSearchOpen ? "search-open" : ""}`}>
-                <div className="nf-dock-row nf-dock-row-primary">
-                  <button
-                    type="button"
-                    className={view === "subscribe" ? "selected" : ""}
-                    onClick={() => setView("subscribe")}
-                  >
-                    Honey Club
-                  </button>
-
-                  <button
-                    type="button"
-                    className={view === "partner" ? "selected" : ""}
-                    onClick={() => setView("partner")}
-                  >
-                    Partner
-                  </button>
-
-                  <button
-                    type="button"
-                    className={view === "help" ? "selected" : ""}
-                    onClick={() => setView("help")}
-                  >
-                    Help | FAQ
-                  </button>
-
-                  <button
-                    type="button"
-                    className={view === "reviews" ? "selected" : ""}
-                    onClick={() => setView("reviews")}
-                  >
-                    Reviews
-                  </button>
-                </div>
-
-                <div className="nf-dock-row nf-dock-row-secondary">
-                  <button
-                    type="button"
-                    className={`nf-near-me-button ${view === "find" ? "selected" : ""}`}
-                    onClick={() => setView("find")}
-                  >
-                    NectarFusions Near Me
-                  </button>
-
-                  <a className="nf-dock-contact" href={`mailto:${CONTACT.email}`}>
-                    Contact
-                  </a>
-
-                  <button
-                    type="button"
-                    className="nf-dock-search-icon"
-                    onClick={() => {
-                      setSiteSearchOpen(true);
-                      setSiteSearchHelp("");
-                      window.requestAnimationFrame(() => siteSearchRef.current?.focus());
-                    }}
+            <div
+              className="nf-universal-dock-inner"
+              style={{ display: "flex", alignItems: "center", gap: 9 }}
+            >
+              <div className="nf-site-search open" style={{ flex: 1, minWidth: 0 }}>
+                <div className="nf-site-search-row">
+                  <input
+                    id="nf-site-search-input"
+                    ref={siteSearchRef}
+                    type="search"
+                    defaultValue=""
                     aria-label="Search NectarFusions"
-                    title="Search"
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <circle cx="10.5" cy="10.5" r="6.5" />
-                      <path d="m15.5 15.5 4.5 4.5" />
-                    </svg>
+                    placeholder="Search NectarFusions or enter an order number..."
+                    onInput={() => { if (siteSearchHelp) setSiteSearchHelp(""); }}
+                    onKeyDown={(event) => { if (event.key === "Enter") runSiteSearch(); }}
+                  />
+                  <button type="button" className="nf-site-search-submit" onClick={runSiteSearch}>
+                    Search
                   </button>
-
-                  <a
-                    className="nf-dock-social"
-                    href="https://www.instagram.com/nectarfusions_honey/"
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label="Follow NectarFusions on Instagram"
-                    title="Instagram"
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <rect x="3" y="3" width="18" height="18" rx="5" />
-                      <circle cx="12" cy="12" r="4.25" />
-                      <circle cx="17.4" cy="6.7" r="1.15" fill="currentColor" stroke="none" />
-                    </svg>
-                  </a>
-
-                  <a
-                    className="nf-dock-social"
-                    href="https://www.facebook.com/NectarFusions/"
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label="Follow NectarFusions on Facebook"
-                    title="Facebook"
-                  >
-                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                      <path d="M13.5 22v-8h2.8l.42-3.2H13.5V8.75c0-.93.26-1.56 1.6-1.56h1.72V4.33c-.3-.04-1.32-.13-2.5-.13-2.47 0-4.16 1.51-4.16 4.28v2.32H7.36V14h2.8v8h3.34Z" />
-                    </svg>
-                  </a>
-
-
                 </div>
+                {siteSearchHelp && (
+                  <div className="nf-site-search-help" role="status">{siteSearchHelp}</div>
+                )}
               </div>
 
-              {siteSearchOpen && (
-                <div className="nf-site-search open">
-                  <div className="nf-site-search-row">
-                    <input
-                      id="nf-site-search-input"
-                      ref={siteSearchRef}
-                      type="search"
-                      defaultValue=""
-                      aria-label="Search NectarFusions"
-                      placeholder="Search NectarFusions or enter an order number..."
-                      onInput={() => {
-                        if (siteSearchHelp) setSiteSearchHelp("");
-                      }}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") runSiteSearch();
+              <a className="nf-dock-social" href="https://www.instagram.com/nectarfusions_honey/"
+                target="_blank" rel="noreferrer" aria-label="Follow NectarFusions on Instagram" title="Instagram">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <rect x="3" y="3" width="18" height="18" rx="5" />
+                  <circle cx="12" cy="12" r="4.25" />
+                  <circle cx="17.4" cy="6.7" r="1.15" fill="currentColor" stroke="none" />
+                </svg>
+              </a>
 
-                        if (event.key === "Escape") {
-                          setSiteSearchOpen(false);
-                          setSiteSearchHelp("");
-
-                          if (siteSearchRef.current) {
-                            siteSearchRef.current.value = "";
-                          }
-                        }
-                      }}
-                    />
-
-                    <button
-                      type="button"
-                      className="nf-site-search-submit"
-                      onClick={runSiteSearch}
-                    >
-                      Search
-                    </button>
-
-                    <button
-                      type="button"
-                      className="nf-site-search-close"
-                      onClick={() => {
-                        setSiteSearchOpen(false);
-                        setSiteSearchHelp("");
-
-                        if (siteSearchRef.current) {
-                          siteSearchRef.current.value = "";
-                        }
-                      }}
-                      aria-label="Close search"
-                      title="Close search"
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <path d="M7 7l10 10M17 7 7 17" />
-                      </svg>
-                    </button>
-                  </div>
-
-                  {siteSearchHelp && (
-                    <div className="nf-site-search-help" role="status">
-                      {siteSearchHelp}
-                    </div>
-                  )}
-                </div>
-              )}
+              <a className="nf-dock-social" href="https://www.facebook.com/NectarFusions/"
+                target="_blank" rel="noreferrer" aria-label="Follow NectarFusions on Facebook" title="Facebook">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M13.5 22v-8h2.8l.42-3.2H13.5V8.75c0-.93.26-1.56 1.6-1.56h1.72V4.33c-.3-.04-1.32-.13-2.5-.13-2.47 0-4.16 1.51-4.16 4.28v2.32H7.36V14h2.8v8h3.34Z" />
+                </svg>
+              </a>
 
               <a
                 className="nf-text-us-fab"
@@ -10706,11 +12346,11 @@ export default function App() {
                 aria-label={`Text NectarFusions at ${CONTACT.phone}`}
                 title="Text us"
               >
-                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M5 5.5h14v10H9l-4 3v-13Z" />
-                  <path d="M8 9h8M8 12h5" />
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M5 5.5h14v10H9l-4 3v-13Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+                  <path d="M8 9h8M8 12h5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
                 </svg>
-                <span>Text us</span>
+
               </a>
             </div>
           </nav>
@@ -10725,7 +12365,7 @@ export default function App() {
       <button className="btn ghost" onClick={() => setView("about")}>About</button>
       <button className="btn ghost" onClick={() => setView("find")}>Find Us</button>
       <button className="btn ghost" onClick={() => setView("subscribe")}>Honey Club</button>
-      <button className="btn ghost" onClick={() => setView("help")}>Order Help | FAQ</button>
+      <button className="btn ghost" onClick={() => setView("help")}>Help | FAQ</button>
       <button className="btn ghost" onClick={() => setView("reviews")}>Reviews</button>
       <button className="btn ghost" onClick={() => setView("partner")}>Partner</button>
       <button className="btn ghost" onClick={() => setView("policy")}>Policies</button>
@@ -10817,6 +12457,11 @@ export default function App() {
         }, 180);
       }}
     />;
+  }
+
+  /* ================= SPECIAL EVENTS ================= */
+  if (view === "events") {
+    return <SpecialEventRequest Header={Header} onBack={() => setView("shop")} />;
   }
 
   /* ================= ORDER HELP ================= */
@@ -11563,75 +13208,6 @@ export default function App() {
         </div>
       )}
 
-      <section className="nf-type-selector-section">
-        <div className="nf-wrap">
-          <div className="nf-section-row nf-type-section-heading">
-            <div>
-              <div className="nf-modern-kicker">Choose your texture</div>
-              <h2 className="nf-section-title">Regular or Spun?</h2>
-            </div>
-            <button
-              type="button"
-              className="nf-type-info-link"
-              onClick={() => setTypeInfo(true)}
-            >
-              What&rsquo;s the difference?
-            </button>
-          </div>
-
-          <div className="nf-type-choice-grid">
-            {[
-              ...TYPES,
-              {
-                id: "undecided",
-                name: "Not Sure",
-                tagline: "Decide in review",
-              },
-            ].map((t) => {
-              const unavailable = t.id === "spun" && !spunEnabled;
-              return (
-                <button
-                  key={t.id}
-                  type="button"
-                  className={`nf-type-choice-card ${pickType === t.id ? "selected" : ""} ${unavailable ? "unavailable" : ""}`}
-                  aria-disabled={unavailable}
-                  onClick={() => {
-                    if (unavailable) {
-                      setTypeNotice(spunUnavailableMessage);
-                      return;
-                    }
-
-                    setPickType(t.id);
-                    setTypeNotice(
-                      t.id === "undecided"
-                        ? "No worries. Add the flavors you want now, then choose Regular or Spun for each jar when you review your order."
-                        : ""
-                    );
-                  }}
-                >
-                  <span className="nf-type-choice-icon">
-                    {t.id === "regular" ? <RegularTextureIcon size={36} color="#147FBE" /> :
-                      t.id === "spun" ? <SpunTextureIcon size={36} color="#147FBE" /> :
-                      <NotSureTextureIcon size={36} color="#147FBE" />}
-                  </span>
-                  <span>
-                    <strong>{t.name}</strong>
-                    <small>{unavailable ? "Temporarily unavailable" : t.tagline}</small>
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          {typeNotice && (
-            <div className="nf-type-notice" role="status">
-              <span>{typeNotice}</span>
-              <button type="button" onClick={() => setTypeNotice("")} aria-label="Dismiss message">×</button>
-            </div>
-          )}
-        </div>
-      </section>
-
       <section className="nf-showcase">
         <div className="nf-wrap">
           <div className="nf-promo-grid">
@@ -11660,6 +13236,269 @@ export default function App() {
             </article>
           </div>
 
+          <section
+            className="card"
+            style={{
+              marginTop: 22, marginBottom: 28, padding: "22px 20px",
+              border: "2px solid #F7C41C",
+              background: "linear-gradient(135deg, #FFFDF5 0%, #FFF4CC 100%)",
+              boxShadow: "0 14px 34px rgba(74,51,19,.08)",
+            }}
+          >
+            <div className="nf-modern-kicker">Weddings · Showers · Events · Gifts</div>
+            <div className="display" style={{ fontSize: 31, color: c.darkBrown, marginTop: 5 }}>
+              PLANNING SOMETHING SPECIAL?
+            </div>
+            <p style={{ margin: "8px 0 14px", maxWidth: 680, fontSize: 14.5, lineHeight: 1.65, color: c.brown }}>
+              Need honey favors, gifts, custom quantities, or jars for a wedding, party, shower,
+              corporate event, or celebration? Tell us what you&rsquo;re planning and we&rsquo;ll help build the right order.
+            </p>
+            <button type="button" className="btn solid" style={{ padding: "12px 16px" }} onClick={() => setView("events")}>
+              Start a Special Event Request →
+            </button>
+          </section>
+
+          <section className="nf-type-selector-section">
+            <div className="nf-wrap">
+              <div className="nf-section-row nf-type-section-heading">
+                <div>
+                  <div className="nf-modern-kicker">Choose your texture</div>
+                  <h2 className="nf-section-title">Regular or Spun?</h2>
+                </div>
+                <button
+                  type="button"
+                  className="nf-type-info-link"
+                  onClick={() => setTypeInfo(true)}
+                >
+                  What&rsquo;s the difference?
+                </button>
+              </div>
+
+              <div className="nf-type-choice-grid">
+                {[
+                  ...TYPES,
+                  {
+                    id: "undecided",
+                    name: "Not Sure",
+                    tagline: "Decide in review",
+                  },
+                ].map((t) => {
+                  const unavailable = t.id === "spun" && !spunEnabled;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      className={`nf-type-choice-card ${pickType === t.id ? "selected" : ""} ${unavailable ? "unavailable" : ""}`}
+                      aria-disabled={unavailable}
+                      onClick={() => {
+                        if (unavailable) {
+                          setTypeNotice(spunUnavailableMessage);
+                          return;
+                        }
+
+                        setPickType(t.id);
+                        setTypeNotice(
+                          t.id === "undecided"
+                            ? "No worries. Add the flavors you want now, then choose Regular or Spun for each jar when you review your order."
+                            : ""
+                        );
+                      }}
+                    >
+                      <span className="nf-type-choice-icon">
+                        {t.id === "regular" ? <RegularTextureIcon size={36} color="#147FBE" /> :
+                          t.id === "spun" ? <SpunTextureIcon size={36} color="#147FBE" /> :
+                          <NotSureTextureIcon size={36} color="#147FBE" />}
+                      </span>
+                      <span>
+                        <strong>{t.name}</strong>
+                        <small>{unavailable ? "Temporarily unavailable" : t.tagline}</small>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {typeNotice && (
+                <div className="nf-type-notice" role="status">
+                  <span>{typeNotice}</span>
+                  <button type="button" onClick={() => setTypeNotice("")} aria-label="Dismiss message">×</button>
+                </div>
+              )}
+            </div>
+          </section>
+
+
+        </div>
+      </section>
+
+      <div className="nf-wrap nf-order-shell" id="order-section">
+        <div className="nf-order-panel">
+          {err && <div className="err" style={{ marginBottom: 16 }}>{err}</div>}
+
+        <button className="card nf-club-card" onClick={() => setView("subscribe")}
+          style={{ width: "100%", padding: "13px 15px", marginBottom: 24, cursor: "pointer", textAlign: "left",
+            display: "flex", alignItems: "center", gap: 11, borderColor: c.gold, background: "#FFFBF0" }}>
+          <Logo size={32} />
+          <span style={{ flex: 1, fontSize: 13.5, lineHeight: 1.5 }}>
+            <strong>Join the Honey Club</strong> — shelf price, free delivery, bonus jar every third box.
+          </span>
+          <span className="num" style={{ fontSize: 20, color: c.amber }}>→</span>
+        </button>
+
+        <section
+          className="nf-bundle-builder"
+          style={{
+            border: "2px solid #F7C41C",
+            background: "linear-gradient(180deg, #FFFDF7 0%, #FFF8E7 100%)",
+            boxShadow: "0 16px 38px rgba(74,51,19,.08)",
+          }}
+        >
+          <div style={{ marginBottom: 20 }}>
+            <div className="nf-modern-kicker">Build your order</div>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 12,
+                flexWrap: "wrap",
+                marginTop: 3,
+              }}
+            >
+              <div
+                className="display"
+                style={{
+                  fontSize: "clamp(32px,4vw,48px)",
+                  lineHeight: .95,
+                  color: "#082C5C",
+                }}
+              >
+                4 OZ BUNDLE
+                <span style={{ color: "#5A9BCB" }}>
+                  {" "}· {B.count} FOR {money(B.price)}
+                </span>
+              </div>
+
+              <div
+                style={{
+                  padding: "7px 11px",
+                  borderRadius: 999,
+                  background: "#FFF3BF",
+                  border: "1px solid #E8B11D",
+                  color: "#815300",
+                  fontSize: 10.5,
+                  fontWeight: 900,
+                  letterSpacing: ".08em",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                BUNDLE & SAVE
+              </div>
+            </div>
+
+            <div
+              style={{
+                marginTop: 8,
+                fontSize: 14,
+                color: c.brown,
+                lineHeight: 1.55,
+              }}
+            >
+              <strong style={{ color: "#082C5C", fontSize: 18, fontWeight: 900 }}>
+                MIX ANY 3 FLAVORS
+              </strong>
+            </div>
+
+            <div
+              className="nf-modern-kicker"
+              style={{ marginTop: 20, marginBottom: 8 }}
+            >
+              Choose your jar size
+            </div>
+          </div>
+
+
+          <div className={`nf-bundle-grid ${pickSize !== B.size ? "size-only" : ""}`}>
+            <div className="nf-size-stack">
+              {cat.sizes.map((s) => (
+                <button
+                  key={s.id}
+                  className={`btn ${pickSize === s.id ? "on" : ""}`}
+                  onClick={() => setPickSize(s.id)}
+                  style={{
+                    textAlign: "left", display: "grid", gridTemplateColumns: "1fr auto",
+                    alignItems: "center", gap: 10, padding: "14px 15px",
+                    borderWidth: pickSize === s.id ? 2 : 1,
+                    boxShadow: pickSize === s.id ? "0 8px 20px rgba(230,155,0,.12)" : "none",
+                  }}
+                >
+                  <span>
+                    <div className="display" style={{ fontSize: 29 }}>{s.label}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, opacity: .72 }}>{money(s.price)}</div>
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 900,
+                      color: pickSize === s.id ? "#082C5C" : c.amber,
+                      textAlign: "right",
+                      lineHeight: 1.15,
+                    }}
+                  >
+                    Choose infusion<br />flavor →
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {pickSize === B.size ? (
+              <div
+                className="nf-bundle-visual"
+                style={{
+                  minHeight: 0,
+                  padding: 26,
+                  borderRadius: 18,
+                  border: "2px solid #F2B400",
+                  background: "linear-gradient(135deg, #FFF2B8 0%, #FFFDF5 58%, #FFE994 100%)",
+                  boxShadow: "0 14px 34px rgba(166,108,0,.18)",
+                  display: "block",
+                }}
+              >
+                <div className="nf-bundle-copy" style={{ width: "100%" }}>
+                  <div className="nf-modern-kicker" style={{ marginBottom: 5 }}>Build your bundle</div>
+                  <strong>MIX ANY THREE 4 OZ JARS</strong>
+                  <p>Choose any three flavors below. Regular and Spun both count.</p>
+                  <div className="nf-bundle-progress">
+                    {price.jars % B.count === 0 && price.jars > 0 ? (
+                      <div className="nf-bundle-complete-message">
+                        <span className="nf-bundle-complete-icon" aria-hidden="true">
+                          <svg viewBox="0 0 64 64" fill="none">
+                            <path d="M18 18h28l4 7v24c0 5-4 9-9 9H23c-5 0-9-4-9-9V25l4-7Z" />
+                            <path d="M22 18v-6h20v6" />
+                            <path d="M22 37l7 7 14-16" />
+                          </svg>
+                        </span>
+                        <span>
+                          <b>{price.bundles} bundle{price.bundles > 1 ? "s" : ""} complete.</b><br />
+                          Add another jar to begin the next one.
+                        </span>
+                      </div>
+                    ) : (
+                      <><b>{price.jars % B.count}/{B.count} jars added.</b><br />Add {B.count - (price.jars % B.count)} more to complete the bundle.</>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="nf-nonbundle-note">
+                Bundle pricing applies only to 4 oz jars. Choose your size and continue to flavors below.
+              </div>
+            )}
+          </div>
+        </section>
+
+        <div className="nf-top-picks-after-builder">
           <div className="nf-section-row">
             <h2 className="nf-section-title">Top Picks</h2>
             <div className="nf-section-note">Customer favorites</div>
@@ -11828,6 +13667,20 @@ export default function App() {
                     {pick.tagline || "Customer favorite"}
                   </div>
 
+                  <div
+                    className="nf-top-selected-price"
+                    aria-label="Selected jar size price"
+                  >
+                    {sizeOf(pickSize).label}{" "}
+                    <strong>{money(sizeOf(pickSize).price)}</strong>
+                  </div>
+
+                  {pick.limited !== true && selectedCount !== null && selectedCount > 0 && selectedCount <= 5 && (
+                    <div style={{ marginTop: 6, fontSize: 10.5, fontWeight: 800, color: "#9A5C00" }}>
+                      Low stock · only {selectedCount} left in {selectedInventory?.label || sizeOf(pickSize).label}
+                    </div>
+                  )}
+
                   {pick.limited === true && (
                     <div className="nf-top-limited-copy">
                       {pick.limited_message && (
@@ -11913,85 +13766,8 @@ export default function App() {
               );
             })}
           </div>
-
         </div>
-      </section>
 
-      <div className="nf-wrap nf-order-shell" id="order-section">
-        <div className="nf-order-panel">
-          {err && <div className="err" style={{ marginBottom: 16 }}>{err}</div>}
-
-        <button className="card nf-club-card" onClick={() => setView("subscribe")}
-          style={{ width: "100%", padding: "13px 15px", marginBottom: 24, cursor: "pointer", textAlign: "left",
-            display: "flex", alignItems: "center", gap: 11, borderColor: c.gold, background: "#FFFBF0" }}>
-          <Logo size={32} />
-          <span style={{ flex: 1, fontSize: 13.5, lineHeight: 1.5 }}>
-            <strong>Join the Honey Club</strong> — shelf price, free delivery, bonus jar every third box.
-          </span>
-          <span className="num" style={{ fontSize: 20, color: c.amber }}>→</span>
-        </button>
-
-        <section className="nf-bundle-builder">
-          <div className="nf-bundle-headline" aria-hidden="true">
-            <span className="nf-bundle-headline-main">4 oz Bundle ·</span>
-            <span className="nf-bundle-headline-price">{B.count} for {money(B.price)}</span>
-          </div>
-
-          <div className={`nf-bundle-grid ${pickSize !== B.size ? "size-only" : ""}`}>
-            <div className="nf-size-stack">
-              {cat.sizes.map((s) => (
-                <button
-                  key={s.id}
-                  className={`btn ${pickSize === s.id ? "on" : ""}`}
-                  onClick={() => setPickSize(s.id)}
-                >
-                  <div className="display" style={{ fontSize: 29 }}>{s.label}</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, opacity: .72 }}>
-                    {money(s.price)}
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            {pickSize === B.size ? (
-              <div
-                className="nf-bundle-visual"
-                style={{
-                  minHeight: 0, padding: 18, borderRadius: 14,
-                  border: "1px solid #E7C869", background: "#FFF", display: "block",
-                }}
-              >
-                <div className="nf-bundle-copy" style={{ width: "100%" }}>
-                  <strong>Mix any three 4 oz jars</strong>
-                  <p>Regular and Spun both count.</p>
-                  <div className="nf-bundle-progress">
-                    {price.jars % B.count === 0 && price.jars > 0 ? (
-                      <div className="nf-bundle-complete-message">
-                        <span className="nf-bundle-complete-icon" aria-hidden="true">
-                          <svg viewBox="0 0 64 64" fill="none">
-                            <path d="M18 18h28l4 7v24c0 5-4 9-9 9H23c-5 0-9-4-9-9V25l4-7Z" />
-                            <path d="M22 18v-6h20v6" />
-                            <path d="M22 37l7 7 14-16" />
-                          </svg>
-                        </span>
-                        <span>
-                          <b>{price.bundles} bundle{price.bundles > 1 ? "s" : ""} complete.</b><br />
-                          Add another jar to begin the next one.
-                        </span>
-                      </div>
-                    ) : (
-                      <><b>{price.jars % B.count}/{B.count} jars added.</b><br />Add {B.count - (price.jars % B.count)} more to complete the bundle.</>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="nf-nonbundle-note">
-                Bundle pricing applies only to 4 oz jars. Choose your size and continue to flavors below.
-              </div>
-            )}
-          </div>
-        </section>
 
         <div
           className="nf-section-row nf-flavor-section-row"
@@ -12019,6 +13795,8 @@ export default function App() {
               const inCart = cartIndex > -1 ? cart[cartIndex] : null;
               const limit = inventoryLimit(f.id, pickSize, pickType);
               const quantityInCart = inCart?.qty ?? 0;
+              const remainingForCard = limit === null ? null : Math.max(0, limit - quantityInCart);
+              const lowStock = remainingForCard !== null && remainingForCard > 0 && remainingForCard <= 5;
               const stockAvailable = flavorAvailableForType(f, pickSize, pickType);
               const canAdd = stockAvailable && (limit === null || quantityInCart < limit);
               const image = flavorImage(f);
@@ -12062,6 +13840,26 @@ export default function App() {
 
                   <div className="nf-pick-body">
                     <div className="nf-pick-name">{f.name}</div>
+                    <div
+                      style={{
+                        marginTop: 5,
+                        marginBottom: 5,
+                        fontSize: 12,
+                        color: c.brown,
+                        lineHeight: 1.35,
+                      }}
+                      aria-label={`${f.name} selected jar size pricing`}
+                    >
+                      {sizeOf(pickSize).label}{" "}
+                      <strong style={{ color: c.darkBrown, fontSize: 13 }}>
+                        {money(sizeOf(pickSize).price)}
+                      </strong>
+                    </div>
+                    {lowStock && (
+                      <div style={{ marginBottom: 4, fontSize: 10.5, fontWeight: 800, color: "#9A5C00" }}>
+                        Low stock · only {remainingForCard} left in this size
+                      </div>
+                    )}
                     <div className="nf-pick-stock">
                       {limit === null
                         ? `${sizeOf(pickSize).label} · ${typeName(pickType)}`
@@ -12113,8 +13911,16 @@ export default function App() {
 
         {cart.length > 0 && (
           <>
-            <section id="order-method-section" className="nf-fulfillment-section nf-order-anchor">
-              <div className="nf-modern-kicker">Choose your order method</div>
+            <section
+              id="order-method-section"
+              className="nf-fulfillment-section nf-order-anchor"
+              style={{
+                scrollMarginTop: 100, padding: "22px 18px", border: "2px solid #F7C41C",
+                borderRadius: 18, background: "linear-gradient(135deg, #FFFDF6 0%, #FFF4CC 100%)",
+                boxShadow: "0 16px 38px rgba(74,51,19,.10)",
+              }}
+            >
+              <div className="nf-modern-kicker">Next step · choose your order method</div>
               <h2 className="nf-fulfillment-title">Delivery &amp; Pickup Options</h2>
               <p className="nf-fulfillment-intro">
                 Select how you would like to receive your NectarFusions order.
@@ -12585,7 +14391,7 @@ export default function App() {
       )}
 
       {/* TEXTURE POPUP — HIDE CART TRAY WHILE OPEN */}
-      {cart.length > 0 && !typeInfo && (
+      {cart.length > 0 && !typeInfo && !cartTrayDismissed && (
         <aside
           className={`nf-cart-tray ${cartOpen ? "open" : ""} ${
             pickSize === B.size && cartSummaryCompact
@@ -12598,16 +14404,27 @@ export default function App() {
             <div className="nf-cart-tray-actions">
               <button
                 type="button"
+                className="nf-cart-tray-close"
+                onClick={() => {
+                  setCartTrayDismissed(true);
+                  setCartOpen(false);
+                  setCartSummaryCompact(false);
+                }}
+                aria-label="Close order summary"
+                title="Close order summary"
+              >
+                ×
+              </button>
+
+              <button
+                type="button"
                 className="nf-cart-tray-toggle"
                 onClick={() => {
-                  if (pickSize === B.size) {
-                    setCartSummaryCompact(false);
-                    setCartOpen(true);
-                    return;
-                  }
-
+                  setCartSummaryCompact(false);
                   setCartOpen((open) => !open);
                 }}
+                aria-label={cartOpen ? "Collapse order review" : "Review order items"}
+                title={cartOpen ? "Collapse order review" : "Review order items"}
                 aria-expanded={
                   cartOpen &&
                   !(pickSize === B.size && cartSummaryCompact)
@@ -12624,12 +14441,23 @@ export default function App() {
                   <span className="nf-cart-tray-count">{cartCount}</span>
                 </span>
 
-                <span className="nf-cart-tray-review-action">
-                  {pickSize === B.size
-                    ? "Review order items"
-                    : cartOpen
-                      ? "Hide"
-                      : "Review order items"}
+                <span
+                  className={`nf-cart-tray-review-action ${cartOpen ? "is-collapse" : ""}`}
+                  aria-hidden="true"
+                >
+                  {cartOpen ? (
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M6 9l6 6 6-6"
+                        stroke="currentColor"
+                        strokeWidth="2.4"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  ) : (
+                    "Review order items"
+                  )}
                 </span>
               </button>
 
@@ -12696,8 +14524,28 @@ export default function App() {
                   </div>
                 ))}
                 {price.saved > 0 && (
-                  <div className="nf-cart-savings">Bundle savings −{money(price.saved)}</div>
+                  <div className="nf-cart-savings">
+                    <span>YOU SAVE</span>
+                    <strong>{money(price.saved)}</strong>
+                    <small>with bundle pricing</small>
+                  </div>
                 )}
+
+                <aside className="nf-cart-use-ideas">
+                  <div className="nf-cart-use-ideas-kicker">Try it your way</div>
+                  <strong>
+                    {cart.length === 1
+                      ? `Ways to enjoy ${cart[0]?.flavor || "your honey"}`
+                      : "Ways to enjoy your honey"}
+                  </strong>
+
+                  <ul>
+                    <li>Drizzle over toast, biscuits, pancakes, or waffles.</li>
+                    <li>Pair with cheese, crackers, fruit, yogurt, or oatmeal.</li>
+                    <li>Use as a finishing drizzle on sweet or savory dishes.</li>
+                    <li>Mix into dressings, glazes, marinades, or baked recipes.</li>
+                  </ul>
+                </aside>
               </div>
             )}
 
@@ -12777,7 +14625,6 @@ export default function App() {
                         key={`completed-bundle-${index}`}
                       >
                         <LockedBundleIcon size={50} />
-                        <span>Bundle {index + 1}</span>
                       </div>
                     ))}
 
@@ -13530,6 +15377,119 @@ function HoneyClubAccount({ Header, token, onBack }) {
 }
 
 /* ============================================================
+   SPECIAL EVENT REQUEST
+   ============================================================ */
+function SpecialEventRequest({ Header, onBack }) {
+  const eventTypes = [
+    "Wedding",
+    "Bridal / Baby Shower",
+    "Corporate / Client Gifts",
+    "Party / Celebration",
+    "Fundraiser / Community Event",
+    "Other",
+  ];
+  const [eventType, setEventType] = useState("");
+  const [form, setForm] = useState({ name: "", email: "", phone: "", eventDate: "", quantity: "", location: "", details: "" });
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const [done, setDone] = useState(false);
+  const [website, setWebsite] = useState("");
+  const [formStartedAt] = useState(() => Date.now());
+
+  const canSubmit = eventType && form.name.trim() && form.email.trim() && form.details.trim() && !busy;
+
+  const submit = async () => {
+    if (!canSubmit) return;
+    setBusy(true);
+    setErr("");
+    const details = [
+      `Event type: ${eventType}`,
+      form.eventDate.trim() ? `Event date: ${form.eventDate.trim()}` : "",
+      form.quantity.trim() ? `Estimated guests / quantity: ${form.quantity.trim()}` : "",
+      form.location.trim() ? `Event location: ${form.location.trim()}` : "",
+      "",
+      form.details.trim(),
+    ].join("\n");
+    try {
+      await api.submitCustomerRequest({
+        requestKind: "special_request", accountKind: "general", accountNumber: "",
+        name: form.name.trim(), email: form.email.trim(), phone: form.phone.trim(),
+        details, website, formStartedAt,
+      });
+      setDone(true);
+    } catch (error) {
+      setErr(error.message || "Your special event request could not be sent.");
+    }
+    setBusy(false);
+  };
+
+  if (done) {
+    return (
+      <div className="nf"><style>{CSS}</style>
+        <Header eyebrow="Special events" title="REQUEST RECEIVED"
+          right={<button className="btn ghost nf-back-to-shop" onClick={onBack}>Back to shop</button>} />
+        <div className="nf-wrap" style={{ paddingTop: 30, maxWidth: 760 }}>
+          <div className="card" style={{ padding: 26, textAlign: "center", borderColor: c.gold, background: "#FFFBF0" }}>
+            <Logo size={64} />
+            <div className="display" style={{ fontSize: 34, color: c.darkBrown, marginTop: 10 }}>WE&rsquo;VE GOT YOUR EVENT REQUEST</div>
+            <p style={{ fontSize: 14.5, lineHeight: 1.7, color: c.brown, margin: "10px 0 0" }}>
+              We&rsquo;ll review the details and contact you about quantities, flavors, timing, and the best options for your event.
+            </p>
+          </div>
+          <button className="btn ghost" style={{ width: "100%", padding: 14, marginTop: 12 }} onClick={onBack}>Back to the shop</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="nf"><style>{CSS}</style>
+      <Header eyebrow="Weddings · celebrations · events" title="SPECIAL EVENT HONEY"
+        right={<button className="btn ghost nf-back-to-shop" onClick={onBack}>Back to shop</button>} />
+      <div className="nf-wrap" style={{ paddingTop: 26, maxWidth: 820 }}>
+        <section className="card" style={{ padding: 22, marginBottom: 16, border: "2px solid #F7C41C", background: "linear-gradient(135deg, #FFFDF5 0%, #FFF4CC 100%)" }}>
+          <div className="nf-modern-kicker">Made for your moment</div>
+          <div className="display" style={{ fontSize: 31, color: c.darkBrown, marginTop: 5 }}>TELL US WHAT YOU&rsquo;RE PLANNING</div>
+          <p style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.65, color: c.brown }}>
+            From wedding favors to corporate gifts and celebration tables, send us the details and we&rsquo;ll help you plan quantities, sizes, flavors, and timing.
+          </p>
+        </section>
+
+        <section className="card" style={{ padding: 20 }}>
+          <div className="eyebrow" style={{ marginBottom: 8 }}>Type of event</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 8 }}>
+            {eventTypes.map((type) => (
+              <button key={type} type="button" className={`btn ${eventType === type ? "on" : ""}`}
+                style={{ padding: "11px 9px" }} onClick={() => setEventType(type)}>{type}</button>
+            ))}
+          </div>
+
+          <div style={{ display: "grid", gap: 10, marginTop: 16 }}>
+            <Field placeholder="Name" value={form.name} onChange={(e) => setForm((x) => ({ ...x, name: e.target.value }))} />
+            <Field placeholder="Email" type="email" value={form.email} onChange={(e) => setForm((x) => ({ ...x, email: e.target.value }))} />
+            <Field placeholder="Phone (optional)" type="tel" required={false} value={form.phone} onChange={(e) => setForm((x) => ({ ...x, phone: e.target.value }))} />
+            <Field placeholder="Event date (optional)" required={false} value={form.eventDate} onChange={(e) => setForm((x) => ({ ...x, eventDate: e.target.value }))} />
+            <Field placeholder="Estimated guests or number of jars (optional)" required={false} value={form.quantity} onChange={(e) => setForm((x) => ({ ...x, quantity: e.target.value }))} />
+            <Field placeholder="Event city / venue (optional)" required={false} value={form.location} onChange={(e) => setForm((x) => ({ ...x, location: e.target.value }))} />
+            <Field placeholder="Tell us what you have in mind — favors, gifts, table jars, sizes, flavors, packaging, or anything else"
+              rows={5} value={form.details} onChange={(e) => setForm((x) => ({ ...x, details: e.target.value }))} />
+            <div aria-hidden="true" style={{ position: "absolute", left: "-10000px", width: 1, height: 1, overflow: "hidden" }}>
+              <label>Website<input tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} /></label>
+            </div>
+          </div>
+
+          {err && <div className="err" style={{ marginTop: 12 }}>{err}</div>}
+          <button type="button" className="btn solid" style={{ width: "100%", padding: 14, marginTop: 14 }} disabled={!canSubmit} onClick={submit}>
+            {busy ? "Sending…" : "Send Special Event Request"}
+          </button>
+        </section>
+        <div style={{ height: 34 }} />
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
    ORDER HELP
    ============================================================ */
 function OrderHelp({ Header, onBack, onOrderFound, initialOrderNo}) {
@@ -13561,7 +15521,7 @@ function OrderHelp({ Header, onBack, onOrderFound, initialOrderNo}) {
   ];
 
   const [requestKind, setRequestKind] = useState("");
-  const [accountKind, setAccountKind] = useState("subscription");
+  const [accountKind, setAccountKind] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [form, setForm] = useState({
     name: "",
@@ -13574,6 +15534,7 @@ function OrderHelp({ Header, onBack, onOrderFound, initialOrderNo}) {
   const [done, setDone] = useState(false);
   const [website, setWebsite] = useState("");
   const [formStartedAt] = useState(() => Date.now());
+  const helpFormRef = useRef(null);
   const [lookup, setLookup] = useState({ orderNo: String(initialOrderNo || ""), email: "" });
   useEffect(() => {
     if (!initialOrderNo) return;
@@ -13628,14 +15589,18 @@ function OrderHelp({ Header, onBack, onOrderFound, initialOrderNo}) {
 
   const selectOption = (option) => {
     setRequestKind(option.id);
-    setAccountKind(option.accountKind);
+    setAccountKind("");
     setErr(null);
+    window.setTimeout(() => {
+      helpFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
   };
 
   const chosen = options.find((option) => option.id === requestKind);
   const detailsRequired = ["special_request", "other"].includes(requestKind);
   const canSubmit =
     requestKind &&
+    accountKind &&
     form.name.trim() &&
     form.email.trim() &&
     (!detailsRequired || form.details.trim()) &&
@@ -13692,7 +15657,7 @@ function OrderHelp({ Header, onBack, onOrderFound, initialOrderNo}) {
             onClick={() => {
               setDone(false);
               setRequestKind("");
-              setAccountKind("subscription");
+              setAccountKind("");
               setAccountNumber("");
               setWebsite("");
               setForm({ name: "", email: "", phone: "", details: "" });
@@ -13760,7 +15725,7 @@ function OrderHelp({ Header, onBack, onOrderFound, initialOrderNo}) {
         </div>
 
         {chosen && (
-          <div className="nf-help-form nf-help-reveal">
+          <div ref={helpFormRef} className="nf-help-form nf-help-reveal" style={{ scrollMarginTop: 105 }}>
             <div className="nf-modern-kicker">Your information</div>
             <h2>Tell Us What You Need</h2>
 
@@ -13823,7 +15788,7 @@ function OrderHelp({ Header, onBack, onOrderFound, initialOrderNo}) {
                 </div>
               </div>
 
-              {accountKind !== "general" && (
+              {accountKind && accountKind !== "general" && (
                 <Field
                   value={accountNumber}
                   required={false}
