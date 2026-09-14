@@ -10795,6 +10795,322 @@ html {
   }
 }
 
+/* STICKY JAR SIZE SWITCHER */
+
+.nf-sticky-size-switcher {
+  position:sticky !important;
+  top:82px !important;
+  z-index:85 !important;
+
+  margin:16px 0 18px !important;
+  padding:8px !important;
+
+  border:1px solid rgba(226,182,47,.58) !important;
+  border-radius:16px !important;
+
+  background:rgba(255,253,247,.96) !important;
+  box-shadow:0 8px 26px rgba(74,51,19,.13) !important;
+
+  backdrop-filter:blur(12px) !important;
+  -webkit-backdrop-filter:blur(12px) !important;
+}
+
+.nf-sticky-size-inner {
+  display:flex !important;
+  align-items:center !important;
+  gap:12px !important;
+}
+
+.nf-sticky-size-label {
+  flex:0 0 auto !important;
+
+  display:flex !important;
+  align-items:baseline !important;
+  gap:7px !important;
+
+  padding:0 8px !important;
+
+  color:#082C5C !important;
+  white-space:nowrap !important;
+}
+
+.nf-sticky-size-label > span {
+  font-size:13px !important;
+  font-weight:800 !important;
+  letter-spacing:.06em !important;
+  text-transform:uppercase !important;
+}
+
+.nf-sticky-size-label > strong {
+  font-size:18px !important;
+  font-weight:950 !important;
+}
+
+.nf-sticky-size-options {
+  flex:1 1 auto !important;
+
+  display:grid !important;
+  grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  gap:7px !important;
+}
+
+.nf-sticky-size-button {
+  min-height:48px !important;
+
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:6px !important;
+
+  padding:8px 12px !important;
+
+  border:1px solid #D8C49E !important;
+  border-radius:11px !important;
+
+  background:#FFFFFF !important;
+  color:#4A3313 !important;
+
+  cursor:pointer !important;
+  transition:
+    transform .14s ease,
+    border-color .14s ease,
+    background .14s ease,
+    box-shadow .14s ease !important;
+}
+
+.nf-sticky-size-button strong {
+  font-size:16px !important;
+  font-weight:950 !important;
+}
+
+.nf-sticky-size-button span {
+  font-size:14px !important;
+  font-weight:750 !important;
+  opacity:.76 !important;
+}
+
+.nf-sticky-size-button:hover {
+  transform:translateY(-1px) !important;
+  border-color:#E3B11B !important;
+}
+
+.nf-sticky-size-button.selected {
+  border:2px solid #DDA900 !important;
+
+  background:
+    linear-gradient(
+      145deg,
+      #FFE367 0%,
+      #FFC91D 100%
+    ) !important;
+
+  color:#17120E !important;
+
+  box-shadow:
+    0 5px 13px rgba(133,89,0,.16),
+    inset 0 1px 0 rgba(255,255,255,.65) !important;
+}
+
+.nf-sticky-size-button.selected span {
+  opacity:.9 !important;
+}
+
+
+/* MOBILE */
+@media (max-width:680px) {
+  .nf-sticky-size-switcher {
+    top:72px !important;
+
+    margin:12px -4px 14px !important;
+    padding:7px !important;
+
+    border-radius:14px !important;
+  }
+
+  .nf-sticky-size-inner {
+    display:block !important;
+  }
+
+  .nf-sticky-size-label {
+    justify-content:space-between !important;
+    width:100% !important;
+
+    margin-bottom:6px !important;
+    padding:0 4px !important;
+  }
+
+  .nf-sticky-size-label > span {
+    font-size:12px !important;
+  }
+
+  .nf-sticky-size-label > strong {
+    font-size:16px !important;
+  }
+
+  .nf-sticky-size-options {
+    grid-template-columns:repeat(3,1fr) !important;
+    gap:5px !important;
+  }
+
+  .nf-sticky-size-button {
+    min-height:45px !important;
+    padding:7px 5px !important;
+
+    flex-direction:column !important;
+    gap:1px !important;
+  }
+
+  .nf-sticky-size-button strong {
+    font-size:15px !important;
+  }
+
+  .nf-sticky-size-button span {
+    font-size:12px !important;
+  }
+}
+
+/* TOP PICKS — EXPLICIT ADD TO CART CTA */
+
+.nf-top-add-cart {
+  width:100% !important;
+  min-height:48px !important;
+
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+
+  margin-top:14px !important;
+  padding:11px 16px !important;
+
+  border:2px solid #DDA900 !important;
+  border-radius:12px !important;
+
+  background:
+    linear-gradient(
+      145deg,
+      #FFE050 0%,
+      #FFC91D 100%
+    ) !important;
+
+  color:#17120E !important;
+
+  font-size:16px !important;
+  font-weight:950 !important;
+  line-height:1.1 !important;
+  letter-spacing:.01em !important;
+
+  box-shadow:
+    0 6px 14px rgba(108,73,0,.16),
+    inset 0 1px 0 rgba(255,255,255,.65) !important;
+
+  transition:
+    transform .15s ease,
+    box-shadow .15s ease !important;
+}
+
+.nf-top-card:hover .nf-top-add-cart {
+  transform:translateY(-1px) !important;
+
+  box-shadow:
+    0 8px 17px rgba(108,73,0,.21),
+    inset 0 1px 0 rgba(255,255,255,.65) !important;
+}
+
+.nf-top-add-cart.choose-size {
+  border-color:#5A9BCB !important;
+  background:#EEF7FC !important;
+  color:#082C5C !important;
+  box-shadow:none !important;
+}
+
+.nf-top-add-cart.sold-out {
+  border-color:#D8CDBE !important;
+  background:#F4F0EA !important;
+  color:#897B6C !important;
+  box-shadow:none !important;
+}
+
+.nf-top-card:disabled .nf-top-add-cart {
+  transform:none !important;
+}
+
+@media (max-width:680px) {
+  .nf-top-add-cart {
+    min-height:46px !important;
+    margin-top:11px !important;
+    padding:10px 12px !important;
+    font-size:16px !important;
+  }
+}
+
+/* TOP PICKS — FORCE CTA INTO LOWER CARD AREA */
+
+.nf-top-card {
+  display:flex !important;
+  flex-direction:column !important;
+}
+
+.nf-top-add-cart {
+  position:static !important;
+  inset:auto !important;
+  top:auto !important;
+  right:auto !important;
+  bottom:auto !important;
+  left:auto !important;
+
+  order:80 !important;
+
+  width:calc(100% - 28px) !important;
+  min-height:48px !important;
+
+  margin:auto 14px 14px !important;
+  padding:11px 16px !important;
+
+  flex:0 0 auto !important;
+
+  transform:none !important;
+}
+
+.nf-top-card:hover .nf-top-add-cart {
+  transform:translateY(-1px) !important;
+}
+
+/* Product availability stays underneath the CTA */
+.nf-top-price {
+  position:static !important;
+  order:90 !important;
+
+  width:100% !important;
+
+  margin:0 !important;
+  padding:0 14px 16px !important;
+
+  flex:0 0 auto !important;
+}
+
+/* Everything else remains above the purchasing CTA */
+.nf-top-name,
+.nf-top-name-above,
+.nf-top-selected-price,
+.nf-top-image-shell,
+.nf-top-tagline,
+.nf-top-limited-copy,
+.nf-top-limited-badge {
+  order:0 !important;
+}
+
+@media (max-width:680px) {
+  .nf-top-add-cart {
+    width:calc(100% - 20px) !important;
+    min-height:46px !important;
+    margin:auto 10px 11px !important;
+  }
+
+  .nf-top-price {
+    padding:0 10px 13px !important;
+  }
+}
+
 /* CART DISMISS + REOPEN */
 .nf-cart-tray-close {
   order:99;
@@ -13498,6 +13814,36 @@ export default function App() {
           </div>
         </section>
 
+        <div className="nf-sticky-size-switcher">
+          <div className="nf-sticky-size-inner">
+            <div className="nf-sticky-size-label">
+              <span>Jar Size</span>
+              <strong>{sizeOf(pickSize).label}</strong>
+            </div>
+
+            <div
+              className="nf-sticky-size-options"
+              role="group"
+              aria-label="Choose jar size"
+            >
+              {cat.sizes.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  className={`nf-sticky-size-button ${
+                    pickSize === s.id ? "selected" : ""
+                  }`}
+                  aria-pressed={pickSize === s.id}
+                  onClick={() => setPickSize(s.id)}
+                >
+                  <strong>{s.label}</strong>
+                  <span>{money(s.price)}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
         <div className="nf-top-picks-after-builder">
           <div className="nf-section-row">
             <h2 className="nf-section-title">Top Picks</h2>
@@ -13762,6 +14108,23 @@ export default function App() {
                               sizeOf(pickSize).label
                             } · ${selectedCount} available`}
                   </div>
+
+                  <span
+                    className={`nf-top-add-cart ${
+                      allSizesSoldOut
+                        ? "sold-out"
+                        : selectedSizeSoldOut
+                          ? "choose-size"
+                          : ""
+                    }`}
+                    aria-hidden="true"
+                  >
+                    {allSizesSoldOut
+                      ? "Sold Out"
+                      : selectedSizeSoldOut
+                        ? "Choose Available Size"
+                        : "Add to Cart +"}
+                  </span>
                 </button>
               );
             })}
@@ -17267,16 +17630,29 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                     s.method === "delivery" &&
                     s.status === "pending";
 
+                  const firstDeliveryReady =
+                    deliveryActive &&
+                    !deliveryDate &&
+                    !s.last_delivered_at;
+
                   const deliverySkipped =
-                    deliveryActive && skipScheduled;
+                    deliveryActive &&
+                    skipScheduled &&
+                    !firstDeliveryReady;
 
                   const deliveryReady =
                     deliveryActive &&
-                    !deliverySkipped &&
-                    Boolean(deliveryDate) &&
-                    deliveryDate <= api.today();
+                    (
+                      firstDeliveryReady ||
+                      (
+                        !deliverySkipped &&
+                        Boolean(deliveryDate) &&
+                        deliveryDate <= api.today()
+                      )
+                    );
 
                   const deliveryOverdue =
+                    Boolean(deliveryDate) &&
                     deliveryReady &&
                     deliveryDate < api.today();
 
@@ -17499,13 +17875,17 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                                       lineHeight: 1.35,
                                     }}
                                   >
-                                    {deliverySkipped
-                                      ? "Next planned delivery: "
-                                      : "Next delivery: "}
-
-                                    {deliveryDate
-                                      ? fmt(parseDay(deliveryDate))
-                                      : "Schedule unavailable"}
+                                    {firstDeliveryReady
+                                      ? "Current box ready for delivery"
+                                      : `${
+                                          deliverySkipped
+                                            ? "Next planned delivery: "
+                                            : "Next delivery: "
+                                        }${
+                                          deliveryDate
+                                            ? fmt(parseDay(deliveryDate))
+                                            : "Schedule unavailable"
+                                        }`}
                                   </div>
 
                                   <div
@@ -17605,7 +17985,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
 
                           {deliveryActive &&
                             !deliverySkipped &&
-                            deliveryDate && (
+                            (deliveryDate || firstDeliveryReady) && (
                               <button
                                 type="button"
                                 className={
