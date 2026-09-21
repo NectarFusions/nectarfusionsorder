@@ -318,6 +318,47 @@ export async function submitCustomerRequest(request) {
   return data;
 }
 
+
+export async function submitSpecialEventOrder(request, designFile) {
+  const formData = new FormData();
+  formData.append("payload", JSON.stringify(request));
+
+  if (designFile) {
+    formData.append("designFile", designFile);
+  }
+
+  const response = await fetch(
+    "/.netlify/functions/special-event-order",
+    {
+      method: "POST",
+      body: formData,
+    }
+  );
+
+  const text = await response.text();
+  let data = {};
+
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = {};
+  }
+
+  if (!response.ok) {
+    const error = new Error(
+      data.error ||
+      "Your special event request could not be submitted."
+    );
+    error.status = response.status;
+    error.requiresBudgetApproval =
+      data.requiresBudgetApproval === true;
+    error.summary = data;
+    throw error;
+  }
+
+  return data;
+}
+
 /* ---------- auth ---------- */
 
 export const signIn = (email, password) =>

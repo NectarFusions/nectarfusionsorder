@@ -10,6 +10,7 @@ import MarketConfirmationPage from "./pages/MarketConfirmationPage";
 import ReviewsPage, { HONEY_HIVE_URL, ReviewHomeCard } from "./pages/ReviewsPage";
 import AdminReviewsPanel from "./pages/AdminReviewsPanel";
 import AdminFlavorRequestsPanel from "./pages/AdminFlavorRequestsPanel";
+import SpecialEventOrderPage from "./pages/SpecialEventOrderPage";
 
 /* ============================================================
    NECTARFUSIONS — ORDER SYSTEM
@@ -475,6 +476,18 @@ const clubTokenFromUrl = () =>
 
 const partnerLoginFromUrl = () =>
   PARTNER_LOGIN_RE.test(window.location.pathname);
+
+
+const specialEventReturnFromUrl = () => {
+  try {
+    return (
+      new URLSearchParams(window.location.search).get("special-event") ===
+      "submitted"
+    );
+  } catch {
+    return false;
+  }
+};
 
 const pushPartnerLoginUrl = () =>
   window.history.pushState(
@@ -11622,7 +11635,11 @@ export default function App() {
   const [cat, setCat] = useState(null);
   const [boot, setBoot] = useState(null);
   const [view, setView] = useState(() =>
-    partnerLoginFromUrl() ? "partnerPortal" : "shop"
+    partnerLoginFromUrl()
+      ? "partnerPortal"
+      : specialEventReturnFromUrl()
+        ? "events"
+        : "shop"
   );
   const [err, setErr] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -15743,112 +15760,12 @@ function HoneyClubAccount({ Header, token, onBack }) {
    SPECIAL EVENT REQUEST
    ============================================================ */
 function SpecialEventRequest({ Header, onBack }) {
-  const eventTypes = [
-    "Wedding",
-    "Bridal / Baby Shower",
-    "Corporate / Client Gifts",
-    "Party / Celebration",
-    "Fundraiser / Community Event",
-    "Other",
-  ];
-  const [eventType, setEventType] = useState("");
-  const [form, setForm] = useState({ name: "", email: "", phone: "", eventDate: "", quantity: "", location: "", details: "" });
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState("");
-  const [done, setDone] = useState(false);
-  const [website, setWebsite] = useState("");
-  const [formStartedAt] = useState(() => Date.now());
-
-  const canSubmit = eventType && form.name.trim() && form.email.trim() && form.details.trim() && !busy;
-
-  const submit = async () => {
-    if (!canSubmit) return;
-    setBusy(true);
-    setErr("");
-    const details = [
-      `Event type: ${eventType}`,
-      form.eventDate.trim() ? `Event date: ${form.eventDate.trim()}` : "",
-      form.quantity.trim() ? `Estimated guests / quantity: ${form.quantity.trim()}` : "",
-      form.location.trim() ? `Event location: ${form.location.trim()}` : "",
-      "",
-      form.details.trim(),
-    ].join("\n");
-    try {
-      await api.submitCustomerRequest({
-        requestKind: "special_request", accountKind: "general", accountNumber: "",
-        name: form.name.trim(), email: form.email.trim(), phone: form.phone.trim(),
-        details, website, formStartedAt,
-      });
-      setDone(true);
-    } catch (error) {
-      setErr(error.message || "Your special event request could not be sent.");
-    }
-    setBusy(false);
-  };
-
-  if (done) {
-    return (
-      <div className="nf"><style>{CSS}</style>
-        <Header eyebrow="Special events" title="REQUEST RECEIVED"
-          right={<button className="btn ghost nf-back-to-shop" onClick={onBack}>Back to shop</button>} />
-        <div className="nf-wrap" style={{ paddingTop: 30, maxWidth: 760 }}>
-          <div className="card" style={{ padding: 26, textAlign: "center", borderColor: c.gold, background: "#FFFBF0" }}>
-            <Logo size={64} />
-            <div className="display" style={{ fontSize: 34, color: c.darkBrown, marginTop: 10 }}>WE&rsquo;VE GOT YOUR EVENT REQUEST</div>
-            <p style={{ fontSize: 14.5, lineHeight: 1.7, color: c.brown, margin: "10px 0 0" }}>
-              We&rsquo;ll review the details and contact you about quantities, flavors, timing, and the best options for your event.
-            </p>
-          </div>
-          <button className="btn ghost" style={{ width: "100%", padding: 14, marginTop: 12 }} onClick={onBack}>Back to the shop</button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="nf"><style>{CSS}</style>
-      <Header eyebrow="Weddings · celebrations · events" title="SPECIAL EVENT HONEY"
-        right={<button className="btn ghost nf-back-to-shop" onClick={onBack}>Back to shop</button>} />
-      <div className="nf-wrap" style={{ paddingTop: 26, maxWidth: 820 }}>
-        <section className="card" style={{ padding: 22, marginBottom: 16, border: "2px solid #F7C41C", background: "linear-gradient(135deg, #FFFDF5 0%, #FFF4CC 100%)" }}>
-          <div className="nf-modern-kicker">Made for your moment</div>
-          <div className="display" style={{ fontSize: 31, color: c.darkBrown, marginTop: 5 }}>TELL US WHAT YOU&rsquo;RE PLANNING</div>
-          <p style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.65, color: c.brown }}>
-            From wedding favors to corporate gifts and celebration tables, send us the details and we&rsquo;ll help you plan quantities, sizes, flavors, and timing.
-          </p>
-        </section>
-
-        <section className="card" style={{ padding: 20 }}>
-          <div className="eyebrow" style={{ marginBottom: 8 }}>Type of event</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 8 }}>
-            {eventTypes.map((type) => (
-              <button key={type} type="button" className={`btn ${eventType === type ? "on" : ""}`}
-                style={{ padding: "11px 9px" }} onClick={() => setEventType(type)}>{type}</button>
-            ))}
-          </div>
-
-          <div style={{ display: "grid", gap: 10, marginTop: 16 }}>
-            <Field placeholder="Name" value={form.name} onChange={(e) => setForm((x) => ({ ...x, name: e.target.value }))} />
-            <Field placeholder="Email" type="email" value={form.email} onChange={(e) => setForm((x) => ({ ...x, email: e.target.value }))} />
-            <Field placeholder="Phone (optional)" type="tel" required={false} value={form.phone} onChange={(e) => setForm((x) => ({ ...x, phone: e.target.value }))} />
-            <Field placeholder="Event date (optional)" required={false} value={form.eventDate} onChange={(e) => setForm((x) => ({ ...x, eventDate: e.target.value }))} />
-            <Field placeholder="Estimated guests or number of jars (optional)" required={false} value={form.quantity} onChange={(e) => setForm((x) => ({ ...x, quantity: e.target.value }))} />
-            <Field placeholder="Event city / venue (optional)" required={false} value={form.location} onChange={(e) => setForm((x) => ({ ...x, location: e.target.value }))} />
-            <Field placeholder="Tell us what you have in mind — favors, gifts, table jars, sizes, flavors, packaging, or anything else"
-              rows={5} value={form.details} onChange={(e) => setForm((x) => ({ ...x, details: e.target.value }))} />
-            <div aria-hidden="true" style={{ position: "absolute", left: "-10000px", width: 1, height: 1, overflow: "hidden" }}>
-              <label>Website<input tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} /></label>
-            </div>
-          </div>
-
-          {err && <div className="err" style={{ marginTop: 12 }}>{err}</div>}
-          <button type="button" className="btn solid" style={{ width: "100%", padding: 14, marginTop: 14 }} disabled={!canSubmit} onClick={submit}>
-            {busy ? "Sending…" : "Send Special Event Request"}
-          </button>
-        </section>
-        <div style={{ height: 34 }} />
-      </div>
-    </div>
+    <SpecialEventOrderPage
+      Header={Header}
+      onBack={onBack}
+      styles={CSS}
+    />
   );
 }
 
