@@ -16411,6 +16411,33 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
     } catch (e) { setErr(e.message); }
   };
 
+  const checkOrderSquareStatus = async (order) => {
+    try {
+      const result = await api.syncOrderSquare(order.id);
+
+      if (!result.synced) {
+        setErr(
+          result.message ||
+          "Square has not confirmed this payment yet."
+        );
+        return;
+      }
+
+      await pull();
+      setErr(null);
+
+      alert(
+        result.message ||
+        `Square confirmed order #${order.order_no} is paid.`
+      );
+    } catch (error) {
+      setErr(
+        error.message ||
+        "Square status could not be checked."
+      );
+    }
+  };
+
   const saveSpunAvailability = async () => {
     setSpunSaveState("saving");
 
@@ -16850,7 +16877,24 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                         fontWeight: 750,
                         lineHeight: 1.5,
                       }}>
-                        Do not prepare this order yet. It will move to Active after Square confirms payment.
+                        <div>
+                          Do not prepare this order yet. It will move to Active after Square confirms payment.
+                        </div>
+                        <button
+                          type="button"
+                          className="btn"
+                          style={{
+                            width: "100%",
+                            marginTop: 9,
+                            padding: "9px 12px",
+                            fontSize: 13.5,
+                            fontWeight: 850,
+                            borderColor: "#D8A800",
+                          }}
+                          onClick={() => checkOrderSquareStatus(o)}
+                        >
+                          Check Square Status
+                        </button>
                       </div>
                     )}
 
@@ -17025,7 +17069,24 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                         fontWeight: 750,
                         lineHeight: 1.5,
                       }}>
-                        Do not prepare this pickup yet. It will be ready after Square confirms payment.
+                        <div>
+                          Do not prepare this pickup yet. It will be ready after Square confirms payment.
+                        </div>
+                        <button
+                          type="button"
+                          className="btn"
+                          style={{
+                            width: "100%",
+                            marginTop: 9,
+                            padding: "9px 12px",
+                            fontSize: 13.5,
+                            fontWeight: 850,
+                            borderColor: "#D8A800",
+                          }}
+                          onClick={() => checkOrderSquareStatus(o)}
+                        >
+                          Check Square Status
+                        </button>
                       </div>
                     )}
 

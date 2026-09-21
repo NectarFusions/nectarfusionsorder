@@ -2293,6 +2293,54 @@ export async function subscribeLink(token) {
   return result.url;
 }
 
+
+export async function syncOrderSquare(orderId) {
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
+
+  if (sessionError) {
+    throw new Error(sessionError.message);
+  }
+
+  const accessToken = session?.access_token;
+
+  if (!accessToken) {
+    throw new Error("Admin sign-in is required to check Square.");
+  }
+
+  const response = await fetch(
+    "/.netlify/functions/order-square-sync",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ orderId }),
+    }
+  );
+
+  const text = await response.text();
+  let result = {};
+
+  try {
+    result = text ? JSON.parse(text) : {};
+  } catch {
+    result = {};
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      result.error ||
+      "Square status could not be checked."
+    );
+  }
+
+  return result;
+}
+
 /* ---------- helpers ---------- */
 export function today() {
   const d = new Date();
