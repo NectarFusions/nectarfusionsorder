@@ -1479,7 +1479,7 @@ export default function SpecialEventOrderPage({
           >
             {busy
               ? "Preparing…"
-              : "Continue to Secure Square Checkout"}
+              : "Checkout"}
           </button>
 
           <p
