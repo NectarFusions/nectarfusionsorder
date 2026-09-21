@@ -139,6 +139,7 @@ export default function SpecialEventOrderPage({
   Header,
   onBack,
   styles,
+  flavorOptions = [],
 }) {
   const [eventType, setEventType] = useState("");
   const [form, setForm] = useState({
@@ -156,6 +157,7 @@ export default function SpecialEventOrderPage({
   const [lidColor, setLidColor] = useState("");
   const [dipperChoice, setDipperChoice] = useState("no");
   const [dipperQty, setDipperQty] = useState(0);
+  const [selectedFlavors, setSelectedFlavors] = useState([]);
 
   const [topCircle, setTopCircle] = useState(false);
   const [frontLabel, setFrontLabel] = useState(false);
@@ -206,7 +208,7 @@ export default function SpecialEventOrderPage({
 
   const subtotalCents =
     bearCents + hexCents + dipperCents + labelCents;
-  const checkoutCents = Math.round(subtotalCents * 0.033);
+  const checkoutCents = Math.round(subtotalCents * 0.04);
   const totalCents = subtotalCents + checkoutCents;
   const budgetCents = Math.round(
     Math.max(0, Number(form.budget) || 0) * 100
@@ -342,6 +344,7 @@ export default function SpecialEventOrderPage({
     location: form.location.trim(),
     budget: Number(form.budget),
     details: form.details.trim(),
+    flavors: selectedFlavors,
     bearQty: safeBearQty,
     hexQty: safeHexQty,
     lidColor,
@@ -1190,8 +1193,77 @@ export default function SpecialEventOrderPage({
           className="card"
           style={{ padding: 20, marginBottom: 16 }}
         >
+          <div className="nf-modern-kicker">
+            Flavor preferences
+          </div>
+
+          <div
+            className="display"
+            style={{
+              fontSize: 27,
+              color: colors.dark,
+              marginTop: 4,
+            }}
+          >
+            CHOOSE FROM OUR TOP 6
+          </div>
+
+          <p
+            style={{
+              margin: "7px 0 12px",
+              fontSize: 13,
+              lineHeight: 1.6,
+              color: colors.brown,
+            }}
+          >
+            Select any of the available flavors you would like us
+            to consider for your event order.
+          </p>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(auto-fit,minmax(145px,1fr))",
+              gap: 8,
+              marginBottom: 18,
+            }}
+          >
+            {flavorOptions.slice(0, 6).map((flavor) => {
+              const selected = selectedFlavors.includes(
+                flavor.name
+              );
+
+              return (
+                <button
+                  key={flavor.id || flavor.name}
+                  type="button"
+                  className={`btn ${selected ? "on" : ""}`}
+                  aria-pressed={selected}
+                  onClick={() => {
+                    setSelectedFlavors((current) =>
+                      current.includes(flavor.name)
+                        ? current.filter(
+                            (name) => name !== flavor.name
+                          )
+                        : [...current, flavor.name]
+                    );
+                    setErr("");
+                  }}
+                  style={{
+                    minHeight: 46,
+                    padding: "10px 9px",
+                  }}
+                >
+                  {selected ? "✓ " : ""}
+                  {flavor.name}
+                </button>
+              );
+            })}
+          </div>
+
           <label style={labelStyle}>
-            Flavor preferences, packaging ideas, or other details
+            Packaging ideas or other details
           </label>
 
           <textarea
@@ -1200,7 +1272,7 @@ export default function SpecialEventOrderPage({
             onChange={(event) =>
               updateForm("details", event.target.value)
             }
-            placeholder="Tell us about flavors, event colors, presentation, quantity splits, or anything else."
+            placeholder="Tell us about event colors, presentation, quantity splits, packaging, or anything else."
             style={{
               ...inputStyle,
               minHeight: 120,
@@ -1349,7 +1421,7 @@ export default function SpecialEventOrderPage({
                 gap: 14,
               }}
             >
-              <span>Square checkout adjustment (3.3%)</span>
+              <span>Square checkout fee (4%)</span>
               <strong>{dollars(checkoutCents)}</strong>
             </div>
 

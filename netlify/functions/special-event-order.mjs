@@ -4,7 +4,7 @@ import { square, db, site, ok, bad } from "./_square.mjs";
 const FROM = "NectarFusions <orders@nectar-fusions.com>";
 const OWNER = "info@nectar-fusions.com";
 const LABEL_BUCKET = "partner-label-examples";
-const CHECKOUT_RATE = 0.033;
+const CHECKOUT_RATE = 0.04;
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
 
 const EVENT_TYPES = new Set([
@@ -78,6 +78,9 @@ const buildSummary = (x) =>
     `Target budget: ${money(x.budgetCents)}`,
     "",
     "ORDER",
+    x.flavors?.length
+      ? `Flavor preferences: ${x.flavors.join(", ")}`
+      : "Flavor preferences: No preference selected",
     x.bearQty
       ? `2 oz Plastic Bears: ${x.bearQty} × ${money(x.bearUnitCents)} = ${money(x.bearQty * x.bearUnitCents)}`
       : "",
@@ -95,7 +98,7 @@ const buildSummary = (x) =>
     x.designPath ? `Private design upload: ${x.designPath}` : "",
     "",
     `Product + design subtotal: ${money(x.subtotalCents)}`,
-    `Square checkout adjustment (3.3%): ${money(x.checkoutCents)}`,
+    `Square checkout fee (4%): ${money(x.checkoutCents)}`,
     `Estimated / checkout total: ${money(x.totalCents)}`,
     "",
     x.mode === "budget_request"
@@ -182,6 +185,12 @@ export default async (req) => {
   const needBy = clean(body.needBy, 20);
   const location = clean(body.location, 250);
   const details = clean(body.details, 1800);
+  const flavors = Array.isArray(body.flavors)
+    ? body.flavors
+        .map((flavor) => clean(flavor, 120))
+        .filter(Boolean)
+        .slice(0, 6)
+    : [];
   const lidColor = clean(body.lidColor, 80);
   const labelText = clean(body.labelText, 500);
   const labelColor = clean(body.labelColor, 160);
@@ -327,7 +336,7 @@ export default async (req) => {
   }
 
   const summary = buildSummary({
-    eventType, needBy, location, details, budgetCents,
+    eventType, needBy, location, details, flavors, budgetCents,
     bearQty, lidColor, bearUnitCents, hexQty, hexUnitCents,
     dipperQty, topCircle, frontLabel, customLabels, labelText,
     labelColor, designPath, subtotalCents, checkoutCents, totalCents, mode,
@@ -412,15 +421,18 @@ export default async (req) => {
             location_id: process.env.SQUARE_LOCATION_ID,
             reference_id: `SE-${String(saved.id).slice(0, 18)}`,
             line_items: lineItems,
-            taxes: [
-              {
-                uid: "special-event-checkout-rate",
-                name: "Square Checkout Adjustment",
-                type: "ADDITIVE",
-                percentage: "3.3",
-                scope: "ORDER",
-              },
-            ],
+            service_charges: checkoutCents > 0
+              ? [
+                  {
+                    name: "Square Checkout Fee",
+                    amount_money: {
+                      amount: checkoutCents,
+                      currency: "USD",
+                    },
+                    calculation_phase: "TOTAL_PHASE",
+                  },
+                ]
+              : [],
           },
           checkout_options: {
             redirect_url: `${site()}/?special-event=submitted`,

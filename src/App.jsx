@@ -12794,7 +12794,56 @@ export default function App() {
 
   /* ================= SPECIAL EVENTS ================= */
   if (view === "events") {
-    return <SpecialEventRequest Header={Header} onBack={() => setView("shop")} />;
+    const allFlavors = (cat?.flavors || []).filter(
+      (flavor) => flavor.active !== false
+    );
+
+    const topPickIds = (cat?.topPicks || [])
+      .filter(
+        (pick) =>
+          pick.active !== false &&
+          pick.flavor_id
+      )
+      .map((pick) => String(pick.flavor_id));
+
+    const coreIds = allFlavors
+      .filter(
+        (flavor) =>
+          cat?.flavorCategories?.[String(flavor.id)] === "core"
+      )
+      .map((flavor) => String(flavor.id));
+
+    const fallbackIds = allFlavors.map(
+      (flavor) => String(flavor.id)
+    );
+
+    const topSixIds = [
+      ...new Set([
+        ...topPickIds,
+        ...coreIds,
+        ...fallbackIds,
+      ]),
+    ].slice(0, 6);
+
+    const flavorOptions = topSixIds
+      .map((id) =>
+        allFlavors.find(
+          (flavor) => String(flavor.id) === id
+        )
+      )
+      .filter(Boolean)
+      .map((flavor) => ({
+        id: String(flavor.id),
+        name: flavor.name,
+      }));
+
+    return (
+      <SpecialEventRequest
+        Header={Header}
+        onBack={() => setView("shop")}
+        flavorOptions={flavorOptions}
+      />
+    );
   }
 
   /* ================= ORDER HELP ================= */
@@ -15759,12 +15808,17 @@ function HoneyClubAccount({ Header, token, onBack }) {
 /* ============================================================
    SPECIAL EVENT REQUEST
    ============================================================ */
-function SpecialEventRequest({ Header, onBack }) {
+function SpecialEventRequest({
+  Header,
+  onBack,
+  flavorOptions = [],
+}) {
   return (
     <SpecialEventOrderPage
       Header={Header}
       onBack={onBack}
       styles={CSS}
+      flavorOptions={flavorOptions}
     />
   );
 }
