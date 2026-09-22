@@ -6,6 +6,7 @@ const OWNER = "info@nectar-fusions.com";
 const LABEL_BUCKET = "partner-label-examples";
 const CHECKOUT_RATE = 0.04;
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
+const PICKUP_ADDRESS = "122 E Railway St, Coleman, MI 48618";
 
 const EVENT_TYPES = new Set([
   "Wedding",
@@ -74,7 +75,16 @@ const buildSummary = (x) =>
   [
     `Event type: ${x.eventType}`,
     `Need by: ${x.needBy}`,
-    x.location ? `Event city / venue: ${x.location}` : "",
+    `Fulfillment: ${x.fulfillmentMethod === "delivery" ? "Local Delivery" : "Coleman Pickup"}`,
+    x.fulfillmentMethod === "delivery"
+      ? `Delivery address: ${x.deliveryAddress}, ${x.deliveryCity}, MI ${x.deliveryZip}`
+      : `Pickup address: ${PICKUP_ADDRESS}`,
+    x.fulfillmentMethod === "delivery"
+      ? `Preferred delivery date: ${x.deliveryDate}`
+      : "Pickup date: NectarFusions will contact customer to schedule",
+    x.fulfillmentMethod === "delivery" && x.deliveryZoneName
+      ? `Delivery zone: ${x.deliveryZoneName}`
+      : "",
     `Target budget: ${money(x.budgetCents)}`,
     "",
     "ORDER",
@@ -98,6 +108,7 @@ const buildSummary = (x) =>
     x.designPath ? `Private design upload: ${x.designPath}` : "",
     "",
     `Product + design subtotal: ${money(x.subtotalCents)}`,
+    `Delivery fee: ${x.fulfillmentMethod === "delivery" ? money(x.deliveryFeeCents) : "FREE"}`,
     `Square checkout fee (4%): ${money(x.checkoutCents)}`,
     `Estimated / checkout total: ${money(x.totalCents)}`,
     "",
@@ -183,8 +194,15 @@ export default async (req) => {
   const email = clean(body.email, 254).toLowerCase();
   const phone = clean(body.phone, 60);
   const needBy = clean(body.needBy, 20);
-  const location = clean(body.location, 250);
   const details = clean(body.details, 1800);
+  const fulfillmentMethod =
+    body.fulfillmentMethod === "delivery" ? "delivery" : "pickup";
+  const deliveryAddress = clean(body.deliveryAddress, 250);
+  const deliveryCity = clean(body.deliveryCity, 120);
+  const deliveryZip = clean(body.deliveryZip, 10)
+    .replace(/\D/g, "")
+    .slice(0, 5);
+  const deliveryDate = clean(body.deliveryDate, 20);
   const flavors = Array.isArray(body.flavors)
     ? body.flavors
         .map((flavor) => clean(flavor, 120))
@@ -285,8 +303,70 @@ export default async (req) => {
     (topCircle ? 1000 : 0) +
     (frontLabel ? 1500 : 0);
 
-  const checkoutCents = Math.round(subtotalCents * CHECKOUT_RATE);
-  const totalCents = subtotalCents + checkoutCents;
+  const supa = db();
+
+  let deliveryZoneName = "";
+  let deliveryFeeCents = 0;
+
+  if (fulfillmentMethod === "delivery") {
+    if (!deliveryAddress) return bad("Enter the delivery street address.");
+    if (!deliveryCity) return bad("Enter the delivery city.");
+    if (!/^\d{5}$/.test(deliveryZip)) {
+      return bad("Enter a valid 5-digit delivery ZIP code.");
+    }
+
+    const parsedDeliveryDate = parseDate(deliveryDate);
+    if (!parsedDeliveryDate) {
+      return bad("Choose your preferred delivery date.");
+    }
+
+    if (daysUntil(parsedDeliveryDate) < 0) {
+      return bad("The preferred delivery date cannot be in the past.");
+    }
+
+    if (parsedDeliveryDate.getTime() > requestedDate.getTime()) {
+      return bad("The preferred delivery date cannot be after the need-by date.");
+    }
+
+    const { data: zones, error: zonesError } = await supa
+      .from("zones")
+      .select("name,zips,fee_cents,minimum_cents,free_over_cents");
+
+    if (zonesError) {
+      console.error("Special event zone lookup failed:", zonesError.message);
+      return bad("Delivery pricing could not be verified. Please try again.", 500);
+    }
+
+    const zone = (zones || []).find(
+      (item) =>
+        Array.isArray(item.zips) &&
+        item.zips.includes(deliveryZip)
+    );
+
+    if (!zone) {
+      return bad(
+        "That ZIP is outside the current local delivery area. Choose Coleman pickup or contact NectarFusions."
+      );
+    }
+
+    const minimumCents = Number(zone.minimum_cents || 0);
+    const freeOverCents = Number(zone.free_over_cents || 0);
+    const zoneFeeCents = Number(zone.fee_cents || 0);
+
+    if (subtotalCents < minimumCents) {
+      return bad(
+        `This delivery zone requires at least ${money(minimumCents)} in products before the delivery fee.`
+      );
+    }
+
+    deliveryZoneName = clean(zone.name, 120);
+    deliveryFeeCents =
+      subtotalCents >= freeOverCents ? 0 : zoneFeeCents;
+  }
+
+  const preSquareCents = subtotalCents + deliveryFeeCents;
+  const checkoutCents = Math.round(preSquareCents * CHECKOUT_RATE);
+  const totalCents = preSquareCents + checkoutCents;
   const overBudget = totalCents > budgetCents;
 
   if (mode === "checkout" && overBudget && !overBudgetApproved) {
@@ -295,6 +375,7 @@ export default async (req) => {
         error: "This order is above the target budget.",
         requiresBudgetApproval: true,
         subtotalCents,
+        deliveryFeeCents,
         checkoutCents,
         totalCents,
         budgetCents,
@@ -306,7 +387,6 @@ export default async (req) => {
     );
   }
 
-  const supa = db();
   const uploadId = crypto.randomUUID();
   let designPath = "";
   let designUrl = "";
@@ -336,7 +416,9 @@ export default async (req) => {
   }
 
   const summary = buildSummary({
-    eventType, needBy, location, details, flavors, budgetCents,
+    eventType, needBy, details, flavors, budgetCents,
+    fulfillmentMethod, deliveryAddress, deliveryCity, deliveryZip,
+    deliveryDate, deliveryZoneName, deliveryFeeCents,
     bearQty, lidColor, bearUnitCents, hexQty, hexUnitCents,
     dipperQty, topCircle, frontLabel, customLabels, labelText,
     labelColor, designPath, subtotalCents, checkoutCents, totalCents, mode,
@@ -413,6 +495,17 @@ export default async (req) => {
       });
     }
 
+    if (deliveryFeeCents > 0) {
+      lineItems.push({
+        name: "Local Delivery",
+        quantity: "1",
+        base_price_money: {
+          amount: deliveryFeeCents,
+          currency: "USD",
+        },
+      });
+    }
+
     try {
       const squareResult = await square("/v2/online-checkout/payment-links", {
         body: {
@@ -440,7 +533,7 @@ export default async (req) => {
             merchant_support_email: OWNER,
           },
           pre_populated_data: { buyer_email: email },
-          payment_note: `NectarFusions special event request ${saved.id}`,
+          payment_note: `NectarFusions special event request ${saved.id} · ${fulfillmentMethod === "delivery" ? "delivery" : "Coleman pickup"}`,
           description: `NectarFusions special event order for ${name}`,
         },
       });
@@ -517,6 +610,7 @@ export default async (req) => {
     requestId: saved.id,
     paymentUrl: paymentLink?.url || null,
     subtotalCents,
+    deliveryFeeCents,
     checkoutCents,
     totalCents,
     budgetCents,

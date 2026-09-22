@@ -12842,6 +12842,7 @@ export default function App() {
         Header={Header}
         onBack={() => setView("shop")}
         flavorOptions={flavorOptions}
+        deliveryZones={cat?.zones || []}
       />
     );
   }
@@ -15812,6 +15813,7 @@ function SpecialEventRequest({
   Header,
   onBack,
   flavorOptions = [],
+  deliveryZones = [],
 }) {
   return (
     <SpecialEventOrderPage
@@ -15819,6 +15821,7 @@ function SpecialEventRequest({
       onBack={onBack}
       styles={CSS}
       flavorOptions={flavorOptions}
+      deliveryZones={deliveryZones}
     />
   );
 }

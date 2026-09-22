@@ -140,6 +140,7 @@ export default function SpecialEventOrderPage({
   onBack,
   styles,
   flavorOptions = [],
+  deliveryZones = [],
 }) {
   const [eventType, setEventType] = useState("");
   const [form, setForm] = useState({
@@ -147,9 +148,12 @@ export default function SpecialEventOrderPage({
     email: "",
     phone: "",
     needBy: "",
-    location: "",
     budget: "",
     details: "",
+    deliveryAddress: "",
+    deliveryCity: "",
+    deliveryZip: "",
+    deliveryDate: "",
   });
 
   const [bearQty, setBearQty] = useState(0);
@@ -158,6 +162,7 @@ export default function SpecialEventOrderPage({
   const [dipperChoice, setDipperChoice] = useState("no");
   const [dipperQty, setDipperQty] = useState(0);
   const [selectedFlavors, setSelectedFlavors] = useState([]);
+  const [fulfillmentMethod, setFulfillmentMethod] = useState("pickup");
 
   const [topCircle, setTopCircle] = useState(false);
   const [frontLabel, setFrontLabel] = useState(false);
@@ -208,8 +213,41 @@ export default function SpecialEventOrderPage({
 
   const subtotalCents =
     bearCents + hexCents + dipperCents + labelCents;
-  const checkoutCents = Math.round(subtotalCents * 0.04);
-  const totalCents = subtotalCents + checkoutCents;
+
+  const deliveryZip = form.deliveryZip.trim();
+  const deliveryZone =
+    fulfillmentMethod === "delivery"
+      ? deliveryZones.find(
+          (zone) =>
+            Array.isArray(zone?.zips) &&
+            zone.zips.includes(deliveryZip)
+        ) || null
+      : null;
+
+  const deliveryOutOfArea =
+    fulfillmentMethod === "delivery" &&
+    deliveryZip.length === 5 &&
+    !deliveryZone;
+
+  const deliveryBelowMinimum =
+    fulfillmentMethod === "delivery" &&
+    deliveryZone &&
+    subtotalCents <
+      Math.round(Number(deliveryZone.minimum || 0) * 100);
+
+  const deliveryFeeCents =
+    fulfillmentMethod === "delivery" &&
+    deliveryZone &&
+    !deliveryBelowMinimum
+      ? subtotalCents >=
+        Math.round(Number(deliveryZone.freeOver || 0) * 100)
+        ? 0
+        : Math.round(Number(deliveryZone.fee || 0) * 100)
+      : 0;
+
+  const preSquareCents = subtotalCents + deliveryFeeCents;
+  const checkoutCents = Math.round(preSquareCents * 0.04);
+  const totalCents = preSquareCents + checkoutCents;
   const budgetCents = Math.round(
     Math.max(0, Number(form.budget) || 0) * 100
   );
@@ -299,6 +337,52 @@ export default function SpecialEventOrderPage({
       return "Add at least one 2 oz bear or glass hexagon.";
     }
 
+    if (fulfillmentMethod === "delivery") {
+      if (!form.deliveryAddress.trim()) {
+        return "Enter the delivery street address.";
+      }
+
+      if (!form.deliveryCity.trim()) {
+        return "Enter the delivery city.";
+      }
+
+      if (!/^\d{5}$/.test(deliveryZip)) {
+        return "Enter a 5-digit delivery ZIP code.";
+      }
+
+      if (!deliveryZone) {
+        return "That ZIP is outside the current local delivery area. Choose Coleman pickup or contact NectarFusions.";
+      }
+
+      if (deliveryBelowMinimum) {
+        return `This delivery zone requires at least ${dollars(
+          Math.round(Number(deliveryZone.minimum || 0) * 100)
+        )} in products before the delivery fee.`;
+      }
+
+      if (!form.deliveryDate) {
+        return "Choose your preferred delivery date.";
+      }
+
+      const preferredDelivery = new Date(
+        `${form.deliveryDate}T12:00:00`
+      );
+      const needByDate = new Date(`${form.needBy}T12:00:00`);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (
+        Number.isNaN(preferredDelivery.getTime()) ||
+        preferredDelivery < today
+      ) {
+        return "Choose a preferred delivery date that is today or later.";
+      }
+
+      if (preferredDelivery > needByDate) {
+        return "The preferred delivery date cannot be after your need-by date.";
+      }
+    }
+
     if (safeBearQty > 0 && !lidColor) {
       return "Choose a lid color for the 2 oz bears.";
     }
@@ -341,9 +425,25 @@ export default function SpecialEventOrderPage({
     email: form.email.trim(),
     phone: form.phone.trim(),
     needBy: form.needBy,
-    location: form.location.trim(),
     budget: Number(form.budget),
     details: form.details.trim(),
+    fulfillmentMethod,
+    deliveryAddress:
+      fulfillmentMethod === "delivery"
+        ? form.deliveryAddress.trim()
+        : "",
+    deliveryCity:
+      fulfillmentMethod === "delivery"
+        ? form.deliveryCity.trim()
+        : "",
+    deliveryZip:
+      fulfillmentMethod === "delivery"
+        ? deliveryZip
+        : "",
+    deliveryDate:
+      fulfillmentMethod === "delivery"
+        ? form.deliveryDate
+        : "",
     flavors: selectedFlavors,
     bearQty: safeBearQty,
     hexQty: safeHexQty,
@@ -676,14 +776,267 @@ export default function SpecialEventOrderPage({
                 updateForm("phone", event.target.value)
               }
             />
-            <TextInput
-              label="Event city / venue"
-              value={form.location}
-              onChange={(event) =>
-                updateForm("location", event.target.value)
-              }
-            />
+
           </div>
+        </section>
+
+        <section
+          className="card"
+          style={{ padding: 20, marginBottom: 16 }}
+        >
+          <div className="nf-modern-kicker">
+            Fulfillment
+          </div>
+
+          <div
+            className="display"
+            style={{
+              fontSize: 27,
+              color: colors.dark,
+              marginTop: 4,
+            }}
+          >
+            PICKUP OR DELIVERY
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(auto-fit,minmax(180px,1fr))",
+              gap: 8,
+              marginTop: 14,
+            }}
+          >
+            <button
+              type="button"
+              className={`btn ${
+                fulfillmentMethod === "pickup" ? "on" : ""
+              }`}
+              onClick={() => {
+                setFulfillmentMethod("pickup");
+                setErr("");
+              }}
+              style={{
+                minHeight: 58,
+                textAlign: "left",
+                padding: "11px 13px",
+              }}
+            >
+              <strong>Pickup</strong>
+              <div
+                style={{
+                  fontSize: 12,
+                  marginTop: 3,
+                  opacity: 0.78,
+                }}
+              >
+                Coleman · No fee
+              </div>
+            </button>
+
+            <button
+              type="button"
+              className={`btn ${
+                fulfillmentMethod === "delivery" ? "on" : ""
+              }`}
+              onClick={() => {
+                setFulfillmentMethod("delivery");
+                setErr("");
+              }}
+              style={{
+                minHeight: 58,
+                textAlign: "left",
+                padding: "11px 13px",
+              }}
+            >
+              <strong>Local Delivery</strong>
+              <div
+                style={{
+                  fontSize: 12,
+                  marginTop: 3,
+                  opacity: 0.78,
+                }}
+              >
+                Fee based on delivery ZIP
+              </div>
+            </button>
+          </div>
+
+          {fulfillmentMethod === "pickup" ? (
+            <div
+              className="card"
+              style={{
+                padding: 14,
+                marginTop: 12,
+                background: "#FFFBF0",
+                borderColor: "#E2B62F",
+                fontSize: 13.5,
+                lineHeight: 1.6,
+              }}
+            >
+              <strong>Free Coleman pickup</strong>
+              <div style={{ marginTop: 3 }}>
+                122 E Railway St, Coleman, MI 48618
+              </div>
+              <div style={{ marginTop: 5 }}>
+                No pickup fee. NectarFusions will contact you to
+                schedule your pickup date.
+              </div>
+            </div>
+          ) : (
+            <div style={{ marginTop: 14 }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns:
+                    "repeat(auto-fit,minmax(220px,1fr))",
+                  gap: 10,
+                }}
+              >
+                <TextInput
+                  label="Delivery street address"
+                  required
+                  value={form.deliveryAddress}
+                  onChange={(event) =>
+                    updateForm(
+                      "deliveryAddress",
+                      event.target.value
+                    )
+                  }
+                />
+
+                <TextInput
+                  label="City"
+                  required
+                  value={form.deliveryCity}
+                  onChange={(event) =>
+                    updateForm("deliveryCity", event.target.value)
+                  }
+                />
+
+                <TextInput
+                  label="ZIP code"
+                  required
+                  inputMode="numeric"
+                  maxLength={5}
+                  value={form.deliveryZip}
+                  onChange={(event) =>
+                    updateForm(
+                      "deliveryZip",
+                      event.target.value.replace(/\D/g, "")
+                    )
+                  }
+                />
+
+                <TextInput
+                  label="Preferred delivery date"
+                  type="date"
+                  required
+                  value={form.deliveryDate}
+                  onChange={(event) =>
+                    updateForm(
+                      "deliveryDate",
+                      event.target.value
+                    )
+                  }
+                />
+              </div>
+
+              <div
+                style={{
+                  marginTop: 8,
+                  fontSize: 12,
+                  lineHeight: 1.55,
+                  color: colors.brown,
+                }}
+              >
+                Choose your preferred delivery date. We’ll confirm
+                the final delivery timing with you.
+              </div>
+
+              {deliveryOutOfArea && (
+                <div className="err" style={{ marginTop: 10 }}>
+                  We don’t currently deliver to {deliveryZip}.
+                  Choose free Coleman pickup or contact us for help.
+                </div>
+              )}
+
+              {deliveryZone && (
+                <div
+                  className="card"
+                  style={{
+                    padding: 14,
+                    marginTop: 10,
+                    background: "#FFFBF0",
+                  }}
+                >
+                  <div className="eyebrow">
+                    {deliveryZone.name || "Local Delivery"}
+                  </div>
+                  <div
+                    style={{
+                      marginTop: 6,
+                      fontSize: 13,
+                      lineHeight: 1.6,
+                      color: colors.brown,
+                    }}
+                  >
+                    {dollars(
+                      Math.round(
+                        Number(deliveryZone.fee || 0) * 100
+                      )
+                    )}{" "}
+                    delivery · Free over{" "}
+                    {dollars(
+                      Math.round(
+                        Number(deliveryZone.freeOver || 0) * 100
+                      )
+                    )}{" "}
+                    ·{" "}
+                    {dollars(
+                      Math.round(
+                        Number(deliveryZone.minimum || 0) * 100
+                      )
+                    )}{" "}
+                    minimum
+                  </div>
+
+                  {deliveryBelowMinimum ? (
+                    <div
+                      className="err"
+                      style={{ marginTop: 8 }}
+                    >
+                      Add{" "}
+                      {dollars(
+                        Math.max(
+                          0,
+                          Math.round(
+                            Number(
+                              deliveryZone.minimum || 0
+                            ) * 100
+                          ) - subtotalCents
+                        )
+                      )}{" "}
+                      more in products to qualify for delivery.
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        marginTop: 8,
+                        fontSize: 13,
+                        fontWeight: 750,
+                        color: colors.dark,
+                      }}
+                    >
+                      Delivery fee for this order:{" "}
+                      {dollars(deliveryFeeCents)}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </section>
 
         <section
@@ -890,6 +1243,19 @@ export default function SpecialEventOrderPage({
                 }}
               >
                 $4.75 each · 50+ hexagons are $3.25 each
+              </div>
+
+              <div
+                style={{
+                  fontSize: 11.5,
+                  color: colors.brown,
+                  marginTop: 5,
+                  lineHeight: 1.45,
+                  fontStyle: "italic",
+                  opacity: 0.82,
+                }}
+              >
+                Honey dipper and bee shown in photo are sold separately.
               </div>
 
               <label style={{ ...labelStyle, marginTop: 12 }}>
@@ -1412,6 +1778,25 @@ export default function SpecialEventOrderPage({
             >
               <span>Subtotal</span>
               <strong>{dollars(subtotalCents)}</strong>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 14,
+              }}
+            >
+              <span>
+                {fulfillmentMethod === "delivery"
+                  ? "Local delivery"
+                  : "Coleman pickup"}
+              </span>
+              <strong>
+                {fulfillmentMethod === "delivery"
+                  ? dollars(deliveryFeeCents)
+                  : "FREE"}
+              </strong>
             </div>
 
             <div
