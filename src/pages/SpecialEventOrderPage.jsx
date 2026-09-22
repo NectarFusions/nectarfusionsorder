@@ -162,7 +162,7 @@ export default function SpecialEventOrderPage({
   const [dipperChoice, setDipperChoice] = useState("no");
   const [dipperQty, setDipperQty] = useState(0);
   const [selectedFlavors, setSelectedFlavors] = useState([]);
-  const [fulfillmentMethod, setFulfillmentMethod] = useState("pickup");
+  const [fulfillmentMethod, setFulfillmentMethod] = useState("");
 
   const [topCircle, setTopCircle] = useState(false);
   const [frontLabel, setFrontLabel] = useState(false);
@@ -331,6 +331,10 @@ export default function SpecialEventOrderPage({
 
     if (!budgetCents) {
       return "Enter your target budget.";
+    }
+
+    if (!["pickup", "delivery"].includes(fulfillmentMethod)) {
+      return "Choose Pickup or Local Delivery.";
     }
 
     if (safeBearQty + safeHexQty < 1) {
@@ -1790,12 +1794,16 @@ export default function SpecialEventOrderPage({
               <span>
                 {fulfillmentMethod === "delivery"
                   ? "Local delivery"
-                  : "Coleman pickup"}
+                  : fulfillmentMethod === "pickup"
+                    ? "Coleman pickup"
+                    : "Fulfillment"}
               </span>
               <strong>
                 {fulfillmentMethod === "delivery"
                   ? dollars(deliveryFeeCents)
-                  : "FREE"}
+                  : fulfillmentMethod === "pickup"
+                    ? "FREE"
+                    : "Select"}
               </strong>
             </div>
 

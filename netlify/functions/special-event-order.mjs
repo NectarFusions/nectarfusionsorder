@@ -195,8 +195,10 @@ export default async (req) => {
   const phone = clean(body.phone, 60);
   const needBy = clean(body.needBy, 20);
   const details = clean(body.details, 1800);
-  const fulfillmentMethod =
-    body.fulfillmentMethod === "delivery" ? "delivery" : "pickup";
+  const fulfillmentMethod = clean(
+    body.fulfillmentMethod,
+    20
+  );
   const deliveryAddress = clean(body.deliveryAddress, 250);
   const deliveryCity = clean(body.deliveryCity, 120);
   const deliveryZip = clean(body.deliveryZip, 10)
@@ -238,6 +240,11 @@ export default async (req) => {
   }
 
   if (!EVENT_TYPES.has(eventType)) return bad("Choose a valid event type.");
+
+  if (!["pickup", "delivery"].includes(fulfillmentMethod)) {
+    return bad("Choose Pickup or Local Delivery.");
+  }
+
   if (!name) return bad("Enter your name.");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return bad("Enter a valid email address.");
