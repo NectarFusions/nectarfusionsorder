@@ -329,10 +329,6 @@ export default function SpecialEventOrderPage({
       return "Choose when you need the order.";
     }
 
-    if (!budgetCents) {
-      return "Enter your target budget.";
-    }
-
     if (!["pickup", "delivery"].includes(fulfillmentMethod)) {
       return "Choose Pickup or Local Delivery.";
     }
@@ -671,7 +667,6 @@ export default function SpecialEventOrderPage({
             <TextInput
               label="Target budget"
               type="number"
-              required
               placeholder="$ Budget"
               value={form.budget}
               onChange={(event) =>

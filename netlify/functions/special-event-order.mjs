@@ -268,8 +268,6 @@ export default async (req) => {
     return bad("Choose a lid color for the 2 oz bears.");
   }
 
-  if (!budgetCents) return bad("Enter your target budget.");
-
   if (customLabels) {
     if (leadDays < 7) {
       return bad(
