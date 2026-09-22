@@ -64,10 +64,292 @@ const inputStyle = {
 const labelStyle = {
   display: "block",
   marginBottom: 6,
-  fontSize: 12,
+  fontSize: 14,
   fontWeight: 800,
   color: colors.dark,
 };
+
+
+const specialEventStyles = `
+  .nf-special-event-page {
+    --event-honey: #F7C41C;
+    --event-amber: #E69B00;
+    --event-blue: #4E7892;
+    --event-cream: #FFF8E7;
+    --event-brown: #4A3313;
+    min-height: 100vh;
+    color: var(--event-brown);
+    font-size: 14px;
+    background:
+      radial-gradient(circle at 8% 2%, rgba(247,196,28,.20), transparent 28%),
+      radial-gradient(circle at 94% 18%, rgba(230,155,0,.13), transparent 24%),
+      linear-gradient(180deg, #FFFDF8 0%, #FFF8E7 48%, #FFFDF8 100%);
+  }
+
+  .nf-special-event-page *,
+  .nf-special-event-page *::before,
+  .nf-special-event-page *::after {
+    box-sizing: border-box;
+  }
+
+  .nf-special-event-page .nf-wrap {
+    width: min(100%, 960px);
+    padding-left: 18px;
+    padding-right: 18px;
+    padding-bottom: 56px;
+  }
+
+  .nf-special-event-page section.card,
+  .nf-special-event-page .card {
+    border-radius: 22px;
+    border: 1px solid #E9D8B9;
+    background: rgba(255,255,255,.96);
+    box-shadow: 0 12px 34px rgba(92,61,18,.08);
+  }
+
+  .nf-special-event-page section.card {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .nf-special-event-page section.card:not(:first-of-type)::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 5px;
+    background: linear-gradient(180deg, #F7C41C, #E69B00);
+    opacity: .82;
+  }
+
+  .nf-special-event-page .nf-wrap > section.card:first-of-type {
+    border: 2px solid #F7C41C !important;
+    background:
+      radial-gradient(circle at 90% 10%, rgba(247,196,28,.20), transparent 24%),
+      linear-gradient(135deg, #FFFDF7 0%, #FFF2BF 100%) !important;
+    box-shadow: 0 16px 40px rgba(165,105,0,.12);
+  }
+
+  .nf-special-event-page .nf-modern-kicker,
+  .nf-special-event-page .eyebrow {
+    font-size: 14px !important;
+    font-weight: 850;
+    letter-spacing: .08em;
+    color: #A96500;
+  }
+
+  .nf-special-event-page .display {
+    letter-spacing: -.02em;
+    line-height: 1.08;
+  }
+
+  .nf-special-event-page .btn {
+    min-height: 48px;
+    border-radius: 999px;
+    font-size: 15px !important;
+    font-weight: 850;
+    border: 2px solid #D99200;
+    background: linear-gradient(180deg, #FFF2A8 0%, #FFD95B 100%);
+    color: #4A3313;
+    box-shadow:
+      0 4px 0 rgba(169,101,0,.16),
+      0 8px 18px rgba(111,73,17,.10);
+    transition:
+      transform .16s ease,
+      box-shadow .16s ease,
+      background .16s ease,
+      border-color .16s ease;
+  }
+
+  .nf-special-event-page .btn.ghost {
+    border: 2px solid #DFC77A;
+    background: #FFFDF7;
+    color: #4A3313;
+    box-shadow: 0 5px 14px rgba(111,73,17,.07);
+  }
+
+  .nf-special-event-page .btn:not(.ghost):hover {
+    background: linear-gradient(180deg, #FFE87A 0%, #F7C41C 100%);
+    border-color: #C98200;
+  }
+
+  .nf-special-event-page .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 7px 18px rgba(111,73,17,.12);
+  }
+
+  .nf-special-event-page .btn.on {
+    color: #FFFFFF;
+    border-color: #B87400;
+    background: linear-gradient(180deg, #E9A70A 0%, #D88B00 100%);
+    box-shadow:
+      0 4px 0 rgba(116,74,0,.20),
+      0 9px 20px rgba(188,119,0,.18);
+  }
+
+  .nf-special-event-page input:not([type="checkbox"]):not([type="radio"]),
+  .nf-special-event-page select,
+  .nf-special-event-page textarea {
+    width: 100%;
+    max-width: 100%;
+    min-height: 46px;
+    border-radius: 12px !important;
+    border-color: #D6BE94 !important;
+    background: #FFFDF9 !important;
+    color: #4A3313;
+    font-size: 16px !important;
+  }
+
+  .nf-special-event-page textarea {
+    line-height: 1.55;
+  }
+
+  .nf-special-event-page input:not([type="checkbox"]):not([type="radio"]):focus,
+  .nf-special-event-page select:focus,
+  .nf-special-event-page textarea:focus {
+    outline: 3px solid rgba(247,196,28,.22);
+    border-color: #E69B00 !important;
+  }
+
+  .nf-special-event-page input[type="checkbox"],
+  .nf-special-event-page input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    accent-color: #E69B00;
+  }
+
+  .nf-special-event-page label {
+    line-height: 1.45;
+  }
+
+  .nf-special-event-page p,
+  .nf-special-event-page span,
+  .nf-special-event-page label,
+  .nf-special-event-page button {
+    overflow-wrap: anywhere;
+  }
+
+  .nf-special-event-page [style*="justify-content: space-between"] {
+    flex-wrap: wrap;
+  }
+
+  .nf-special-event-page section.card,
+  .nf-special-event-page article,
+  .nf-special-event-page section.card > *,
+  .nf-special-event-page article > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .nf-special-event-page article {
+    width: 100%;
+  }
+
+  @media (max-width: 700px) {
+    .nf-special-event-page .nf-wrap {
+      width: 100% !important;
+      max-width: 100% !important;
+      padding-top: 18px !important;
+      padding-left: 12px !important;
+      padding-right: 12px !important;
+      padding-bottom: 38px !important;
+      margin-left: auto !important;
+      margin-right: auto !important;
+    }
+
+    .nf-special-event-page .nf-wrap > *,
+    .nf-special-event-page section.card,
+    .nf-special-event-page article {
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+    }
+
+    .nf-special-event-page section.card,
+    .nf-special-event-page .card {
+      padding: 18px !important;
+      margin-bottom: 12px !important;
+      border-radius: 18px;
+    }
+
+    .nf-special-event-page section.card > *,
+    .nf-special-event-page article > * {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+    }
+
+    .nf-special-event-page .display {
+      font-size: clamp(24px, 7vw, 31px) !important;
+      overflow-wrap: anywhere;
+    }
+
+    .nf-special-event-page [style*="grid-template-columns"] {
+      grid-template-columns: minmax(0, 1fr) !important;
+      width: 100% !important;
+    }
+
+    .nf-special-event-page [style*="display: flex"] {
+      max-width: 100% !important;
+    }
+
+    .nf-special-event-page label:has(input[type="checkbox"]),
+    .nf-special-event-page label:has(input[type="radio"]) {
+      width: 100% !important;
+      max-width: 100% !important;
+      align-items: flex-start !important;
+    }
+
+    .nf-special-event-page .btn:not(.nf-back-to-shop) {
+      width: 100% !important;
+      max-width: 100% !important;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .nf-special-event-page input:not([type="checkbox"]):not([type="radio"]),
+    .nf-special-event-page select,
+    .nf-special-event-page textarea {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+
+    .nf-special-event-page article img {
+      width: 100% !important;
+      max-width: 100% !important;
+      height: auto !important;
+      max-height: 250px;
+      object-fit: contain;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .nf-special-event-page [style*="max-width: 60%"] {
+      max-width: 100% !important;
+      text-align: left !important;
+    }
+
+    .nf-special-event-page [style*="justify-content: space-between"] {
+      width: 100% !important;
+      align-items: flex-start !important;
+      row-gap: 6px;
+    }
+  }
+
+  @media (max-width: 380px) {
+    .nf-special-event-page .nf-wrap {
+      padding-left: 9px !important;
+      padding-right: 9px !important;
+    }
+
+    .nf-special-event-page section.card,
+    .nf-special-event-page .card {
+      padding: 15px !important;
+    }
+  }
+`;
 
 function Modal({ title, children, onClose }) {
   return (
@@ -205,6 +487,12 @@ export default function SpecialEventOrderPage({
     dipperChoice === "yes"
       ? Math.max(0, Number.parseInt(dipperQty, 10) || 0)
       : 0;
+  const safeThankYouTagQty = thankYouTags
+    ? Math.max(0, Number.parseInt(thankYouTagQty, 10) || 0)
+    : 0;
+  const safeBeeCharmQty = beeCharm
+    ? Math.max(0, Number.parseInt(beeCharmQty, 10) || 0)
+    : 0;
 
   const bearUnitCents = safeBearQty >= 50 ? 300 : 400;
   const hexUnitCents = safeHexQty >= 50 ? 325 : 475;
@@ -212,11 +500,17 @@ export default function SpecialEventOrderPage({
   const bearCents = safeBearQty * bearUnitCents;
   const hexCents = safeHexQty * hexUnitCents;
   const dipperCents = safeDipperQty * 100;
-  const labelCents =
-    (customDesign ? 3000 : 0);
+  const thankYouTagCents = safeThankYouTagQty * 100;
+  const beeCharmCents = safeBeeCharmQty * 100;
+  const labelCents = customDesign ? 3000 : 0;
 
   const subtotalCents =
-    bearCents + hexCents + dipperCents + labelCents;
+    bearCents +
+    hexCents +
+    dipperCents +
+    thankYouTagCents +
+    beeCharmCents +
+    labelCents;
 
   const deliveryZip = form.deliveryZip.trim();
   const deliveryZone =
@@ -388,6 +682,14 @@ export default function SpecialEventOrderPage({
       return "Enter how many honey dippers you want.";
     }
 
+    if (thankYouTags && safeThankYouTagQty < 1) {
+      return "Enter how many Thank You Tags you want.";
+    }
+
+    if (beeCharm && safeBeeCharmQty < 1) {
+      return "Enter how many Bee Charms you want.";
+    }
+
     const days = daysUntilNeedBy();
 
     if (days === null || days < 0) {
@@ -447,12 +749,8 @@ export default function SpecialEventOrderPage({
     lidColor,
     dipperQty: safeDipperQty,
     customDesign,
-    thankYouTagQty: thankYouTags
-      ? Math.max(0, Number.parseInt(thankYouTagQty, 10) || 0)
-      : 0,
-    beeCharmQty: beeCharm
-      ? Math.max(0, Number.parseInt(beeCharmQty, 10) || 0)
-      : 0,
+    thankYouTagQty: safeThankYouTagQty,
+    beeCharmQty: safeBeeCharmQty,
     finishingDetails: finishingDetails.trim(),
     labelText: customLabels ? labelText.trim() : "",
     labelColor: customLabels ? labelColor.trim() : "",
@@ -529,8 +827,9 @@ export default function SpecialEventOrderPage({
 
   if (done) {
     return (
-      <div className="nf">
+      <div className="nf nf-special-event-page">
         <style>{styles}</style>
+        <style>{specialEventStyles}</style>
 
         <Header
           eyebrow="Special events"
@@ -573,7 +872,8 @@ export default function SpecialEventOrderPage({
               style={{
                 fontSize: 14.5,
                 lineHeight: 1.7,
-                color: colors.brown,
+                color: "#4E7892",
+                  fontWeight: 700,
                 margin: "10px 0 0",
               }}
             >
@@ -600,8 +900,9 @@ export default function SpecialEventOrderPage({
   }
 
   return (
-    <div className="nf">
+    <div className="nf nf-special-event-page">
       <style>{styles}</style>
+        <style>{specialEventStyles}</style>
 
       <Header
         eyebrow="Weddings · celebrations · events"
@@ -650,7 +951,8 @@ export default function SpecialEventOrderPage({
               margin: "8px 0 16px",
               fontSize: 14.5,
               lineHeight: 1.65,
-              color: colors.brown,
+              color: "#4E7892",
+                  fontWeight: 700,
             }}
           >
             Build your favors, see the total change as you go,
@@ -698,7 +1000,7 @@ export default function SpecialEventOrderPage({
                   ? "#FFF0F0"
                   : "#F0F8EE",
                 color: overBudget ? "#8C2525" : "#31532B",
-                fontSize: 13,
+                fontSize: 14,
                 fontWeight: 750,
               }}
             >
@@ -828,7 +1130,7 @@ export default function SpecialEventOrderPage({
               <strong>Pickup</strong>
               <div
                 style={{
-                  fontSize: 12,
+                  fontSize: 14,
                   marginTop: 3,
                   opacity: 0.78,
                 }}
@@ -855,7 +1157,7 @@ export default function SpecialEventOrderPage({
               <strong>Local Delivery</strong>
               <div
                 style={{
-                  fontSize: 12,
+                  fontSize: 14,
                   marginTop: 3,
                   opacity: 0.78,
                 }}
@@ -873,7 +1175,7 @@ export default function SpecialEventOrderPage({
                 marginTop: 12,
                 background: "#FFFBF0",
                 borderColor: "#E2B62F",
-                fontSize: 13.5,
+                fontSize: 14,
                 lineHeight: 1.6,
               }}
             >
@@ -948,9 +1250,10 @@ export default function SpecialEventOrderPage({
               <div
                 style={{
                   marginTop: 8,
-                  fontSize: 12,
+                  fontSize: 14,
                   lineHeight: 1.55,
-                  color: colors.brown,
+                  color: "#4E7892",
+                  fontWeight: 700,
                 }}
               >
                 Choose your preferred delivery date. We’ll confirm
@@ -979,9 +1282,10 @@ export default function SpecialEventOrderPage({
                   <div
                     style={{
                       marginTop: 6,
-                      fontSize: 13,
+                      fontSize: 14,
                       lineHeight: 1.6,
-                      color: colors.brown,
+                      color: "#4E7892",
+                  fontWeight: 700,
                     }}
                   >
                     {dollars(
@@ -1026,7 +1330,7 @@ export default function SpecialEventOrderPage({
                     <div
                       style={{
                         marginTop: 8,
-                        fontSize: 13,
+                        fontSize: 14,
                         fontWeight: 750,
                         color: colors.dark,
                       }}
@@ -1101,8 +1405,9 @@ export default function SpecialEventOrderPage({
 
               <div
                 style={{
-                  fontSize: 12.5,
-                  color: colors.brown,
+                  fontSize: 14,
+                  color: "#4E7892",
+                  fontWeight: 700,
                   marginTop: 4,
                   lineHeight: 1.55,
                 }}
@@ -1132,7 +1437,7 @@ export default function SpecialEventOrderPage({
                   <div
                     style={{
                       marginTop: 14,
-                      fontSize: 12,
+                      fontSize: 14,
                       fontWeight: 800,
                     }}
                   >
@@ -1167,7 +1472,7 @@ export default function SpecialEventOrderPage({
                           borderRadius: 9,
                           background: "#fff",
                           font: "inherit",
-                          fontSize: 10.5,
+                          fontSize: 14,
                           fontWeight: 800,
                           color: colors.dark,
                           cursor: "pointer",
@@ -1238,8 +1543,9 @@ export default function SpecialEventOrderPage({
 
               <div
                 style={{
-                  fontSize: 12.5,
-                  color: colors.brown,
+                  fontSize: 14,
+                  color: "#4E7892",
+                  fontWeight: 700,
                   marginTop: 4,
                   lineHeight: 1.55,
                 }}
@@ -1249,15 +1555,16 @@ export default function SpecialEventOrderPage({
 
               <div
                 style={{
-                  fontSize: 11.5,
-                  color: colors.brown,
+                  fontSize: 14,
+                  color: "#4E7892",
+                  fontWeight: 700,
                   marginTop: 5,
                   lineHeight: 1.45,
                   fontStyle: "italic",
                   opacity: 0.82,
                 }}
               >
-                Honey dipper and bee shown in photo are sold separately.
+                *Honey dipper, bee charm and tag shown in photo are sold separately.
               </div>
 
               <label style={{ ...labelStyle, marginTop: 12 }}>
@@ -1311,9 +1618,10 @@ export default function SpecialEventOrderPage({
 
           <p
             style={{
-              fontSize: 13.5,
+              fontSize: 14,
               lineHeight: 1.6,
-              color: colors.brown,
+              color: "#4E7892",
+                  fontWeight: 700,
             }}
           >
             $1.00 each
@@ -1461,9 +1769,10 @@ export default function SpecialEventOrderPage({
 
             <div
               style={{
-                fontSize: 13,
+                fontSize: 14,
                 lineHeight: 1.55,
-                color: "#6F6254",
+                color: "#4E7892",
+                  fontWeight: 700,
               }}
             >
               Optional finishing touch. The flat price is $30 for custom
@@ -1485,7 +1794,8 @@ export default function SpecialEventOrderPage({
             <div
               style={{
                 fontSize: 14,
-                color: "#6F6254",
+                color: "#4E7892",
+                  fontWeight: 700,
                 marginTop: 6,
                 marginBottom: 12,
                 lineHeight: 1.5,
@@ -1535,7 +1845,7 @@ export default function SpecialEventOrderPage({
                       }
                     }}
                   />
-                  <strong>Thank You Tag</strong>
+                  <strong>Thank You Tag · $1.00 each</strong>
                 </label>
 
                 {thankYouTags && (
@@ -1549,8 +1859,9 @@ export default function SpecialEventOrderPage({
                   >
                     <label
                       style={{
-                        fontSize: 13,
-                        color: "#6F6254",
+                        fontSize: 14,
+                        color: "#4E7892",
+                  fontWeight: 700,
                       }}
                     >
                       Quantity needed
@@ -1609,7 +1920,7 @@ export default function SpecialEventOrderPage({
                       }
                     }}
                   />
-                  <strong>Bee Charm</strong>
+                  <strong>Bee Charm · $1.00 each</strong>
                 </label>
 
                 {beeCharm && (
@@ -1623,8 +1934,9 @@ export default function SpecialEventOrderPage({
                   >
                     <label
                       style={{
-                        fontSize: 13,
-                        color: "#6F6254",
+                        fontSize: 14,
+                        color: "#4E7892",
+                  fontWeight: 700,
                       }}
                     >
                       Quantity needed
@@ -1653,7 +1965,7 @@ export default function SpecialEventOrderPage({
                 <label
                   style={{
                     display: "block",
-                    fontSize: 13,
+                    fontSize: 14,
                     fontWeight: 700,
                     color: colors.dark,
                     marginBottom: 6,
@@ -1702,7 +2014,7 @@ export default function SpecialEventOrderPage({
                   borderRadius: 8,
                   background: "#F8F2FC",
                   color: "#5E437A",
-                  fontSize: 13,
+                  fontSize: 14,
                   lineHeight: 1.6,
                 }}
               >
@@ -1744,8 +2056,9 @@ export default function SpecialEventOrderPage({
                 <div
                   style={{
                     marginTop: 6,
-                    fontSize: 11.5,
-                    color: colors.brown,
+                    fontSize: 14,
+                    color: "#4E7892",
+                  fontWeight: 700,
                   }}
                 >
                   Optional · JPG, PNG, WebP, or PDF · up to 4 MB
@@ -1763,7 +2076,7 @@ export default function SpecialEventOrderPage({
                       border: "1px solid #E4D9EF",
                       borderRadius: 8,
                       background: "#fff",
-                      fontSize: 12,
+                      fontSize: 14,
                     }}
                   >
                     <span
@@ -1811,9 +2124,10 @@ export default function SpecialEventOrderPage({
           <p
             style={{
               margin: "7px 0 12px",
-              fontSize: 13,
+              fontSize: 14,
               lineHeight: 1.6,
-              color: colors.brown,
+              color: "#4E7892",
+                  fontWeight: 700,
             }}
           >
             Select any of the available flavors you would like us
@@ -1925,7 +2239,7 @@ export default function SpecialEventOrderPage({
               display: "grid",
               gap: 8,
               marginTop: 14,
-              fontSize: 13.5,
+              fontSize: 14,
             }}
           >
             {safeBearQty > 0 && (
@@ -1996,14 +2310,10 @@ export default function SpecialEventOrderPage({
                   gap: 14,
                 }}
               >
-                <span>Thank You Tags</span>
-                <strong>
-                  {Math.max(
-                    0,
-                    Number.parseInt(thankYouTagQty, 10) || 0
-                  )}{" "}
-                  qty
-                </strong>
+                <span>
+                  {safeThankYouTagQty} × Thank You Tag @ $1.00
+                </span>
+                <strong>{dollars(thankYouTagCents)}</strong>
               </div>
             )}
 
@@ -2015,14 +2325,10 @@ export default function SpecialEventOrderPage({
                   gap: 14,
                 }}
               >
-                <span>Bee Charms</span>
-                <strong>
-                  {Math.max(
-                    0,
-                    Number.parseInt(beeCharmQty, 10) || 0
-                  )}{" "}
-                  qty
-                </strong>
+                <span>
+                  {safeBeeCharmQty} × Bee Charm @ $1.00
+                </span>
+                <strong>{dollars(beeCharmCents)}</strong>
               </div>
             )}
 
@@ -2117,7 +2423,7 @@ export default function SpecialEventOrderPage({
                 borderRadius: 9,
                 background: "#FFF0F0",
                 color: "#8C2525",
-                fontSize: 13,
+                fontSize: 14,
                 fontWeight: 750,
                 lineHeight: 1.5,
               }}
@@ -2154,8 +2460,9 @@ export default function SpecialEventOrderPage({
             style={{
               margin: "10px 0 0",
               textAlign: "center",
-              color: colors.brown,
-              fontSize: 11.5,
+              color: "#4E7892",
+                  fontWeight: 700,
+              fontSize: 14,
               lineHeight: 1.55,
             }}
           >
@@ -2175,7 +2482,8 @@ export default function SpecialEventOrderPage({
           <p
             style={{
               lineHeight: 1.7,
-              color: colors.brown,
+              color: "#4E7892",
+                  fontWeight: 700,
             }}
           >
             You’ll receive a visual proof and work with a designer
@@ -2185,7 +2493,8 @@ export default function SpecialEventOrderPage({
           <p
             style={{
               lineHeight: 1.7,
-              color: colors.brown,
+              color: "#4E7892",
+                  fontWeight: 700,
             }}
           >
             Please allow at least one full week for design,
@@ -2210,7 +2519,8 @@ export default function SpecialEventOrderPage({
           <p
             style={{
               lineHeight: 1.7,
-              color: colors.brown,
+              color: "#4E7892",
+                  fontWeight: 700,
             }}
           >
             {deadlinePopup}
@@ -2236,7 +2546,8 @@ export default function SpecialEventOrderPage({
           <p
             style={{
               lineHeight: 1.7,
-              color: colors.brown,
+              color: "#4E7892",
+                  fontWeight: 700,
             }}
           >
             Your target budget is{" "}
@@ -2248,7 +2559,8 @@ export default function SpecialEventOrderPage({
           <p
             style={{
               lineHeight: 1.7,
-              color: colors.brown,
+              color: "#4E7892",
+                  fontWeight: 700,
             }}
           >
             You can approve the higher total and continue to

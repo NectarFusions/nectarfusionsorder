@@ -102,14 +102,14 @@ const buildSummary = (x) =>
       ? `Small wood honey dippers: ${x.dipperQty} × $1.00 = ${money(x.dipperQty * 100)}`
       : "Small wood honey dippers: None",
     x.customDesign ? "Custom design: +$30.00 flat (includes printing/labeling)" : "",
-    x.thankYouTagQty ? `Thank You tags: ${x.thankYouTagQty}` : "Thank You tags: None",
-    x.beeCharmQty ? `Bee charms: ${x.beeCharmQty}` : "Bee charms: None",
+    x.thankYouTagQty ? `Thank You tags: ${x.thankYouTagQty} × $1.00 = ${money(x.thankYouTagQty * 100)}` : "Thank You tags: None",
+    x.beeCharmQty ? `Bee charms: ${x.beeCharmQty} × $1.00 = ${money(x.beeCharmQty * 100)}` : "Bee charms: None",
     x.finishingDetails ? `Finishing details: ${x.finishingDetails}` : "",
         x.customLabels ? `Custom label wording: ${x.labelText}` : "",
     x.customLabels ? `Custom label color: ${x.labelColor}` : "",
     x.designPath ? `Private design upload: ${x.designPath}` : "",
     "",
-    `Product + design subtotal: ${money(x.subtotalCents)}`,
+    `Order subtotal: ${money(x.subtotalCents)}`,
     `Delivery fee: ${x.fulfillmentMethod === "delivery" ? money(x.deliveryFeeCents) : "FREE"}`,
     `Square checkout fee (4%): ${money(x.checkoutCents)}`,
     `Estimated / checkout total: ${money(x.totalCents)}`,
@@ -231,8 +231,8 @@ export default async (req) => {
 
   const customDesign = body.customDesign === true;
   const customLabels = customDesign;
-  const thankYouTagQty = Math.max(0, Number(body.thankYouTagQty || 0));
-  const beeCharmQty = Math.max(0, Number(body.beeCharmQty || 0));
+  const thankYouTagQty = qty(body.thankYouTagQty);
+  const beeCharmQty = qty(body.beeCharmQty);
   const finishingDetails = clean(body.finishingDetails, 1200);
   const overBudgetApproved = body.overBudgetApproved === true;
 
@@ -260,8 +260,14 @@ export default async (req) => {
   const leadDays = daysUntil(requestedDate);
   if (leadDays < 0) return bad("The need-by date cannot be in the past.");
 
-  if (bearQty === null || hexQty === null || dipperQty === null) {
-    return bad("Enter valid product quantities.");
+  if (
+    bearQty === null ||
+    hexQty === null ||
+    dipperQty === null ||
+    thankYouTagQty === null ||
+    beeCharmQty === null
+  ) {
+    return bad("Enter valid item quantities.");
   }
 
   if (bearQty + hexQty < 1) {
@@ -309,6 +315,8 @@ export default async (req) => {
     bearQty * bearUnitCents +
     hexQty * hexUnitCents +
     dipperQty * 100 +
+    thankYouTagQty * 100 +
+    beeCharmQty * 100 +
     (customDesign ? 3000 : 0);
 
   const supa = db();
@@ -492,6 +500,22 @@ export default async (req) => {
         name: "Custom Design + Printing & Labeling",
         quantity: "1",
         base_price_money: { amount: 3000, currency: "USD" },
+      });
+    }
+
+    if (thankYouTagQty > 0) {
+      lineItems.push({
+        name: "Thank You Tag",
+        quantity: String(thankYouTagQty),
+        base_price_money: { amount: 100, currency: "USD" },
+      });
+    }
+
+    if (beeCharmQty > 0) {
+      lineItems.push({
+        name: "Bee Charm",
+        quantity: String(beeCharmQty),
+        base_price_money: { amount: 100, currency: "USD" },
       });
     }
 
