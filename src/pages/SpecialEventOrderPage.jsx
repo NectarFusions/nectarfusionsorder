@@ -164,8 +164,12 @@ export default function SpecialEventOrderPage({
   const [selectedFlavors, setSelectedFlavors] = useState([]);
   const [fulfillmentMethod, setFulfillmentMethod] = useState("");
 
-  const [topCircle, setTopCircle] = useState(false);
-  const [frontLabel, setFrontLabel] = useState(false);
+  const [customDesign, setCustomDesign] = useState(false);
+  const [thankYouTags, setThankYouTags] = useState(false);
+  const [thankYouTagQty, setThankYouTagQty] = useState(0);
+  const [beeCharm, setBeeCharm] = useState(false);
+  const [beeCharmQty, setBeeCharmQty] = useState(0);
+  const [finishingDetails, setFinishingDetails] = useState("");
   const [labelText, setLabelText] = useState("");
   const [labelColor, setLabelColor] = useState("");
   const [designFile, setDesignFile] = useState(null);
@@ -188,7 +192,7 @@ export default function SpecialEventOrderPage({
   const [website, setWebsite] = useState("");
   const [formStartedAt] = useState(() => Date.now());
 
-  const customLabels = topCircle || frontLabel;
+  const customLabels = customDesign;
   const safeBearQty = Math.max(
     0,
     Number.parseInt(bearQty, 10) || 0
@@ -209,7 +213,7 @@ export default function SpecialEventOrderPage({
   const hexCents = safeHexQty * hexUnitCents;
   const dipperCents = safeDipperQty * 100;
   const labelCents =
-    (topCircle ? 1000 : 0) + (frontLabel ? 1500 : 0);
+    (customDesign ? 3000 : 0);
 
   const subtotalCents =
     bearCents + hexCents + dipperCents + labelCents;
@@ -277,13 +281,6 @@ export default function SpecialEventOrderPage({
     );
   };
 
-  const toggleCustom = (kind, checked) => {
-    if (kind === "top") setTopCircle(checked);
-    if (kind === "front") setFrontLabel(checked);
-
-    if (checked) setShowDesignerNotice(true);
-    setErr("");
-  };
 
   const chooseDesignFile = (event) => {
     const file = event.target.files?.[0] || null;
@@ -449,8 +446,14 @@ export default function SpecialEventOrderPage({
     hexQty: safeHexQty,
     lidColor,
     dipperQty: safeDipperQty,
-    topCircle,
-    frontLabel,
+    customDesign,
+    thankYouTagQty: thankYouTags
+      ? Math.max(0, Number.parseInt(thankYouTagQty, 10) || 0)
+      : 0,
+    beeCharmQty: beeCharm
+      ? Math.max(0, Number.parseInt(beeCharmQty, 10) || 0)
+      : 0,
+    finishingDetails: finishingDetails.trim(),
     labelText: customLabels ? labelText.trim() : "",
     labelColor: customLabels ? labelColor.trim() : "",
     overBudgetApproved,
@@ -1399,6 +1402,16 @@ export default function SpecialEventOrderPage({
               marginTop: 14,
             }}
           >
+            <div
+              style={{
+                fontSize: 14,
+                fontWeight: 700,
+                color: colors.dark,
+              }}
+            >
+              Would you like custom design labels?
+            </div>
+
             <label
               style={{
                 display: "flex",
@@ -1411,15 +1424,16 @@ export default function SpecialEventOrderPage({
               }}
             >
               <input
-                type="checkbox"
-                checked={topCircle}
-                onChange={(event) =>
-                  toggleCustom("top", event.target.checked)
-                }
+                type="radio"
+                name="customDesign"
+                checked={customDesign}
+                onChange={() => {
+                  setCustomDesign(true);
+                  setShowDesignerNotice(true);
+                }}
               />
               <span>
-                <strong>Top circle design</strong> · +$10.00
-                flat
+                <strong>Yes</strong> · +$30.00 flat
               </span>
             </label>
 
@@ -1435,17 +1449,238 @@ export default function SpecialEventOrderPage({
               }}
             >
               <input
-                type="checkbox"
-                checked={frontLabel}
-                onChange={(event) =>
-                  toggleCustom("front", event.target.checked)
-                }
+                type="radio"
+                name="customDesign"
+                checked={!customDesign}
+                onChange={() => setCustomDesign(false)}
               />
               <span>
-                <strong>Front label design</strong> · +$15.00
-                flat
+                <strong>No</strong> · Use standard NectarFusions labeling
               </span>
             </label>
+
+            <div
+              style={{
+                fontSize: 13,
+                lineHeight: 1.55,
+                color: "#6F6254",
+              }}
+            >
+              Optional finishing touch. The flat price is $30 for custom
+              design work which includes printing and labeling of items.
+            </div>
+          </div>
+
+          <div
+            style={{
+              marginTop: 24,
+              paddingTop: 20,
+              borderTop: "1px solid #E8DDCE",
+            }}
+          >
+            <div className="nf-modern-kicker">
+              Finishing touches
+            </div>
+
+            <div
+              style={{
+                fontSize: 14,
+                color: "#6F6254",
+                marginTop: 6,
+                marginBottom: 12,
+                lineHeight: 1.5,
+              }}
+            >
+              Select any finishing touches you would like added to your
+              order.
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gap: 10,
+              }}
+            >
+              <div
+                style={{
+                  padding: 12,
+                  border: "1px solid #E2D6C4",
+                  borderRadius: 10,
+                }}
+              >
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    cursor: "pointer",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={thankYouTags}
+                    onChange={(event) => {
+                      const checked = event.target.checked;
+                      setThankYouTags(checked);
+
+                      if (
+                        checked &&
+                        !(Number.parseInt(thankYouTagQty, 10) > 0)
+                      ) {
+                        setThankYouTagQty(1);
+                      }
+
+                      if (!checked) {
+                        setThankYouTagQty(0);
+                      }
+                    }}
+                  />
+                  <strong>Thank You Tag</strong>
+                </label>
+
+                {thankYouTags && (
+                  <div
+                    style={{
+                      marginTop: 10,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                    }}
+                  >
+                    <label
+                      style={{
+                        fontSize: 13,
+                        color: "#6F6254",
+                      }}
+                    >
+                      Quantity needed
+                    </label>
+
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={thankYouTagQty}
+                      onChange={(event) =>
+                        setThankYouTagQty(event.target.value)
+                      }
+                      style={{
+                        width: 90,
+                        padding: "8px 10px",
+                        border: "1px solid #D8CBB9",
+                        borderRadius: 8,
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div
+                style={{
+                  padding: 12,
+                  border: "1px solid #E2D6C4",
+                  borderRadius: 10,
+                }}
+              >
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    cursor: "pointer",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={beeCharm}
+                    onChange={(event) => {
+                      const checked = event.target.checked;
+                      setBeeCharm(checked);
+
+                      if (
+                        checked &&
+                        !(Number.parseInt(beeCharmQty, 10) > 0)
+                      ) {
+                        setBeeCharmQty(1);
+                      }
+
+                      if (!checked) {
+                        setBeeCharmQty(0);
+                      }
+                    }}
+                  />
+                  <strong>Bee Charm</strong>
+                </label>
+
+                {beeCharm && (
+                  <div
+                    style={{
+                      marginTop: 10,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                    }}
+                  >
+                    <label
+                      style={{
+                        fontSize: 13,
+                        color: "#6F6254",
+                      }}
+                    >
+                      Quantity needed
+                    </label>
+
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={beeCharmQty}
+                      onChange={(event) =>
+                        setBeeCharmQty(event.target.value)
+                      }
+                      style={{
+                        width: 90,
+                        padding: "8px 10px",
+                        border: "1px solid #D8CBB9",
+                        borderRadius: 8,
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: colors.dark,
+                    marginBottom: 6,
+                  }}
+                >
+                  Additional instructions or detail requests
+                </label>
+
+                <textarea
+                  rows={4}
+                  value={finishingDetails}
+                  onChange={(event) =>
+                    setFinishingDetails(event.target.value)
+                  }
+                  placeholder="Tell us anything else you would like us to know about your finishing details."
+                  style={{
+                    width: "100%",
+                    boxSizing: "border-box",
+                    padding: 12,
+                    border: "1px solid #D8CBB9",
+                    borderRadius: 10,
+                    resize: "vertical",
+                    font: "inherit",
+                  }}
+                />
+              </div>
+            </div>
           </div>
 
           {customLabels && (
@@ -1740,7 +1975,7 @@ export default function SpecialEventOrderPage({
               </div>
             )}
 
-            {topCircle && (
+            {customDesign && (
               <div
                 style={{
                   display: "flex",
@@ -1748,12 +1983,12 @@ export default function SpecialEventOrderPage({
                   gap: 14,
                 }}
               >
-                <span>Top circle custom design</span>
-                <strong>$10.00</strong>
+                <span>Custom design including printing + labeling</span>
+                <strong>$30.00</strong>
               </div>
             )}
 
-            {frontLabel && (
+            {thankYouTags && (
               <div
                 style={{
                   display: "flex",
@@ -1761,8 +1996,53 @@ export default function SpecialEventOrderPage({
                   gap: 14,
                 }}
               >
-                <span>Front label custom design</span>
-                <strong>$15.00</strong>
+                <span>Thank You Tags</span>
+                <strong>
+                  {Math.max(
+                    0,
+                    Number.parseInt(thankYouTagQty, 10) || 0
+                  )}{" "}
+                  qty
+                </strong>
+              </div>
+            )}
+
+            {beeCharm && (
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: 14,
+                }}
+              >
+                <span>Bee Charms</span>
+                <strong>
+                  {Math.max(
+                    0,
+                    Number.parseInt(beeCharmQty, 10) || 0
+                  )}{" "}
+                  qty
+                </strong>
+              </div>
+            )}
+
+            {finishingDetails.trim() && (
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: 14,
+                }}
+              >
+                <span>Finishing details</span>
+                <strong
+                  style={{
+                    textAlign: "right",
+                    maxWidth: "60%",
+                  }}
+                >
+                  {finishingDetails.trim()}
+                </strong>
               </div>
             )}
 

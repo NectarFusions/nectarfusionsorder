@@ -101,9 +101,11 @@ const buildSummary = (x) =>
     x.dipperQty
       ? `Small wood honey dippers: ${x.dipperQty} × $1.00 = ${money(x.dipperQty * 100)}`
       : "Small wood honey dippers: None",
-    x.topCircle ? "Top circle custom design: +$10.00 flat" : "",
-    x.frontLabel ? "Front label custom design: +$15.00 flat" : "",
-    x.customLabels ? `Custom label wording: ${x.labelText}` : "",
+    x.customDesign ? "Custom design: +$30.00 flat (includes printing/labeling)" : "",
+    x.thankYouTagQty ? `Thank You tags: ${x.thankYouTagQty}` : "Thank You tags: None",
+    x.beeCharmQty ? `Bee charms: ${x.beeCharmQty}` : "Bee charms: None",
+    x.finishingDetails ? `Finishing details: ${x.finishingDetails}` : "",
+        x.customLabels ? `Custom label wording: ${x.labelText}` : "",
     x.customLabels ? `Custom label color: ${x.labelColor}` : "",
     x.designPath ? `Private design upload: ${x.designPath}` : "",
     "",
@@ -227,9 +229,11 @@ export default async (req) => {
       ? Math.round(budgetDollars * 100)
       : 0;
 
-  const topCircle = body.topCircle === true;
-  const frontLabel = body.frontLabel === true;
-  const customLabels = topCircle || frontLabel;
+  const customDesign = body.customDesign === true;
+  const customLabels = customDesign;
+  const thankYouTagQty = Math.max(0, Number(body.thankYouTagQty || 0));
+  const beeCharmQty = Math.max(0, Number(body.beeCharmQty || 0));
+  const finishingDetails = clean(body.finishingDetails, 1200);
   const overBudgetApproved = body.overBudgetApproved === true;
 
   const elapsed =
@@ -305,8 +309,7 @@ export default async (req) => {
     bearQty * bearUnitCents +
     hexQty * hexUnitCents +
     dipperQty * 100 +
-    (topCircle ? 1000 : 0) +
-    (frontLabel ? 1500 : 0);
+    (customDesign ? 3000 : 0);
 
   const supa = db();
 
@@ -425,8 +428,8 @@ export default async (req) => {
     fulfillmentMethod, deliveryAddress, deliveryCity, deliveryZip,
     deliveryDate, deliveryZoneName, deliveryFeeCents,
     bearQty, lidColor, bearUnitCents, hexQty, hexUnitCents,
-    dipperQty, topCircle, frontLabel, customLabels, labelText,
-    labelColor, designPath, subtotalCents, checkoutCents, totalCents, mode,
+    dipperQty, customDesign, customLabels, labelText,
+    labelColor, thankYouTagQty, beeCharmQty, finishingDetails, designPath, subtotalCents, checkoutCents, totalCents, mode,
   });
 
   const { data: saved, error: insertError } = await supa
@@ -484,19 +487,11 @@ export default async (req) => {
       });
     }
 
-    if (topCircle) {
+    if (customDesign) {
       lineItems.push({
-        name: "Custom Top Circle Label Design",
+        name: "Custom Design + Printing & Labeling",
         quantity: "1",
-        base_price_money: { amount: 1000, currency: "USD" },
-      });
-    }
-
-    if (frontLabel) {
-      lineItems.push({
-        name: "Custom Front Label Design",
-        quantity: "1",
-        base_price_money: { amount: 1500, currency: "USD" },
+        base_price_money: { amount: 3000, currency: "USD" },
       });
     }
 
