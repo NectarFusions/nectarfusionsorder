@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { useState, useMemo, useEffect, useLayoutEffect, useCallback, useRef } from "react";
 import * as api from "./lib/api";
 import PartnerPage from "./pages/PartnerPage";
 import PartnerPortalPage from "./pages/PartnerPortalPage";
@@ -11895,6 +11895,7 @@ export default function App() {
   const [cartSummaryCompact, setCartSummaryCompact] = useState(false);
   const [dockHasEntered, setDockHasEntered] = useState(false);
   const siteSearchRef = useRef(null);
+  const shopScrollRestoreRef = useRef(null);
   const [siteSearchHelp, setSiteSearchHelp] = useState("");
   const [siteSearchOpen, setSiteSearchOpen] = useState(false);
   const [searchedOrderNo, setSearchedOrderNo] = useState("");
@@ -11950,6 +11951,14 @@ export default function App() {
       setCartOpen(false);
       setCheckoutOpen(false);
     }
+  }, [cart]);
+
+  useLayoutEffect(() => {
+    const restoreY = shopScrollRestoreRef.current;
+    if (restoreY === null || typeof window === "undefined") return;
+
+    shopScrollRestoreRef.current = null;
+    window.scrollTo({ top: restoreY, left: 0, behavior: "auto" });
   }, [cart]);
 
   useEffect(() => {
@@ -12216,11 +12225,18 @@ export default function App() {
     );
   };
 
+  const preserveShopScroll = () => {
+    if (typeof window === "undefined") return;
+    if (!window.matchMedia("(max-width: 760px)").matches) return;
+    shopScrollRestoreRef.current = window.scrollY;
+  };
+
   const addJar = (
     f,
     sizeId = pickSize,
     typeId = pickType
   ) => {
+    preserveShopScroll();
     setCartOpen(false);
     setCart((cc) => {
     const i = cc.findIndex(
@@ -14533,6 +14549,7 @@ export default function App() {
                           className="nf-pick-qty-btn"
                           aria-label={`Remove one ${f.name}`}
                           onClick={() => {
+                            preserveShopScroll();
                             setCartOpen(false);
                             bump(cartIndex, -1);
                           }}
@@ -14545,6 +14562,7 @@ export default function App() {
                           aria-label={`Add another ${f.name}`}
                           disabled={!canAdd}
                           onClick={() => {
+                            preserveShopScroll();
                             setCartOpen(false);
                             if (canAdd) bump(cartIndex, 1);
                           }}
