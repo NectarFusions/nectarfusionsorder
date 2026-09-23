@@ -11629,6 +11629,242 @@ html {
   opacity:.75;
 }
 
+
+/* SIMPLIFIED ON-DEMAND CART + FULL-SCREEN FULFILLMENT */
+.nf-cart-simple {
+  z-index:340 !important;
+}
+.nf-cart-simple .nf-cart-tray-inner {
+  width:min(920px,100%) !important;
+  max-width:920px !important;
+  margin:0 auto !important;
+}
+.nf-cart-simple .nf-cart-simple-header {
+  flex:0 0 auto;
+  justify-content:space-between;
+  padding:0 0 16px;
+  border-bottom:1px solid rgba(255,255,255,.34);
+}
+.nf-cart-simple-title {
+  min-width:0;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  color:#FFFFFF;
+}
+.nf-cart-simple-title > div {
+  min-width:0;
+  display:grid;
+  gap:2px;
+}
+.nf-cart-simple-title span {
+  font-size:13px;
+  font-weight:950;
+  letter-spacing:.11em;
+  text-transform:uppercase;
+}
+.nf-cart-simple-title strong {
+  font-size:18px;
+  line-height:1.25;
+}
+.nf-cart-simple .nf-cart-items {
+  flex:1 1 auto !important;
+  min-height:0;
+  max-height:none !important;
+  overflow-y:auto;
+  margin:18px 0 !important;
+  padding:8px !important;
+  border-radius:16px;
+  background:rgba(255,255,255,.11);
+}
+.nf-cart-simple .nf-cart-summary {
+  flex:0 0 auto;
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) minmax(190px,260px) !important;
+  align-items:end !important;
+  gap:20px !important;
+  padding:18px 0 0 !important;
+  border-top:1px solid rgba(255,255,255,.34);
+}
+.nf-cart-simple .nf-cart-totals {
+  min-width:0;
+  display:grid;
+  gap:10px;
+  color:#FFFFFF;
+  font-size:16px !important;
+  line-height:1.35 !important;
+}
+.nf-cart-simple .nf-cart-totals-row {
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:18px;
+}
+.nf-cart-simple .nf-cart-totals-row span,
+.nf-cart-simple .nf-cart-totals-row strong {
+  margin:0 !important;
+  font-size:16px !important;
+  line-height:1.35 !important;
+  letter-spacing:0 !important;
+}
+.nf-cart-simple .nf-cart-totals-row strong {
+  flex:0 0 auto;
+  font-weight:900;
+}
+.nf-cart-simple .nf-cart-discount-row {
+  color:#FFF1AE;
+}
+.nf-cart-simple .nf-cart-grand-total {
+  display:grid;
+  gap:3px;
+  margin-top:4px;
+  padding-top:11px;
+  border-top:1px solid rgba(255,255,255,.25);
+}
+.nf-cart-simple .nf-cart-grand-total span {
+  margin:0 !important;
+  font-size:13px !important;
+  font-weight:950 !important;
+  line-height:1.2 !important;
+  letter-spacing:.1em !important;
+  text-transform:uppercase;
+}
+.nf-cart-simple .nf-cart-grand-total strong {
+  margin:0 !important;
+  font-size:clamp(40px,6vw,58px) !important;
+  font-weight:950 !important;
+  line-height:1 !important;
+  letter-spacing:.01em !important;
+}
+.nf-cart-simple .nf-cart-summary > .btn {
+  width:100% !important;
+  max-width:none !important;
+  min-height:58px !important;
+  grid-column:auto !important;
+  padding:15px 18px !important;
+  border-radius:17px !important;
+  font-size:18px !important;
+}
+.nf-checkout-overlay {
+  position:fixed;
+  inset:0;
+  z-index:340;
+  min-height:100dvh;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  padding:
+    calc(18px + env(safe-area-inset-top))
+    clamp(14px,4vw,52px)
+    calc(28px + env(safe-area-inset-bottom));
+  background:linear-gradient(180deg,#249FE8 0%,#147FBE 100%);
+}
+.nf-checkout-overlay-shell {
+  width:min(900px,100%);
+  margin:0 auto;
+}
+.nf-checkout-overlay-header {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:18px;
+  padding-bottom:16px;
+  color:#FFFFFF;
+  border-bottom:1px solid rgba(255,255,255,.34);
+}
+.nf-checkout-overlay-kicker {
+  font-size:12px;
+  font-weight:950;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+  color:#FFF1AE;
+}
+.nf-checkout-overlay-header h2 {
+  margin:3px 0 0;
+  color:#FFFFFF;
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:clamp(42px,7vw,64px);
+  line-height:.95;
+  letter-spacing:.01em;
+}
+.nf-checkout-overlay-header p {
+  max-width:620px;
+  margin:7px 0 0;
+  color:rgba(255,255,255,.9);
+  font-size:15px;
+  font-weight:650;
+  line-height:1.5;
+}
+.nf-checkout-overlay-back {
+  flex:0 0 auto;
+  min-height:44px;
+  padding:10px 15px;
+  border:1px solid rgba(255,255,255,.74);
+  border-radius:999px;
+  background:rgba(255,255,255,.14);
+  color:#FFFFFF;
+  font:inherit;
+  font-size:14px;
+  font-weight:900;
+  cursor:pointer;
+}
+.nf-checkout-overlay-back:hover {
+  background:rgba(255,255,255,.24);
+}
+.nf-checkout-overlay-content {
+  display:grid;
+  gap:18px;
+  margin-top:18px;
+  padding-bottom:30px;
+}
+.nf-checkout-overlay .nf-fulfillment-section {
+  margin:0 !important;
+}
+.nf-checkout-details-card {
+  padding:22px 18px;
+  border:2px solid #F7C41C;
+  border-radius:18px;
+  background:linear-gradient(135deg,#FFFDF6 0%,#FFF4CC 100%);
+  color:#3A2B1E;
+  box-shadow:0 16px 38px rgba(20,77,111,.18);
+}
+.nf-checkout-details-card #order-details-section {
+  margin-top:0 !important;
+  color:#082C5C;
+}
+.nf-checkout-details-card .nf-details-continue {
+  margin-bottom:0;
+}
+@media (max-width:760px) {
+  .nf-cart-simple .nf-cart-summary {
+    grid-template-columns:1fr !important;
+    gap:15px !important;
+  }
+  .nf-cart-simple .nf-cart-summary > .btn {
+    grid-column:1 !important;
+  }
+  .nf-checkout-overlay {
+    padding:
+      calc(14px + env(safe-area-inset-top))
+      12px
+      calc(20px + env(safe-area-inset-bottom));
+  }
+  .nf-checkout-overlay-header {
+    gap:12px;
+  }
+  .nf-checkout-overlay-header h2 {
+    font-size:44px;
+  }
+  .nf-checkout-overlay-header p {
+    font-size:14px;
+  }
+  .nf-checkout-overlay-back {
+    padding:9px 12px;
+  }
+  .nf-checkout-details-card {
+    padding:18px 14px;
+  }
+}
+
 `;
 
 export default function App() {
@@ -11653,7 +11889,8 @@ export default function App() {
   const [typeInfo, setTypeInfo] = useState(false);
   const [typeNotice, setTypeNotice] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
-  const [cartOpen, setCartOpen] = useState(true);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [cartTrayDismissed, setCartTrayDismissed] = useState(false);
   const [cartSummaryCompact, setCartSummaryCompact] = useState(false);
   const [dockHasEntered, setDockHasEntered] = useState(false);
@@ -11686,7 +11923,7 @@ export default function App() {
   const [subMarketPopupStep, setSubMarketPopupStep] = useState(0);
 
   useEffect(() => {
-    if (!reviewOpen && !typeInfo) return undefined;
+    if (!reviewOpen && !typeInfo && !checkoutOpen) return undefined;
 
     const previousBodyOverflow = document.body.style.overflow;
     const previousHtmlOverflow = document.documentElement.style.overflow;
@@ -11698,7 +11935,7 @@ export default function App() {
       document.body.style.overflow = previousBodyOverflow;
       document.documentElement.style.overflow = previousHtmlOverflow;
     };
-  }, [reviewOpen, typeInfo]);
+  }, [reviewOpen, typeInfo, checkoutOpen]);
 
   const reload = useCallback(async () => {
     try { setCat(await api.getCatalog()); }
@@ -11710,6 +11947,8 @@ export default function App() {
   useEffect(() => {
     if (cart.length === 0) {
       setCartTrayDismissed(false);
+      setCartOpen(false);
+      setCheckoutOpen(false);
     }
   }, [cart]);
 
@@ -12303,7 +12542,7 @@ export default function App() {
       // available to the confirmation lookup. Retry that lookup before showing an error.
       const full = await api.getOrderWithRetry(r.token);
       setReceipt({ ...full, token: r.token, email: cust.email, address: cust.address, city: cust.city, zip });
-      setCart([]); setSlot(null); setMethod(null); setZip(""); setCtaOff(false); setReviewOpen(false);
+      setCart([]); setSlot(null); setMethod(null); setZip(""); setCtaOff(false); setReviewOpen(false); setCheckoutOpen(false); setCartOpen(false);
       reload();  // stock may have moved
     } catch (e) { setErr(e.message); }
     setBusy(false);
@@ -12345,6 +12584,7 @@ export default function App() {
 
   const scrollToOrderStep = (id) => {
     setCartOpen(false);
+    setCheckoutOpen(true);
     window.requestAnimationFrame(() => {
       document.getElementById(id)?.scrollIntoView({
         behavior: "smooth",
@@ -12361,6 +12601,13 @@ export default function App() {
       setContinueHelp("");
     }
     scrollToOrderStep(sectionId);
+  };
+
+  const startCheckout = () => {
+    setContinueAttemptKey("");
+    setContinueHelp("");
+    setCartOpen(false);
+    setCheckoutOpen(true);
   };
 
   const continueOrder = () => {
@@ -12495,6 +12742,7 @@ export default function App() {
                 onClick={() => {
                   setCartTrayDismissed(false);
                   setCartSummaryCompact(false);
+                  setCheckoutOpen(false);
 
                   if (view !== "shop") {
                     setView("shop");
@@ -12627,7 +12875,7 @@ export default function App() {
           </section>
         )}
 
-        {view !== "admin" && view !== "login" && !receipt && !(view === "shop" && cartCount > 0 && !cartTrayDismissed) && (
+        {view !== "admin" && view !== "login" && !receipt && (
           <nav
             className={`nf-universal-dock ${dockHasEntered ? "settled" : "entering"} ${view === "shop" ? "home-dock" : ""}`}
             aria-label="NectarFusions website navigation"
@@ -12657,34 +12905,7 @@ export default function App() {
                 )}
               </div>
 
-              <a className="nf-dock-social" href="https://www.instagram.com/nectarfusions_honey/"
-                target="_blank" rel="noreferrer" aria-label="Follow NectarFusions on Instagram" title="Instagram">
-                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <rect x="3" y="3" width="18" height="18" rx="5" />
-                  <circle cx="12" cy="12" r="4.25" />
-                  <circle cx="17.4" cy="6.7" r="1.15" fill="currentColor" stroke="none" />
-                </svg>
-              </a>
 
-              <a className="nf-dock-social" href="https://www.facebook.com/NectarFusions/"
-                target="_blank" rel="noreferrer" aria-label="Follow NectarFusions on Facebook" title="Facebook">
-                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d="M13.5 22v-8h2.8l.42-3.2H13.5V8.75c0-.93.26-1.56 1.6-1.56h1.72V4.33c-.3-.04-1.32-.13-2.5-.13-2.47 0-4.16 1.51-4.16 4.28v2.32H7.36V14h2.8v8h3.34Z" />
-                </svg>
-              </a>
-
-              <a
-                className="nf-text-us-fab"
-                href={`sms:${CONTACT.phone.replace(/\D/g, "")}`}
-                aria-label={`Text NectarFusions at ${CONTACT.phone}`}
-                title="Text us"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M5 5.5h14v10H9l-4 3v-13Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-                  <path d="M8 9h8M8 12h5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                </svg>
-
-              </a>
             </div>
           </nav>
         )}
@@ -14339,9 +14560,34 @@ export default function App() {
           </div>
         )}
 
-        {cart.length > 0 && (
-          <>
-            <section
+        {cart.length > 0 && checkoutOpen && (
+          <div
+            className="nf-checkout-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Delivery and pickup options"
+          >
+            <div className="nf-checkout-overlay-shell">
+              <header className="nf-checkout-overlay-header">
+                <div>
+                  <div className="nf-checkout-overlay-kicker">Your order</div>
+                  <h2>Delivery &amp; Pickup</h2>
+                  <p>Choose how you would like to receive your NectarFusions order.</p>
+                </div>
+                <button
+                  type="button"
+                  className="nf-checkout-overlay-back"
+                  onClick={() => {
+                    setCheckoutOpen(false);
+                    setCartOpen(true);
+                  }}
+                >
+                  Back to cart
+                </button>
+              </header>
+
+              <div className="nf-checkout-overlay-content">
+                <section
               id="order-method-section"
               className="nf-fulfillment-section nf-order-anchor"
               style={{
@@ -14502,7 +14748,7 @@ export default function App() {
             </section>
 
             {slot && (
-              <>
+              <section className="nf-checkout-details-card">
                 {!ctaOff && method !== "market" && (
                   <div className="card" style={{ padding: 15, marginTop: 22, background: "#FFFBF0", borderColor: c.gold,
                     display: "flex", alignItems: "flex-start", gap: 11 }}>
@@ -14558,14 +14804,17 @@ export default function App() {
                     setContinueAttemptKey("");
                     setContinueHelp("");
                     setCartOpen(false);
+                    setCheckoutOpen(false);
                     setReviewOpen(true);
                   }}
                 >
                   Continue to review order
                 </button>
-              </>
+              </section>
             )}
-          </>
+              </div>
+            </div>
+          </div>
         )}
 
         {cart.length === 0 && shelf.length > 0 && (
@@ -14804,7 +15053,14 @@ export default function App() {
             </div>
 
             <div className="nf-final-review-actions">
-              <button type="button" className="nf-final-review-back" onClick={() => setReviewOpen(false)}>
+              <button
+                type="button"
+                className="nf-final-review-back"
+                onClick={() => {
+                  setReviewOpen(false);
+                  setCheckoutOpen(true);
+                }}
+              >
                 Back to edit
               </button>
               <button
@@ -14820,277 +15076,117 @@ export default function App() {
         </div>
       )}
 
-      {/* TEXTURE POPUP — HIDE CART TRAY WHILE OPEN */}
-      {cart.length > 0 && !typeInfo && !cartTrayDismissed && (
+      {/* ON-DEMAND CART — opens only when the customer clicks the cart */}
+      {cart.length > 0 && !typeInfo && cartOpen && !checkoutOpen && (
         <aside
-          className={`nf-cart-tray ${cartOpen ? "open" : ""} ${
-            pickSize === B.size && cartSummaryCompact
-              ? "compact"
-              : ""
-          }`}
-          aria-label="Your order"
+          className="nf-cart-tray open nf-cart-simple"
+          aria-label="Your cart"
+          role="dialog"
+          aria-modal="true"
         >
           <div className="nf-cart-tray-inner">
-            <div className="nf-cart-tray-actions">
+            <div className="nf-cart-tray-actions nf-cart-simple-header">
+              <div className="nf-cart-simple-title">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M3 4h2l2.1 10.1a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 1.9-1.4L21 7H6"
+                    stroke="currentColor"
+                    strokeWidth="1.9"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <circle cx="10" cy="20" r="1.35" fill="currentColor" />
+                  <circle cx="18" cy="20" r="1.35" fill="currentColor" />
+                </svg>
+                <div>
+                  <span>Your cart</span>
+                  <strong>
+                    {cartCount} item{cartCount === 1 ? "" : "s"} in cart
+                  </strong>
+                </div>
+              </div>
+
               <button
                 type="button"
                 className="nf-cart-tray-close"
                 onClick={() => {
-                  setCartTrayDismissed(true);
                   setCartOpen(false);
                   setCartSummaryCompact(false);
                 }}
-                aria-label="Close order summary"
-                title="Close order summary"
+                aria-label="Close cart"
+                title="Close cart"
               >
                 ×
               </button>
-
-              <button
-                type="button"
-                className="nf-cart-tray-toggle"
-                onClick={() => {
-                  setCartSummaryCompact(false);
-                  setCartOpen((open) => !open);
-                }}
-                aria-label={cartOpen ? "Collapse order review" : "Review order items"}
-                title={cartOpen ? "Collapse order review" : "Review order items"}
-                aria-expanded={
-                  cartOpen &&
-                  !(pickSize === B.size && cartSummaryCompact)
-                }
-              >
-                <span className="nf-cart-tray-label">
-                  <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M3 4h2l2.1 10.1a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 1.9-1.4L21 7H6"
-                      stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
-                    <circle cx="10" cy="20" r="1.35" fill="currentColor" />
-                    <circle cx="18" cy="20" r="1.35" fill="currentColor" />
-                  </svg>
-                  Your Order
-                  <span className="nf-cart-tray-count">{cartCount}</span>
-                </span>
-
-                <span
-                  className={`nf-cart-tray-review-action ${cartOpen ? "is-collapse" : ""}`}
-                  aria-hidden="true"
-                >
-                  {cartOpen ? (
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                      <path
-                        d="M6 9l6 6 6-6"
-                        stroke="currentColor"
-                        strokeWidth="2.4"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  ) : (
-                    "Review order items"
-                  )}
-                </span>
-              </button>
-
-              {pickSize === B.size && (
-                <button
-                  type="button"
-                  className="nf-cart-compact-toggle"
-                  aria-label={
-                    cartSummaryCompact
-                      ? "Expand order summary"
-                      : "Condense order summary"
-                  }
-                  title={
-                    cartSummaryCompact
-                      ? "Expand order summary"
-                      : "Condense order summary"
-                  }
-                  aria-pressed={cartSummaryCompact}
-                  onClick={() => {
-                    const nextCompact = !cartSummaryCompact;
-
-                    setCartSummaryCompact(nextCompact);
-
-                    if (nextCompact) {
-                      setCartOpen(false);
-                    }
-                  }}
-                >
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d={
-                        cartSummaryCompact
-                          ? "M6 9l6 6 6-6"
-                          : "M6 15l6-6 6 6"
-                      }
-                      stroke="currentColor"
-                      strokeWidth="2.3"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </button>
-              )}
             </div>
 
-            {cartOpen && (
-              <div className="nf-cart-items">
-                {cart.map((item, index) => (
-                  <div className="nf-cart-item" key={`${item.flavor_id}-${item.size_id}-${item.type}`}>
-                    <span className="nf-cart-item-dot" style={{ background: item.hex }} />
-                    <span className="nf-cart-item-name">
-                      <strong>{item.flavor}</strong>
-                      <small>{sizeOf(item.size_id).label} · {typeName(item.type)}</small>
-                    </span>
-                    <button type="button" onClick={() => bump(index, -1)} aria-label={`Remove one ${item.flavor}`}>−</button>
-                    <span className="nf-cart-item-qty">{item.qty}</span>
-                    <button type="button" onClick={() => bump(index, 1)} aria-label={`Add another ${item.flavor}`}>+</button>
-                  </div>
-                ))}
+            <div className="nf-cart-items">
+              {cart.map((item, index) => (
+                <div
+                  className="nf-cart-item"
+                  key={`${item.flavor_id}-${item.size_id}-${item.type}`}
+                >
+                  <span
+                    className="nf-cart-item-dot"
+                    style={{ background: item.hex }}
+                  />
+                  <span className="nf-cart-item-name">
+                    <strong>{item.flavor}</strong>
+                    <small>
+                      {sizeOf(item.size_id).label} · {typeName(item.type)}
+                    </small>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => bump(index, -1)}
+                    aria-label={`Remove one ${item.flavor}`}
+                  >
+                    −
+                  </button>
+                  <span className="nf-cart-item-qty">{item.qty}</span>
+                  <button
+                    type="button"
+                    onClick={() => bump(index, 1)}
+                    aria-label={`Add another ${item.flavor}`}
+                  >
+                    +
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div className="nf-cart-summary">
+              <div className="nf-cart-totals">
+                <div className="nf-cart-totals-row">
+                  <span>Merchandise subtotal</span>
+                  <strong>{money(price.sub + price.saved)}</strong>
+                </div>
+
                 {price.saved > 0 && (
-                  <div className="nf-cart-savings">
-                    <span>YOU SAVE</span>
-                    <strong>{money(price.saved)}</strong>
-                    <small>with bundle pricing</small>
+                  <div className="nf-cart-totals-row nf-cart-discount-row">
+                    <span>Bundle discount</span>
+                    <strong>−{money(price.saved)}</strong>
                   </div>
                 )}
 
-                <aside className="nf-cart-use-ideas">
-                  <div className="nf-cart-use-ideas-kicker">Try it your way</div>
-                  <strong>
-                    {cart.length === 1
-                      ? `Ways to enjoy ${cart[0]?.flavor || "your honey"}`
-                      : "Ways to enjoy your honey"}
-                  </strong>
-
-                  <ul>
-                    <li>Drizzle over toast, biscuits, pancakes, or waffles.</li>
-                    <li>Pair with cheese, crackers, fruit, yogurt, or oatmeal.</li>
-                    <li>Use as a finishing drizzle on sweet or savory dishes.</li>
-                    <li>Mix into dressings, glazes, marinades, or baked recipes.</li>
-                  </ul>
-                </aside>
-              </div>
-            )}
-
-            {method === "delivery" &&
-              belowMin &&
-              zone &&
-              deliveryWarningDismissedAt !== price.sub && (
-                <div className="nf-cart-delivery-warning" role="status" aria-live="polite">
-                  <div className="nf-cart-delivery-warning-copy">
-                    <div>
-                      <strong>{money(price.sub)} merchandise subtotal</strong> — add{" "}
-                      <strong>{money(Math.max(0, zone.minimum - price.sub))}</strong>{" "}
-                      more to qualify for local delivery.
-                    </div>
-                    <div className="nf-cart-delivery-warning-note">
-                      Delivery fees don&rsquo;t count toward the {money(zone.minimum)} minimum.
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setDeliveryWarningDismissedAt(price.sub)}
-                  >
-                    Got it
-                  </button>
+                <div className="nf-cart-grand-total">
+                  <span>Order total</span>
+                  <strong>{money(price.sub)}</strong>
                 </div>
-              )}
-
-            <div className="nf-cart-summary">
-              {price.jars > 0 && (
-                <section
-                  className="nf-cart-bundle-rail"
-                  aria-label={`${price.bundles} completed bundles and ${
-                    price.jars % B.count
-                  } of ${B.count} jars selected for the next bundle`}
-                >
-                  <div className="nf-cart-bundle-rail-copy">
-                    <div className="nf-cart-bundle-rail-heading">
-                      {sizeOf(B.size).label} Bundle · {B.count} for{" "}
-                      {money(B.price)}
-                    </div>
-
-                    <div
-                      className="nf-cart-bundle-rail-status"
-                      aria-live="polite"
-                    >
-                      {price.jars % B.count === 0 ? (
-                        <>
-                          <strong>
-                            {price.bundles} bundle
-                            {price.bundles > 1 ? "s" : ""} complete
-                          </strong>
-                          <span>
-                            Start selecting your next bundle
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <strong>
-                            {price.jars % B.count}/{B.count} jars selected
-                          </strong>
-                          <span>
-                            Choose{" "}
-                            {B.count - (price.jars % B.count)} more
-                            to complete this bundle
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="nf-cart-bundle-rail-jars">
-                    {Array.from({
-                      length: price.bundles,
-                    }).map((_, index) => (
-                      <div
-                        className="nf-cart-bundle-rail-jar is-complete"
-                        key={`completed-bundle-${index}`}
-                      >
-                        <LockedBundleIcon size={50} />
-                      </div>
-                    ))}
-
-                    <div
-                      className="nf-cart-bundle-rail-jar is-current"
-                      key={`current-bundle-${price.bundles}`}
-                    >
-                      <HoneyJarProgress
-                        filled={price.jars % B.count}
-                        total={B.count}
-                        size={56}
-                      />
-                    </div>
-                  </div>
-                </section>
-              )}
-
-              <div className="nf-cart-totals">
-                <div>Merchandise subtotal: {money(price.sub)}</div>
-                {method === "delivery" && <div>Delivery: {fee > 0 ? money(fee) : "Free"}</div>}
-                {method === "ship" && <div>Shipping: Free</div>}
-                <span>Order total</span>
-                <strong>{money(total)}</strong>
               </div>
 
               <button
                 className="btn solid nf-guided-order-button"
                 disabled={busy}
-                onClick={continueOrder}
+                onClick={startCheckout}
               >
-                {canPlace ? "Review order" : "Continue"}
+                Continue
               </button>
             </div>
           </div>
         </aside>
       )}
+
     </div>
   );
 }
