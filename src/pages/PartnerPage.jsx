@@ -1,21 +1,22 @@
 import { useMemo, useState } from "react";
 
 const PARTNER_CSS = `
-.nf-partner-page { padding-bottom:190px; }
-.nf-partner-main { padding-top:34px; padding-bottom:80px; }
+.nf-partner-page { padding-bottom:180px; }
+.nf-partner-main { padding-top:30px; padding-bottom:84px; }
 .nf-partner-hero {
   position:relative;
   overflow:hidden;
   display:grid;
-  grid-template-columns:minmax(0,1.15fr) minmax(300px,.85fr);
+  grid-template-columns:minmax(0,1.12fr) minmax(300px,.88fr);
   gap:34px;
-  padding:clamp(28px,5vw,58px);
+  padding:clamp(30px,5vw,60px);
   border-radius:30px;
   background:
-    radial-gradient(circle at 92% 10%,rgba(247,196,28,.18),transparent 27%),
-    linear-gradient(145deg,#21140D 0%,#392417 58%,#173C52 100%);
-  color:#FFFFFF;
-  box-shadow:0 24px 58px rgba(31,20,12,.22);
+    radial-gradient(circle at 92% 10%,rgba(247,196,28,.22),transparent 28%),
+    radial-gradient(circle at 8% 88%,rgba(114,183,228,.14),transparent 30%),
+    linear-gradient(145deg,#102E40 0%,#174C68 55%,#1B6F91 100%);
+  color:#fff;
+  box-shadow:0 24px 58px rgba(31,20,12,.2);
 }
 .nf-partner-hero::after {
   content:"";
@@ -27,59 +28,134 @@ const PARTNER_CSS = `
   border-radius:50%;
   border:34px solid rgba(114,183,228,.12);
 }
-.nf-partner-hero-copy,.nf-partner-hero-card { position:relative; z-index:1; }
+.nf-partner-hero-copy,.nf-partner-format-card { position:relative; z-index:1; }
 .nf-partner-hero h2 {
+  max-width:690px;
   margin:12px 0 0;
-  max-width:650px;
   font-family:'Bebas Neue',Impact,sans-serif;
-  font-size:clamp(52px,7vw,84px);
+  font-size:clamp(54px,7vw,86px);
   line-height:.9;
   letter-spacing:.015em;
 }
 .nf-partner-hero h2 span { color:#F7C41C; }
-.nf-partner-hero p { max-width:650px; margin:20px 0 0; color:#F6ECDD; font-size:16px; line-height:1.75; }
+.nf-partner-hero p {
+  max-width:680px;
+  margin:20px 0 0;
+  color:#F6ECDD;
+  font-size:16px;
+  line-height:1.72;
+}
 .nf-partner-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:26px; }
 .nf-partner-actions button { min-height:48px; padding:12px 18px; }
 .nf-partner-secondary {
-  border-color:rgba(255,255,255,.55) !important;
-  background:rgba(255,255,255,.1) !important;
-  color:#FFFFFF !important;
+  border-color:rgba(255,255,255,.55)!important;
+  background:rgba(255,255,255,.1)!important;
+  color:#fff!important;
 }
-.nf-partner-hero-card {
+.nf-partner-format-card {
   align-self:stretch;
   display:grid;
   align-content:center;
   gap:15px;
   padding:26px;
-  border:1px solid rgba(255,255,255,.24);
+  border:1px solid rgba(255,255,255,.3);
   border-radius:22px;
-  background:rgba(255,255,255,.09);
+  background:rgba(255,255,255,.11);
   backdrop-filter:blur(8px);
 }
-.nf-partner-hero-card strong { color:#FFF4CE; font-size:18px; }
-.nf-partner-hero-card ul { display:grid; gap:12px; margin:0; padding:0; list-style:none; }
-.nf-partner-hero-card li { display:grid; grid-template-columns:28px minmax(0,1fr); gap:9px; align-items:start; color:#FFFFFF; line-height:1.5; }
-.nf-partner-hero-card li span:first-child { color:#F7C41C; font-weight:950; }
+.nf-partner-format-card strong { color:#FFF4CE; font-size:18px; }
+.nf-partner-format-list { display:grid; gap:9px; }
+.nf-partner-format-row {
+  display:flex;
+  justify-content:space-between;
+  gap:16px;
+  padding:11px 12px;
+  border-radius:12px;
+  background:rgba(255,255,255,.08);
+}
+.nf-partner-format-row span:first-child { color:#D8EAF5; font-size:14px; font-weight:850; }
+.nf-partner-format-row span:last-child { color:#fff; font-size:14px; font-weight:900; text-align:right; }
+.nf-partner-format-note { margin:0!important; color:#D7CFC6!important; font-size:11.5px!important; line-height:1.55!important; }
+
 .nf-partner-section { margin-top:56px; }
 .nf-partner-heading { max-width:760px; margin-bottom:22px; }
-.nf-partner-heading h2 { margin:8px 0 0; font-family:'Bebas Neue',Impact,sans-serif; font-size:46px; line-height:.95; color:#17120E; }
-.nf-partner-heading p { margin:12px 0 0; color:#5D5148; font-size:15px; line-height:1.75; }
-.nf-partner-benefits { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
-.nf-partner-benefit {
-  padding:22px;
-  border:1px solid #E7DED3;
-  border-radius:20px;
-  background:linear-gradient(145deg,#FFFFFF,#FBF7F1);
-  box-shadow:0 10px 26px rgba(45,31,20,.07);
+.nf-partner-heading h2 {
+  margin:8px 0 0;
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:46px;
+  line-height:.95;
+  color:#17120E;
 }
-.nf-partner-benefit-icon { width:42px; height:42px; display:grid; place-items:center; border-radius:13px; background:#EAF7FF; color:#167BB6; font-size:20px; }
-.nf-partner-benefit h3 { margin:15px 0 7px; color:#24170F; font-size:17px; }
-.nf-partner-benefit p { margin:0; color:#65584D; font-size:13.5px; line-height:1.65; }
-.nf-partner-process { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; counter-reset:partner-step; }
+.nf-partner-heading p { margin:12px 0 0; color:#5D5148; font-size:15px; line-height:1.72; }
+
+.nf-partner-programs { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+.nf-partner-program {
+  position:relative;
+  overflow:hidden;
+  min-height:260px;
+  padding:24px;
+  border:1px solid #E3D8CB;
+  border-radius:21px;
+  background:#fff;
+  box-shadow:0 10px 28px rgba(45,31,20,.07);
+}
+.nf-partner-program::after {
+  content:"";
+  position:absolute;
+  width:120px;
+  height:120px;
+  right:-54px;
+  top:-54px;
+  border-radius:50%;
+  background:rgba(36,160,237,.08);
+}
+.nf-partner-program[data-kind="bulk"]::after { background:rgba(247,196,28,.13); }
+.nf-partner-program[data-kind="gifting"]::after { background:rgba(140,108,180,.11); }
+.nf-partner-program-label {
+  display:inline-flex;
+  padding:6px 9px;
+  border-radius:999px;
+  background:#EAF7FF;
+  color:#175D85;
+  font-size:14px;
+  font-weight:950;
+  letter-spacing:.045em;
+  text-transform:uppercase;
+}
+.nf-partner-program[data-kind="bulk"] .nf-partner-program-label { background:#FFF4BE; color:#664B00; }
+.nf-partner-program[data-kind="gifting"] .nf-partner-program-label { background:#F2EAF8; color:#68488A; }
+.nf-partner-program h3 { margin:16px 0 8px; color:#25180F; font-size:21px; }
+.nf-partner-program > p { margin:0; color:#67594D; font-size:14px; line-height:1.65; }
+.nf-partner-program ul { display:grid; gap:8px; margin:18px 0 0; padding:0; list-style:none; }
+.nf-partner-program li { display:grid; grid-template-columns:16px minmax(0,1fr); gap:8px; color:#54483F; font-size:14px; line-height:1.5; }
+.nf-partner-program li::before { content:"✓"; color:#167BB6; font-weight:950; }
+
+.nf-partner-benefits { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+.nf-partner-benefit {
+  padding:20px;
+  border:1px solid #E7DED3;
+  border-radius:18px;
+  background:linear-gradient(145deg,#FFFFFF,#FBF7F1);
+}
+.nf-partner-benefit-icon {
+  width:38px;
+  height:38px;
+  display:grid;
+  place-items:center;
+  border-radius:12px;
+  background:#EAF7FF;
+  color:#167BB6;
+  font-size:17px;
+  font-weight:900;
+}
+.nf-partner-benefit h3 { margin:14px 0 7px; color:#24170F; font-size:15px; }
+.nf-partner-benefit p { margin:0; color:#65584D; font-size:14px; line-height:1.6; }
+
+.nf-partner-process { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; counter-reset:partner-step; }
 .nf-partner-step {
   position:relative;
-  min-height:155px;
-  padding:22px 20px 20px 68px;
+  min-height:150px;
+  padding:56px 18px 18px;
   border:1px solid #DDE8EF;
   border-radius:18px;
   background:#F6FBFE;
@@ -89,80 +165,107 @@ const PARTNER_CSS = `
   content:counter(partner-step);
   position:absolute;
   left:18px;
-  top:19px;
-  width:36px;
-  height:36px;
+  top:17px;
+  width:30px;
+  height:30px;
   display:grid;
   place-items:center;
   border-radius:50%;
-  background:#24A0ED;
-  color:#FFFFFF;
+  background:#173C52;
+  color:#fff;
+  font-size:14px;
   font-weight:950;
 }
-.nf-partner-step h3 { margin:2px 0 7px; color:#173C52; font-size:16px; }
-.nf-partner-step p { margin:0; color:#5B7180; font-size:13px; line-height:1.6; }
-.nf-partner-program-note {
-  margin-top:16px;
-  padding:18px 20px;
+.nf-partner-step h3 { margin:0 0 7px; color:#173C52; font-size:15px; }
+.nf-partner-step p { margin:0; color:#5B7180; font-size:14px; line-height:1.6; }
+
+.nf-partner-pricing-note {
+  margin-top:18px;
+  padding:16px 18px;
   border-left:5px solid #F7C41C;
-  border-radius:14px;
+  border-radius:13px;
   background:#FFF9E8;
   color:#604A1C;
   font-size:14px;
-  line-height:1.7;
-}
-.nf-partner-portal-note {
-  display:none;
-  margin-top:15px;
-  padding:16px;
-  border:1px solid #8FC4E4;
-  border-radius:14px;
-  background:#EAF7FF;
-  color:#173C52;
   line-height:1.65;
 }
-.nf-partner-portal-note.visible { display:block; }
+
 .nf-partner-form-shell {
   display:grid;
-  grid-template-columns:minmax(250px,.72fr) minmax(0,1.28fr);
-  gap:28px;
+  grid-template-columns:minmax(250px,.7fr) minmax(0,1.3fr);
+  gap:30px;
   padding:clamp(22px,4vw,38px);
   border:1px solid #E2D5C6;
   border-radius:26px;
   background:linear-gradient(145deg,#FFFDF8,#F7F0E6);
   box-shadow:0 16px 40px rgba(45,31,20,.09);
 }
-.nf-partner-form-intro h2 { margin:9px 0 12px; font-family:'Bebas Neue',Impact,sans-serif; font-size:46px; line-height:.95; }
-.nf-partner-form-intro p { color:#62554A; font-size:14px; line-height:1.75; }
+.nf-partner-form-intro h2 {
+  margin:9px 0 12px;
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:46px;
+  line-height:.95;
+}
+.nf-partner-form-intro p { color:#62554A; font-size:14px; line-height:1.72; }
 .nf-partner-form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
 .nf-partner-field { display:grid; gap:6px; }
 .nf-partner-field.full { grid-column:1/-1; }
-.nf-partner-field label { color:#4A3313; font-size:11px; font-weight:850; letter-spacing:.05em; text-transform:uppercase; }
-.nf-partner-field select { width:100%; min-height:50px; padding:12px 14px; border:1.5px solid #CDB58D; border-radius:12px; background:#FFFFFF; color:#17120E; font:inherit; font-size:15px; }
-.nf-partner-field textarea { min-height:110px; resize:vertical; }
-.nf-partner-consent { grid-column:1/-1; display:flex; align-items:flex-start; gap:10px; padding:12px; border-radius:12px; background:#FFFFFF; color:#5D5148; font-size:12.5px; line-height:1.55; }
-.nf-partner-consent input { width:18px !important; height:18px; flex:0 0 18px; margin-top:1px; box-shadow:none !important; }
+.nf-partner-field label {
+  color:#4A3313;
+  font-size:14px;
+  font-weight:850;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+.nf-partner-field select {
+  width:100%;
+  min-height:50px;
+  padding:12px 14px;
+  border:1.5px solid #CDB58D;
+  border-radius:12px;
+  background:#fff;
+  color:#17120E;
+  font:inherit;
+  font-size:15px;
+}
+.nf-partner-field textarea { min-height:95px; resize:vertical; }
+.nf-partner-consent {
+  grid-column:1/-1;
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  padding:12px;
+  border-radius:12px;
+  background:#fff;
+  color:#5D5148;
+  font-size:14px;
+  line-height:1.55;
+}
+.nf-partner-consent input { width:18px!important; height:18px; flex:0 0 18px; margin-top:1px; box-shadow:none!important; }
 .nf-partner-submit { grid-column:1/-1; min-height:52px; }
 .nf-partner-success { padding:24px; border:2px solid #8FA97B; border-radius:18px; background:#F7FBF4; text-align:center; }
 .nf-partner-success h3 { margin:0; font-family:'Bebas Neue',Impact,sans-serif; font-size:34px; color:#3F6031; }
 .nf-partner-success p { margin:8px 0 0; color:#536948; line-height:1.65; }
-.nf-partner-faq { display:grid; gap:10px; }
-.nf-partner-faq details { border:1px solid #E5DBCF; border-radius:15px; background:#FFFFFF; }
-.nf-partner-faq summary { padding:16px 18px; cursor:pointer; color:#2B211A; font-weight:800; }
-.nf-partner-faq p { margin:0; padding:0 18px 18px; color:#65584D; font-size:13.5px; line-height:1.7; }
-@media (max-width:850px) {
+
+.nf-partner-faq { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.nf-partner-faq details { border:1px solid #E5DBCF; border-radius:15px; background:#fff; }
+.nf-partner-faq summary { padding:16px 18px; cursor:pointer; color:#2B211A; font-size:14px; font-weight:850; }
+.nf-partner-faq p { margin:0; padding:0 18px 18px; color:#65584D; font-size:14px; line-height:1.68; }
+
+@media (max-width:900px) {
   .nf-partner-hero,.nf-partner-form-shell { grid-template-columns:1fr; }
+  .nf-partner-programs { grid-template-columns:1fr; }
   .nf-partner-benefits,.nf-partner-process { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
 @media (max-width:600px) {
   .nf-partner-page { padding-bottom:165px; }
   .nf-partner-main { padding-top:20px; }
-  .nf-partner-hero { padding:27px 20px; border-radius:22px; }
-  .nf-partner-hero h2 { font-size:52px; }
-  .nf-partner-benefits,.nf-partner-process,.nf-partner-form-grid { grid-template-columns:1fr; }
-  .nf-partner-field.full,.nf-partner-consent,.nf-partner-submit { grid-column:auto; }
+  .nf-partner-hero { padding:28px 20px; border-radius:22px; }
+  .nf-partner-hero h2 { font-size:54px; }
   .nf-partner-section { margin-top:42px; }
   .nf-partner-heading h2,.nf-partner-form-intro h2 { font-size:38px; }
+  .nf-partner-benefits,.nf-partner-process,.nf-partner-form-grid,.nf-partner-faq { grid-template-columns:1fr; }
+  .nf-partner-field.full,.nf-partner-consent,.nf-partner-submit { grid-column:auto; }
 }
 `;
 
@@ -170,43 +273,81 @@ const BUSINESS_TYPES = [
   "Boutique or gift shop",
   "Michigan-made shop",
   "Farm store or specialty grocery",
-  "Café or bakery",
+  "Café, bakery, or foodservice",
   "Winery, cheese shop, or butcher",
-  "Tourist or visitor shop",
-  "Hospitality or foodservice inquiry",
-  "Corporate or event gifting inquiry",
+  "Hospitality or tourism business",
+  "Corporate or event gifting",
   "Other",
 ];
 
+const PARTNER_INTERESTS = [
+  "Retail shelf products",
+  "Foodservice or bulk honey",
+  "Event favors or gifting",
+  "Custom labels or packaging",
+  "Multiple partner options",
+];
+
 const BENEFITS = [
-  ["✦", "Distinctive Michigan-made honey", "A broad infused-honey collection made in small batches with real ingredients."],
-  ["◌", "Built for discovery", "Flavors invite sampling, conversation, pairing ideas, and repeat visits."],
-  ["▣", "Shelf-friendly presentation", "Giftable jars designed to work in boutiques, cafés, farm stores, and specialty retailers."],
-  ["↻", "Reorder support", "Approved partners can request replenishment and receive direct help with timing and assortment."],
-  ["▤", "Partner materials", "Product information, flavor guidance, and approved brand resources will live in the Partner Portal."],
-  ["♥", "A direct relationship", "You work directly with the NectarFusions team rather than through a distant distributor."],
+  ["MI", "Michigan Honey", "Raw Michigan honey with the pollen left in and a growing collection of real-ingredient infusions."],
+  ["✦", "Made to Stand Out", "Distinctive flavors and giftable formats designed to spark sampling, conversation, and repeat purchases."],
+  ["↔", "Flexible Formats", "Retail jars, bulk honey, and small gifting formats let the partnership match how your business actually sells or serves."],
+  ["↻", "Direct Support", "Approved partners get secure ordering tools, resources, event support, and a direct relationship with NectarFusions."],
+];
+
+const PROGRAMS = [
+  {
+    kind: "retail",
+    label: "Retail",
+    title: "Retail Shelves",
+    copy: "For boutiques, farm stores, specialty grocers, cafés, and Michigan-made shops.",
+    bullets: [
+      "7 oz and 1 lb retail jars",
+      "Natural and signature infused flavors",
+      "Curated opening assortment and easy replenishment",
+      "Current pricing and order history through the Partner Portal",
+    ],
+  },
+  {
+    kind: "bulk",
+    label: "Foodservice",
+    title: "Bulk Honey",
+    copy: "For cafés, bakeries, kitchens, hospitality, beverage programs, and higher-volume use.",
+    bullets: [
+      "1/2 gallon, 1 gallon, and 5 gallon formats",
+      "Natural or infused honey options",
+      "Pickup, delivery, or shipping requests",
+      "Bulk ordering enabled for eligible partner accounts",
+    ],
+  },
+  {
+    kind: "gifting",
+    label: "Events & Gifting",
+    title: "Small Favors + Custom Requests",
+    copy: "For weddings, client gifts, corporate events, hospitality, and branded gifting.",
+    bullets: [
+      "2 oz plastic honey bears",
+      "Small glass hexagonal containers",
+      "Flavor selection and presentation requests",
+      "Custom label requests available for reviewed partner orders",
+    ],
+  },
 ];
 
 const PROCESS = [
-  ["Start with an inquiry", "Tell us about your store, customers, placement, timing, and where NectarFusions would be sold."],
-  ["Complete the application", "Businesses moving forward provide store, buyer, resale, receiving, payment, and placement information."],
-  ["Receive a curated offer", "Approved businesses receive the current line sheet and a recommended 7 oz and 1 lb opening mix."],
-  ["Sign and prepay", "Sign the partner agreement and prepay the 24-unit opening order before product is released."],
-  ["Launch with support", "Receive lot-coded product, shelf guidance, and approved merchandising materials."],
-  ["Review and replenish", "Review sell-through at Day 30 and Day 60, then reorder the winners through the secure portal."],
+  ["Tell us about your business", "Send a short partner inquiry with where and how you plan to sell, serve, or gift NectarFusions."],
+  ["We match the right program", "We review your business and determine the best retail, bulk, gifting, or combined partner setup."],
+  ["Get approved and connected", "Approved partners receive current terms, pricing, resources, and secure Partner Portal access."],
+  ["Order and grow", "Place replenishment or eligible bulk requests through the portal and work directly with NectarFusions as needs change."],
 ];
 
 const FAQS = [
-  ["Who may apply?", "Boutiques, gift shops, Michigan-made shops, farm stores, specialty grocers, cafés, bakeries, wineries, cheese shops, butchers, and visitor-focused retailers may apply. Corporate, foodservice, custom, and pilot work use separate written programs."],
-  ["Which jar sizes are available to retail partners?", "Approved retail wholesale partners may purchase 7 oz and 1 lb jars. The 4 oz jar is reserved for NectarFusions direct farmers-market sales."],
-  ["What are the wholesale prices?", "The published wholesale prices are $7.25 for the 7 oz jar and $12.00 for the 1 lb jar. Suggested retail is $12.00 and $20.00, although retailers independently set their resale prices."],
-  ["What are the order minimums?", "The opening minimum is 24 units. The reorder minimum is 12 units. The standard case pack is six units per flavor and size unless a mixed case is offered in writing."],
-  ["Can we choose our flavors?", "Yes. NectarFusions provides a curated opening recommendation, and the final assortment is confirmed based on the store, customer fit, season, and available inventory."],
-  ["Are orders prepaid?", "Yes. Opening orders are prepaid. Reorders remain prepaid unless written payment terms are specifically approved."],
-  ["Do you offer consignment?", "No. The retail partner program is wholesale. Corporate gifting, foodservice, custom, co-brand, and pilot requests are quoted separately in writing."],
-  ["How do partner levels work?", "Starter, Growth, and Strategic levels reward performance with support, access, visibility, allocation, and possible earned protections. Partner level never changes the published unit wholesale price."],
-  ["How do reorders work?", "Current partners submit replenishment requests through the secure Partner Portal. NectarFusions reviews inventory, timing, fulfillment, and the requested assortment before confirming the order."],
-  ["Who should we contact?", "Email info@nectar-fusions.com or call or text (989) 941-6385."],
+  ["What sizes are available?", "Retail partners currently order 7 oz and 1 lb jars. Eligible foodservice and bulk partners can request 1/2 gallon, 1 gallon, and 5 gallon formats. Gifting options include 2 oz plastic bears and small glass hexagonal containers."],
+  ["What are the retail order minimums?", "The current retail program uses a 24-unit opening order, a 12-unit reorder minimum, and six-unit increments by flavor and size unless a different arrangement is approved in writing."],
+  ["Can partners order both natural and infused honey?", "Yes. Available selections depend on the program, current inventory, and partner eligibility. Foodservice and bulk ordering supports both natural and infused options."],
+  ["Do you offer custom labels or event favors?", "Yes. Eligible partner requests can include small gifting containers, custom label requests, packaging details, and event-specific needs. Custom pricing is provided after review."],
+  ["Where do I see current pricing?", "Approved partners receive current pricing and ordering access through NectarFusions partner materials and the secure Partner Portal. This keeps public information simple while partner pricing stays current."],
+  ["How do reorders work?", "Approved retail partners submit replenishment requests through the Partner Portal. Eligible accounts can also access foodservice, bulk, gifting, and custom-request tools from the same secure account."],
 ];
 
 export default function PartnerPage({ Header, styles, onBack, onPartnerLogin, submitInquiry }) {
@@ -222,12 +363,8 @@ export default function PartnerPage({ Header, styles, onBack, onPartnerLogin, su
     email: "",
     phone: "",
     websiteSocial: "",
-    businessAddress: "",
-    salesLocation: "",
-    openingTiming: "",
     interests: "",
-    assortment: "",
-    heard: "",
+    salesLocation: "",
     message: "",
     consent: false,
   });
@@ -239,8 +376,15 @@ export default function PartnerPage({ Header, styles, onBack, onPartnerLogin, su
   };
 
   const canSubmit = useMemo(
-    () => form.contactName.trim() && form.businessName.trim() && form.businessType &&
-      form.email.trim() && form.salesLocation.trim() && form.consent && !busy,
+    () =>
+      form.contactName.trim() &&
+      form.businessName.trim() &&
+      form.businessType &&
+      form.email.trim() &&
+      form.interests &&
+      form.salesLocation.trim() &&
+      form.consent &&
+      !busy,
     [form, busy]
   );
 
@@ -251,7 +395,7 @@ export default function PartnerPage({ Header, styles, onBack, onPartnerLogin, su
   const submit = async (event) => {
     event.preventDefault();
     if (!canSubmit) {
-      setError("Complete the required business, contact, sales-location, and consent fields.");
+      setError("Complete the required business, contact, partner-interest, sales-location, and consent fields.");
       return;
     }
 
@@ -262,13 +406,9 @@ export default function PartnerPage({ Header, styles, onBack, onPartnerLogin, su
       "PARTNER INQUIRY",
       `Business: ${form.businessName.trim()}`,
       `Business type: ${form.businessType}`,
+      `Partnership interest: ${form.interests}`,
       `Website or social: ${form.websiteSocial.trim() || "Not provided"}`,
-      `Business address: ${form.businessAddress.trim() || "Not provided"}`,
-      `Where products would be sold: ${form.salesLocation.trim()}`,
-      `Estimated opening timing: ${form.openingTiming.trim() || "Not provided"}`,
-      `Products or flavors of interest: ${form.interests.trim() || "Not provided"}`,
-      `Current retail assortment: ${form.assortment.trim() || "Not provided"}`,
-      `How they heard about NectarFusions: ${form.heard.trim() || "Not provided"}`,
+      `Where NectarFusions would be sold or used: ${form.salesLocation.trim()}`,
       `Additional message: ${form.message.trim() || "None"}`,
       "Consent to be contacted: Yes",
     ].join("\n");
@@ -298,7 +438,7 @@ export default function PartnerPage({ Header, styles, onBack, onPartnerLogin, su
       <style>{styles}</style>
       <style>{PARTNER_CSS}</style>
       <Header
-        eyebrow="Retail & Wholesale"
+        eyebrow="Retail • Foodservice • Gifting"
         title="PARTNER WITH NECTARFUSIONS"
         right={<button className="btn ghost nf-back-to-shop" onClick={onBack}>Back to shop</button>}
       />
@@ -306,44 +446,71 @@ export default function PartnerPage({ Header, styles, onBack, onPartnerLogin, su
       <main className="nf-wrap nf-partner-main">
         <section className="nf-partner-hero">
           <div className="nf-partner-hero-copy">
-            <div className="nf-modern-kicker" style={{ color: "#72B7E4" }}>For boutiques, farm stores, cafés, and specialty retailers</div>
-            <h2>Bring NectarFusions to <span>Your Customers</span></h2>
+            <div className="nf-modern-kicker" style={{ color: "#72B7E4" }}>
+              Wholesale partnerships built to fit your business
+            </div>
+            <h2>Michigan Honey, <span>Made to Move</span></h2>
             <p>
-              Add a small-batch Michigan honey line made for discovery, gifting, everyday use, and strong local
-              retail relationships. Approved retail partners carry two proven wholesale sizes with published pricing.
+              Stock it, serve it, or gift it. NectarFusions partners get access to raw Michigan honey,
+              signature infused flavors, multiple product formats, and a secure portal built for easy reorders and support.
             </p>
             <div className="nf-partner-actions">
-              <button type="button" className="btn solid" onClick={scrollToApplication}>Become a Partner</button>
-              <button
-                type="button"
-                className="btn nf-partner-secondary"
-                onClick={onPartnerLogin}
-              >
-                Login
+              <button type="button" className="btn solid" onClick={scrollToApplication}>Apply to Partner</button>
+              <button type="button" className="btn nf-partner-secondary" onClick={onPartnerLogin}>
+                Partner Login
               </button>
             </div>
           </div>
 
-          <aside className="nf-partner-hero-card" aria-label="Partner program overview">
-            <strong>A clear, low-risk retail partnership</strong>
-            <ul>
-              <li><span>01</span><span>Retail wholesale is limited to the 7 oz and 1 lb jars.</span></li>
-              <li><span>02</span><span>Every approved retail partner receives the same published unit pricing.</span></li>
-              <li><span>03</span><span>The opening order is prepaid with a 24-unit minimum.</span></li>
-              <li><span>04</span><span>Day-30 and Day-60 reviews guide reorders and assortment decisions.</span></li>
-            </ul>
+          <aside className="nf-partner-format-card" aria-label="Available NectarFusions partner formats">
+            <strong>Available Partner Formats</strong>
+            <div className="nf-partner-format-list">
+              <div className="nf-partner-format-row"><span>Retail</span><span>7 oz • 1 lb</span></div>
+              <div className="nf-partner-format-row"><span>Foodservice</span><span>1/2 gal • 1 gal • 5 gal</span></div>
+              <div className="nf-partner-format-row"><span>Gifting</span><span>2 oz bears • glass hex</span></div>
+              <div className="nf-partner-format-row"><span>Honey</span><span>Natural + infused</span></div>
+            </div>
+            <p className="nf-partner-format-note">
+              Product access depends on partner type, inventory, and program approval.
+            </p>
           </aside>
         </section>
 
         <section className="nf-partner-section">
           <div className="nf-partner-heading">
-            <div className="nf-modern-kicker">Why partner with us</div>
-            <h2>Honey That Gives People Something to Talk About</h2>
+            <div className="nf-modern-kicker">Choose what fits</div>
+            <h2>One Partnership. Multiple Ways to Sell It.</h2>
             <p>
-              NectarFusions combines raw Michigan honey with real ingredients in flavors designed to be sampled,
-              shared, gifted, paired, and remembered.
+              Start with the program that fits your business today. Approved partners can expand into additional
+              formats as their needs grow.
             </p>
           </div>
+
+          <div className="nf-partner-programs">
+            {PROGRAMS.map((program) => (
+              <article className="nf-partner-program" data-kind={program.kind} key={program.title}>
+                <div className="nf-partner-program-label">{program.label}</div>
+                <h3>{program.title}</h3>
+                <p>{program.copy}</p>
+                <ul>
+                  {program.bullets.map((bullet) => <li key={bullet}>{bullet}</li>)}
+                </ul>
+              </article>
+            ))}
+          </div>
+
+          <div className="nf-partner-pricing-note">
+            Current partner pricing is provided during approval and through the secure Partner Portal, so the
+            information partners use to order stays current.
+          </div>
+        </section>
+
+        <section className="nf-partner-section">
+          <div className="nf-partner-heading">
+            <div className="nf-modern-kicker">Why NectarFusions</div>
+            <h2>Built for More Than a Shelf</h2>
+          </div>
+
           <div className="nf-partner-benefits">
             {BENEFITS.map(([icon, title, copy]) => (
               <article className="nf-partner-benefit" key={title}>
@@ -357,45 +524,10 @@ export default function PartnerPage({ Header, styles, onBack, onPartnerLogin, su
 
         <section className="nf-partner-section">
           <div className="nf-partner-heading">
-            <div className="nf-modern-kicker">Retail wholesale program</div>
-            <h2>Two Sizes. One Published Price Schedule.</h2>
-            <p>
-              Retailers independently set resale prices. The amounts below are NectarFusions partner costs and
-              suggested retail prices under the corrected July 2026 program.
-            </p>
-          </div>
-
-          <div className="nf-partner-benefits">
-            <article className="nf-partner-benefit">
-              <div className="nf-partner-benefit-icon" aria-hidden="true">7</div>
-              <h3>7 oz Hero Jar</h3>
-              <p><strong>$7.25 partner cost</strong><br />$12.00 suggested retail<br />$4.75 partner gross at suggested retail</p>
-            </article>
-
-            <article className="nf-partner-benefit">
-              <div className="nf-partner-benefit-icon" aria-hidden="true">1</div>
-              <h3>1 lb Pantry Jar</h3>
-              <p><strong>$12.00 partner cost</strong><br />$20.00 suggested retail<br />$8.00 partner gross at suggested retail</p>
-            </article>
-
-            <article className="nf-partner-benefit">
-              <div className="nf-partner-benefit-icon" aria-hidden="true">✓</div>
-              <h3>Program Minimums</h3>
-              <p><strong>24-unit opening order</strong><br />12-unit reorder minimum<br />Six units per flavor and size</p>
-            </article>
-          </div>
-
-          <div className="nf-partner-program-note">
-            The 4 oz jar is reserved for NectarFusions direct farmers-market sales. Starter, Growth, and Strategic
-            partner levels change support and access—not the published per-jar wholesale price.
-          </div>
-        </section>
-
-        <section className="nf-partner-section">
-          <div className="nf-partner-heading">
             <div className="nf-modern-kicker">How it works</div>
-            <h2>A Clear Path From Application to Reorder</h2>
+            <h2>Simple From First Hello to Reorder</h2>
           </div>
+
           <div className="nf-partner-process">
             {PROCESS.map(([title, copy]) => (
               <article className="nf-partner-step" key={title}>
@@ -404,28 +536,23 @@ export default function PartnerPage({ Header, styles, onBack, onPartnerLogin, su
               </article>
             ))}
           </div>
-          <div className="nf-partner-program-note">
-            Eligible unopened units from the first wholesale order may request one controlled flavor swap by Day 45.
-            The maximum is 20% of the opening order, rounded down to whole jars. A 24-unit opening order therefore
-            allows a maximum swap of four jars, subject to label, seal, Core-flavor, and availability requirements.
-          </div>
         </section>
 
         <section id="partner-application" className="nf-partner-section nf-partner-form-shell">
           <div className="nf-partner-form-intro">
             <div className="nf-modern-kicker">Partner inquiry</div>
-            <h2>Tell Us About Your Business</h2>
+            <h2>Let’s See What Fits Your Business</h2>
             <p>
-              This is the initial partner inquiry. Businesses moving forward will complete the formal application,
-              provide resale information, and confirm receiving, payment, and placement details before approval.
+              Tell us a little about your business and what you are interested in. We will review the fit and follow
+              up with the right partner options, current pricing, and next steps.
             </p>
             <p><strong>Required fields are marked with an asterisk.</strong></p>
           </div>
 
           {done ? (
             <div className="nf-partner-success" role="status">
-              <h3>Inquiry received</h3>
-              <p>Thank you. NectarFusions will review the information and contact you using the details provided.</p>
+              <h3>Inquiry Received</h3>
+              <p>Thank you. NectarFusions will review your information and contact you using the details provided.</p>
             </div>
           ) : (
             <form className="nf-partner-form-grid" onSubmit={submit}>
@@ -433,10 +560,12 @@ export default function PartnerPage({ Header, styles, onBack, onPartnerLogin, su
                 <label htmlFor="partner-contact">Contact name *</label>
                 <input id="partner-contact" value={form.contactName} onChange={update("contactName")} />
               </div>
+
               <div className="nf-partner-field">
                 <label htmlFor="partner-business">Business name *</label>
                 <input id="partner-business" value={form.businessName} onChange={update("businessName")} />
               </div>
+
               <div className="nf-partner-field">
                 <label htmlFor="partner-type">Business type *</label>
                 <select id="partner-type" value={form.businessType} onChange={update("businessType")}>
@@ -444,54 +573,54 @@ export default function PartnerPage({ Header, styles, onBack, onPartnerLogin, su
                   {BUSINESS_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
                 </select>
               </div>
+
+              <div className="nf-partner-field">
+                <label htmlFor="partner-interest">What are you interested in? *</label>
+                <select id="partner-interest" value={form.interests} onChange={update("interests")}>
+                  <option value="">Choose one</option>
+                  {PARTNER_INTERESTS.map((interest) => <option key={interest} value={interest}>{interest}</option>)}
+                </select>
+              </div>
+
               <div className="nf-partner-field">
                 <label htmlFor="partner-email">Email *</label>
                 <input id="partner-email" type="email" value={form.email} onChange={update("email")} />
               </div>
+
               <div className="nf-partner-field">
                 <label htmlFor="partner-phone">Phone</label>
                 <input id="partner-phone" inputMode="tel" value={form.phone} onChange={update("phone")} />
               </div>
-              <div className="nf-partner-field">
+
+              <div className="nf-partner-field full">
                 <label htmlFor="partner-web">Website or social link</label>
                 <input id="partner-web" value={form.websiteSocial} onChange={update("websiteSocial")} />
               </div>
+
               <div className="nf-partner-field full">
-                <label htmlFor="partner-address">Business address</label>
-                <input id="partner-address" value={form.businessAddress} onChange={update("businessAddress")} />
+                <label htmlFor="partner-sold">Where would NectarFusions be sold or used? *</label>
+                <textarea
+                  id="partner-sold"
+                  value={form.salesLocation}
+                  onChange={update("salesLocation")}
+                  placeholder="Store, café, bakery, restaurant, event program, client gifting, online shop, or other setting"
+                />
               </div>
+
               <div className="nf-partner-field full">
-                <label htmlFor="partner-sold">Where would NectarFusions be sold? *</label>
-                <textarea id="partner-sold" value={form.salesLocation} onChange={update("salesLocation")}
-                  placeholder="Store location, market, café counter, gifting program, online shop, or other sales setting" />
-              </div>
-              <div className="nf-partner-field">
-                <label htmlFor="partner-timing">Estimated opening timing</label>
-                <input id="partner-timing" value={form.openingTiming} onChange={update("openingTiming")}
-                  placeholder="For example: within 30 days" />
-              </div>
-              <div className="nf-partner-field">
-                <label htmlFor="partner-heard">How did you hear about us?</label>
-                <input id="partner-heard" value={form.heard} onChange={update("heard")} />
-              </div>
-              <div className="nf-partner-field full">
-                <label htmlFor="partner-interests">Flavors or product categories of interest</label>
-                <textarea id="partner-interests" value={form.interests} onChange={update("interests")} />
-              </div>
-              <div className="nf-partner-field full">
-                <label htmlFor="partner-assortment">Current retail assortment</label>
-                <textarea id="partner-assortment" value={form.assortment} onChange={update("assortment")}
-                  placeholder="What products, gifts, foods, or brands do you currently carry?" />
-              </div>
-              <div className="nf-partner-field full">
-                <label htmlFor="partner-message">Additional questions or message</label>
+                <label htmlFor="partner-message">Anything else we should know?</label>
                 <textarea id="partner-message" value={form.message} onChange={update("message")} />
               </div>
 
               <div aria-hidden="true" style={{ position: "absolute", left: "-10000px", width: 1, height: 1, overflow: "hidden" }}>
                 <label htmlFor="partner-website-check">Leave this field empty</label>
-                <input id="partner-website-check" tabIndex={-1} autoComplete="off" value={honeypot}
-                  onChange={(event) => setHoneypot(event.target.value)} />
+                <input
+                  id="partner-website-check"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={honeypot}
+                  onChange={(event) => setHoneypot(event.target.value)}
+                />
               </div>
 
               <label className="nf-partner-consent">
@@ -510,9 +639,10 @@ export default function PartnerPage({ Header, styles, onBack, onPartnerLogin, su
 
         <section className="nf-partner-section">
           <div className="nf-partner-heading">
-            <div className="nf-modern-kicker">Partner FAQ</div>
-            <h2>Before You Apply</h2>
+            <div className="nf-modern-kicker">Quick answers</div>
+            <h2>Partner FAQ</h2>
           </div>
+
           <div className="nf-partner-faq">
             {FAQS.map(([question, answer]) => (
               <details key={question}>
@@ -526,3 +656,4 @@ export default function PartnerPage({ Header, styles, onBack, onPartnerLogin, su
     </div>
   );
 }
+
