@@ -16421,7 +16421,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
   const [retailLocations, setRetailLocations] = useState([]);
   const [customerRequests, setCustomerRequests] = useState([]);
   const [requestView, setRequestView] = useState("open");
-  const [adminTab, setAdminTab] = useState("orders");
+  const [adminTab, setAdminTab] = useState("fulfillment");
   const [q, setQ] = useState("");
   const [orderView, setOrderView] = useState("active");
   const [subView, setSubView] = useState("active");
@@ -16717,6 +16717,567 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
 
   const today = api.today();
 
+  const fulfillmentDateForOrder = (order) => {
+    if (order.method === "market") {
+      return order.market_dates?.day || order.delivery_day || "";
+    }
+
+    if (order.method === "delivery") {
+      return order.delivery_day || "";
+    }
+
+    return "";
+  };
+
+  const deliveryZoneForOrder = (order) => {
+    if (order.method !== "delivery") return null;
+
+    const directZone = (cat?.zones || []).find(
+      (zone) => zone.id === order.zone_id
+    );
+
+    if (directZone) return directZone;
+
+    const orderZip = String(order.zip || "")
+      .replace(/\D/g, "")
+      .slice(0, 5);
+
+    if (!orderZip) return null;
+
+    return (cat?.zones || []).find(
+      (zone) =>
+        Array.isArray(zone.zips) &&
+        zone.zips.map(String).includes(orderZip)
+    ) || null;
+  };
+
+  const fulfillmentWindowForOrder = (order) => {
+    if (order.method === "delivery") {
+      const zone = deliveryZoneForOrder(order);
+      return zone?.window_label || zone?.day_label || "Scheduled delivery";
+    }
+
+    if (order.method === "market") {
+      return (
+        order.market_dates?.hours ||
+        order.market_dates?.venues?.hours ||
+        "Market hours"
+      );
+    }
+
+    return "Ship ASAP";
+  };
+
+  const fulfillmentMethodLabel = (order) =>
+    order.method === "market"
+      ? "Market Pickup"
+      : order.method === "delivery"
+        ? "Local Delivery"
+        : "Shipping";
+
+  const fulfillmentLocationForOrder = (order) => {
+    if (order.method === "market") {
+      const venueName =
+        order.market_dates?.venues?.name ||
+        "Market pickup";
+
+      const whereAt =
+        order.market_dates?.where_at ||
+        order.market_dates?.venues?.where_at ||
+        "";
+
+      return [venueName, whereAt].filter(Boolean).join(" · ");
+    }
+
+    const cityLine = [
+      order.city,
+      order.zip ? `MI ${order.zip}` : "",
+    ].filter(Boolean).join(", ");
+
+    return [order.address, cityLine].filter(Boolean).join(" · ");
+  };
+
+  const fulfillmentOrderReady = (order) =>
+    !order.archived_at &&
+    !isPaymentPending(order) &&
+    !["done", "cancelled", "noshow"].includes(order.status);
+
+  const dueTodayOrders = activeOrders.filter(
+    (order) =>
+      fulfillmentOrderReady(order) &&
+      ["delivery", "market"].includes(order.method) &&
+      fulfillmentDateForOrder(order) === today
+  );
+
+  const overdueFulfillmentOrders = activeOrders.filter((order) => {
+    if (
+      !fulfillmentOrderReady(order) ||
+      !["delivery", "market"].includes(order.method)
+    ) {
+      return false;
+    }
+
+    const dueDay = fulfillmentDateForOrder(order);
+    return Boolean(dueDay && dueDay < today);
+  });
+
+  const upcomingFulfillmentOrders = activeOrders
+    .filter((order) => {
+      if (
+        !fulfillmentOrderReady(order) ||
+        !["delivery", "market"].includes(order.method)
+      ) {
+        return false;
+      }
+
+      const dueDay = fulfillmentDateForOrder(order);
+      return Boolean(dueDay && dueDay > today);
+    })
+    .sort((a, b) =>
+      String(fulfillmentDateForOrder(a)).localeCompare(
+        String(fulfillmentDateForOrder(b))
+      )
+    );
+
+  const openShippingOrders = activeOrders.filter(
+    (order) =>
+      fulfillmentOrderReady(order) &&
+      order.method === "ship"
+  );
+
+  const fulfillmentQueue = [
+    ...overdueFulfillmentOrders,
+    ...dueTodayOrders,
+    ...upcomingFulfillmentOrders,
+    ...openShippingOrders,
+  ].filter(
+    (order, index, list) =>
+      list.findIndex((candidate) => candidate.id === order.id) === index
+  );
+
+  const fulfillmentJarCount = fulfillmentQueue.reduce(
+    (sum, order) =>
+      sum +
+      (order.order_items || []).reduce(
+        (itemSum, item) => itemSum + Number(item.qty || 0),
+        0
+      ),
+    0
+  );
+
+  const fulfillmentDayLabel = new Date(
+    `${today}T12:00:00`
+  ).toLocaleDateString(undefined, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  const fulfillmentStatusForOrder = (order) => {
+    if (order.method === "ship") {
+      return {
+        label: "SHIP ASAP",
+        background: "#E8F5FF",
+        border: "#73BCE8",
+        color: "#0A5582",
+      };
+    }
+
+    const dueDay = fulfillmentDateForOrder(order);
+
+    if (dueDay && dueDay < today) {
+      return {
+        label: `OVERDUE · ${fmt(parseDay(dueDay))}`,
+        background: "#FFF0F0",
+        border: "#D96A6A",
+        color: "#8B1E1E",
+      };
+    }
+
+    if (dueDay && dueDay > today) {
+      return {
+        label: `UPCOMING · ${fmt(parseDay(dueDay))} · ${fulfillmentWindowForOrder(order)}`,
+        background: "#EEF7FF",
+        border: "#73BCE8",
+        color: "#0A5582",
+      };
+    }
+
+    return {
+      label: `TODAY · ${fulfillmentWindowForOrder(order)}`,
+      background: "#FFF8D8",
+      border: "#E2B62F",
+      color: "#6A4300",
+    };
+  };
+
+  const fulfillmentItemsText = (order) =>
+    (order.order_items || [])
+      .map(
+        (item) =>
+          `${item.qty}x ${item.size_label} ${
+            item.type === "spun" ? "Spun" : "Regular"
+          } - ${item.flavor_name}`
+      )
+      .join("; ");
+
+  const csvCell = (value) =>
+    `"${String(value ?? "").replace(/"/g, '""')}"`;
+
+  const exportFulfillmentCsv = () => {
+    const header = [
+      "Priority",
+      "Order",
+      "Customer",
+      "Method",
+      "Due Date",
+      "Delivery / Pickup Window",
+      "Location",
+      "Phone",
+      "Email",
+      "Items",
+      "Notes",
+      "Placed",
+    ];
+
+    const rows = fulfillmentQueue.map((order) => {
+      const dueDay =
+        order.method === "ship"
+          ? ""
+          : fulfillmentDateForOrder(order);
+
+      return [
+        fulfillmentStatusForOrder(order).label,
+        `#${order.order_no}`,
+        order.name,
+        fulfillmentMethodLabel(order),
+        dueDay,
+        fulfillmentWindowForOrder(order),
+        fulfillmentLocationForOrder(order),
+        order.phone,
+        order.email,
+        fulfillmentItemsText(order),
+        order.notes || "",
+        order.placed_at
+          ? new Date(order.placed_at).toLocaleString()
+          : "",
+      ];
+    });
+
+    const csv = [header, ...rows]
+      .map((row) => row.map(csvCell).join(","))
+      .join("\\n");
+
+    const blob = new Blob([csv], {
+      type: "text/csv;charset=utf-8",
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `NectarFusions-Fulfillment-Queue-${today}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const escapeFulfillmentHtml = (value) =>
+    String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+
+  const printFulfillmentSheet = () => {
+    const printWindow = window.open(
+      "",
+      "_blank",
+      "width=1100,height=850"
+    );
+
+    if (!printWindow) {
+      alert(
+        "Your browser blocked the print window. Allow pop-ups for this site and try again."
+      );
+      return;
+    }
+
+    const orderCards = fulfillmentQueue.length
+      ? fulfillmentQueue
+          .map((order) => {
+            const status = fulfillmentStatusForOrder(order);
+            const location =
+              fulfillmentLocationForOrder(order) ||
+              "No location listed";
+
+            const itemLines = (order.order_items || [])
+              .map(
+                (item) =>
+                  `<li>${escapeFulfillmentHtml(
+                    `${item.qty}x ${item.size_label} ${
+                      item.type === "spun" ? "Spun" : "Regular"
+                    } - ${item.flavor_name}`
+                  )}</li>`
+              )
+              .join("");
+
+            return `
+              <article class="order-card">
+                <div class="order-head">
+                  <div>
+                    <div class="priority">${escapeFulfillmentHtml(
+                      status.label
+                    )}</div>
+                    <h2>#${escapeFulfillmentHtml(
+                      order.order_no
+                    )} · ${escapeFulfillmentHtml(order.name)}</h2>
+                  </div>
+                  <div class="method">${escapeFulfillmentHtml(
+                    fulfillmentMethodLabel(order)
+                  )}</div>
+                </div>
+
+                <div class="meta">
+                  <div>
+                    <span>When</span>
+                    <strong>${escapeFulfillmentHtml(
+                      fulfillmentWindowForOrder(order)
+                    )}</strong>
+                  </div>
+                  <div>
+                    <span>Where</span>
+                    <strong>${escapeFulfillmentHtml(location)}</strong>
+                  </div>
+                  <div>
+                    <span>Contact</span>
+                    <strong>${escapeFulfillmentHtml(
+                      [order.phone, order.email]
+                        .filter(Boolean)
+                        .join(" · ")
+                    )}</strong>
+                  </div>
+                </div>
+
+                <div class="items">
+                  <span>Fill</span>
+                  <ul>${itemLines}</ul>
+                </div>
+
+                ${
+                  order.notes
+                    ? `<div class="notes"><strong>Notes:</strong> ${escapeFulfillmentHtml(
+                        order.notes
+                      )}</div>`
+                    : ""
+                }
+              </article>
+            `;
+          })
+          .join("")
+      : `<div class="empty">No orders need fulfillment today.</div>`;
+
+    printWindow.document.write(`
+      <!doctype html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>NectarFusions Fulfillment ${escapeFulfillmentHtml(
+            today
+          )}</title>
+          <style>
+            * { box-sizing: border-box; }
+            body {
+              margin: 0;
+              padding: 32px;
+              color: #202020;
+              font-family: Arial, Helvetica, sans-serif;
+              background: #fff;
+            }
+            header {
+              display: flex;
+              justify-content: space-between;
+              gap: 24px;
+              align-items: flex-end;
+              padding-bottom: 18px;
+              border-bottom: 3px solid #e2b62f;
+            }
+            .brand {
+              font-size: 13px;
+              font-weight: 900;
+              letter-spacing: .14em;
+              text-transform: uppercase;
+              color: #8a5a00;
+            }
+            h1 {
+              margin: 5px 0 0;
+              font-size: 34px;
+              line-height: 1;
+            }
+            .date {
+              text-align: right;
+              font-size: 14px;
+              line-height: 1.5;
+            }
+            .summary {
+              display: grid;
+              grid-template-columns: repeat(5, 1fr);
+              gap: 10px;
+              margin: 18px 0;
+            }
+            .summary div {
+              padding: 12px;
+              border: 1px solid #ddd;
+              border-radius: 8px;
+            }
+            .summary span,
+            .meta span,
+            .items > span {
+              display: block;
+              margin-bottom: 4px;
+              font-size: 10px;
+              font-weight: 900;
+              letter-spacing: .1em;
+              text-transform: uppercase;
+              color: #777;
+            }
+            .summary strong {
+              font-size: 22px;
+            }
+            .order-card {
+              break-inside: avoid;
+              margin: 0 0 14px;
+              padding: 16px;
+              border: 1.5px solid #b9b9b9;
+              border-radius: 10px;
+            }
+            .order-head {
+              display: flex;
+              justify-content: space-between;
+              gap: 20px;
+              align-items: flex-start;
+            }
+            .priority {
+              margin-bottom: 4px;
+              font-size: 11px;
+              font-weight: 900;
+              letter-spacing: .08em;
+              color: #8a5a00;
+            }
+            h2 {
+              margin: 0;
+              font-size: 20px;
+            }
+            .method {
+              flex: 0 0 auto;
+              padding: 6px 9px;
+              border: 1px solid #bbb;
+              border-radius: 999px;
+              font-size: 11px;
+              font-weight: 800;
+            }
+            .meta {
+              display: grid;
+              grid-template-columns: .8fr 1.4fr 1.2fr;
+              gap: 12px;
+              margin: 14px 0;
+              padding: 12px 0;
+              border-top: 1px solid #ddd;
+              border-bottom: 1px solid #ddd;
+            }
+            .meta strong {
+              font-size: 12px;
+              line-height: 1.4;
+            }
+            .items ul {
+              margin: 6px 0 0;
+              padding-left: 20px;
+              font-size: 13px;
+              line-height: 1.55;
+            }
+            .notes {
+              margin-top: 10px;
+              padding: 9px 10px;
+              border-radius: 7px;
+              background: #f6f3ec;
+              font-size: 12px;
+              line-height: 1.45;
+            }
+            .empty {
+              padding: 40px;
+              border: 1px solid #ddd;
+              text-align: center;
+            }
+            footer {
+              margin-top: 16px;
+              font-size: 10px;
+              color: #777;
+              text-align: center;
+            }
+            @media print {
+              body { padding: 0; }
+            }
+          </style>
+        </head>
+        <body>
+          <header>
+            <div>
+              <div class="brand">NectarFusions · Back Room</div>
+              <h1>Fulfillment Queue</h1>
+            </div>
+            <div class="date">
+              <strong>${escapeFulfillmentHtml(
+                fulfillmentDayLabel
+              )}</strong><br />
+              Generated ${escapeFulfillmentHtml(
+                new Date().toLocaleString()
+              )}
+            </div>
+          </header>
+
+          <section class="summary">
+            <div>
+              <span>Total queue</span>
+              <strong>${fulfillmentQueue.length}</strong>
+            </div>
+            <div>
+              <span>Due today</span>
+              <strong>${dueTodayOrders.length}</strong>
+            </div>
+            <div>
+              <span>Upcoming</span>
+              <strong>${upcomingFulfillmentOrders.length}</strong>
+            </div>
+            <div>
+              <span>Overdue</span>
+              <strong>${overdueFulfillmentOrders.length}</strong>
+            </div>
+            <div>
+              <span>Total jars</span>
+              <strong>${fulfillmentJarCount}</strong>
+            </div>
+          </section>
+
+          ${orderCards}
+
+          <footer>
+            Payment-pending orders are excluded until payment is confirmed.
+          </footer>
+
+          <script>
+            window.addEventListener("load", () => {
+              window.print();
+            });
+          <\/script>
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+  };
+
   const flavorCategoryOptions = [
     { id: "core", label: "Core Collection" },
     { id: "seasonal", label: "Seasonal Special" },
@@ -16755,6 +17316,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
   });
 
   const tabs = [
+    ["fulfillment", `Fulfillment Queue (${fulfillmentQueue.length})`],
     ["inventory", "Flavors & Inventory"],
     ["subscriptions", `Honey Club (${activeSubs.length})`],
     ["marketPickups", `Market Pickups (${marketOpenCount})`],
@@ -16812,6 +17374,463 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
 
         {adminTab === "flavorRequests" && (
           <AdminFlavorRequestsPanel />
+        )}
+
+        {adminTab === "fulfillment" && (
+          <>
+            <section
+              style={{
+                marginBottom: 16,
+                padding: 18,
+                border: "2px solid #E2B62F",
+                borderRadius: 16,
+                background:
+                  "linear-gradient(135deg,#FFFDF6 0%,#FFF6D8 100%)",
+                boxShadow: "0 12px 28px rgba(74,51,19,.08)",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  justifyContent: "space-between",
+                  gap: 14,
+                  flexWrap: "wrap",
+                }}
+              >
+                <div>
+                  <div className="eyebrow">
+                    Daily prep sheet · {fulfillmentDayLabel}
+                  </div>
+                  <div
+                    className="display"
+                    style={{
+                      marginTop: 5,
+                      fontSize: "clamp(34px,6vw,48px)",
+                      color: c.darkBrown,
+                      lineHeight: .95,
+                    }}
+                  >
+                    FULFILLMENT QUEUE
+                  </div>
+                  <p
+                    style={{
+                      maxWidth: 620,
+                      margin: "8px 0 0",
+                      color: c.brown,
+                      fontSize: 13.5,
+                      lineHeight: 1.55,
+                    }}
+                  >
+                    New paid orders appear here as soon as they come in.
+                    Overdue work is first, then today, upcoming delivery and
+                    market orders, and open shipping orders. Payment-pending
+                    orders stay out until Square confirms payment.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  className="btn"
+                  style={{
+                    padding: "9px 13px",
+                    fontSize: 12.5,
+                  }}
+                  onClick={pull}
+                >
+                  Refresh now
+                </button>
+              </div>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns:
+                    "repeat(auto-fit,minmax(105px,1fr))",
+                  gap: 8,
+                  marginTop: 16,
+                }}
+              >
+                {[
+                  ["Queue", fulfillmentQueue.length],
+                  ["Due Today", dueTodayOrders.length],
+                  ["Upcoming", upcomingFulfillmentOrders.length],
+                  ["Overdue", overdueFulfillmentOrders.length],
+                  ["Jars to Fill", fulfillmentJarCount],
+                ].map(([label, value]) => (
+                  <div
+                    key={label}
+                    className="card"
+                    style={{
+                      padding: "12px 10px",
+                      textAlign: "center",
+                      background: "#FFF",
+                    }}
+                  >
+                    <div
+                      className="num"
+                      style={{
+                        fontSize: 28,
+                        color: c.darkBrown,
+                      }}
+                    >
+                      {value}
+                    </div>
+                    <div
+                      style={{
+                        marginTop: 2,
+                        fontSize: 10.5,
+                        fontWeight: 900,
+                        letterSpacing: ".06em",
+                        textTransform: "uppercase",
+                        color: c.tan,
+                      }}
+                    >
+                      {label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns:
+                    "repeat(2,minmax(0,1fr))",
+                  gap: 8,
+                  marginTop: 12,
+                }}
+              >
+                <button
+                  type="button"
+                  className="btn solid"
+                  style={{
+                    padding: 12,
+                    fontSize: 13,
+                  }}
+                  onClick={printFulfillmentSheet}
+                >
+                  Print / Save PDF
+                </button>
+
+                <button
+                  type="button"
+                  className="btn"
+                  style={{
+                    padding: 12,
+                    fontSize: 13,
+                  }}
+                  onClick={exportFulfillmentCsv}
+                >
+                  Export CSV
+                </button>
+              </div>
+            </section>
+
+            <div style={{ marginBottom: 32 }}>
+              {fulfillmentQueue.length === 0 && (
+                <div
+                  className="card"
+                  style={{
+                    padding: 28,
+                    textAlign: "center",
+                    color: c.tan,
+                    fontSize: 14,
+                  }}
+                >
+                  <div
+                    className="display"
+                    style={{
+                      fontSize: 30,
+                      color: c.darkBrown,
+                    }}
+                  >
+                    YOU&apos;RE CAUGHT UP
+                  </div>
+                  <div style={{ marginTop: 6 }}>
+                    No paid orders need fulfillment right now.
+                  </div>
+                </div>
+              )}
+
+              {fulfillmentQueue.map((order) => {
+                const status =
+                  fulfillmentStatusForOrder(order);
+                const location =
+                  fulfillmentLocationForOrder(order);
+                const placedAt = order.placed_at
+                  ? new Date(
+                      order.placed_at
+                    ).toLocaleString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })
+                  : "";
+
+                return (
+                  <article
+                    key={order.id}
+                    className="card"
+                    style={{
+                      padding: 15,
+                      marginBottom: 10,
+                      borderWidth: 2,
+                      borderColor: status.border,
+                      background: "#FFF",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: 10,
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <div
+                        style={{
+                          flex: "1 1 220px",
+                          minWidth: 0,
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "inline-flex",
+                            padding: "5px 8px",
+                            border: `1px solid ${status.border}`,
+                            borderRadius: 999,
+                            background: status.background,
+                            color: status.color,
+                            fontSize: 11,
+                            fontWeight: 950,
+                            letterSpacing: ".05em",
+                          }}
+                        >
+                          {status.label}
+                        </div>
+
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "baseline",
+                            gap: 8,
+                            flexWrap: "wrap",
+                            marginTop: 8,
+                          }}
+                        >
+                          <span
+                            className="num"
+                            style={{
+                              fontSize: 27,
+                              color: c.darkBrown,
+                            }}
+                          >
+                            #{order.order_no}
+                          </span>
+                          <strong
+                            style={{
+                              fontSize: 15,
+                              color: c.darkBrown,
+                            }}
+                          >
+                            {order.name}
+                          </strong>
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          flex: "0 0 auto",
+                          textAlign: "right",
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 900,
+                            letterSpacing: ".05em",
+                            textTransform: "uppercase",
+                            color: c.tan,
+                          }}
+                        >
+                          {fulfillmentMethodLabel(order)}
+                        </div>
+                        <div
+                          style={{
+                            marginTop: 3,
+                            fontSize: 15,
+                            fontWeight: 900,
+                            color: c.darkBrown,
+                          }}
+                        >
+                          {fulfillmentWindowForOrder(order)}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns:
+                          "repeat(2,minmax(0,1fr))",
+                        gap: 10,
+                        marginTop: 13,
+                        padding: 12,
+                        borderRadius: 10,
+                        background: "#FBF8F2",
+                      }}
+                    >
+                      <div>
+                        <div
+                          className="eyebrow"
+                          style={{ fontSize: 10 }}
+                        >
+                          Where
+                        </div>
+                        <div
+                          style={{
+                            marginTop: 3,
+                            fontSize: 13,
+                            lineHeight: 1.45,
+                            color: c.darkBrown,
+                          }}
+                        >
+                          {location ||
+                            "No location listed"}
+                        </div>
+                      </div>
+
+                      <div>
+                        <div
+                          className="eyebrow"
+                          style={{ fontSize: 10 }}
+                        >
+                          Contact
+                        </div>
+                        <div
+                          style={{
+                            marginTop: 3,
+                            fontSize: 12.5,
+                            lineHeight: 1.45,
+                            color: c.darkBrown,
+                          }}
+                        >
+                          <div>{order.phone}</div>
+                          <div>{order.email}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        marginTop: 12,
+                        paddingTop: 11,
+                        borderTop: "1px solid #E7DCC9",
+                      }}
+                    >
+                      <div
+                        className="eyebrow"
+                        style={{ marginBottom: 6 }}
+                      >
+                        Fill this order
+                      </div>
+
+                      <div
+                        style={{
+                          display: "grid",
+                          gap: 4,
+                          fontSize: 13.5,
+                          lineHeight: 1.45,
+                          color: c.darkBrown,
+                        }}
+                      >
+                        {(order.order_items || []).map(
+                          (item) => (
+                            <div key={item.id}>
+                              <strong>
+                                {item.qty}×
+                              </strong>{" "}
+                              {item.size_label}{" "}
+                              <strong>
+                                {item.type === "spun"
+                                  ? "Spun"
+                                  : "Regular"}
+                              </strong>{" "}
+                              — {item.flavor_name}
+                            </div>
+                          )
+                        )}
+                      </div>
+                    </div>
+
+                    {order.notes && (
+                      <div
+                        style={{
+                          marginTop: 10,
+                          padding: "9px 10px",
+                          borderRadius: 8,
+                          background: "#FFF9DE",
+                          color: "#5E4500",
+                          fontSize: 12.5,
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        <strong>Notes:</strong>{" "}
+                        {order.notes}
+                      </div>
+                    )}
+
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 10,
+                        flexWrap: "wrap",
+                        marginTop: 12,
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: 11.5,
+                          color: c.tan,
+                        }}
+                      >
+                        {placedAt
+                          ? `Placed ${placedAt}`
+                          : ""}
+                      </div>
+
+                      <button
+                        type="button"
+                        className="btn"
+                        style={{
+                          padding: "9px 12px",
+                          fontSize: 12.5,
+                        }}
+                        onClick={() =>
+                          guard(() =>
+                            api.setOrderStatus(
+                              order.id,
+                              "done"
+                            )
+                          )
+                        }
+                      >
+                        {order.method === "market"
+                          ? "Mark picked up"
+                          : order.method === "ship"
+                            ? "Mark shipped"
+                            : "Mark delivered"}
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </>
         )}
 
         {adminTab === "orders" && (
