@@ -408,7 +408,7 @@ export async function getPartnerPortalContext() {
       supabase
         .from("partner_accounts")
         .select(
-          "id,business_name,public_name,contact_name,email,partner_type," +
+          "id,business_name,public_name,contact_name,email,phone,partner_type," +
           "relationship_status,partner_level,partner_level_updated_at," +
           "auth_access_enabled,preferred_delivery_days,preferred_fulfillment," +
           "receiving_notes,delivery_notes,locator_permission," +
@@ -526,6 +526,72 @@ export async function getPartnerReplenishmentCatalog() {
   return Array.isArray(data) ? data : [];
 }
 
+export async function getPartnerDeliveryZones() {
+  const { data, error } = await supabase
+    .from("zones")
+    .select(
+      "id,name,zips,fee_cents,minimum_cents," +
+      "days,day_label,window_label,cutoff_label,same_day_ok,same_day_lead_minutes"
+    )
+    .order("name");
+
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function updateMyPartnerDeliveryAddress(address) {
+  const { data, error } = await supabase.rpc(
+    "update_my_partner_delivery_address",
+    {
+      p_address_line1: String(address?.addressLine1 || "").trim(),
+      p_address_line2:
+        String(address?.addressLine2 || "").trim() || null,
+      p_city: String(address?.city || "").trim(),
+      p_state: String(address?.state || "").trim().toUpperCase(),
+      p_zip: String(address?.zip || "")
+        .replace(/\D/g, "")
+        .slice(0, 5),
+    }
+  );
+
+  if (error) throw new Error(error.message);
+  return data || {};
+}
+
+
+export async function updateMyPartnerDeliveryProfile(profile) {
+  const { data, error } = await supabase.rpc(
+    "update_my_partner_delivery_profile",
+    {
+      p_business_name: String(profile?.businessName || "").trim(),
+      p_phone: String(profile?.phone || "").trim(),
+      p_delivery_notes:
+        String(profile?.deliveryNotes || "").trim() || null,
+      p_address_line1: String(profile?.addressLine1 || "").trim(),
+      p_address_line2:
+        String(profile?.addressLine2 || "").trim() || null,
+      p_city: String(profile?.city || "").trim(),
+      p_state: String(profile?.state || "").trim().toUpperCase(),
+      p_zip: String(profile?.zip || "")
+        .replace(/\D/g, "")
+        .slice(0, 5),
+    }
+  );
+
+  if (error) throw new Error(error.message);
+  return data || {};
+}
+
+export async function hideMyPartnerReplenishmentRequest(requestId) {
+  const { data, error } = await supabase.rpc(
+    "hide_my_partner_replenishment_request",
+    { p_request_id: requestId }
+  );
+
+  if (error) throw new Error(error.message);
+  return Boolean(data);
+}
+
 export async function listPartnerReplenishmentRequests() {
   const { data, error } = await supabase
     .from("partner_replenishment_requests")
@@ -536,12 +602,13 @@ export async function listPartnerReplenishmentRequests() {
       "requested_subtotal_cents,quote_subtotal_cents," +
       "fulfillment_charge_cents,confirmed_total_cents,submitted_at," +
       "reviewed_at,created_at,updated_at,quoted_at,accepted_at,paid_at," +
-      "fulfilled_at,cancelled_at,declined_at," +
+      "fulfilled_at,cancelled_at,declined_at,partner_hidden_at," +
       "items:partner_replenishment_items(" +
       "id,request_id,flavor_id,flavor_name,size_id,texture,quantity," +
       "on_hand_count,notes,unit_price_cents,price_version,line_total_cents" +
       ")"
     )
+    .is("partner_hidden_at", null)
     .order("submitted_at", { ascending: false })
     .order("created_at", { ascending: false });
 
@@ -2386,4 +2453,83 @@ export async function syncOrderSquare(orderId) {
 export function today() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/* ---------- unified partner store ---------- */
+
+async function partnerStoreCheckoutRequest(mode, payload) {
+  const { data: sessionData, error: sessionError } =
+    await supabase.auth.getSession();
+
+  if (sessionError) throw new Error(sessionError.message);
+
+  const accessToken = sessionData?.session?.access_token;
+  if (!accessToken) {
+    throw new Error("Partner authentication is required.");
+  }
+
+  let response;
+  try {
+    response = await fetch(
+      "/.netlify/functions/partner-store-checkout",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ ...payload, mode }),
+      }
+    );
+  } catch {
+    throw new Error(
+      "The partner checkout connection was interrupted."
+    );
+  }
+
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error(
+      "The partner checkout service returned an incomplete response."
+    );
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      data?.error || "The partner order could not be processed."
+    );
+  }
+
+  return data;
+}
+
+export async function quotePartnerStoreOrder(payload) {
+  return partnerStoreCheckoutRequest("quote", payload);
+}
+
+export async function checkoutPartnerStoreOrder(payload) {
+  return partnerStoreCheckoutRequest("checkout", payload);
+}
+
+export async function listPartnerStoreOrders() {
+  const { data, error } = await supabase
+    .from("partner_store_orders")
+    .select(
+      "id,token,order_no,partner_id,status,fulfillment_method,needed_by," +
+      "preferred_delivery_days,current_inventory_notes,request_notes," +
+      "business_name,contact_name,email,phone,address_line1,address_line2," +
+      "city,state,zip,delivery_notes,subtotal_cents,delivery_fee_cents," +
+      "processing_fee_cents,total_cents,paid,paid_at,square_link_url," +
+      "created_at,updated_at," +
+      "items:partner_store_order_items(" +
+      "id,category,product_key,flavor_id,flavor_name,size_id,size_label," +
+      "texture,quantity,unit_price_cents,line_total_cents,details,created_at" +
+      ")"
+    )
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return data ?? [];
 }

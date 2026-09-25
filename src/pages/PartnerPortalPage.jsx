@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import * as api from "../lib/api";
 import PartnerEventsPanel from "./PartnerEventsPanel";
 import PartnerOrderingPanel from "./PartnerOrderingPanel";
+import PartnerCartDrawer from "./PartnerCartDrawer";
 
 const PORTAL_CSS = `
 .nf-partner-portal-page {
@@ -26,8 +27,9 @@ const PORTAL_CSS = `
 .nf-partner-portal-banner {
   padding:clamp(28px,5vw,52px);
   background:
-    radial-gradient(circle at 92% 12%,rgba(247,196,28,.22),transparent 28%),
-    linear-gradient(145deg,#21140D,#3A2518 58%,#173C52);
+    radial-gradient(circle at 92% 12%,rgba(247,196,28,.18),transparent 28%),
+    radial-gradient(circle at 10% 88%,rgba(114,183,228,.18),transparent 32%),
+    linear-gradient(145deg,#0F2F44 0%,#15506D 52%,#1E7BA0 100%);
   color:#FFFFFF;
 }
 .nf-partner-portal-banner h2 {
@@ -80,7 +82,7 @@ const PORTAL_CSS = `
 }
 .nf-partner-login-field label {
   color:#4A3313;
-  font-size:11px;
+  font-size:14px;
   font-weight:900;
   letter-spacing:.06em;
   text-transform:uppercase;
@@ -145,7 +147,7 @@ const PORTAL_CSS = `
   display:block;
   margin-top:4px;
   color:#51715A;
-  font-size:13px;
+  font-size:14px;
 }
 .nf-partner-resource-panel {
   margin-top:22px;
@@ -182,7 +184,7 @@ const PORTAL_CSS = `
   border-radius:999px;
   background:#E9F6FD;
   color:#175D85;
-  font-size:11px;
+  font-size:14px;
   font-weight:900;
   letter-spacing:.05em;
   text-transform:uppercase;
@@ -209,7 +211,7 @@ const PORTAL_CSS = `
   border-radius:999px;
   background:#FFF0B5;
   color:#6E5100;
-  font-size:9.5px;
+  font-size:14px;
   font-weight:900;
   letter-spacing:.05em;
   text-transform:uppercase;
@@ -222,7 +224,7 @@ const PORTAL_CSS = `
 .nf-partner-resource-card p {
   margin:0;
   color:#6A5D52;
-  font-size:13px;
+  font-size:14px;
   line-height:1.58;
 }
 .nf-partner-resource-meta {
@@ -231,7 +233,7 @@ const PORTAL_CSS = `
   gap:7px 13px;
   margin-top:12px;
   color:#71808A;
-  font-size:11px;
+  font-size:14px;
 }
 .nf-partner-resource-card .btn {
   width:100%;
@@ -286,7 +288,7 @@ const PORTAL_CSS = `
 .nf-partner-dashboard-card p {
   margin:0;
   color:#67594D;
-  font-size:13px;
+  font-size:14px;
   line-height:1.65;
 }
 .nf-partner-account-details {
@@ -303,7 +305,7 @@ const PORTAL_CSS = `
 .nf-partner-account-detail span {
   display:block;
   color:#587386;
-  font-size:10px;
+  font-size:14px;
   font-weight:900;
   letter-spacing:.06em;
   text-transform:uppercase;
@@ -355,7 +357,7 @@ const PORTAL_CSS = `
   border-radius:999px;
   background:#FFF4BE;
   color:#59430F;
-  font-size:12px;
+  font-size:14px;
   font-weight:900;
   letter-spacing:.05em;
   text-transform:uppercase;
@@ -376,7 +378,7 @@ const PORTAL_CSS = `
 .nf-partner-progress-stat span {
   display:block;
   color:#6B7D87;
-  font-size:10px;
+  font-size:14px;
   font-weight:900;
   letter-spacing:.06em;
   text-transform:uppercase;
@@ -416,7 +418,7 @@ const PORTAL_CSS = `
 }
 .nf-partner-current-step span {
   color:#55798D;
-  font-size:10px;
+  font-size:14px;
   font-weight:900;
   letter-spacing:.07em;
   text-transform:uppercase;
@@ -437,7 +439,7 @@ const PORTAL_CSS = `
   gap:8px 16px;
   margin-top:10px;
   color:#5D7582;
-  font-size:12px;
+  font-size:14px;
 }
 .nf-partner-progress-subheading {
   margin:28px 0 12px;
@@ -466,7 +468,7 @@ const PORTAL_CSS = `
   border-radius:50%;
   background:#ECE5DD;
   color:#67594D;
-  font-size:13px;
+  font-size:14px;
   font-weight:900;
 }
 .nf-partner-milestone-marker[data-status="completed"] {
@@ -494,7 +496,7 @@ const PORTAL_CSS = `
 .nf-partner-milestone-copy p {
   margin:0;
   color:#6A5D52;
-  font-size:13px;
+  font-size:14px;
   line-height:1.55;
 }
 .nf-partner-milestone-copy p + p {
@@ -519,7 +521,7 @@ const PORTAL_CSS = `
   border-radius:999px;
   background:#EFE9E1;
   color:#62564C;
-  font-size:10px;
+  font-size:14px;
   font-weight:900;
   letter-spacing:.04em;
   text-transform:uppercase;
@@ -568,7 +570,7 @@ const PORTAL_CSS = `
 .nf-partner-goal-card p {
   margin:8px 0 0;
   color:#6A5D52;
-  font-size:13px;
+  font-size:14px;
   line-height:1.55;
 }
 .nf-partner-goal-values {
@@ -577,7 +579,7 @@ const PORTAL_CSS = `
   gap:14px;
   margin-top:14px;
   color:#5C5148;
-  font-size:12px;
+  font-size:14px;
 }
 .nf-partner-goal-values strong {
   color:#173C52;
@@ -644,6 +646,208 @@ const PORTAL_CSS = `
   }
   .nf-partner-portal-shell {
     border-radius:22px;
+  }
+}
+
+.nf-partner-workspace-head {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:20px;
+}
+.nf-partner-workspace-head .nf-partner-dashboard-title {
+  margin-bottom:8px;
+}
+.nf-partner-workspace-status {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:center;
+  color:#61717B;
+  font-size:14px;
+}
+.nf-partner-workspace-status strong {
+  padding:5px 9px;
+  border-radius:999px;
+  background:#EAF6ED;
+  color:#285A37;
+  font-size:14px;
+}
+.nf-partner-workspace-nav {
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:22px;
+  padding:6px;
+  border:1px solid #D8E4EA;
+  border-radius:14px;
+  background:#F7FBFD;
+}
+.nf-partner-workspace-nav button {
+  min-height:42px;
+  padding:9px 16px;
+  border:0;
+  border-radius:10px;
+  background:transparent;
+  color:#496575;
+  font:inherit;
+  font-size:14px;
+  font-weight:850;
+  cursor:pointer;
+}
+.nf-partner-workspace-nav button[aria-current="page"] {
+  background:#173C52;
+  color:#FFFFFF;
+}
+.nf-partner-home {
+  margin-top:22px;
+}
+.nf-partner-home-intro {
+  max-width:700px;
+}
+.nf-partner-home-intro h3,
+.nf-partner-workspace-section-head h3 {
+  margin:7px 0 8px;
+  color:#23170F;
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:36px;
+  line-height:1;
+}
+.nf-partner-home-intro p,
+.nf-partner-workspace-section-head p {
+  margin:0;
+  color:#64727A;
+  font-size:14px;
+  line-height:1.65;
+}
+.nf-partner-next-card {
+  display:flex;
+  justify-content:space-between;
+  gap:20px;
+  align-items:flex-start;
+  margin-top:18px;
+  padding:20px;
+  border:1px solid #BBD9E8;
+  border-radius:17px;
+  background:#F1F9FD;
+}
+.nf-partner-next-card span {
+  display:block;
+  color:#587386;
+  font-size:14px;
+  font-weight:900;
+  text-transform:uppercase;
+}
+.nf-partner-next-card h3 {
+  margin:7px 0 5px;
+  color:#173C52;
+  font-size:18px;
+}
+.nf-partner-next-card p {
+  margin:0;
+  color:#5B7180;
+  font-size:14px;
+  line-height:1.6;
+}
+.nf-partner-next-card > strong {
+  flex:0 0 auto;
+  color:#173C52;
+  font-size:14px;
+}
+.nf-partner-action-grid {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+  margin-top:14px;
+}
+.nf-partner-action-card {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  min-height:190px;
+  padding:20px;
+  border:1px solid #DDE5EA;
+  border-radius:17px;
+  background:#FFFFFF;
+  color:#2C2119;
+  text-align:left;
+  font:inherit;
+  cursor:pointer;
+  box-shadow:0 8px 22px rgba(32,86,122,.06);
+}
+.nf-partner-action-card:hover {
+  border-color:#8FC4E4;
+  transform:translateY(-1px);
+}
+.nf-partner-action-icon {
+  width:38px;
+  height:38px;
+  display:grid;
+  place-items:center;
+  border-radius:11px;
+  background:#EAF7FF;
+  color:#167BB6;
+  font-size:18px;
+  font-weight:900;
+}
+.nf-partner-action-card strong {
+  margin-top:14px;
+  color:#23170F;
+  font-size:17px;
+}
+.nf-partner-action-card small {
+  margin-top:7px;
+  color:#667780;
+  font-size:14px;
+  line-height:1.55;
+}
+.nf-partner-action-card em {
+  margin-top:auto;
+  padding-top:16px;
+  color:#167BB6;
+  font-size:14px;
+  font-style:normal;
+  font-weight:900;
+}
+.nf-partner-help-line {
+  margin-top:18px;
+  padding:14px 16px;
+  border-radius:12px;
+  background:#FFF9E8;
+  color:#604A1C;
+  font-size:14px;
+}
+.nf-partner-workspace-section {
+  margin-top:22px;
+}
+.nf-partner-workspace-section-head {
+  display:flex;
+  justify-content:space-between;
+  gap:20px;
+  align-items:flex-start;
+  margin-bottom:14px;
+}
+.nf-partner-workspace-section > .nf-partner-resource-empty {
+  margin-top:0;
+}
+.nf-partner-resource-grid-simple {
+  margin-top:0;
+}
+@media (max-width:760px) {
+  .nf-partner-workspace-head,
+  .nf-partner-workspace-section-head,
+  .nf-partner-next-card {
+    flex-direction:column;
+  }
+  .nf-partner-workspace-nav {
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .nf-partner-action-grid {
+    grid-template-columns:1fr;
+  }
+  .nf-partner-action-card {
+    min-height:165px;
   }
 }
 `;
@@ -740,6 +944,7 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
   const [error, setError] = useState("");
   const [resourceBusyId, setResourceBusyId] = useState("");
   const [resourceError, setResourceError] = useState("");
+  const [portalSection, setPortalSection] = useState("home");
 
   const canSubmit = useMemo(
     () => email.trim() && password && !busy,
@@ -916,17 +1121,13 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
           <div className="nf-partner-portal-banner">
             <div
               className="nf-modern-kicker"
-              style={{ color: "#72B7E4" }}
+              style={{ color: "#9ED8F4" }}
             >
-              Approved NectarFusions partners
+              NectarFusions Partner Portal
             </div>
             <h2>
               Your Partner Tools, <span>One Secure Place</span>
             </h2>
-            <p>
-              Sign in using the email address connected to your approved
-              NectarFusions partner account.
-            </p>
           </div>
 
           <div className="nf-partner-portal-body">
@@ -952,13 +1153,10 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
                   </div>
                   <h3>Sign In to Your Account</h3>
                   <p>
-                    Partner access is available only to approved accounts
-                    connected by NectarFusions. Passwords are managed securely
-                    through Supabase Auth and are never stored in the Partner
-                    Portal tables.
+                    Use the email and password connected to your approved NectarFusions partner account.
                   </p>
                   <p>
-                    Need account help? Contact{" "}
+                    Need help accessing your account? Contact{" "}
                     <strong>info@nectar-fusions.com</strong>.
                   </p>
                 </div>
@@ -1021,14 +1219,18 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
 
             {access.kind === "partner" && (
               <>
-                <div className="nf-partner-access-banner">
+                <div className="nf-partner-workspace-head">
                   <div>
-                    <strong>
-                      Secure partner access confirmed
-                    </strong>
-                    <span>
-                      Signed in as {mapping?.email || "approved partner"}
-                    </span>
+                    <div className="nf-modern-kicker">Partner Dashboard</div>
+                    <h2 className="nf-partner-dashboard-title">
+                      Welcome, {partnerName}
+                    </h2>
+                    <div className="nf-partner-workspace-status">
+                      <span>{account?.business_name}</span>
+                      {account?.relationship_status && (
+                        <strong>{cleanStatus(account.relationship_status)}</strong>
+                      )}
+                    </div>
                   </div>
 
                   <button
@@ -1041,469 +1243,226 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
                   </button>
                 </div>
 
-                <h2 className="nf-partner-dashboard-title">
-                  Welcome, {partnerName}
-                </h2>
+                <nav className="nf-partner-workspace-nav" aria-label="Partner portal sections">
+                  <button
+                    type="button"
+                    aria-current={portalSection === "home" ? "page" : undefined}
+                    onClick={() => setPortalSection("home")}
+                  >
+                    Home
+                  </button>
+                  <button
+                    type="button"
+                    aria-current={portalSection === "orders" ? "page" : undefined}
+                    onClick={() => setPortalSection("orders")}
+                  >
+                    Orders
+                  </button>
+                  <button
+                    type="button"
+                    aria-current={portalSection === "resources" ? "page" : undefined}
+                    onClick={() => setPortalSection("resources")}
+                  >
+                    Resources
+                  </button>
+                  {(account?.event_submission_enabled || events.length > 0) && (
+                    <button
+                      type="button"
+                      aria-current={portalSection === "events" ? "page" : undefined}
+                      onClick={() => setPortalSection("events")}
+                    >
+                      Events
+                    </button>
+                  )}
+                </nav>
 
-                <div className="nf-partner-account-details">
-                  <div className="nf-partner-account-detail">
-                    <span>Business</span>
-                    <strong>{account?.business_name}</strong>
-                  </div>
-                  <div className="nf-partner-account-detail">
-                    <span>Account status</span>
-                    <strong>
-                      {cleanStatus(account?.relationship_status)}
-                    </strong>
-                  </div>
-                  <div className="nf-partner-account-detail">
-                    <span>Your role</span>
-                    <strong>
-                      {cleanStatus(mapping?.partner_role)}
-                    </strong>
-                  </div>
-                  <div className="nf-partner-account-detail">
-                    <span>Partner level</span>
-                    <strong>{partnerLevel}</strong>
-                  </div>
-                </div>
-
-                <PartnerOrderingPanel />
-
-                <section
-                  className="nf-partner-progress-panel"
-                  aria-labelledby="partner-progress-title"
-                >
-                  <div className="nf-partner-progress-header">
-                    <div>
-                      <div className="nf-modern-kicker">
-                        Partnership journey
-                      </div>
-                      <h2
-                        id="partner-progress-title"
-                        className="nf-partner-progress-title"
-                      >
-                        Partnership Progress
-                      </h2>
-                      <p className="nf-partner-progress-intro">
-                        Follow your completed steps, current responsibility,
-                        upcoming actions, and measurable partnership goals.
+                {portalSection === "home" && (
+                  <section className="nf-partner-home">
+                    <div className="nf-partner-home-intro">
+                      <div className="nf-modern-kicker">Start here</div>
+                      <h3>What Do You Need Today?</h3>
+                      <p>
+                        Choose an area below. Your portal keeps ordering, files, and partner activity in one place without showing everything at once.
                       </p>
                     </div>
 
-                    <div className="nf-partner-level-badge">
-                      {partnerLevel} Partner
-                    </div>
-                  </div>
+                    <div className="nf-partner-next-card">
+                      <div>
+                        <span>Your next step</span>
+                        <h3>
+                          {currentMilestone
+                            ? currentMilestone.title
+                            : "You’re all caught up"}
+                        </h3>
+                        <p>
+                          {currentMilestone?.next_action ||
+                            "There is nothing you need to complete right now."}
+                        </p>
+                      </div>
 
-                  <div className="nf-partner-progress-stats">
-                    <div className="nf-partner-progress-stat">
-                      <span>Overall progress</span>
-                      <strong>{progressPercent}%</strong>
-                      <small>
-                        Based on visible milestones that are completed or
-                        intentionally skipped.
-                      </small>
-                    </div>
-
-                    <div className="nf-partner-progress-stat">
-                      <span>Milestones resolved</span>
-                      <strong>
-                        {resolvedMilestoneCount} of {milestones.length}
-                      </strong>
-                      <small>
-                        NectarFusions updates official milestone statuses.
-                      </small>
-                    </div>
-
-                    <div className="nf-partner-progress-stat">
-                      <span>Goals assigned</span>
-                      <strong>{goals.length}</strong>
-                      <small>
-                        Goals may include launch, sales, reorder,
-                        merchandising, event, or level targets.
-                      </small>
-                    </div>
-                  </div>
-
-                  <div
-                    className="nf-partner-progress-track"
-                    role="progressbar"
-                    aria-label="Partnership progress"
-                    aria-valuemin="0"
-                    aria-valuemax="100"
-                    aria-valuenow={progressPercent}
-                  >
-                    <div
-                      className="nf-partner-progress-fill"
-                      style={{ width: `${progressPercent}%` }}
-                    />
-                  </div>
-
-                  <div className="nf-partner-current-step">
-                    <span>Your next step</span>
-                    <h3>
-                      {currentMilestone
-                        ? currentMilestone.title
-                        : "All visible milestones are resolved"}
-                    </h3>
-                    <p>
-                      {currentMilestone?.next_action ||
-                        "NectarFusions will add the next action when the partnership advances."}
-                    </p>
-
-                    {currentMilestone && (
-                      <div className="nf-partner-current-step-meta">
+                      {currentMilestone?.due_at && (
                         <strong>
-                          Responsible:{" "}
-                          {cleanStatus(
-                            currentMilestone.responsible_party
-                          )}
+                          Due {formatPartnerDate(currentMilestone.due_at)}
                         </strong>
+                      )}
+                    </div>
 
-                        {currentMilestone.due_at && (
-                          <span>
-                            Due:{" "}
-                            {formatPartnerDate(
-                              currentMilestone.due_at
-                            )}
-                          </span>
-                        )}
+                    <div className="nf-partner-action-grid">
+                      <button
+                        type="button"
+                        className="nf-partner-action-card"
+                        onClick={() => setPortalSection("orders")}
+                      >
+                        <span className="nf-partner-action-icon">↻</span>
+                        <strong>Orders</strong>
+                        <small>
+                          Reorder retail products or submit eligible wholesale and bulk requests.
+                        </small>
+                        <em>Open Orders →</em>
+                      </button>
+
+                      <button
+                        type="button"
+                        className="nf-partner-action-card"
+                        onClick={() => setPortalSection("resources")}
+                      >
+                        <span className="nf-partner-action-icon">↓</span>
+                        <strong>Resources</strong>
+                        <small>
+                          Download current partner files and approved materials.
+                        </small>
+                        <em>View Resources →</em>
+                      </button>
+
+                      {(account?.event_submission_enabled || events.length > 0) && (
+                        <button
+                          type="button"
+                          className="nf-partner-action-card"
+                          onClick={() => setPortalSection("events")}
+                        >
+                          <span className="nf-partner-action-icon">◇</span>
+                          <strong>Events</strong>
+                          <small>
+                            Create, review, or manage partner event submissions.
+                          </small>
+                          <em>Manage Events →</em>
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="nf-partner-help-line">
+                      Need help? <strong>info@nectar-fusions.com</strong>
+                    </div>
+                  </section>
+                )}
+
+                {portalSection === "orders" && (
+                  <section className="nf-partner-workspace-section">
+                    <div className="nf-partner-workspace-section-head">
+                      <div>
+                        <div className="nf-modern-kicker">Partner ordering</div>
+                        <h3>Orders</h3>
+                        <p>Place a new request or review previous partner orders.</p>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn ghost"
+                        onClick={() => setPortalSection("home")}
+                      >
+                        Back to Home
+                      </button>
+                    </div>
+                    <PartnerOrderingPanel account={account} />
+                    <PartnerCartDrawer account={account} />
+                  </section>
+                )}
+
+                {portalSection === "resources" && (
+                  <section className="nf-partner-workspace-section">
+                    <div className="nf-partner-workspace-section-head">
+                      <div>
+                        <div className="nf-modern-kicker">Approved downloads</div>
+                        <h3>Resources</h3>
+                        <p>Download the current files and materials available to your account.</p>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn ghost"
+                        onClick={() => setPortalSection("home")}
+                      >
+                        Back to Home
+                      </button>
+                    </div>
+
+                    {resourceError && (
+                      <div className="nf-partner-resource-error" role="alert">
+                        {resourceError}
                       </div>
                     )}
-                  </div>
 
-                  <h3 className="nf-partner-progress-subheading">
-                    Milestones
-                  </h3>
-
-                  <div className="nf-partner-milestone-list">
-                    {milestones.map((milestone, index) => (
-                      <article
-                        key={milestone.id || milestone.milestone_key}
-                        className="nf-partner-milestone"
-                      >
-                        <div
-                          className="nf-partner-milestone-marker"
-                          data-status={milestone.status}
-                          aria-hidden="true"
-                        >
-                          {milestone.status === "completed"
-                            ? "✓"
-                            : index + 1}
-                        </div>
-
-                        <div className="nf-partner-milestone-copy">
-                          <h4>{milestone.title}</h4>
-
-                          {milestone.description && (
-                            <p>{milestone.description}</p>
-                          )}
-
-                          {!isResolvedMilestone(milestone.status) &&
-                            milestone.next_action && (
-                              <p>
-                                <strong>Next:</strong>{" "}
-                                {milestone.next_action}
-                              </p>
-                            )}
-
-                          {milestone.partner_visible_notes && (
-                            <p className="nf-partner-visible-note">
-                              <strong>Partner note:</strong>{" "}
-                              {milestone.partner_visible_notes}
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="nf-partner-milestone-side">
-                          <span
-                            className="nf-partner-status-pill"
-                            data-status={milestone.status}
-                          >
-                            {cleanStatus(milestone.status)}
-                          </span>
-
-                          <small>
-                            {cleanStatus(
-                              milestone.responsible_party
-                            )}
-                          </small>
-
-                          {milestone.due_at && (
-                            <small>
-                              Due{" "}
-                              {formatPartnerDate(milestone.due_at)}
-                            </small>
-                          )}
-
-                          {milestone.completed_at && (
-                            <small>
-                              Completed{" "}
-                              {formatPartnerDate(
-                                milestone.completed_at
-                              )}
-                            </small>
-                          )}
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-
-                  <h3 className="nf-partner-progress-subheading">
-                    Partnership Goals
-                  </h3>
-
-                  {goals.length === 0 ? (
-                    <div className="nf-partner-empty-goals">
-                      No goals have been assigned yet. NectarFusions can add
-                      measurable targets and next actions without changing
-                      your published wholesale pricing.
-                    </div>
-                  ) : (
-                    <div className="nf-partner-goals-grid">
-                      {goals.map((goal) => {
-                        const goalPercent =
-                          goalProgressPercent(goal);
-
-                        return (
-                          <article
-                            key={goal.id}
-                            className="nf-partner-goal-card"
-                          >
-                            <div className="nf-partner-goal-top">
-                              <div>
-                                <h4>{goal.title}</h4>
-                                <p>
-                                  {cleanStatus(goal.goal_type)}
-                                </p>
-                              </div>
-
-                              <span
-                                className="nf-partner-status-pill"
-                                data-status={goal.status}
-                              >
-                                {cleanStatus(goal.status)}
-                              </span>
-                            </div>
-
-                            {goal.description && (
-                              <p>{goal.description}</p>
-                            )}
-
-                            <div className="nf-partner-goal-values">
-                              <span>
-                                Current:{" "}
-                                <strong>
-                                  {formatGoalValue(
-                                    goal.current_value,
-                                    goal.unit_label
-                                  )}
-                                </strong>
-                              </span>
-                              <span>
-                                Target:{" "}
-                                <strong>
-                                  {formatGoalValue(
-                                    goal.target_value,
-                                    goal.unit_label
-                                  )}
-                                </strong>
-                              </span>
-                            </div>
-
-                            <div
-                              className="nf-partner-goal-track"
-                              role="progressbar"
-                              aria-label={`${goal.title} progress`}
-                              aria-valuemin="0"
-                              aria-valuemax="100"
-                              aria-valuenow={goalPercent}
-                            >
-                              <div
-                                className="nf-partner-goal-fill"
-                                style={{ width: `${goalPercent}%` }}
-                              />
-                            </div>
-
-                            {goal.next_action && (
-                              <p>
-                                <strong>Next:</strong>{" "}
-                                {goal.next_action}
-                              </p>
-                            )}
-
-                            {goal.partner_visible_notes && (
-                              <p className="nf-partner-visible-note">
-                                <strong>Partner note:</strong>{" "}
-                                {goal.partner_visible_notes}
-                              </p>
-                            )}
-
-                            {goal.due_on && (
-                              <p>
-                                <strong>Due:</strong>{" "}
-                                {formatPartnerDate(goal.due_on)}
-                              </p>
-                            )}
-                          </article>
-                        );
-                      })}
-                    </div>
-                  )}
-                </section>
-
-                <section
-                  className="nf-partner-resource-panel"
-                  aria-labelledby="partner-resource-title"
-                >
-                  <div className="nf-partner-resource-header">
-                    <div>
-                      <div className="nf-modern-kicker">
-                        Approved downloads
+                    {resources.length === 0 ? (
+                      <div className="nf-partner-resource-empty">
+                        No partner resources are available right now.
                       </div>
-                      <h2 id="partner-resource-title">
-                        Partner Resources
-                      </h2>
-                      <p>
-                        Access current files approved for your partner
-                        type. Private download links expire shortly after
-                        they are created.
-                      </p>
-                    </div>
-
-                    <div className="nf-partner-resource-count">
-                      {resources.length}{" "}
-                      {resources.length === 1
-                        ? "Resource"
-                        : "Resources"}
-                    </div>
-                  </div>
-
-                  {resourceError && (
-                    <div
-                      className="nf-partner-resource-error"
-                      role="alert"
-                    >
-                      {resourceError}
-                    </div>
-                  )}
-
-                  {resources.length === 0 ? (
-                    <div className="nf-partner-resource-empty">
-                      No approved resources are available for this
-                      partner account yet.
-                    </div>
-                  ) : (
-                    <div className="nf-partner-resource-grid">
-                      {resources.map((resource) => (
-                        <article
-                          key={resource.id}
-                          className="nf-partner-resource-card"
-                        >
-                          <span className="nf-partner-resource-category">
-                            {partnerResourceCategory(
-                              resource.category
-                            )}
-                          </span>
-
-                          <h3>{resource.title}</h3>
-
-                          {resource.description && (
-                            <p>{resource.description}</p>
-                          )}
-
-                          <div className="nf-partner-resource-meta">
-                            {resource.version_label && (
-                              <span>
-                                Version {resource.version_label}
-                              </span>
-                            )}
-
-                            {resource.effective_at && (
-                              <span>
-                                Effective{" "}
-                                {formatPartnerDate(
-                                  resource.effective_at
-                                )}
-                              </span>
-                            )}
-
-                            {resource.expires_at && (
-                              <span>
-                                Available through{" "}
-                                {formatPartnerDate(
-                                  resource.expires_at
-                                )}
-                              </span>
-                            )}
-                          </div>
-
-                          <button
-                            type="button"
-                            className="btn solid"
-                            disabled={
-                              resourceBusyId === resource.id
-                            }
-                            onClick={() =>
-                              downloadResource(resource)
-                            }
+                    ) : (
+                      <div className="nf-partner-resource-grid nf-partner-resource-grid-simple">
+                        {resources.map((resource) => (
+                          <article
+                            key={resource.id}
+                            className="nf-partner-resource-card"
                           >
-                            {resourceBusyId === resource.id
-                              ? "Preparing Download…"
-                              : "Download Resource"}
-                          </button>
-                        </article>
-                      ))}
-                    </div>
+                            <span className="nf-partner-resource-category">
+                              {partnerResourceCategory(resource.category)}
+                            </span>
+
+                            <h3>{resource.title}</h3>
+
+                            {resource.description && (
+                              <p>{resource.description}</p>
+                            )}
+
+                            <button
+                              type="button"
+                              className="btn solid"
+                              disabled={resourceBusyId === resource.id}
+                              onClick={() => downloadResource(resource)}
+                            >
+                              {resourceBusyId === resource.id
+                                ? "Preparing Download…"
+                                : "Download"}
+                            </button>
+                          </article>
+                        ))}
+                      </div>
+                    )}
+                  </section>
+                )}
+
+                {portalSection === "events" &&
+                  (account?.event_submission_enabled || events.length > 0) && (
+                    <section className="nf-partner-workspace-section">
+                      <div className="nf-partner-workspace-section-head">
+                        <div>
+                          <div className="nf-modern-kicker">Partner activity</div>
+                          <h3>Events</h3>
+                          <p>Create or review event submissions connected to your account.</p>
+                        </div>
+                        <button
+                          type="button"
+                          className="btn ghost"
+                          onClick={() => setPortalSection("home")}
+                        >
+                          Back to Home
+                        </button>
+                      </div>
+
+                      <PartnerEventsPanel
+                        account={account}
+                        events={events}
+                        onRefresh={refreshPartnerContext}
+                      />
+                    </section>
                   )}
-                </section>
-
-                <PartnerEventsPanel
-                  account={account}
-                  events={events}
-                  onRefresh={refreshPartnerContext}
-                />
-
-                <div className="nf-partner-dashboard-grid">
-                  <article className="nf-partner-dashboard-card">
-                    <h3>Replenishment Requests</h3>
-                    <p>
-                      Submit restock needs using the approved 7 oz and
-                      1 lb wholesale product formats. The complete request
-                      workflow is the next portal module.
-                    </p>
-                  </article>
-
-                  <article className="nf-partner-dashboard-card">
-                    <h3>Partner Resources</h3>
-                    <p>
-                      Approved private downloads are available in the
-                      resource library above. Availability is based on
-                      resource status and partner type.
-                    </p>
-                  </article>
-
-                  <article className="nf-partner-dashboard-card">
-                    <h3>Events and Visibility</h3>
-                    <p>
-                      Create drafts, upload private flyers, and submit events
-                      for NectarFusions approval in the event section above.
-                    </p>
-                  </article>
-                </div>
-
-                <div className="nf-partner-program-summary">
-                  <strong>Current retail wholesale structure:</strong>{" "}
-                  7 oz jars are $7.25 wholesale with a $12.00 suggested retail,
-                  and 1 lb jars are $12.00 wholesale with a $20.00 suggested
-                  retail. Opening orders require at least 24 units, reorders
-                  require at least 12 units, and the standard case pack is six
-                  units per flavor and size unless a mixed case is approved in
-                  writing. The 4 oz jar remains reserved for NectarFusions
-                  direct farmers-market sales. Partner levels change benefits
-                  and access—not the published unit price.
-                </div>
               </>
             )}
 

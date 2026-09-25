@@ -1,6 +1,7 @@
 import { Fragment } from "react";
 import { useState, useMemo, useEffect, useLayoutEffect, useCallback, useRef } from "react";
 import * as api from "./lib/api";
+import { getPartnerStoreCartCount } from "./lib/partnerStoreCart";
 import PartnerPage from "./pages/PartnerPage";
 import PartnerPortalPage from "./pages/PartnerPortalPage";
 import AdminPartnerManagement from "./pages/AdminPartnerManagement";
@@ -11893,6 +11894,7 @@ export default function App() {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [cartTrayDismissed, setCartTrayDismissed] = useState(false);
   const [cartSummaryCompact, setCartSummaryCompact] = useState(false);
+  const [partnerCartCount, setPartnerCartCount] = useState(0);
   const [dockHasEntered, setDockHasEntered] = useState(false);
   const siteSearchRef = useRef(null);
   const shopScrollRestoreRef = useRef(null);
@@ -11952,6 +11954,23 @@ export default function App() {
       setCheckoutOpen(false);
     }
   }, [cart]);
+
+  useEffect(() => {
+    const syncPartnerCartCount = () =>
+      setPartnerCartCount(getPartnerStoreCartCount());
+
+    syncPartnerCartCount();
+    window.addEventListener(
+      "nf-partner-cart-changed",
+      syncPartnerCartCount
+    );
+
+    return () =>
+      window.removeEventListener(
+        "nf-partner-cart-changed",
+        syncPartnerCartCount
+      );
+  }, []);
 
   useLayoutEffect(() => {
     const restoreY = shopScrollRestoreRef.current;
@@ -12718,6 +12737,9 @@ export default function App() {
   };
 
   const Header = ({ eyebrow, title, right, big }) => {
+    const visibleCartCount =
+      view === "partnerPortal" ? partnerCartCount : cartCount;
+
     const brand = (
       <button
         type="button"
@@ -12756,6 +12778,13 @@ export default function App() {
                 type="button"
                 className="nf-cart-button"
                 onClick={() => {
+                  if (view === "partnerPortal") {
+                    window.dispatchEvent(
+                      new CustomEvent("nf-open-partner-cart")
+                    );
+                    return;
+                  }
+
                   setCartTrayDismissed(false);
                   setCartSummaryCompact(false);
                   setCheckoutOpen(false);
@@ -12767,7 +12796,7 @@ export default function App() {
                     setCartOpen(true);
                   }
                 }}
-                aria-label={`Open cart with ${cartCount} item${cartCount === 1 ? "" : "s"}`}
+                aria-label={`Open cart with ${visibleCartCount} item${visibleCartCount === 1 ? "" : "s"}`}
                 title="Your cart"
               >
                 <svg width="23" height="23" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -12776,8 +12805,8 @@ export default function App() {
                   <circle cx="10" cy="20" r="1.35" fill="currentColor" />
                   <circle cx="18" cy="20" r="1.35" fill="currentColor" />
                 </svg>
-                <span className={`nf-cart-badge ${cartCount === 0 ? "empty" : ""}`}>
-                  {cartCount}
+                <span className={`nf-cart-badge ${visibleCartCount === 0 ? "empty" : ""}`}>
+                  {visibleCartCount}
                 </span>
               </button>
 

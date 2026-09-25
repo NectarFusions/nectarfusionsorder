@@ -145,6 +145,30 @@ export default async (req) => {
           }).eq("id", order.id);
           console.log("Order paid:", order.id);
         }
+
+        const { data: partnerStoreOrder } = await supa
+          .from("partner_store_orders")
+          .select("id,paid")
+          .eq("square_order_id", p.order_id)
+          .maybeSingle();
+
+        if (partnerStoreOrder && !partnerStoreOrder.paid) {
+          await supa
+            .from("partner_store_orders")
+            .update({
+              paid: true,
+              paid_at: new Date().toISOString(),
+              square_payment_id: p.id,
+              status: "paid",
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", partnerStoreOrder.id);
+
+          console.log(
+            "Partner store order paid:",
+            partnerStoreOrder.id
+          );
+        }
         break;
       }
 
