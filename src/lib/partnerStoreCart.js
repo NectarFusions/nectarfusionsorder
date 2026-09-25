@@ -1,7 +1,29 @@
 const CART_KEY = "nectarfusions-partner-store-cart";
+const FULFILLMENT_KEY = "nectarfusions-partner-store-fulfillment";
 
 const safeCart = (value) =>
   Array.isArray(value) ? value.filter((item) => item && item.id) : [];
+
+
+export function getPartnerStoreFulfillment() {
+  try {
+    const saved = String(localStorage.getItem(FULFILLMENT_KEY) || "").trim();
+    return ["pickup", "delivery"].includes(saved) ? saved : "pickup";
+  } catch {
+    return "pickup";
+  }
+}
+
+export function setPartnerStoreFulfillment(method) {
+  const next = ["pickup", "delivery"].includes(method) ? method : "pickup";
+  localStorage.setItem(FULFILLMENT_KEY, next);
+  window.dispatchEvent(
+    new CustomEvent("nf-partner-fulfillment-changed", {
+      detail: { fulfillmentMethod: next },
+    })
+  );
+  return next;
+}
 
 export function getPartnerStoreCart() {
   try {

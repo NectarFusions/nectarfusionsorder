@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import * as api from "../lib/api";
-import { addPartnerStoreItems } from "../lib/partnerStoreCart";
+import {
+  addPartnerStoreItems,
+  getPartnerStoreFulfillment,
+  setPartnerStoreFulfillment,
+} from "../lib/partnerStoreCart";
 
 const REPLENISHMENT_CSS = `
 .nf-replenishment-panel {
@@ -1934,7 +1938,7 @@ export default function PartnerReplenishmentPanel({ account }) {
   const [selectedFlavorIds, setSelectedFlavorIds] = useState([]);
   const [form, setForm] = useState({
     neededBy: "",
-    fulfillmentMethod: "",
+    fulfillmentMethod: getPartnerStoreFulfillment(),
     preferredDeliveryDays: [],
     currentInventoryNotes: "",
     requestNotes: "",
@@ -2081,6 +2085,9 @@ export default function PartnerReplenishmentPanel({ account }) {
 
   const updateForm = (key, value) => {
     setForm((current) => ({ ...current, [key]: value }));
+    if (key === "fulfillmentMethod") {
+      setPartnerStoreFulfillment(value);
+    }
     if (error) setError("");
     if (success) setSuccess("");
   };
@@ -2678,6 +2685,18 @@ const duplicateSelections = useMemo(() => {
   const addSelectedToCart = async (event) => {
     event.preventDefault();
 
+    if (!["pickup", "delivery"].includes(form.fulfillmentMethod)) {
+      setError("Choose Pickup or Local Delivery before adding items to your cart.");
+      return;
+    }
+
+    if (totalQuantity < 12) {
+      setError(`Retail replenishment requires at least 12 jars. Add ${12 - totalQuantity} more.`);
+      return;
+    }
+
+    setPartnerStoreFulfillment(form.fulfillmentMethod);
+
     if (
       duplicateSelections ||
       selectedLines.length === 0 ||
@@ -2723,7 +2742,7 @@ const duplicateSelections = useMemo(() => {
       );
 
       setSuccess(
-        `${totalQuantity} retail jar${totalQuantity === 1 ? "" : "s"} added to the cart in the top banner.`
+        `${totalQuantity} retail jar${totalQuantity === 1 ? "" : "s"} added to your cart. You can keep shopping in Gifts or Wholesale before checkout.`
       );
     } catch (cartError) {
       setError(
@@ -3057,7 +3076,7 @@ const duplicateSelections = useMemo(() => {
           Loading secure replenishment tools…
         </div>
       ) : tab === "new" ? (
-        <form className="nf-replenishment-form" onSubmit={submit}>
+        <form className="nf-replenishment-form" onSubmit={addSelectedToCart}>
           <div className="nf-replenishment-top-grid">
             <div className="nf-replenishment-field">
               <label htmlFor="replenishment-needed-by">
@@ -3676,25 +3695,21 @@ const duplicateSelections = useMemo(() => {
             )}
           </div>
 
-          <div className="nf-replenishment-dual-actions">
-            <button
-              type="button"
-              className="btn ghost nf-replenishment-submit"
-              onClick={addSelectedToCart}
-            >
-              {busy ? "Working…" : "Add to Cart"}
-            </button>
-
-            <button
+          <button
             type="submit"
             className="btn solid nf-replenishment-submit"
-            disabled={!canSubmit}
+            disabled={
+              loading ||
+              busy ||
+              catalog.length === 0 ||
+              !validLines ||
+              duplicateSelections ||
+              totalQuantity < 12 ||
+              !["pickup", "delivery"].includes(form.fulfillmentMethod)
+            }
           >
-            {busy
-              ? "Submitting Request…"
-              : "Submit Order Request"}
+            {busy ? "Adding…" : "Add Retail Items to Cart"}
           </button>
-          </div>
         </form>
       ) : requests.length === 0 ? (
         <div className="nf-replenishment-empty">

@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import * as api from "../lib/api";
-import { addPartnerStoreItems } from "../lib/partnerStoreCart";
+import {
+  addPartnerStoreItems,
+  getPartnerStoreFulfillment,
+  setPartnerStoreFulfillment,
+} from "../lib/partnerStoreCart";
 
 const CSS = `
 .nf-bulk{margin-top:14px;padding:clamp(20px,3vw,30px);border:1px solid #D8C9B8;border-radius:22px;background:radial-gradient(circle at 96% 5%,rgba(247,196,28,.14),transparent 28%),linear-gradient(145deg,#FFFFFF,#FBF7F1)}
@@ -90,7 +94,7 @@ const emptyGiftSet = (type = "Small Plastic Bear") => ({
 
 const initialForm = () => ({
   neededBy: "",
-  fulfillmentMethod: "",
+  fulfillmentMethod: getPartnerStoreFulfillment(),
   pickupMarketDateId: "",
   preferredDeliveryDays: [],
   requestNotes: "",
@@ -404,6 +408,7 @@ const canSubmit =
   };
 
   const changeFulfillment = (value) => {
+    setPartnerStoreFulfillment(value);
     setForm((current) => ({
       ...current,
       fulfillmentMethod: value,
@@ -544,6 +549,12 @@ const canSubmit =
   const addWholesaleToCart = async (event) => {
     event.preventDefault();
 
+    if (!["pickup", "delivery"].includes(form.fulfillmentMethod)) {
+      setError("Choose Coleman Pickup or Local Delivery before adding wholesale items to your cart.");
+      return;
+    }
+    setPartnerStoreFulfillment(form.fulfillmentMethod);
+
     if (form.items.length < 1) {
       setError("Add at least one wholesale container.");
       return;
@@ -592,10 +603,7 @@ const canSubmit =
       );
 
       setSuccess(
-        `${totalContainers} wholesale container${totalContainers === 1 ? "" : "s"} added. Opening checkout…`
-      );
-      window.dispatchEvent(
-        new CustomEvent("nf-open-partner-cart")
+        `${totalContainers} wholesale container${totalContainers === 1 ? "" : "s"} added to your cart. You can keep shopping in Gifts or Retail before checkout.`
       );
     } catch (cartError) {
       setError(
@@ -1447,13 +1455,45 @@ const canSubmit =
               </div>
             </>
           ) : (
-            <div className="nf-bulk-note">
-              <strong>Fulfillment is selected at checkout.</strong>{" "}
-              After you build the wholesale order, choose Coleman Pickup or
-              Local Delivery in Partner Checkout. Local delivery availability
-              and the fee are calculated automatically from the delivery ZIP
-              and included in the final total before payment.
-            </div>
+            <>
+              <div className="nf-bulk-step-title">
+                <span className="nf-bulk-step-number">2</span>
+                <div>
+                  <h3>Fulfillment</h3>
+                  <p>Choose Pickup or Local Delivery before adding these items to your shared cart.</p>
+                </div>
+              </div>
+
+              <div className="nf-bulk-meta">
+                <div className="nf-bulk-field">
+                  <label htmlFor="bulk-fulfillment">Fulfillment</label>
+                  <select
+                    id="bulk-fulfillment"
+                    value={form.fulfillmentMethod}
+                    onChange={(event) => changeFulfillment(event.target.value)}
+                  >
+                    <option value="pickup">Coleman Pickup</option>
+                    <option value="delivery">Local Delivery</option>
+                  </select>
+                </div>
+
+                {form.fulfillmentMethod === "pickup" && (
+                  <div className="nf-bulk-market-card">
+                    <div className="nf-bulk-fulfillment pickup">
+                      <strong>Coleman Pickup · FREE</strong><br />
+                      122 E Railway St, Coleman, MI 48618
+                    </div>
+                  </div>
+                )}
+
+                {form.fulfillmentMethod === "delivery" && (
+                  <div className="nf-bulk-fulfillment delivery">
+                    <strong>Local Delivery · fee based on ZIP.</strong>{" "}
+                    The final delivery fee is calculated from the delivery ZIP in checkout and included before payment.
+                  </div>
+                )}
+              </div>
+            </>
           )}
 
           <div className="nf-bulk-step-title">
@@ -1463,7 +1503,7 @@ const canSubmit =
               <p>
                 {giftMode
                   ? "Everything you added stays in this request."
-                  : "Review the products below, then continue to checkout for fulfillment, final ZIP-based delivery pricing, and payment."}
+                  : "Review the products below, add them to your cart, then switch tabs if you want to add Gifts or Retail items to the same order."}
               </p>
             </div>
           </div>
@@ -1591,10 +1631,11 @@ const canSubmit =
                 !catalog.enabled ||
                 !validLines ||
                 duplicateSelections ||
-                form.items.length < 1
+                form.items.length < 1 ||
+                !fulfillmentValid
               }
             >
-              {busy ? "Opening Checkout…" : "Continue to Checkout"}
+              {busy ? "Adding…" : "Add Wholesale Items to Cart"}
             </button>
           )}
         </form>

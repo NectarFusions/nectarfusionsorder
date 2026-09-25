@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import * as api from "../lib/api";
-import { replacePartnerStoreItems } from "../lib/partnerStoreCart";
+import {
+  getPartnerStoreFulfillment,
+  replacePartnerStoreItems,
+  setPartnerStoreFulfillment,
+} from "../lib/partnerStoreCart";
 
 const PICKUP_ADDRESS = "122 E Railway St, Coleman, MI 48618";
 
@@ -85,7 +89,7 @@ const blankGift = (type) => ({
 
 const initialForm = () => ({
   neededBy: "",
-  fulfillmentMethod: "",
+  fulfillmentMethod: getPartnerStoreFulfillment(),
   preferredDeliveryDays: [],
   requestNotes: "",
   bear: blankGift(PRODUCT_META.bear.type),
@@ -1366,6 +1370,7 @@ export default function PartnerGiftRequestPanel() {
   };
 
   const changeFulfillment = (value) => {
+    setPartnerStoreFulfillment(value);
     setForm((current) => ({
       ...current,
       fulfillmentMethod: value,
@@ -1508,6 +1513,7 @@ export default function PartnerGiftRequestPanel() {
 
     setError("");
     setSuccess("");
+    setPartnerStoreFulfillment(form.fulfillmentMethod);
 
     try {
       const cartItems = [];
@@ -1630,10 +1636,7 @@ export default function PartnerGiftRequestPanel() {
       );
 
       setSuccess(
-        "Gift items were added. Opening checkout…"
-      );
-      window.dispatchEvent(
-        new CustomEvent("nf-open-partner-cart")
+        "Gift items were added to your cart. You can keep shopping in Retail or Wholesale before checkout."
       );
     } catch (cartError) {
       setError(
@@ -2079,7 +2082,7 @@ export default function PartnerGiftRequestPanel() {
               Loading gift requests…
             </div>
           ) : tab === "new" ? (
-            <form onSubmit={submit}>
+            <form onSubmit={addGiftItemsToCart}>
               <div className="nf-gift-layout">
                 <div className="nf-gift-main">
                   <section className="nf-gift-section">
@@ -2411,16 +2414,7 @@ export default function PartnerGiftRequestPanel() {
                     included in the Partner Checkout total before payment.
                   </div>
 
-                  <div className="nf-gift-dual-actions">
-            <button
-              type="button"
-              className="nf-gift-submit secondary"
-              onClick={addGiftItemsToCart}
-            >
-              {busy ? "Working…" : "Continue to Checkout"}
-            </button>
-
-            <button
+                  <button
                     type="submit"
                     className="nf-gift-submit"
                     disabled={
@@ -2429,11 +2423,8 @@ export default function PartnerGiftRequestPanel() {
                       selectedGifts.length === 0
                     }
                   >
-                    {busy
-                      ? "Submitting…"
-                      : "Submit Gift Request"}
+                    {busy ? "Adding…" : "Add Gift Items to Cart"}
                   </button>
-          </div>
                 </aside>
               </div>
             </form>

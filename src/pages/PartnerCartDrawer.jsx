@@ -3,7 +3,9 @@ import * as api from "../lib/api";
 import {
   clearPartnerStoreCart,
   getPartnerStoreCart,
+  getPartnerStoreFulfillment,
   removePartnerStoreItem,
+  setPartnerStoreFulfillment,
 } from "../lib/partnerStoreCart";
 
 const PICKUP_ADDRESS = "122 E Railway St, Coleman, MI 48618";
@@ -150,7 +152,7 @@ export default function PartnerCartDrawer({ account }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [checkout, setCheckout] = useState({
-    fulfillmentMethod: "pickup",
+    fulfillmentMethod: getPartnerStoreFulfillment(),
     neededBy: "",
     preferredDeliveryDays: [],
     currentInventoryNotes: "",
@@ -192,12 +194,30 @@ export default function PartnerCartDrawer({ account }) {
       setSuccess("");
     };
 
+    const syncFulfillment = (event) => {
+      const fulfillmentMethod =
+        event?.detail?.fulfillmentMethod ||
+        getPartnerStoreFulfillment();
+
+      setCheckout((current) => ({
+        ...current,
+        fulfillmentMethod,
+        preferredDeliveryDays:
+          fulfillmentMethod === "delivery"
+            ? current.preferredDeliveryDays
+            : [],
+      }));
+      setQuote(null);
+    };
+
     window.addEventListener("nf-partner-cart-changed", sync);
     window.addEventListener("nf-open-partner-cart", show);
+    window.addEventListener("nf-partner-fulfillment-changed", syncFulfillment);
 
     return () => {
       window.removeEventListener("nf-partner-cart-changed", sync);
       window.removeEventListener("nf-open-partner-cart", show);
+      window.removeEventListener("nf-partner-fulfillment-changed", syncFulfillment);
     };
   }, []);
 
@@ -370,6 +390,7 @@ export default function PartnerCartDrawer({ account }) {
                   checkout.fulfillmentMethod === "pickup" ? "active" : ""
                 }
                 onClick={() => {
+                  setPartnerStoreFulfillment("pickup");
                   setCheckout((current) => ({
                     ...current,
                     fulfillmentMethod: "pickup",
@@ -387,6 +408,7 @@ export default function PartnerCartDrawer({ account }) {
                   checkout.fulfillmentMethod === "delivery" ? "active" : ""
                 }
                 onClick={() => {
+                  setPartnerStoreFulfillment("delivery");
                   setCheckout((current) => ({
                     ...current,
                     fulfillmentMethod: "delivery",
