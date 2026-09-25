@@ -273,7 +273,7 @@ const BUSINESS_TYPES = [
   "Boutique or gift shop",
   "Michigan-made shop",
   "Farm store or specialty grocery",
-  "Café, bakery, or foodservice",
+  "Café, bakery, restaurant, or wholesale buyer",
   "Winery, cheese shop, or butcher",
   "Hospitality or tourism business",
   "Corporate or event gifting",
@@ -282,7 +282,7 @@ const BUSINESS_TYPES = [
 
 const PARTNER_INTERESTS = [
   "Retail shelf products",
-  "Foodservice or bulk honey",
+  "Wholesale or bulk honey",
   "Event favors or gifting",
   "Custom labels or packaging",
   "Multiple partner options",
@@ -302,7 +302,7 @@ const PROGRAMS = [
     title: "Retail Shelves",
     copy: "For boutiques, farm stores, specialty grocers, cafés, and Michigan-made shops.",
     bullets: [
-      "7 oz and 1 lb retail jars",
+      "4 oz, 7 oz, and 1 lb retail jars",
       "Natural and signature infused flavors",
       "Curated opening assortment and easy replenishment",
       "Current pricing and order history through the Partner Portal",
@@ -310,7 +310,7 @@ const PROGRAMS = [
   },
   {
     kind: "bulk",
-    label: "Foodservice",
+    label: "Wholesale",
     title: "Bulk Honey",
     copy: "For cafés, bakeries, kitchens, hospitality, beverage programs, and higher-volume use.",
     bullets: [
@@ -342,12 +342,12 @@ const PROCESS = [
 ];
 
 const FAQS = [
-  ["What sizes are available?", "Retail partners currently order 7 oz and 1 lb jars. Eligible foodservice and bulk partners can request 1/2 gallon, 1 gallon, and 5 gallon formats. Gifting options include 2 oz plastic bears and small glass hexagonal containers."],
-  ["What are the retail order minimums?", "The current retail program uses a 24-unit opening order, a 12-unit reorder minimum, and six-unit increments by flavor and size unless a different arrangement is approved in writing."],
-  ["Can partners order both natural and infused honey?", "Yes. Available selections depend on the program, current inventory, and partner eligibility. Foodservice and bulk ordering supports both natural and infused options."],
+  ["What sizes are available?", "Retail partners currently order 4 oz, 7 oz, and 1 lb jars. Eligible wholesale and bulk partners can request 1/2 gallon, 1 gallon, and 5 gallon formats. Gifting options include 2 oz plastic bears and small glass hexagonal containers."],
+  ["What are the retail order minimums?", "The retail program uses a 12-jar minimum, with quantities ordered in six-jar increments by flavor, size, and texture. Available products can be mixed within the same order."],
+  ["Can partners order both natural and infused honey?", "Yes. Available selections depend on the program, current inventory, and partner eligibility. Wholesale and bulk ordering supports both natural and infused options."],
   ["Do you offer custom labels or event favors?", "Yes. Eligible partner requests can include small gifting containers, custom label requests, packaging details, and event-specific needs. Custom pricing is provided after review."],
   ["Where do I see current pricing?", "Approved partners receive current pricing and ordering access through NectarFusions partner materials and the secure Partner Portal. This keeps public information simple while partner pricing stays current."],
-  ["How do reorders work?", "Approved retail partners submit replenishment requests through the Partner Portal. Eligible accounts can also access foodservice, bulk, gifting, and custom-request tools from the same secure account."],
+  ["How do reorders work?", "Approved retail partners submit replenishment requests through the Partner Portal. Eligible accounts can also access wholesale, bulk, gifting, and custom-request tools from the same secure account."],
 ];
 
 export default function PartnerPage({ Header, styles, onBack, onPartnerLogin, submitInquiry }) {
@@ -438,7 +438,7 @@ export default function PartnerPage({ Header, styles, onBack, onPartnerLogin, su
       <style>{styles}</style>
       <style>{PARTNER_CSS}</style>
       <Header
-        eyebrow="Retail • Foodservice • Gifting"
+        eyebrow="Retail • Wholesale • Gifting"
         title="PARTNER WITH NECTARFUSIONS"
         right={<button className="btn ghost nf-back-to-shop" onClick={onBack}>Back to shop</button>}
       />
@@ -465,8 +465,8 @@ export default function PartnerPage({ Header, styles, onBack, onPartnerLogin, su
           <aside className="nf-partner-format-card" aria-label="Available NectarFusions partner formats">
             <strong>Available Partner Formats</strong>
             <div className="nf-partner-format-list">
-              <div className="nf-partner-format-row"><span>Retail</span><span>7 oz • 1 lb</span></div>
-              <div className="nf-partner-format-row"><span>Foodservice</span><span>1/2 gal • 1 gal • 5 gal</span></div>
+              <div className="nf-partner-format-row"><span>Retail</span><span>4 oz • 7 oz • 1 lb</span></div>
+              <div className="nf-partner-format-row"><span>Wholesale</span><span>1/2 gal • 1 gal • 5 gal</span></div>
               <div className="nf-partner-format-row"><span>Gifting</span><span>2 oz bears • glass hex</span></div>
               <div className="nf-partner-format-row"><span>Honey</span><span>Natural + infused</span></div>
             </div>

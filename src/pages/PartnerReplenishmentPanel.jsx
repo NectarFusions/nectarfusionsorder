@@ -2710,7 +2710,9 @@ const duplicateSelections = useMemo(() => {
           sizeId: catalogRow.size_id,
           sizeLabel:
             catalogRow.size_label ||
-            (catalogRow.size_id === "7oz" ? "7 oz" : "1 lb"),
+            ({ "4oz": "4 oz", "7oz": "7 oz", "1lb": "1 lb" }[
+              catalogRow.size_id
+            ] || catalogRow.size_id),
           texture: catalogRow.texture,
           quantity: Number(line.quantity),
           unitPriceCents: Number(
