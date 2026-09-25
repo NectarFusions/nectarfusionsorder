@@ -303,7 +303,7 @@ const PROGRAMS = [
     copy: "For boutiques, farm stores, specialty grocers, cafés, and Michigan-made shops.",
     bullets: [
       "4 oz, 7 oz, and 1 lb retail jars",
-      "Natural and signature infused flavors",
+      "Core flavors: Chipotle, Cinnamon, Lemon, Madagascar Vanilla, and Original",
       "Curated opening assortment and easy replenishment",
       "Current pricing and order history through the Partner Portal",
     ],
@@ -452,7 +452,7 @@ export default function PartnerPage({ Header, styles, onBack, onPartnerLogin, su
             <h2>Michigan Honey, <span>Made to Move</span></h2>
             <p>
               Stock it, serve it, or gift it. NectarFusions partners get access to raw Michigan honey,
-              signature infused flavors, multiple product formats, and a secure portal built for easy reorders and support.
+              core retail flavors, multiple product formats, and a secure portal built for easy reorders and support.
             </p>
             <div className="nf-partner-actions">
               <button type="button" className="btn solid" onClick={scrollToApplication}>Apply to Partner</button>
