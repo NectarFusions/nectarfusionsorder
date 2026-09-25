@@ -14,10 +14,8 @@ const RESOURCE_CATEGORIES = [
 ];
 
 const PARTNER_TYPES = [
-  ["retailer", "Retailer"],
-  ["wholesaler", "Wholesaler"],
-  ["event_partner", "Event Partner"],
-  ["other", "Other"],
+  ["retail", "Retail"],
+  ["wholesale", "Wholesale"],
 ];
 
 const RESOURCE_STATUSES = [

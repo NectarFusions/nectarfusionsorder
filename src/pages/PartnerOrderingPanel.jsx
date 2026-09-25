@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import * as api from "../lib/api";
+import { useEffect, useMemo, useState } from "react";
 import PartnerReplenishmentPanel from "./PartnerReplenishmentPanel";
 import PartnerBulkOrderPanel from "./PartnerBulkOrderPanel";
 import PartnerGiftRequestPanel from "./PartnerGiftRequestPanel";
@@ -7,7 +6,7 @@ import PartnerGiftRequestPanel from "./PartnerGiftRequestPanel";
 const CSS = `
 .nf-ordering-switch {
   display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
   gap:8px;
   margin:22px 0 0;
   padding:7px;
@@ -40,34 +39,30 @@ const CSS = `
 `;
 
 export default function PartnerOrderingPanel({ account }) {
-  const [bulkEnabled, setBulkEnabled] = useState(false);
-  const [tab, setTab] = useState("retail");
+  const partnerType = account?.partner_type || "";
+
+  const tabs = useMemo(() => {
+    const next = [];
+
+    if (partnerType === "retail" || partnerType === "both") {
+      next.push({ id: "retail", label: "Retail Orders" });
+    }
+
+    if (partnerType === "wholesale" || partnerType === "both") {
+      next.push({ id: "bulk", label: "Wholesale Orders" });
+    }
+
+    next.push({ id: "gifts", label: "Gifts & Custom" });
+    return next;
+  }, [partnerType]);
+
+  const [tab, setTab] = useState(() => tabs[0]?.id || "gifts");
 
   useEffect(() => {
-    let active = true;
-
-    api
-      .getPartnerBulkOrderCatalog()
-      .then((config) => {
-        if (active) {
-          setBulkEnabled(
-            config.enabled === true &&
-              config.eligible === true
-          );
-        }
-      })
-      .catch(() => {
-        if (active) setBulkEnabled(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  if (!bulkEnabled) {
-    return <PartnerReplenishmentPanel account={account} />;
-  }
+    if (!tabs.some((item) => item.id === tab)) {
+      setTab(tabs[0]?.id || "gifts");
+    }
+  }, [tabs, tab]);
 
   return (
     <>
@@ -78,32 +73,17 @@ export default function PartnerOrderingPanel({ account }) {
         role="tablist"
         aria-label="Partner ordering type"
       >
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === "retail"}
-          onClick={() => setTab("retail")}
-        >
-          Retailer Replenishment
-        </button>
-
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === "bulk"}
-          onClick={() => setTab("bulk")}
-        >
-          Wholesale & Bulk
-        </button>
-
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === "gifts"}
-          onClick={() => setTab("gifts")}
-        >
-          Gift Sets & Custom Requests
-        </button>
+        {tabs.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            role="tab"
+            aria-selected={tab === item.id}
+            onClick={() => setTab(item.id)}
+          >
+            {item.label}
+          </button>
+        ))}
       </div>
 
       {tab === "retail" ? (

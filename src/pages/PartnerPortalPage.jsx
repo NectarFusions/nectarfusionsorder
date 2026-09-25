@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import * as api from "../lib/api";
 import PartnerEventsPanel from "./PartnerEventsPanel";
 import PartnerOrderingPanel from "./PartnerOrderingPanel";
+import PartnerPricingGuide from "./PartnerPricingGuide";
 import PartnerCartDrawer from "./PartnerCartDrawer";
 
 const PORTAL_CSS = `
@@ -852,10 +853,35 @@ const PORTAL_CSS = `
 }
 `;
 
+const PARTNER_TYPE_CSS = `
+.nf-partner-type-setup{display:grid;gap:20px;padding:clamp(22px,4vw,38px);border:1px solid #D8E4EA;border-radius:22px;background:linear-gradient(145deg,#FFFFFF,#F7FBFD)}
+.nf-partner-type-setup h3{margin:6px 0 8px;color:#23170F;font-family:'Bebas Neue',Impact,sans-serif;font-size:40px;line-height:1}
+.nf-partner-type-setup>p{margin:0;max-width:760px;color:#62554A;line-height:1.7}
+.nf-partner-type-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.nf-partner-type-option{display:grid;gap:7px;min-height:150px;padding:18px;border:1.5px solid #D7C7B5;border-radius:16px;background:#fff;color:#2C2119;text-align:left;font:inherit;cursor:pointer}
+.nf-partner-type-option strong{color:#173C52;font-size:18px}
+.nf-partner-type-option span{color:#67594D;font-size:14px;line-height:1.55}
+.nf-partner-type-option[data-selected="true"]{border-color:#173C52;background:#F0F7FB;box-shadow:0 0 0 2px rgba(23,60,82,.08)}
+.nf-partner-type-help{padding:14px 16px;border:1px solid #E0D5C8;border-radius:14px;background:#FFFCF7}
+.nf-partner-type-help summary{cursor:pointer;color:#173C52;font-weight:900}
+.nf-partner-type-help div{display:grid;gap:10px;margin-top:12px;color:#65584D;font-size:14px;line-height:1.6}
+.nf-partner-type-actions{display:flex;gap:10px;flex-wrap:wrap}
+@media(max-width:760px){.nf-partner-type-options{grid-template-columns:1fr}}
+`;
+
 const cleanStatus = (value) =>
   String(value || "")
     .replaceAll("_", " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
+
+const partnerTypeLabel = (value) =>
+  value === "retail"
+    ? "Retail Partner"
+    : value === "wholesale"
+      ? "Wholesale Partner"
+      : value === "both"
+        ? "Retail + Wholesale"
+        : "Type Not Selected";
 
 const formatPartnerDate = (value) => {
   if (!value) return "";
@@ -945,6 +971,7 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
   const [resourceBusyId, setResourceBusyId] = useState("");
   const [resourceError, setResourceError] = useState("");
   const [portalSection, setPortalSection] = useState("home");
+  const [partnerTypeDraft, setPartnerTypeDraft] = useState("");
 
   const canSubmit = useMemo(
     () => email.trim() && password && !busy,
@@ -1059,6 +1086,23 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
     return context;
   }, []);
 
+  const savePartnerType = async () => {
+    if (!partnerTypeDraft || busy) return;
+
+    setBusy(true);
+    setError("");
+
+    try {
+      await api.selectMyPartnerType(partnerTypeDraft);
+      await refreshPartnerContext();
+      setPortalSection("home");
+    } catch (saveError) {
+      setError(accessErrorMessage(saveError));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const account = access.account;
   const mapping = access.mapping;
   const partnerName =
@@ -1101,6 +1145,7 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
     <div className="nf nf-partner-portal-page">
       <style>{styles}</style>
       <style>{PORTAL_CSS}</style>
+      <style>{PARTNER_TYPE_CSS}</style>
 
       <Header
         eyebrow="Secure Partner Access"
@@ -1217,7 +1262,107 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
               </div>
             )}
 
-            {access.kind === "partner" && (
+            {access.kind === "partner" && !account?.partner_type && (
+              <section className="nf-partner-type-setup">
+                <div>
+                  <div className="nf-modern-kicker">One-time setup</div>
+                  <h3>Choose Your Partner Type</h3>
+                  <p>
+                    Choose the option that best matches how your business will
+                    work with NectarFusions. You only choose this once. If your
+                    business changes later, NectarFusions can update it for you.
+                  </p>
+                </div>
+
+                <div className="nf-partner-type-options">
+                  <button
+                    type="button"
+                    className="nf-partner-type-option"
+                    data-selected={partnerTypeDraft === "retail"}
+                    onClick={() => setPartnerTypeDraft("retail")}
+                  >
+                    <strong>Retail Partner</strong>
+                    <span>
+                      I sell packaged NectarFusions jars directly to customers
+                      from a store, boutique, farm market, café shelf, gift shop,
+                      or similar retail business.
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="nf-partner-type-option"
+                    data-selected={partnerTypeDraft === "wholesale"}
+                    onClick={() => setPartnerTypeDraft("wholesale")}
+                  >
+                    <strong>Wholesale Partner</strong>
+                    <span>
+                      I buy larger-format honey for foodservice, production,
+                      hospitality, beverage programs, baking, or other business use.
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="nf-partner-type-option"
+                    data-selected={partnerTypeDraft === "both"}
+                    onClick={() => setPartnerTypeDraft("both")}
+                  >
+                    <strong>Both</strong>
+                    <span>
+                      My business both resells packaged NectarFusions jars and
+                      uses or purchases larger wholesale formats.
+                    </span>
+                  </button>
+                </div>
+
+                <details className="nf-partner-type-help">
+                  <summary>Not sure which type fits my business?</summary>
+                  <div>
+                    <p>
+                      <strong>Choose Retail</strong> if customers will purchase
+                      NectarFusions jars from your business.
+                    </p>
+                    <p>
+                      <strong>Choose Wholesale</strong> if your business uses
+                      NectarFusions honey behind the scenes or buys larger
+                      containers for service, production, or recipes.
+                    </p>
+                    <p>
+                      <strong>Choose Both</strong> if you do both. Gifts and
+                      custom requests are available with every partner type.
+                    </p>
+                  </div>
+                </details>
+
+                {error && (
+                  <div className="nf-partner-portal-error" role="alert">
+                    {error}
+                  </div>
+                )}
+
+                <div className="nf-partner-type-actions">
+                  <button
+                    type="button"
+                    className="btn solid"
+                    disabled={!partnerTypeDraft || busy}
+                    onClick={savePartnerType}
+                  >
+                    {busy ? "Saving…" : "Save & Enter Partner Portal"}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn ghost"
+                    onClick={signOut}
+                    disabled={busy}
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              </section>
+            )}
+
+            {access.kind === "partner" && account?.partner_type && (
               <>
                 <div className="nf-partner-workspace-head">
                   <div>
@@ -1227,6 +1372,7 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
                     </h2>
                     <div className="nf-partner-workspace-status">
                       <span>{account?.business_name}</span>
+                      <strong>{partnerTypeLabel(account?.partner_type)}</strong>
                       {account?.relationship_status && (
                         <strong>{cleanStatus(account.relationship_status)}</strong>
                       )}
@@ -1257,6 +1403,13 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
                     onClick={() => setPortalSection("orders")}
                   >
                     Orders
+                  </button>
+                  <button
+                    type="button"
+                    aria-current={portalSection === "pricing" ? "page" : undefined}
+                    onClick={() => setPortalSection("pricing")}
+                  >
+                    Pricing Guide
                   </button>
                   <button
                     type="button"
@@ -1324,6 +1477,19 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
                       <button
                         type="button"
                         className="nf-partner-action-card"
+                        onClick={() => setPortalSection("pricing")}
+                      >
+                        <span className="nf-partner-action-icon">$</span>
+                        <strong>Pricing Guide</strong>
+                        <small>
+                          Reference the current pricing available for your partner type.
+                        </small>
+                        <em>View Pricing →</em>
+                      </button>
+
+                      <button
+                        type="button"
+                        className="nf-partner-action-card"
                         onClick={() => setPortalSection("resources")}
                       >
                         <span className="nf-partner-action-icon">↓</span>
@@ -1374,6 +1540,29 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
                     </div>
                     <PartnerOrderingPanel account={account} />
                     <PartnerCartDrawer account={account} />
+                  </section>
+                )}
+
+                {portalSection === "pricing" && (
+                  <section className="nf-partner-workspace-section">
+                    <div className="nf-partner-workspace-section-head">
+                      <div>
+                        <div className="nf-modern-kicker">Current partner pricing</div>
+                        <h3>Pricing Guide</h3>
+                        <p>
+                          Pricing shown here is matched to your saved partner type.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn ghost"
+                        onClick={() => setPortalSection("home")}
+                      >
+                        Back to Home
+                      </button>
+                    </div>
+
+                    <PartnerPricingGuide account={account} />
                   </section>
                 )}
 

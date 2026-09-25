@@ -514,6 +514,22 @@ export async function getPartnerPortalContext() {
   return { kind: "unauthorized" };
 }
 
+export async function selectMyPartnerType(partnerType) {
+  const allowed = ["retail", "wholesale", "both"];
+
+  if (!allowed.includes(partnerType)) {
+    throw new Error("Choose Retail, Wholesale, or Both.");
+  }
+
+  const { data, error } = await supabase.rpc(
+    "set_my_partner_type_once",
+    { p_partner_type: partnerType }
+  );
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
 
 /* ---------- partner replenishment ---------- */
 
@@ -1165,6 +1181,32 @@ export async function getAdminPartnerProgress(partnerId) {
     milestones: milestonesResult.data ?? [],
     goals: goalsResult.data ?? [],
   };
+}
+
+export async function updateAdminPartnerType(partnerId, partnerType) {
+  const allowedTypes = ["retail", "wholesale", "both"];
+
+  if (!allowedTypes.includes(partnerType)) {
+    throw new Error("Choose a valid partner type.");
+  }
+
+  const { data, error } = await supabase
+    .from("partner_accounts")
+    .update({
+      partner_type: partnerType,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", partnerId)
+    .select(
+      "id,business_name,public_name,contact_name,email,partner_type," +
+      "relationship_status,partner_level,partner_level_updated_at," +
+      "auth_access_enabled,locator_permission,event_submission_enabled," +
+      "created_at,updated_at"
+    )
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
 }
 
 export async function updateAdminPartnerLevel(partnerId, partnerLevel) {

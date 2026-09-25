@@ -372,6 +372,12 @@ const PARTNER_LEVELS = [
   ["strategic", "Strategic"],
 ];
 
+const PARTNER_TYPES = [
+  ["retail", "Retail Partner"],
+  ["wholesale", "Wholesale Partner"],
+  ["both", "Retail + Wholesale"],
+];
+
 const MILESTONE_STATUSES = [
   ["not_started", "Not Started"],
   ["in_progress", "In Progress"],
@@ -492,6 +498,7 @@ export default function AdminPartnerManagement() {
     goals: [],
   });
   const [levelDraft, setLevelDraft] = useState("starter");
+  const [typeDraft, setTypeDraft] = useState("");
   const [newGoal, setNewGoal] = useState(emptyGoal);
   const [showNewGoal, setShowNewGoal] = useState(false);
   const [loadingAccounts, setLoadingAccounts] = useState(true);
@@ -534,6 +541,7 @@ export default function AdminPartnerManagement() {
         account.contact_name,
         account.email,
         account.partner_level,
+        account.partner_type,
         account.relationship_status,
       ]
         .filter(Boolean)
@@ -609,10 +617,12 @@ export default function AdminPartnerManagement() {
   useEffect(() => {
     if (!selectedAccount) {
       setLevelDraft("starter");
+      setTypeDraft("");
       return;
     }
 
     setLevelDraft(selectedAccount.partner_level || "starter");
+    setTypeDraft(selectedAccount.partner_type || "");
   }, [selectedAccount]);
 
   useEffect(() => {
@@ -663,6 +673,33 @@ export default function AdminPartnerManagement() {
         goal.id === id ? { ...goal, ...patch } : goal
       ),
     }));
+  };
+
+  const saveType = async () => {
+    if (!selectedAccount || !typeDraft || busyKey) return;
+
+    setBusyKey("type");
+    setError("");
+    setNotice("");
+
+    try {
+      const updated = await api.updateAdminPartnerType(
+        selectedAccount.id,
+        typeDraft
+      );
+
+      setAccounts((current) =>
+        current.map((account) =>
+          account.id === updated.id ? { ...account, ...updated } : account
+        )
+      );
+
+      setNotice("Partner type saved.");
+    } catch (saveError) {
+      setError(saveError.message);
+    } finally {
+      setBusyKey("");
+    }
   };
 
   const saveLevel = async () => {
@@ -937,6 +974,7 @@ export default function AdminPartnerManagement() {
                     )}
                   </div>
                   <span>
+                    {cleanStatus(account.partner_type || "type_not_selected")} ·{" "}
                     {cleanStatus(account.partner_level || "starter")} ·{" "}
                     {cleanStatus(account.relationship_status)}
                   </span>
@@ -992,11 +1030,65 @@ export default function AdminPartnerManagement() {
                     </strong>
                   </div>
                   <div>
+                    <span>Partner Type</span>
+                    <strong>
+                      {cleanStatus(selectedAccount.partner_type || "Not selected")}
+                    </strong>
+                  </div>
+                  <div>
                     <span>Relationship</span>
                     <strong>
                       {cleanStatus(selectedAccount.relationship_status)}
                     </strong>
                   </div>
+                </div>
+              </div>
+
+              <div className="nf-apm-section">
+                <div className="nf-apm-section-heading">
+                  <div>
+                    <h3>Partner Type & Portal Access</h3>
+                    <p>
+                      Retail partners see Retail Orders, Gifts, and their Pricing Guide.
+                      Wholesale partners see Wholesale Orders, Gifts, and their Pricing Guide.
+                      Both partners see all ordering tabs. You can change the type here at any time.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="nf-apm-level-row">
+                  <label className="nf-apm-field">
+                    <span>Partner type</span>
+                    <select
+                      value={typeDraft}
+                      onChange={(event) => {
+                        setTypeDraft(event.target.value);
+                        setNotice("");
+                      }}
+                    >
+                      <option value="" disabled>
+                        Not selected
+                      </option>
+                      {PARTNER_TYPES.map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <button
+                    type="button"
+                    className="btn solid"
+                    disabled={
+                      busyKey === "type" ||
+                      !typeDraft ||
+                      typeDraft === selectedAccount.partner_type
+                    }
+                    onClick={saveType}
+                  >
+                    {busyKey === "type" ? "Saving…" : "Save Partner Type"}
+                  </button>
                 </div>
               </div>
 
