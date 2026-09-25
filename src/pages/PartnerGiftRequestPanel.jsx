@@ -1100,7 +1100,7 @@ const CSS = `
   }
 
   .nf-gift-product-eyebrow {
-    font-size:12px;
+    font-size:14px;
   }
 
   .nf-gift-product-pricing {
@@ -1110,7 +1110,7 @@ const CSS = `
 
   .nf-gift-product-pricing strong,
   .nf-gift-product-pricing span {
-    font-size:13px;
+    font-size:14px;
   }
 
   .nf-gift-product-toggle {
@@ -1223,6 +1223,135 @@ const CSS = `
     grid-template-columns:1fr;
   }
 }
+
+/* NF PARTNER UX POLISH START */
+.nf-gift {
+  max-width:1080px;
+  margin-top:22px;
+  padding-left:0;
+  padding-right:0;
+  color:#173C52;
+  font-size:15px;
+}
+.nf-gift-shell {
+  position:relative;
+  isolation:isolate;
+  border-color:#DDD0C0;
+  border-radius:24px;
+  background:linear-gradient(180deg,#FFFFFF 0%,#FFFDF8 100%);
+  box-shadow:0 16px 40px rgba(48,31,18,.08);
+}
+.nf-gift-shell::before {
+  content:"";
+  position:absolute;
+  z-index:0;
+  top:120px;
+  right:clamp(10px,4vw,42px);
+  width:clamp(220px,28vw,360px);
+  aspect-ratio:1;
+  background:url("/logo.png") center/contain no-repeat;
+  opacity:.035;
+  filter:grayscale(1);
+  pointer-events:none;
+}
+.nf-gift-shell > * {
+  position:relative;
+  z-index:1;
+}
+.nf-gift-hero {
+  background:
+    radial-gradient(circle at 92% 12%,rgba(247,196,28,.20),transparent 28%),
+    radial-gradient(circle at 10% 88%,rgba(114,183,228,.16),transparent 32%),
+    linear-gradient(145deg,#102E40 0%,#174C68 55%,#1B6F91 100%);
+}
+.nf-gift-hero p {
+  font-size:15px;
+  line-height:1.7;
+}
+.nf-gift-product,
+.nf-gift-card,
+.nf-gift-summary {
+  border-radius:18px;
+  box-shadow:0 8px 22px rgba(48,31,18,.05);
+}
+.nf-gift-product-eyebrow,
+.nf-gift-product-pricing strong,
+.nf-gift-product-pricing span,
+.nf-gift small {
+  font-size:14px !important;
+}
+.nf-gift-product-toggle,
+.nf-gift-product-cart,
+.nf-gift-submit,
+.nf-gift-tabs button {
+  min-height:48px;
+  font-size:15px;
+}
+.nf-gift-field input,
+.nf-gift-field select,
+.nf-gift-field textarea,
+.nf-gift input,
+.nf-gift select,
+.nf-gift textarea {
+  font-size:15px;
+}
+.nf-gift-submit {
+  width:100%;
+  min-height:52px;
+  border-radius:13px;
+  background:#F7C41C;
+  color:#102E40;
+  font-size:16px;
+  font-weight:950;
+}
+.nf-gift button:focus-visible,
+.nf-gift input:focus-visible,
+.nf-gift select:focus-visible,
+.nf-gift textarea:focus-visible {
+  outline:3px solid rgba(36,160,237,.2);
+  outline-offset:2px;
+}
+@media(max-width:720px) {
+  .nf-gift {
+    margin-top:14px;
+    padding:0;
+  }
+  .nf-gift-shell {
+    border-radius:19px;
+  }
+  .nf-gift-shell::before {
+    top:160px;
+    right:8px;
+    width:180px;
+    opacity:.025;
+  }
+  .nf-gift-hero {
+    padding:22px 17px;
+  }
+  .nf-gift-product-actions {
+    grid-column:1/-1;
+    width:100%;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+  .nf-gift-product-actions button {
+    width:100%;
+  }
+  .nf-gift-field input,
+  .nf-gift-field select,
+  .nf-gift-field textarea,
+  .nf-gift input,
+  .nf-gift select,
+  .nf-gift textarea {
+    font-size:16px;
+  }
+}
+@media(max-width:430px) {
+  .nf-gift-product-actions {
+    grid-template-columns:1fr;
+  }
+}
+/* NF PARTNER UX POLISH END */
 `;
 
 export default function PartnerGiftRequestPanel() {

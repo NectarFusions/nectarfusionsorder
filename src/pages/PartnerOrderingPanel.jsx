@@ -36,6 +36,52 @@ const CSS = `
     grid-template-columns:1fr;
   }
 }
+
+/* NF PARTNER UX POLISH START */
+.nf-ordering-switch {
+  position:relative;
+  z-index:4;
+  gap:10px;
+  margin-top:24px;
+  padding:9px;
+  border:1px solid #DDD0C0;
+  border-radius:20px;
+  background:linear-gradient(145deg,#FFFFFF,#FFF9EF);
+  box-shadow:0 10px 28px rgba(48,31,18,.07);
+}
+.nf-ordering-switch button {
+  min-height:52px;
+  padding:12px 16px;
+  border-radius:13px;
+  font-size:15px;
+  transition:transform .16s ease,box-shadow .16s ease,background .16s ease;
+}
+.nf-ordering-switch button:hover {
+  transform:translateY(-1px);
+  background:#EEF7FB;
+  color:#173C52;
+}
+.nf-ordering-switch button[aria-selected="true"] {
+  background:linear-gradient(145deg,#102E40,#1B6F91);
+  color:#FFFFFF;
+  box-shadow:0 8px 18px rgba(23,60,82,.18);
+}
+.nf-ordering-switch button:focus-visible {
+  outline:3px solid rgba(247,196,28,.48);
+  outline-offset:2px;
+}
+@media (max-width:620px) {
+  .nf-ordering-switch {
+    grid-template-columns:1fr;
+    padding:8px;
+    border-radius:17px;
+  }
+  .nf-ordering-switch button {
+    min-height:50px;
+    font-size:15px;
+  }
+}
+/* NF PARTNER UX POLISH END */
 `;
 
 export default function PartnerOrderingPanel({ account }) {

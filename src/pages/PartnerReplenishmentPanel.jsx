@@ -1804,6 +1804,155 @@ const REPLENISHMENT_CSS = `
     grid-column:auto;
   }
 }
+
+/* NF PARTNER UX POLISH START */
+.nf-replenishment-panel {
+  position:relative;
+  isolation:isolate;
+  max-width:1080px;
+  margin:22px auto 0;
+  border-color:#DDD0C0;
+  border-radius:24px;
+  background:linear-gradient(180deg,#FFFFFF 0%,#FFFDF8 100%);
+  box-shadow:0 16px 40px rgba(48,31,18,.08);
+  font-size:15px;
+}
+.nf-replenishment-panel::before {
+  content:"";
+  position:absolute;
+  z-index:0;
+  top:110px;
+  right:clamp(10px,4vw,42px);
+  width:clamp(220px,28vw,360px);
+  aspect-ratio:1;
+  background:url("/logo.png") center/contain no-repeat;
+  opacity:.035;
+  filter:grayscale(1);
+  pointer-events:none;
+}
+.nf-replenishment-panel > * {
+  position:relative;
+  z-index:1;
+}
+.nf-replenishment-header {
+  padding:clamp(20px,3.5vw,30px);
+  border-radius:20px;
+  background:
+    radial-gradient(circle at 92% 12%,rgba(247,196,28,.18),transparent 28%),
+    radial-gradient(circle at 10% 88%,rgba(114,183,228,.16),transparent 32%),
+    linear-gradient(145deg,#102E40 0%,#174C68 55%,#1B6F91 100%);
+  box-shadow:0 14px 32px rgba(16,46,64,.16);
+}
+.nf-replenishment-header h2 {
+  color:#FFFFFF;
+  font-size:clamp(36px,5vw,46px);
+}
+.nf-replenishment-header p {
+  color:#F6ECDD;
+  font-size:15px;
+  line-height:1.7;
+}
+.nf-replenishment-price-note {
+  border-color:#F7C41C;
+  background:#FFF4BE;
+  color:#59430F;
+}
+.nf-replenishment-form {
+  gap:22px;
+}
+.nf-replenishment-items,
+.nf-replenishment-pricing-summary,
+.nf-replenishment-order-options {
+  border:1px solid #E3D8CB;
+  border-radius:18px;
+  background:rgba(255,255,255,.96);
+  box-shadow:0 8px 22px rgba(48,31,18,.05);
+}
+.nf-replenishment-items {
+  padding:clamp(16px,2.5vw,22px);
+}
+.nf-replenishment-flavor-grid button,
+.nf-replenishment-tabs button,
+.nf-replenishment-items-actions .btn,
+.nf-replenishment-submit {
+  min-height:48px;
+}
+.nf-replenishment-field input,
+.nf-replenishment-field select,
+.nf-replenishment-field textarea,
+.nf-replenishment-line input,
+.nf-replenishment-line select,
+.nf-replenishment-reply textarea {
+  font-size:15px;
+}
+.nf-replenishment-field input:focus-visible,
+.nf-replenishment-field select:focus-visible,
+.nf-replenishment-field textarea:focus-visible,
+.nf-replenishment-flavor-grid button:focus-visible,
+.nf-replenishment-tabs button:focus-visible,
+.nf-replenishment-submit:focus-visible {
+  outline:3px solid rgba(36,160,237,.2);
+  outline-offset:2px;
+}
+.nf-replenishment-submit {
+  width:100%;
+  padding:13px 18px;
+  border-radius:13px;
+  background:#F7C41C;
+  color:#102E40;
+  font-size:16px;
+  font-weight:950;
+}
+@media (max-width:700px) {
+  .nf-replenishment-panel {
+    margin-top:14px;
+    padding:16px;
+    border-radius:19px;
+  }
+  .nf-replenishment-panel::before {
+    top:150px;
+    right:8px;
+    width:180px;
+    opacity:.025;
+  }
+  .nf-replenishment-header {
+    padding:22px 17px;
+    border-radius:16px;
+  }
+  .nf-replenishment-header h2 {
+    font-size:34px;
+  }
+  .nf-replenishment-header p {
+    font-size:15px;
+  }
+  .nf-replenishment-items {
+    padding:15px;
+  }
+  .nf-replenishment-items-header,
+  .nf-replenishment-items-actions {
+    align-items:stretch;
+  }
+  .nf-replenishment-items-actions {
+    width:100%;
+  }
+  .nf-replenishment-items-actions .btn {
+    flex:1;
+  }
+  .nf-replenishment-flavor-grid {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .nf-replenishment-field input,
+  .nf-replenishment-field select,
+  .nf-replenishment-field textarea {
+    font-size:16px;
+  }
+}
+@media (max-width:430px) {
+  .nf-replenishment-flavor-grid {
+    grid-template-columns:1fr;
+  }
+}
+/* NF PARTNER UX POLISH END */
 `;
 
 const DAYS = [
