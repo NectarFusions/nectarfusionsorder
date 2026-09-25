@@ -3629,7 +3629,7 @@ const duplicateSelections = useMemo(() => {
             </div>
 
             <div>
-              <span>Card processing fee (4%)</span>
+              <span>Processing fee (4%)</span>
               <strong>
                 {subtotalCents > 0
                   ? money(squareCheckoutFeeCents)
