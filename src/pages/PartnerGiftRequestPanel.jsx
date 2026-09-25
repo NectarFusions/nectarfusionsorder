@@ -20,26 +20,37 @@ const PRODUCT_META = {
     title: "2 oz Plastic Bear",
     image: "/images/partner-gift-bear-2oz.jpg",
     alt: "2 oz plastic honey bear container",
-    price: "$4.00 each",
-    tier: "50+ are $3.00 each",
+    priceKey: "bear_price_cents",
+    retailPriceKey: "bear_suggested_retail_cents",
   },
   hex: {
     type: "Small Glass Hexagonal Container",
     title: "2 oz Glass Hexagon",
     image: "/images/partner-gift-hexagonal.jpg",
     alt: "2 oz glass hexagonal honey container",
-    price: "$4.75 each",
-    tier: "50+ are $3.25 each",
+    priceKey: "hex_price_cents",
+    retailPriceKey: "hex_suggested_retail_cents",
   },
 };
 
+const DEFAULT_GIFT_PRICING = {
+  bear_price_cents: 250,
+  bear_suggested_retail_cents: 500,
+  hex_price_cents: 300,
+  hex_suggested_retail_cents: 600,
+  addon_unit_price_cents: 50,
+  addon_suggested_retail_cents: 100,
+  addon_bundle_price_cents: 125,
+  addon_bundle_suggested_retail_cents: 250,
+  custom_label_flat_cents: 3000,
+};
+
 const TOP_GIFT_FLAVOR_ALIASES = [
-  ["Peach"],
-  ["Blueberry"],
-  ["Thai Hot Pepper"],
-  ["Madagascar Vanilla", "Vanilla"],
+  ["Chipotle"],
   ["Cinnamon"],
   ["Lemon"],
+  ["Madagascar Vanilla", "Vanilla"],
+  ["Original"],
 ];
 
 const normalizeFlavorName = (value) =>
@@ -129,10 +140,13 @@ const todayIso = () => {
   ].join("-");
 };
 
-const unitPriceCents = (gift) => {
-  const qty = giftQuantity(gift);
-  if (gift?.type === PRODUCT_META.bear.type) return qty >= 50 ? 300 : 400;
-  if (gift?.type === PRODUCT_META.hex.type) return qty >= 50 ? 325 : 475;
+const unitPriceCents = (gift, pricing) => {
+  if (gift?.type === PRODUCT_META.bear.type) {
+    return Number(pricing?.bear_price_cents || 250);
+  }
+  if (gift?.type === PRODUCT_META.hex.type) {
+    return Number(pricing?.hex_price_cents || 300);
+  }
   return 0;
 };
 
@@ -145,14 +159,41 @@ const giftQuantity = (gift) =>
     0
   );
 
-const lineTotalCents = (gift) => {
+const addOnPricing = (gift, pricing) => {
+  const dipperQty = safeQty(gift?.dipperQty);
+  const thankYouTagQty = safeQty(gift?.thankYouTagQty);
+  const beeCharmQty = safeQty(gift?.beeCharmQty);
+  const bundleQty = Math.min(
+    dipperQty,
+    thankYouTagQty,
+    beeCharmQty
+  );
+  const individualQty =
+    dipperQty +
+    thankYouTagQty +
+    beeCharmQty -
+    bundleQty * 3;
+
+  return {
+    bundleQty,
+    dipperRemainder: dipperQty - bundleQty,
+    thankYouTagRemainder: thankYouTagQty - bundleQty,
+    beeCharmRemainder: beeCharmQty - bundleQty,
+    totalCents:
+      bundleQty *
+        Number(pricing?.addon_bundle_price_cents || 125) +
+      individualQty *
+        Number(pricing?.addon_unit_price_cents || 50),
+  };
+};
+
+const lineTotalCents = (gift, pricing) => {
   if (!gift?.enabled) return 0;
   const qty = giftQuantity(gift);
-  const addOns =
-    safeQty(gift.dipperQty) +
-    safeQty(gift.thankYouTagQty) +
-    safeQty(gift.beeCharmQty);
-  return qty * unitPriceCents(gift) + addOns * 100;
+  return (
+    qty * unitPriceCents(gift, pricing) +
+    addOnPricing(gift, pricing).totalCents
+  );
 };
 
 const CSS = `
@@ -1164,6 +1205,9 @@ export default function PartnerGiftRequestPanel() {
     giftSetFlavors: [],
   });
   const [requests, setRequests] = useState([]);
+  const [giftPricing, setGiftPricing] = useState(
+    DEFAULT_GIFT_PRICING
+  );
   const [form, setForm] = useState(initialForm);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -1176,12 +1220,18 @@ export default function PartnerGiftRequestPanel() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [nextCatalog, nextRequests] = await Promise.all([
-        api.getPartnerBulkOrderCatalog(),
-        api.listPartnerBulkOrderRequests(),
-      ]);
+      const [nextCatalog, nextPricing, nextRequests] =
+        await Promise.all([
+          api.getPartnerBulkOrderCatalog(),
+          api.getPartnerGiftPricing(),
+          api.listPartnerBulkOrderRequests(),
+        ]);
 
       setCatalog(nextCatalog);
+      setGiftPricing({
+        ...DEFAULT_GIFT_PRICING,
+        ...(nextPricing || {}),
+      });
       setRequests(
         (nextRequests || []).filter(
           (request) =>
@@ -1212,12 +1262,19 @@ export default function PartnerGiftRequestPanel() {
     [form]
   );
 
+  const pricing = {
+    ...DEFAULT_GIFT_PRICING,
+    ...(giftPricing || {}),
+  };
+
   const productsSubtotalCents = selectedGifts.reduce(
-    (sum, gift) => sum + lineTotalCents(gift),
+    (sum, gift) => sum + lineTotalCents(gift, pricing),
     0
   );
 
-  const labelChargeCents = form.customLabelsRequested ? 3000 : 0;
+  const labelChargeCents = form.customLabelsRequested
+    ? Number(pricing.custom_label_flat_cents || 3000)
+    : 0;
   const requestSubtotalCents =
     productsSubtotalCents + labelChargeCents;
 
@@ -1447,7 +1504,7 @@ if (gift.flavorIds.length < 1) {
             ? PRODUCT_META.bear.title
             : PRODUCT_META.hex.title;
         const unitPrice =
-          unitPriceCents(gift);
+          unitPriceCents(gift, pricing);
 
         for (const flavor of topGiftFlavors(
           catalog.giftSetFlavors
@@ -1475,31 +1532,45 @@ if (gift.flavorIds.length < 1) {
           });
         }
 
-        const addOns = [
+        const addonPricing = addOnPricing(gift, pricing);
+
+        if (addonPricing.bundleQty > 0) {
+          cartItems.push({
+            id: `gift_addon:${containerType}:all_three`,
+            category: "gift_addon",
+            addonType: "all_three",
+            containerType,
+            name: "Gift add-on set: dipper + Thank You tag + bee charm",
+            quantity: addonPricing.bundleQty,
+            unitPriceCents: Number(
+              pricing.addon_bundle_price_cents || 125
+            ),
+          });
+        }
+
+        const remainingAddOns = [
           [
             "dipper",
             "Wood honey dipper",
-            gift.dipperQty,
+            addonPricing.dipperRemainder,
           ],
           [
             "thank_you_tag",
             "Thank You tag",
-            gift.thankYouTagQty,
+            addonPricing.thankYouTagRemainder,
           ],
           [
             "bee_charm",
             "Bee charm",
-            gift.beeCharmQty,
+            addonPricing.beeCharmRemainder,
           ],
         ];
 
         for (const [
           addonType,
           name,
-          value,
-        ] of addOns) {
-          const quantity = safeQty(value);
-
+          quantity,
+        ] of remainingAddOns) {
           if (quantity < 1) continue;
 
           cartItems.push({
@@ -1509,7 +1580,9 @@ if (gift.flavorIds.length < 1) {
             containerType,
             name,
             quantity,
-            unitPriceCents: 100,
+            unitPriceCents: Number(
+              pricing.addon_unit_price_cents || 50
+            ),
           });
         }
       }
@@ -1521,7 +1594,7 @@ if (gift.flavorIds.length < 1) {
           name:
             "Custom design + printing & labeling",
           quantity: 1,
-          unitPriceCents: 3000,
+          unitPriceCents: Number(pricing.custom_label_flat_cents || 3000),
           notes:
             form.customLabelNotes.trim() || null,
           labelExamples:
@@ -1702,7 +1775,7 @@ if (gift.flavorIds.length < 1) {
   const renderProductCard = (key) => {
     const meta = PRODUCT_META[key];
     const gift = form[key];
-    const liveTotal = lineTotalCents(gift);
+    const liveTotal = lineTotalCents(gift, pricing);
 
     return (
       <article
@@ -1719,8 +1792,12 @@ if (gift.flavorIds.length < 1) {
             </span>
             <h4>{meta.title}</h4>
             <div className="nf-gift-product-pricing">
-              <strong>{meta.price}</strong>
-              <span>{meta.tier}</span>
+              <strong>
+                {money(pricing[meta.priceKey])} partner price
+              </strong>
+              <span>
+                Suggested retail {money(pricing[meta.retailPriceKey])}
+              </span>
             </div>
           </div>
 
@@ -1798,12 +1875,13 @@ if (gift.flavorIds.length < 1) {
             </div>
 <div>
               <div className="nf-gift-flavor-label">
-                Optional add-ons
+                Optional add-ons · all three together{" "}
+                {money(pricing.addon_bundle_price_cents)} per set
               </div>
               <div className="nf-gift-addons">
                 <label className="nf-gift-addon">
                   <strong>Wood honey dipper</strong>
-                  <span>$1.00 each</span>
+                  <span>{money(pricing.addon_unit_price_cents)} each</span>
                   <input
                     type="number"
                     min="0"
@@ -1821,7 +1899,7 @@ if (gift.flavorIds.length < 1) {
 
                 <label className="nf-gift-addon">
                   <strong>Thank You tag</strong>
-                  <span>$1.00 each</span>
+                  <span>{money(pricing.addon_unit_price_cents)} each</span>
                   <input
                     type="number"
                     min="0"
@@ -1839,7 +1917,7 @@ if (gift.flavorIds.length < 1) {
 
                 <label className="nf-gift-addon">
                   <strong>Bee charm</strong>
-                  <span>$1.00 each</span>
+                  <span>{money(pricing.addon_unit_price_cents)} each</span>
                   <input
                     type="number"
                     min="0"
@@ -1875,10 +1953,8 @@ if (gift.flavorIds.length < 1) {
 
             <div className="nf-gift-price-live">
               <span>
-                {money(unitPriceCents(gift))} each
-                {giftQuantity(gift) >= 50
-                  ? " · 50+ pricing applied"
-                  : ""}
+                {money(unitPriceCents(gift, pricing))} each
+                {" · partner pricing"}
               </span>
               <strong>{money(liveTotal)}</strong>
             </div>
@@ -2010,7 +2086,7 @@ if (gift.flavorIds.length < 1) {
                         <span>
                           <strong>
                             Custom design + printing & labeling
-                            · $30 flat
+                            · {money(pricing.custom_label_flat_cents)} flat
                           </strong>
                           <span>
                             Upload examples and tell us what you

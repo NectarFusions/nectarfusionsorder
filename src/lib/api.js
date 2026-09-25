@@ -760,6 +760,16 @@ export async function getPartnerBulkOrderCatalog() {
   };
 }
 
+export async function getPartnerGiftPricing() {
+  const { data, error } = await supabase.rpc(
+    "get_partner_gift_pricing"
+  );
+
+  if (error) throw new Error(error.message);
+
+  return data || {};
+}
+
 const PARTNER_LABEL_BUCKET = "partner-label-examples";
 const PARTNER_LABEL_MIME_TYPES = new Set([
   "image/jpeg",

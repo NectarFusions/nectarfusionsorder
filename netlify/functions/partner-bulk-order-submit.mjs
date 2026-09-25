@@ -1,5 +1,5 @@
 /* ============================================================
-   PARTNER FOODSERVICE, BULK + GIFT SET REQUEST SUBMISSION
+   PARTNER WHOLESALE, BULK + GIFT SET REQUEST SUBMISSION
    /.netlify/functions/partner-bulk-order-submit
 
    Uses the authenticated Partner session and isolated partner-order RPCs.
@@ -56,10 +56,39 @@ const cleanGiftSets = (value) =>
                 .filter(Boolean)
                 .slice(0, 20)
             : [],
+          flavor_quantities:
+            gift?.flavor_quantities &&
+            typeof gift.flavor_quantities === "object" &&
+            !Array.isArray(gift.flavor_quantities)
+              ? Object.fromEntries(
+                  Object.entries(gift.flavor_quantities)
+                    .map(([id, quantity]) => [
+                      String(id || "").trim(),
+                      Number(quantity),
+                    ])
+                    .filter(([id, quantity]) =>
+                      Boolean(id) &&
+                      Number.isInteger(quantity) &&
+                      quantity > 0 &&
+                      quantity <= 999
+                    )
+                    .slice(0, 20)
+                )
+              : {},
           lid_color:
             type === "Small Plastic Bear"
               ? cleanOptional(gift?.lid_color, 120)
               : null,
+          dipper_quantity: Number(gift?.dipper_quantity || 0),
+          thank_you_tag_quantity: Number(
+            gift?.thank_you_tag_quantity || 0
+          ),
+          bee_charm_quantity: Number(gift?.bee_charm_quantity || 0),
+          dipper_quantity: Number(gift?.dipper_quantity || 0),
+          thank_you_tag_quantity: Number(
+            gift?.thank_you_tag_quantity || 0
+          ),
+          bee_charm_quantity: Number(gift?.bee_charm_quantity || 0),
           custom_details: cleanOptional(gift?.custom_details, 1000),
         };
       })
@@ -107,9 +136,17 @@ const giftSetHtml = (giftSets) => {
           <td style="padding:10px;border-bottom:1px solid #E7DCC9">
             <strong>${esc(gift.type || "Small gift set")}</strong><br>
             <span style="font-size:12px;color:#7B5821">${esc(
-              Array.isArray(gift.flavor_names)
-                ? gift.flavor_names.join(", ")
-                : "Flavors pending"
+              Array.isArray(gift.flavor_breakdown) &&
+              gift.flavor_breakdown.length > 0
+                ? gift.flavor_breakdown
+                    .map(
+                      (item) =>
+                        `${item.flavor_name}: ${item.quantity}`
+                    )
+                    .join(" · ")
+                : Array.isArray(gift.flavor_names)
+                  ? gift.flavor_names.join(", ")
+                  : "Flavors pending"
             )}</span>
             ${
               gift.lid_color
@@ -121,11 +158,31 @@ const giftSetHtml = (giftSets) => {
                 ? `<br><span style="font-size:12px;color:#7B5821"><strong>Custom details:</strong> ${esc(gift.custom_details)}</span>`
                 : ""
             }
+            ${
+              Number(gift.dipper_quantity || 0) > 0
+                ? `<br><span style="font-size:12px;color:#7B5821"><strong>Small wood dippers:</strong> ${esc(gift.dipper_quantity)} × $1.00</span>`
+                : ""
+            }
+            ${
+              Number(gift.thank_you_tag_quantity || 0) > 0
+                ? `<br><span style="font-size:12px;color:#7B5821"><strong>Thank You tags:</strong> ${esc(gift.thank_you_tag_quantity)} × $1.00</span>`
+                : ""
+            }
+            ${
+              Number(gift.bee_charm_quantity || 0) > 0
+                ? `<br><span style="font-size:12px;color:#7B5821"><strong>Bee charms:</strong> ${esc(gift.bee_charm_quantity)} × $1.00</span>`
+                : ""
+            }
           </td>
           <td style="padding:10px;border-bottom:1px solid #E7DCC9;text-align:center">${esc(
             gift.quantity
           )}</td>
-          <td style="padding:10px;border-bottom:1px solid #E7DCC9;text-align:right">Admin will provide pricing</td>
+          <td style="padding:10px;border-bottom:1px solid #E7DCC9;text-align:right">
+              <strong>${money(gift.line_total_cents)}</strong><br>
+              <span style="font-size:12px;color:#7B5821">
+                ${money(gift.unit_price_cents)} each
+              </span>
+            </td>
         </tr>`
     )
     .join("");
@@ -329,7 +386,7 @@ export default async (req) => {
   const payload = {
     p_needed_by: cleanOptional(body.neededBy, 10),
     p_fulfillment_method:
-      cleanOptional(body.fulfillmentMethod, 30) || "flexible",
+      cleanOptional(body.fulfillmentMethod, 30),
     p_preferred_delivery_days: cleanDays(body.preferredDeliveryDays),
     p_request_notes: cleanOptional(body.requestNotes, 5000),
     p_items: Array.isArray(body.items) ? body.items.slice(0, 50) : [],
@@ -341,7 +398,7 @@ export default async (req) => {
   };
 
   const { data: submitted, error: submissionError } = await userClient.rpc(
-    "submit_partner_bulk_order_v3",
+    "submit_partner_bulk_order_v6",
     payload
   );
 
@@ -407,7 +464,7 @@ export default async (req) => {
       to: OWNER,
       replyTo: account.email || undefined,
       subject:
-        `Partner Foodservice Request — ${
+        `Partner Order Request — ${
           account.public_name || account.business_name
         } — ` + money(request.requested_subtotal_cents),
       html: ownerEmail({ account, request }),

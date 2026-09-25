@@ -25,6 +25,18 @@ const money = (value) =>
 
 const cents = (value) => money(Number(value || 0) / 100);
 
+const DEFAULT_GIFT_PRICING = {
+  bear_price_cents: 250,
+  bear_suggested_retail_cents: 500,
+  hex_price_cents: 300,
+  hex_suggested_retail_cents: 600,
+  addon_unit_price_cents: 50,
+  addon_suggested_retail_cents: 100,
+  addon_bundle_price_cents: 125,
+  addon_bundle_suggested_retail_cents: 250,
+  custom_label_flat_cents: 3000,
+};
+
 export default function PartnerPricingGuide({ account }) {
   const partnerType = account?.partner_type || "";
   const showRetail = partnerType === "retail" || partnerType === "both";
@@ -33,6 +45,7 @@ export default function PartnerPricingGuide({ account }) {
 
   const [retailCatalog, setRetailCatalog] = useState(null);
   const [bulkCatalog, setBulkCatalog] = useState(null);
+  const [giftPricing, setGiftPricing] = useState(DEFAULT_GIFT_PRICING);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -46,11 +59,16 @@ export default function PartnerPricingGuide({ account }) {
       showWholesale
         ? api.getPartnerBulkOrderCatalog()
         : Promise.resolve(null),
+      api.getPartnerGiftPricing(),
     ])
-      .then(([retail, bulk]) => {
+      .then(([retail, bulk, gifts]) => {
         if (!active) return;
         setRetailCatalog(retail);
         setBulkCatalog(bulk);
+        setGiftPricing({
+          ...DEFAULT_GIFT_PRICING,
+          ...(gifts || {}),
+        });
       })
       .catch((loadError) => {
         if (!active) return;
@@ -170,13 +188,67 @@ export default function PartnerPricingGuide({ account }) {
             </table>
           </section>
         )}
+
+        <section className="nf-pricing-guide-card">
+          <h4>Gifts & Custom Requests</h4>
+          <p>
+            Partner gift pricing is the same for Retail, Wholesale, and
+            Both partner types.
+          </p>
+
+          <table className="nf-pricing-guide-table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Your Price</th>
+                <th>Suggested Retail</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>2 oz Plastic Bear</td>
+                <td><strong>{cents(giftPricing.bear_price_cents)}</strong></td>
+                <td>{cents(giftPricing.bear_suggested_retail_cents)}</td>
+              </tr>
+              <tr>
+                <td>2 oz Glass Hexagon</td>
+                <td><strong>{cents(giftPricing.hex_price_cents)}</strong></td>
+                <td>{cents(giftPricing.hex_suggested_retail_cents)}</td>
+              </tr>
+              <tr>
+                <td>Wood Honey Dipper</td>
+                <td><strong>{cents(giftPricing.addon_unit_price_cents)}</strong></td>
+                <td>{cents(giftPricing.addon_suggested_retail_cents)}</td>
+              </tr>
+              <tr>
+                <td>Thank You Tag</td>
+                <td><strong>{cents(giftPricing.addon_unit_price_cents)}</strong></td>
+                <td>{cents(giftPricing.addon_suggested_retail_cents)}</td>
+              </tr>
+              <tr>
+                <td>Bee Charm</td>
+                <td><strong>{cents(giftPricing.addon_unit_price_cents)}</strong></td>
+                <td>{cents(giftPricing.addon_suggested_retail_cents)}</td>
+              </tr>
+              <tr>
+                <td>Gift Set Add-ons (all three)</td>
+                <td><strong>{cents(giftPricing.addon_bundle_price_cents)}</strong></td>
+                <td>{cents(giftPricing.addon_bundle_suggested_retail_cents)}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p>
+            Custom design + printing & labeling:{" "}
+            <strong>{cents(giftPricing.custom_label_flat_cents)} flat</strong>.
+          </p>
+        </section>
       </div>
 
       <div className="nf-pricing-guide-note">
-        Gift sets and custom requests are available to every partner type
-        from the Gifts tab. Pricing shown here is the current portal
-        pricing and may change when NectarFusions updates its published
-        pricing.
+        Gifts and custom requests are available to every partner type.
+        Core partner flavors are Chipotle, Cinnamon, Lemon,
+        Madagascar Vanilla, and Original.
       </div>
     </div>
   );
