@@ -35,6 +35,7 @@ const DEFAULT_GIFT_PRICING = {
   addon_bundle_price_cents: 125,
   addon_bundle_suggested_retail_cents: 250,
   custom_label_flat_cents: 3000,
+  pack_size: 12,
 };
 
 export default function PartnerPricingGuide({ account }) {
@@ -193,7 +194,9 @@ export default function PartnerPricingGuide({ account }) {
           <h4>Gifts & Custom Requests</h4>
           <p>
             Partner gift pricing is the same for Retail, Wholesale, and
-            Both partner types.
+            Both partner types. Both 2 oz gift containers are sold in packs of{" "}
+            {giftPricing.pack_size || 12}. Gift container flavors are ordered in
+            packs of {giftPricing.pack_size || 12}.
           </p>
 
           <table className="nf-pricing-guide-table">
@@ -206,14 +209,38 @@ export default function PartnerPricingGuide({ account }) {
             </thead>
             <tbody>
               <tr>
-                <td>2 oz Plastic Bear</td>
-                <td><strong>{cents(giftPricing.bear_price_cents)}</strong></td>
-                <td>{cents(giftPricing.bear_suggested_retail_cents)}</td>
+                <td>
+                  2 oz Plastic Bear · pack of {giftPricing.pack_size || 12}
+                </td>
+                <td>
+                  <strong>
+                    {cents(
+                      giftPricing.bear_price_cents *
+                        (giftPricing.pack_size || 12)
+                    )}{" "}
+                    / pack
+                  </strong>
+                  <br />
+                  {cents(giftPricing.bear_price_cents)} each
+                </td>
+                <td>{cents(giftPricing.bear_suggested_retail_cents)} each</td>
               </tr>
               <tr>
-                <td>2 oz Glass Hexagon</td>
-                <td><strong>{cents(giftPricing.hex_price_cents)}</strong></td>
-                <td>{cents(giftPricing.hex_suggested_retail_cents)}</td>
+                <td>
+                  2 oz Glass Hexagon · pack of {giftPricing.pack_size || 12}
+                </td>
+                <td>
+                  <strong>
+                    {cents(
+                      giftPricing.hex_price_cents *
+                        (giftPricing.pack_size || 12)
+                    )}{" "}
+                    / pack
+                  </strong>
+                  <br />
+                  {cents(giftPricing.hex_price_cents)} each
+                </td>
+                <td>{cents(giftPricing.hex_suggested_retail_cents)} each</td>
               </tr>
               <tr>
                 <td>Wood Honey Dipper</td>

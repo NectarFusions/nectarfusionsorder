@@ -38,7 +38,7 @@ const allowedRelationshipStatuses = new Set([
 ]);
 
 const allowedGiftFlavorNames = new Set([
-  "peach","blueberry","thai hot pepper","madagascar vanilla","vanilla","cinnamon","lemon",
+  "chipotle","cinnamon","lemon","madagascar vanilla","original",
 ]);
 
 const bulkPrices = {
@@ -48,14 +48,15 @@ const bulkPrices = {
 };
 
 const giftContainer = {
-  bear:{label:"2 oz Plastic Bear",normal:400,bulk:300},
-  hex:{label:"2 oz Glass Hexagon",normal:475,bulk:325},
+  bear:{label:"2 oz Plastic Bear"},
+  hex:{label:"2 oz Glass Hexagon"},
 };
 
 const giftAddon = {
   dipper:"Wood honey dipper",
   thank_you_tag:"Thank You tag",
   bee_charm:"Bee charm",
+  all_three:"Gift add-on set",
 };
 
 const itemName = (item) => {
@@ -104,6 +105,14 @@ async function buildValidatedOrder({ admin, account, body }) {
   const addonItems = rawItems.filter((item) => item?.category === "gift_addon");
   const customLabelItems = rawItems.filter((item) => item?.category === "custom_label");
 
+  const partnerType = normalize(account.partner_type);
+  if (retailItems.length && !["retail","both"].includes(partnerType)) {
+    throw new Error("Retail products are not available for this partner type.");
+  }
+  if (bulkItems.length && !["wholesale","both"].includes(partnerType)) {
+    throw new Error("Wholesale products are not available for this partner type.");
+  }
+
   const flavorIds = [
     ...retailItems.map((i)=>clean(i.flavorId,50)),
     ...bulkItems.filter((i)=>i.honeyType==="infused").map((i)=>clean(i.flavorId,50)),
@@ -143,14 +152,35 @@ async function buildValidatedOrder({ admin, account, body }) {
     spunEnabled = setting?.value?.enabled === true;
   }
 
-  const giftTotals = { bear:0, hex:0 };
-  for (const raw of giftItems) {
-    const containerType = clean(raw.containerType,20);
-    const quantity = int(raw.quantity);
-    if (!giftContainer[containerType]) throw new Error("A gift container selection is invalid.");
-    if (!quantity || quantity < 1 || quantity > 999) throw new Error("Gift quantities must be between 1 and 999.");
-    giftTotals[containerType] += quantity;
-  }
+  const { data: retailSizes, error: retailSizeError } = await admin
+    .from("sizes")
+    .select("id,label,price_cents")
+    .in("id",["4oz","7oz","1lb"]);
+  if (retailSizeError) throw retailSizeError;
+  const retailSizeMap = new Map(
+    (retailSizes || []).map((size) => [String(size.id), size])
+  );
+
+  const { data: giftPricingSetting, error: giftPricingError } = await admin
+    .from("settings")
+    .select("value")
+    .eq("key","partner_gift_pricing")
+    .maybeSingle();
+  if (giftPricingError) throw giftPricingError;
+
+  const giftPricing = {
+    bear_price_cents:250,
+    hex_price_cents:300,
+    addon_unit_price_cents:50,
+    addon_bundle_price_cents:125,
+    custom_label_flat_cents:3000,
+    pack_size:12,
+    ...(giftPricingSetting?.value || {}),
+  };
+  const giftPackSize = Math.max(
+    1,
+    Number.parseInt(giftPricing.pack_size,10) || 12
+  );
 
   const finalItems = [];
   let retailJarTotal = 0;
@@ -162,18 +192,29 @@ async function buildValidatedOrder({ admin, account, body }) {
     const quantity = int(raw.quantity);
     const flavor = flavorMap.get(flavorId);
 
-    if (!flavor?.active) throw new Error("A retail flavor is no longer available.");
-    if (!["7oz","1lb"].includes(sizeId)) throw new Error("Retailer Replenishment is limited to 7 oz and 1 lb jars.");
+    if (
+      !flavor?.active ||
+      !allowedGiftFlavorNames.has(normalize(flavor.name))
+    ) {
+      throw new Error("Retailer Replenishment is limited to the current core flavors.");
+    }
+
+    const size = retailSizeMap.get(sizeId);
+    if (!size) {
+      throw new Error("Retailer Replenishment is limited to 4 oz, 7 oz, and 1 lb jars.");
+    }
     if (!["regular","spun"].includes(texture)) throw new Error("Choose Regular or Spun honey.");
     if (texture === "spun" && !spunEnabled) throw new Error("Spun honey is currently unavailable.");
     if (!quantity || quantity < 6 || quantity > 996 || quantity % 6 !== 0) {
       throw new Error("Retailer Replenishment quantities must be ordered in six-jar increments.");
     }
     if (!stockMap.get(`${flavorId}|${sizeId}|${texture}`)) {
-      throw new Error(`${flavor.name} ${sizeId} ${texture} is no longer available.`);
+      throw new Error(`${flavor.name} ${size.label} ${texture} is no longer available.`);
     }
 
-    const unit = sizeId === "7oz" ? 725 : 1200;
+    const unit = Math.floor(Number(size.price_cents || 0) / 2);
+    if (!unit) throw new Error("Partner pricing is unavailable for a selected retail size.");
+
     retailJarTotal += quantity;
     finalItems.push({
       category:"retail",
@@ -181,7 +222,7 @@ async function buildValidatedOrder({ admin, account, body }) {
       flavor_id:flavor.id,
       flavor_name:flavor.name,
       size_id:sizeId,
-      size_label:sizeId==="7oz"?"7 oz":"1 lb",
+      size_label:size.label,
       texture,
       quantity,
       unit_price_cents:unit,
@@ -234,11 +275,22 @@ async function buildValidatedOrder({ admin, account, body }) {
 
     if (!config) throw new Error("A gift container selection is invalid.");
     if (!flavor?.active || !allowedGiftFlavorNames.has(normalize(flavor.name))) {
-      throw new Error("Gift Sets are limited to the six offered gift flavors.");
+      throw new Error("Partner Gift Sets are limited to the current core flavors.");
     }
-    if (!quantity || quantity < 1 || quantity > 999) throw new Error("Gift flavor quantities must be between 1 and 999.");
+    if (
+      !quantity ||
+      quantity < giftPackSize ||
+      quantity > 996 ||
+      quantity % giftPackSize !== 0
+    ) {
+      throw new Error(`Gift flavors must be ordered in packs of ${giftPackSize}.`);
+    }
 
-    const unit = giftTotals[containerType] >= 50 ? config.bulk : config.normal;
+    const unit =
+      containerType === "bear"
+        ? Number(giftPricing.bear_price_cents || 250)
+        : Number(giftPricing.hex_price_cents || 300);
+
     finalItems.push({
       category:"gift",
       product_key:containerType,
@@ -253,6 +305,8 @@ async function buildValidatedOrder({ admin, account, body }) {
       details:{
         container_type:containerType,
         container_label:config.label,
+        pack_size:giftPackSize,
+        packs:quantity/giftPackSize,
         lid_color:containerType==="bear"?clean(raw.lidColor,120):null,
         custom_details:clean(raw.customDetails,1000),
       },
@@ -267,6 +321,11 @@ async function buildValidatedOrder({ admin, account, body }) {
     if (!giftAddon[addonType]) throw new Error("A gift add-on is invalid.");
     if (!quantity || quantity < 1 || quantity > 999) throw new Error("Gift add-on quantities must be between 1 and 999.");
 
+    const unit =
+      addonType === "all_three"
+        ? Number(giftPricing.addon_bundle_price_cents || 125)
+        : Number(giftPricing.addon_unit_price_cents || 50);
+
     finalItems.push({
       category:"gift_addon",
       product_key:addonType,
@@ -276,8 +335,8 @@ async function buildValidatedOrder({ admin, account, body }) {
       size_label:giftAddon[addonType],
       texture:null,
       quantity,
-      unit_price_cents:100,
-      line_total_cents:quantity*100,
+      unit_price_cents:unit,
+      line_total_cents:quantity*unit,
       details:{container_type:giftContainer[containerType]?containerType:null},
     });
   }
@@ -300,8 +359,8 @@ async function buildValidatedOrder({ admin, account, body }) {
       size_label:"Custom Labels",
       texture:null,
       quantity:1,
-      unit_price_cents:3000,
-      line_total_cents:3000,
+      unit_price_cents:Number(giftPricing.custom_label_flat_cents || 3000),
+      line_total_cents:Number(giftPricing.custom_label_flat_cents || 3000),
       details:{notes:clean(raw.notes,3000),label_examples:examples},
     });
   }
@@ -446,7 +505,7 @@ export default async (req) => {
     .eq("id",mapping.partner_id)
     .single();
 
-  if (accountError || !account || account.auth_access_enabled!==true || !["retailer","wholesaler","other"].includes(account.partner_type) || !allowedRelationshipStatuses.has(account.relationship_status)) {
+  if (accountError || !account || account.auth_access_enabled!==true || !["retail","wholesale","both"].includes(account.partner_type) || !allowedRelationshipStatuses.has(account.relationship_status)) {
     return json(403,{error:"Partner ordering is not available for this account."});
   }
 
@@ -548,7 +607,7 @@ export default async (req) => {
     }));
     const serviceCharges = [
       ...(validated.deliveryFeeCents>0?[{name:"Partner local delivery",amount_money:{amount:validated.deliveryFeeCents,currency:"USD"},calculation_phase:"TOTAL_PHASE"}]:[]),
-      ...(validated.processingFeeCents>0?[{name:"Card processing fee (4%)",amount_money:{amount:validated.processingFeeCents,currency:"USD"},calculation_phase:"TOTAL_PHASE"}]:[]),
+      ...(validated.processingFeeCents>0?[{name:"Processing fee (4%)",amount_money:{amount:validated.processingFeeCents,currency:"USD"},calculation_phase:"TOTAL_PHASE"}]:[]),
     ];
 
     const sq = await square("/v2/online-checkout/payment-links",{

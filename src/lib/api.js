@@ -2585,3 +2585,28 @@ export async function listPartnerStoreOrders() {
   if (error) throw new Error(error.message);
   return data ?? [];
 }
+
+
+export async function listAdminPartnerStoreOrders(partnerId) {
+  if (!partnerId) return [];
+
+  const { data, error } = await supabase
+    .from("partner_store_orders")
+    .select(
+      "id,token,order_no,partner_id,status,fulfillment_method,needed_by," +
+      "preferred_delivery_days,current_inventory_notes,request_notes," +
+      "business_name,contact_name,email,phone,address_line1,address_line2," +
+      "city,state,zip,delivery_notes,subtotal_cents,delivery_fee_cents," +
+      "processing_fee_cents,total_cents,paid,paid_at,square_link_url," +
+      "created_at,updated_at," +
+      "items:partner_store_order_items(" +
+      "id,category,product_key,flavor_id,flavor_name,size_id,size_label," +
+      "texture,quantity,unit_price_cents,line_total_cents,details,created_at" +
+      ")"
+    )
+    .eq("partner_id", partnerId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}

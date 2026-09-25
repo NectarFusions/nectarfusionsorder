@@ -398,7 +398,7 @@ export default async (req) => {
   };
 
   const { data: submitted, error: submissionError } = await userClient.rpc(
-    "submit_partner_bulk_order_v6",
+    "submit_partner_bulk_order_v7",
     payload
   );
 

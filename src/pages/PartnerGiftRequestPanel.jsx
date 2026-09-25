@@ -43,6 +43,7 @@ const DEFAULT_GIFT_PRICING = {
   addon_bundle_price_cents: 125,
   addon_bundle_suggested_retail_cents: 250,
   custom_label_flat_cents: 3000,
+  pack_size: 12,
 };
 
 const TOP_GIFT_FLAVOR_ALIASES = [
@@ -1302,14 +1303,25 @@ export default function PartnerGiftRequestPanel() {
     setSuccess("");
   };
 
-  const adjustGiftQuantity = (key, delta) => {
-    const current = safeQty(form[key].quantity);
-    updateGift(key, "quantity", Math.max(1, current + delta));
-  };
+  const packSize = Math.max(
+    1,
+    Number.parseInt(pricing.pack_size, 10) || 12
+  );
 
-  const updateFlavorQuantity = (key, flavorId, value) => {
+  const updateFlavorPackQuantity = (
+    key,
+    flavorId,
+    packCountValue
+  ) => {
     const id = String(flavorId);
-    const quantity = safeQty(value);
+    const packCount = Math.max(
+      0,
+      Math.min(
+        Math.floor(996 / packSize),
+        Number.parseInt(packCountValue, 10) || 0
+      )
+    );
+    const quantity = packCount * packSize;
 
     setForm((current) => {
       const next = {
@@ -1450,29 +1462,35 @@ export default function PartnerGiftRequestPanel() {
     }
 
     for (const gift of selectedGifts) {
-      if (giftQuantity(gift) < 1) {
-        return `Enter at least one flavor quantity for ${
+      const flavorQuantities = Object.values(
+        gift.flavorQuantities || {}
+      ).map((value) => safeQty(value));
+
+      if (flavorQuantities.length < 1) {
+        return `Choose at least one flavor pack for ${
           gift.type === PRODUCT_META.bear.type
             ? "the 2 oz Plastic Bear"
             : "the 2 oz Glass Hexagon"
         }.`;
       }
 
-if (gift.flavorIds.length < 1) {
-        return `Choose at least one flavor for ${
-          gift.type === PRODUCT_META.bear.type
-            ? "the 2 oz Plastic Bear"
-            : "the 2 oz Glass Hexagon"
-        }.`;
+      if (
+        flavorQuantities.some(
+          (quantity) =>
+            quantity < packSize ||
+            quantity % packSize !== 0
+        )
+      ) {
+        return `Each flavor must be ordered in packs of ${packSize}.`;
       }
     }
 
     if (
-      !["pickup", "delivery", "shipping"].includes(
+      !["pickup", "delivery"].includes(
         form.fulfillmentMethod
       )
     ) {
-      return "Choose Coleman Pickup, Local Delivery, or Shipping.";
+      return "Choose Coleman Pickup or Local Delivery.";
     }
 
     return "";
@@ -1612,7 +1630,10 @@ if (gift.flavorIds.length < 1) {
       );
 
       setSuccess(
-        "Gift items were added to the cart in the top banner."
+        "Gift items were added. Opening checkout…"
+      );
+      window.dispatchEvent(
+        new CustomEvent("nf-open-partner-cart")
       );
     } catch (cartError) {
       setError(
@@ -1788,15 +1809,16 @@ if (gift.flavorIds.length < 1) {
 
           <div className="nf-gift-product-title">
             <span className="nf-gift-product-eyebrow">
-              Gift container
+              Gift container · sold by 12-count pack
             </span>
             <h4>{meta.title}</h4>
             <div className="nf-gift-product-pricing">
               <strong>
-                {money(pricing[meta.priceKey])} partner price
+                {money(pricing[meta.priceKey] * packSize)} per 12-count pack
               </strong>
               <span>
-                Suggested retail {money(pricing[meta.retailPriceKey])}
+                12 individual {meta.title} containers per pack ·{" "}
+                {money(pricing[meta.priceKey])} each
               </span>
             </div>
           </div>
@@ -1834,12 +1856,25 @@ if (gift.flavorIds.length < 1) {
             )}
 
             <div className="nf-gift-field full">
-              <label>Flavor quantities</label>
+              <label>Flavor packs · 12 containers per pack</label>
+              <p>
+                Choose how many packs of each flavor you need. For example,
+                1 Cinnamon pack = {packSize} Cinnamon containers.
+              </p>
+
               <div className="nf-gift-flavor-quantity-grid">
                 {topGiftFlavors(
                   catalog.giftSetFlavors
                 ).map((flavor) => {
                   const id = String(flavor.id);
+                  const containerQty = safeQty(
+                    gift.flavorQuantities?.[id]
+                  );
+                  const packCount =
+                    containerQty > 0
+                      ? containerQty / packSize
+                      : 0;
+
                   return (
                     <label
                       className="nf-gift-flavor-quantity"
@@ -1849,28 +1884,35 @@ if (gift.flavorIds.length < 1) {
                       <input
                         type="number"
                         min="0"
-                        max="999"
+                        max={Math.floor(996 / packSize)}
                         step="1"
                         inputMode="numeric"
-                        value={
-                          gift.flavorQuantities?.[id] || 0
-                        }
+                        value={packCount}
+                        aria-label={`${flavor.name} packs`}
                         onChange={(event) =>
-                          updateFlavorQuantity(
+                          updateFlavorPackQuantity(
                             key,
                             id,
                             event.target.value
                           )
                         }
                       />
+                      <small>
+                        {packCount} {packCount === 1 ? "pack" : "packs"} ·{" "}
+                        {containerQty} containers
+                      </small>
                     </label>
                   );
                 })}
               </div>
 
               <div className="nf-gift-flavor-total">
-                <span>Total containers</span>
-                <strong>{giftQuantity(gift)}</strong>
+                <span>Total gift containers</span>
+                <strong>
+                  {giftQuantity(gift) / packSize}{" "}
+                  {giftQuantity(gift) / packSize === 1 ? "pack" : "packs"}{" "}
+                  × {packSize} = {giftQuantity(gift)} individual containers
+                </strong>
               </div>
             </div>
 <div>
@@ -1953,8 +1995,8 @@ if (gift.flavorIds.length < 1) {
 
             <div className="nf-gift-price-live">
               <span>
-                {money(unitPriceCents(gift, pricing))} each
-                {" · partner pricing"}
+                {money(unitPriceCents(gift, pricing) * packSize)} per{" "}
+                {packSize}-pack · {money(unitPriceCents(gift, pricing))} each
               </span>
               <strong>{money(liveTotal)}</strong>
             </div>
@@ -2217,9 +2259,6 @@ if (gift.flavorIds.length < 1) {
                             <option value="delivery">
                               Local Delivery
                             </option>
-                            <option value="shipping">
-                              Shipping
-                            </option>
                           </select>
                         </div>
 
@@ -2241,9 +2280,10 @@ if (gift.flavorIds.length < 1) {
                           "delivery" && (
                           <>
                             <div className="nf-gift-fulfillment-note">
-                              Local delivery charges are based on
-                              the delivery ZIP and are confirmed
-                              with the final quote.
+                              Local delivery availability and the
+                              delivery fee are based on the delivery ZIP.
+                              The fee is included in the Partner Checkout
+                              total before payment.
                             </div>
 
                             <fieldset className="nf-gift-days">
@@ -2272,14 +2312,6 @@ if (gift.flavorIds.length < 1) {
                           </>
                         )}
 
-                        {form.fulfillmentMethod ===
-                          "shipping" && (
-                          <div className="nf-gift-fulfillment-note">
-                            Shipping is quoted separately and
-                            confirmed before the final quote is
-                            accepted.
-                          </div>
-                        )}
 
                         <div className="nf-gift-field full">
                           <label>Request notes</label>
@@ -2323,8 +2355,12 @@ if (gift.flavorIds.length < 1) {
                         >
                           <div>
                             <strong>
-                              {giftQuantity(gift)} ×{" "}
-                              {title}
+                              {giftQuantity(gift) / packSize}{" "}
+                              {giftQuantity(gift) / packSize === 1
+                                ? "pack"
+                                : "packs"}{" "}
+                              × {packSize} = {giftQuantity(gift)}{" "}
+                              {title} containers
                             </strong>
                             <span>
                               {Object.keys(
@@ -2370,9 +2406,9 @@ if (gift.flavorIds.length < 1) {
                   </div>
 
                   <div className="nf-gift-summary-note">
-                    Delivery or shipping charges and card
-                    processing fees, when applicable, are added
-                    to the final quote.
+                    Local delivery is based on the delivery ZIP.
+                    The delivery fee and processing fee (4%) are
+                    included in the Partner Checkout total before payment.
                   </div>
 
                   <div className="nf-gift-dual-actions">
@@ -2381,7 +2417,7 @@ if (gift.flavorIds.length < 1) {
               className="nf-gift-submit secondary"
               onClick={addGiftItemsToCart}
             >
-              {busy ? "Working…" : "Add to Cart"}
+              {busy ? "Working…" : "Continue to Checkout"}
             </button>
 
             <button

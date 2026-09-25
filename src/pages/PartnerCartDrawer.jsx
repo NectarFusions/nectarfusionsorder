@@ -306,7 +306,7 @@ export default function PartnerCartDrawer({ account }) {
       >
         <div className="nf-partner-cart-head">
           <div>
-            <h2>Partner Cart</h2>
+            <h2>Partner Checkout</h2>
             <p>Everything from your store order checks out together.</p>
           </div>
           <button
@@ -540,13 +540,13 @@ export default function PartnerCartDrawer({ account }) {
                 <strong>{money(quote?.subtotalCents ?? subtotal)}</strong>
               </div>
               <div>
-                <span>Partner delivery</span>
+                <span>Local delivery (ZIP-based)</span>
                 <strong>
                   {quote ? money(quote.deliveryFeeCents) : "Calculated by ZIP"}
                 </strong>
               </div>
               <div>
-                <span>Card processing fee (4%)</span>
+                <span>Processing fee (4%)</span>
                 <strong>
                   {quote
                     ? money(quote.processingFeeCents)

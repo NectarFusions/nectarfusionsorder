@@ -354,7 +354,6 @@ const activeSize = sizeById.get(activeOrderSection);
   const fulfillmentValid = [
     "pickup",
     "delivery",
-    "shipping",
   ].includes(form.fulfillmentMethod);
 
 const canSubmit =
@@ -365,7 +364,7 @@ const canSubmit =
     validLines &&
     validGiftSets &&
     !duplicateSelections &&
-    fulfillmentValid &&
+    (!giftMode || fulfillmentValid) &&
     hasRequestedProducts &&
     (!giftMode ||
       !form.customLabelsRequested ||
@@ -593,7 +592,10 @@ const canSubmit =
       );
 
       setSuccess(
-        `${totalContainers} wholesale container${totalContainers === 1 ? "" : "s"} added to the cart in the top banner.`
+        `${totalContainers} wholesale container${totalContainers === 1 ? "" : "s"} added. Opening checkout…`
+      );
+      window.dispatchEvent(
+        new CustomEvent("nf-open-partner-cart")
       );
     } catch (cartError) {
       setError(
@@ -608,7 +610,7 @@ const canSubmit =
 
     if (!fulfillmentValid) {
       setError(
-        "Choose Coleman Pickup, Local Delivery, or Shipping."
+        "Choose Coleman Pickup or Local Delivery."
       );
       return;
     }
@@ -860,24 +862,26 @@ const canSubmit =
         </div>
       )}
 
-      <div className="nf-bulk-tabs" role="tablist">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === "new"}
-          onClick={() => setTab("new")}
-        >
-          New Partner Request
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === "history"}
-          onClick={() => setTab("history")}
-        >
-          Request History ({filteredRequests.length})
-        </button>
-      </div>
+      {giftMode && (
+        <div className="nf-bulk-tabs" role="tablist">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === "new"}
+            onClick={() => setTab("new")}
+          >
+            New Gift Request
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === "history"}
+            onClick={() => setTab("history")}
+          >
+            Request History ({filteredRequests.length})
+          </button>
+        </div>
+      )}
 
       {error && (
         <div className="nf-bulk-message" data-kind="error" role="alert">
@@ -893,7 +897,7 @@ const canSubmit =
       {loading ? (
         <div className="nf-bulk-empty">Loading secure partner ordering…</div>
       ) : tab === "new" ? (
-        <form className="nf-bulk-form" onSubmit={submit}>
+        <form className="nf-bulk-form" onSubmit={giftMode ? submit : addWholesaleToCart}>
           <div className="nf-bulk-note">
             {giftMode ? (
               <>
@@ -1355,110 +1359,111 @@ const canSubmit =
             </div>
           ) : null}
 
-          <div className="nf-bulk-step-title">
-            <span className="nf-bulk-step-number">2</span>
-            <div>
-              <h3>Fulfillment & timing</h3>
-              <p>Tell us when you need it and how you would like to receive it.</p>
-            </div>
-          </div>
+          {giftMode ? (
+            <>
+              <div className="nf-bulk-step-title">
+                <span className="nf-bulk-step-number">2</span>
+                <div>
+                  <h3>Fulfillment & timing</h3>
+                  <p>Tell us when you need it and how you would like to receive it.</p>
+                </div>
+              </div>
 
-          <div className="nf-bulk-meta">
-            <div className="nf-bulk-field">
-              <label htmlFor="bulk-needed-by">Needed by</label>
-              <input
-                id="bulk-needed-by"
-                type="date"
-                min={todayIso()}
-                value={form.neededBy}
-                onChange={(event) =>
-                  updateForm("neededBy", event.target.value)
-                }
-              />
-            </div>
-
-            <div className="nf-bulk-field">
-              <label htmlFor="bulk-fulfillment">Fulfillment</label>
-              <select
-                id="bulk-fulfillment"
-                value={form.fulfillmentMethod}
-                onChange={(event) => changeFulfillment(event.target.value)}
-              >
-                <option value="">Choose fulfillment</option>
-                <option value="pickup">Coleman Pickup</option>
-                <option value="delivery">Local Delivery</option>
-                <option value="shipping">Shipping</option>
-              </select>
-            </div>
-
-            {form.fulfillmentMethod === "delivery" && (
-              <>
-                <div className="nf-bulk-fulfillment delivery">
-                  <strong>Delivery fee is separate.</strong> Delivery fees are not
-                  included in the product subtotal and will be charged separately
-                  at drop-off.
+              <div className="nf-bulk-meta">
+                <div className="nf-bulk-field">
+                  <label htmlFor="bulk-needed-by">Needed by</label>
+                  <input
+                    id="bulk-needed-by"
+                    type="date"
+                    min={todayIso()}
+                    value={form.neededBy}
+                    onChange={(event) =>
+                      updateForm("neededBy", event.target.value)
+                    }
+                  />
                 </div>
 
-                <fieldset className="nf-bulk-days">
-                  <legend>Preferred delivery days</legend>
-                  <div className="nf-bulk-day-grid">
-                    {DAYS.map(([value, label]) => (
-                      <label key={value}>
-                        <input
-                          type="checkbox"
-                          checked={form.preferredDeliveryDays.includes(value)}
-                          onChange={() => toggleDay(value)}
-                        />
-                        <span>{label}</span>
-                      </label>
-                    ))}
+                <div className="nf-bulk-field">
+                  <label htmlFor="bulk-fulfillment">Fulfillment</label>
+                  <select
+                    id="bulk-fulfillment"
+                    value={form.fulfillmentMethod}
+                    onChange={(event) => changeFulfillment(event.target.value)}
+                  >
+                    <option value="">Choose fulfillment</option>
+                    <option value="pickup">Coleman Pickup</option>
+                    <option value="delivery">Local Delivery</option>
+                  </select>
+                </div>
+
+                {form.fulfillmentMethod === "delivery" && (
+                  <>
+                    <div className="nf-bulk-fulfillment delivery">
+                      <strong>Local delivery is ZIP-based.</strong>{" "}
+                      Delivery availability and the delivery fee are calculated
+                      from the delivery ZIP and included in the checkout total.
+                    </div>
+
+                    <fieldset className="nf-bulk-days">
+                      <legend>Preferred delivery days</legend>
+                      <div className="nf-bulk-day-grid">
+                        {DAYS.map(([value, label]) => (
+                          <label key={value}>
+                            <input
+                              type="checkbox"
+                              checked={form.preferredDeliveryDays.includes(value)}
+                              onChange={() => toggleDay(value)}
+                            />
+                            <span>{label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </fieldset>
+                  </>
+                )}
+
+                {form.fulfillmentMethod === "pickup" && (
+                  <div className="nf-bulk-market-card">
+                    <div className="nf-bulk-fulfillment pickup">
+                      <strong>Coleman Pickup</strong>
+                      <br />
+                      122 E Railway St, Coleman, MI 48618
+                    </div>
                   </div>
-                </fieldset>
-              </>
-            )}
+                )}
 
-            {form.fulfillmentMethod === "pickup" && (
-              <div className="nf-bulk-market-card">
-                <div className="nf-bulk-fulfillment pickup">
-                  <strong>Coleman Pickup</strong>
-                  <br />
-                  122 E Railway St, Coleman, MI 48618
-                  <br />
-                  NectarFusions will confirm your pickup timing after the request is reviewed.
+                <div className="nf-bulk-field full">
+                  <label htmlFor="bulk-notes">Request notes</label>
+                  <textarea
+                    id="bulk-notes"
+                    maxLength={5000}
+                    value={form.requestNotes}
+                    onChange={(event) =>
+                      updateForm("requestNotes", event.target.value)
+                    }
+                    placeholder="Add timing, use case, delivery, packaging, or other details."
+                  />
                 </div>
               </div>
-            )}
-
-            {form.fulfillmentMethod === "shipping" && (
-              <div className="nf-bulk-fulfillment shipping">
-                <strong>Shipping is quoted separately.</strong> Shipping is not
-                included in the product subtotal. NectarFusions will confirm the
-                shipping charge before you accept the final quote.
-              </div>
-            )}
-
-            <div className="nf-bulk-field full">
-              <label htmlFor="bulk-notes">Request notes</label>
-              <textarea
-                id="bulk-notes"
-                maxLength={5000}
-                value={form.requestNotes}
-                onChange={(event) =>
-                  updateForm("requestNotes", event.target.value)
-                }
-                placeholder="Add timing, use case, delivery, packaging, or other details."
-              />
+            </>
+          ) : (
+            <div className="nf-bulk-note">
+              <strong>Fulfillment is selected at checkout.</strong>{" "}
+              After you build the wholesale order, choose Coleman Pickup or
+              Local Delivery in Partner Checkout. Local delivery availability
+              and the fee are calculated automatically from the delivery ZIP
+              and included in the final total before payment.
             </div>
-          </div>
-
+          )}
 
           <div className="nf-bulk-step-title">
             <span className="nf-bulk-step-number">3</span>
             <div>
-              <h3>Review your request</h3>
+              <h3>{giftMode ? "Review your request" : "Review your wholesale order"}</h3>
               <p>
-                Switching categories above does not remove anything. Everything
-                you added stays in this request.
+                {giftMode
+                  ? "Everything you added stays in this request."
+                  : "Review the products below, then continue to checkout for fulfillment, final ZIP-based delivery pricing, and payment."}
               </p>
             </div>
           </div>
@@ -1562,23 +1567,36 @@ const canSubmit =
             </div>
           )}
 
-          <div className="nf-bulk-dual-actions">
-            <button
-              type="button"
-              className="btn ghost"
-              onClick={addWholesaleToCart}
-            >
-              {busy ? "Working…" : "Add to Cart"}
-            </button>
+          {giftMode ? (
+            <div className="nf-bulk-dual-actions">
+              <button
+                type="button"
+                className="btn ghost"
+                onClick={addWholesaleToCart}
+              >
+                {busy ? "Working…" : "Add to Cart"}
+              </button>
 
-            <button type="submit" className="btn solid" disabled={!canSubmit}>
-            {busy
-              ? "Submitting Partner Request…"
-              : giftMode
-                ? "Submit Gift Request"
-                : "Submit Wholesale Request"}
-          </button>
-          </div>
+              <button type="submit" className="btn solid" disabled={!canSubmit}>
+                {busy ? "Submitting Gift Request…" : "Submit Gift Request"}
+              </button>
+            </div>
+          ) : (
+            <button
+              type="submit"
+              className="btn solid"
+              disabled={
+                loading ||
+                busy ||
+                !catalog.enabled ||
+                !validLines ||
+                duplicateSelections ||
+                form.items.length < 1
+              }
+            >
+              {busy ? "Opening Checkout…" : "Continue to Checkout"}
+            </button>
+          )}
         </form>
       ) : filteredRequests.length === 0 ? (
         <div className="nf-bulk-empty">

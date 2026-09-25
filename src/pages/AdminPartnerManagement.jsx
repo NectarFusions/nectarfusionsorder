@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import * as api from "../lib/api";
 import AdminPartnerReplenishmentPanel from "./AdminPartnerReplenishmentPanel";
 import AdminPartnerBulkOrderPanel from "./AdminPartnerBulkOrderPanel";
+import AdminPartnerStoreOrdersPanel from "./AdminPartnerStoreOrdersPanel";
 
 const ADMIN_PARTNER_CSS = `
 .nf-apm {
@@ -1091,6 +1092,10 @@ export default function AdminPartnerManagement() {
                   </button>
                 </div>
               </div>
+
+              <AdminPartnerStoreOrdersPanel
+                partner={selectedAccount}
+              />
 
               <AdminPartnerReplenishmentPanel
                 partner={selectedAccount}
