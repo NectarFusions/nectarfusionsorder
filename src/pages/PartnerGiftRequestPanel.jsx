@@ -422,6 +422,29 @@ const CSS = `
   background:#FFFFFF;
   color:#173C52;
 }
+.nf-gift-product-actions{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.nf-gift-product-cart{
+  min-width:112px;
+  min-height:48px;
+  padding:10px 14px;
+  border:0;
+  border-radius:12px;
+  background:#F7C41C;
+  color:#173C52;
+  font:inherit;
+  font-size:14px;
+  font-weight:900;
+  cursor:pointer;
+}
+.nf-gift-product-cart:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
 .nf-gift-config {
   display:grid;
   gap:22px;
@@ -1826,13 +1849,25 @@ export default function PartnerGiftRequestPanel() {
             </div>
           </div>
 
-          <button
-            type="button"
-            className="nf-gift-product-toggle"
-            onClick={() => toggleProduct(key)}
-          >
-            {gift.enabled ? "Remove" : "Add to request"}
-          </button>
+          <div className="nf-gift-product-actions">
+            <button
+              type="button"
+              className="nf-gift-product-toggle"
+              onClick={() => toggleProduct(key)}
+            >
+              {gift.enabled ? "Remove" : "Add item"}
+            </button>
+            {gift.enabled && (
+              <button
+                type="button"
+                className="nf-gift-product-cart"
+                onClick={addGiftItemsToCart}
+                disabled={busy || uploadingLabels}
+              >
+                {busy ? "Adding…" : "Add to Cart"}
+              </button>
+            )}
+          </div>
         </div>
 
         {gift.enabled && (
@@ -2415,15 +2450,15 @@ export default function PartnerGiftRequestPanel() {
                   </div>
 
                   <button
-                    type="submit"
+                    type="button"
                     className="nf-gift-submit"
-                    disabled={
-                      busy ||
-                      uploadingLabels ||
-                      selectedGifts.length === 0
+                    onClick={() =>
+                      window.dispatchEvent(
+                        new CustomEvent("nf-open-partner-cart")
+                      )
                     }
                   >
-                    {busy ? "Adding…" : "Add Gift Items to Cart"}
+                    Checkout
                   </button>
                 </aside>
               </div>

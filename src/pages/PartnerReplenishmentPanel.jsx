@@ -943,6 +943,16 @@ const REPLENISHMENT_CSS = `
   font-size:14px;
   font-weight:900;
 }
+.nf-replenishment-items-actions {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.nf-replenishment-items-actions .btn {
+  min-height:40px;
+  padding:8px 14px;
+}
 .nf-replenishment-flavor-grid {
   display:grid;
   grid-template-columns:repeat(4,minmax(0,1fr));
@@ -3419,8 +3429,18 @@ const duplicateSelections = useMemo(() => {
                   Select as many as you need. Each flavor shows every available size and texture below.
                 </p>
               </div>
-              <div className="nf-replenishment-selected-count">
-                {selectedFlavorIds.length} selected
+              <div className="nf-replenishment-items-actions">
+                <div className="nf-replenishment-selected-count">
+                  {selectedFlavorIds.length} selected
+                </div>
+                <button
+                  type="button"
+                  className="btn solid"
+                  onClick={addSelectedToCart}
+                  disabled={!canSubmit}
+                >
+                  {busy ? "Adding…" : "Add to Cart"}
+                </button>
               </div>
             </div>
 
@@ -3696,19 +3716,15 @@ const duplicateSelections = useMemo(() => {
           </div>
 
           <button
-            type="submit"
+            type="button"
             className="btn solid nf-replenishment-submit"
-            disabled={
-              loading ||
-              busy ||
-              catalog.length === 0 ||
-              !validLines ||
-              duplicateSelections ||
-              totalQuantity < 12 ||
-              !["pickup", "delivery"].includes(form.fulfillmentMethod)
+            onClick={() =>
+              window.dispatchEvent(
+                new CustomEvent("nf-open-partner-cart")
+              )
             }
           >
-            {busy ? "Adding…" : "Add Retail Items to Cart"}
+            Checkout
           </button>
         </form>
       ) : requests.length === 0 ? (

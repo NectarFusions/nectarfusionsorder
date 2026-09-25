@@ -60,9 +60,9 @@ const CSS = `
   backdrop-filter:blur(3px)
 }
 .nf-partner-cart-drawer{
-  position:fixed;top:0;right:0;z-index:9999;width:min(520px,100%);
+  position:fixed;inset:0;z-index:9999;width:100vw;
   height:100dvh;display:flex;flex-direction:column;background:#fff;
-  box-shadow:-18px 0 48px rgba(16,46,64,.2)
+  box-shadow:none
 }
 .nf-partner-cart-head{
   display:flex;justify-content:space-between;gap:16px;align-items:center;
@@ -74,7 +74,16 @@ const CSS = `
   width:42px;height:42px;border:1px solid rgba(255,255,255,.3);border-radius:999px;
   background:transparent;color:#fff;font:inherit;font-size:21px;cursor:pointer
 }
-.nf-partner-cart-body{flex:1;overflow:auto;padding:16px;display:grid;gap:15px}
+.nf-partner-cart-body{
+  flex:1;
+  width:min(1180px,100%);
+  margin:0 auto;
+  box-sizing:border-box;
+  overflow:auto;
+  padding:22px;
+  display:grid;
+  gap:18px
+}
 .nf-partner-cart-empty{
   padding:18px;border:1px dashed #BFD3DD;border-radius:13px;background:#F8FBFC;
   color:#607985;font-size:14px;line-height:1.55
@@ -210,14 +219,34 @@ export default function PartnerCartDrawer({ account }) {
       setQuote(null);
     };
 
+    const syncDeliveryProfile = (event) => {
+      const next = event?.detail;
+
+      if (!next || typeof next !== "object") return;
+
+      setProfile((current) => ({
+        ...current,
+        ...next,
+      }));
+      setQuote(null);
+    };
+
     window.addEventListener("nf-partner-cart-changed", sync);
     window.addEventListener("nf-open-partner-cart", show);
     window.addEventListener("nf-partner-fulfillment-changed", syncFulfillment);
+    window.addEventListener(
+      "nf-partner-delivery-profile-changed",
+      syncDeliveryProfile
+    );
 
     return () => {
       window.removeEventListener("nf-partner-cart-changed", sync);
       window.removeEventListener("nf-open-partner-cart", show);
       window.removeEventListener("nf-partner-fulfillment-changed", syncFulfillment);
+      window.removeEventListener(
+        "nf-partner-delivery-profile-changed",
+        syncDeliveryProfile
+      );
     };
   }, []);
 
@@ -605,13 +634,16 @@ export default function PartnerCartDrawer({ account }) {
                 disabled={
                   Boolean(busy) ||
                   !cart.length ||
+                  !quote ||
                   (retailJars > 0 && retailJars < 12)
                 }
                 onClick={submit}
               >
                 {busy === "checkout"
                   ? "Saving Order…"
-                  : "Submit Order & Continue to Square"}
+                  : quote
+                    ? "Submit Order & Continue to Square"
+                    : "Review Order to Continue"}
               </button>
             </div>
           </section>

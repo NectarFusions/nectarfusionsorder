@@ -61,6 +61,69 @@ const CSS = `
   grid-template-columns:1fr 1fr;
   gap:10px;
 }
+.nf-bulk-workspace-actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.nf-bulk-cart-now{
+  min-height:45px;
+  padding:10px 15px;
+  border:1px solid #173C52;
+  border-radius:11px;
+  background:#FFFFFF;
+  color:#173C52;
+  font:inherit;
+  font-size:14px;
+  font-weight:900;
+  cursor:pointer;
+}
+.nf-bulk-cart-now:disabled{
+  opacity:.5;
+  cursor:not-allowed;
+}
+.nf-bulk-delivery-profile{
+  grid-column:1/-1;
+  display:grid;
+  gap:12px;
+  padding:15px;
+  border:1px solid #E4D6C6;
+  border-radius:14px;
+  background:#FFFCF8;
+}
+.nf-bulk-delivery-profile-head{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:flex-start;
+}
+.nf-bulk-delivery-profile-head h4{
+  margin:0;
+  color:#281A12;
+  font-size:16px;
+}
+.nf-bulk-delivery-profile-head p{
+  margin:4px 0 0;
+  color:#75685E;
+  font-size:13px;
+  line-height:1.5;
+}
+.nf-bulk-delivery-save{
+  min-height:43px;
+  padding:9px 13px;
+  border:0;
+  border-radius:10px;
+  background:#173C52;
+  color:#FFFFFF;
+  font:inherit;
+  font-weight:900;
+  cursor:pointer;
+}
+.nf-bulk-delivery-save:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
 @media(max-width:620px){
   .nf-bulk-dual-actions{
     grid-template-columns:1fr;
@@ -190,7 +253,7 @@ const todayIso = () => {
 const actionMessage = (error) =>
   String(error?.message || error || "The partner request could not be updated.");
 
-export default function PartnerBulkOrderPanel({ mode = "bulk" }) {
+export default function PartnerBulkOrderPanel({ mode = "bulk", account }) {
   const giftMode = mode === "gifts";
   const [tab, setTab] = useState("new");
   const [catalog, setCatalog] = useState({
@@ -213,6 +276,30 @@ export default function PartnerBulkOrderPanel({ mode = "bulk" }) {
     () => (giftMode ? "gift_sets" : "")
   );
   const [form, setForm] = useState(initialForm);
+  const [deliverySaving, setDeliverySaving] = useState(false);
+  const [deliveryProfileDraft, setDeliveryProfileDraft] = useState(() => ({
+    businessName: account?.business_name || "",
+    phone: account?.phone || "",
+    addressLine1: account?.address_line1 || "",
+    addressLine2: account?.address_line2 || "",
+    city: account?.city || "",
+    state: account?.state || "MI",
+    zip: account?.zip || "",
+    deliveryNotes: account?.delivery_notes || "",
+  }));
+
+  useEffect(() => {
+    setDeliveryProfileDraft({
+      businessName: account?.business_name || "",
+      phone: account?.phone || "",
+      addressLine1: account?.address_line1 || "",
+      addressLine2: account?.address_line2 || "",
+      city: account?.city || "",
+      state: account?.state || "MI",
+      zip: account?.zip || "",
+      deliveryNotes: account?.delivery_notes || "",
+    });
+  }, [account]);
 
   const filteredRequests = useMemo(
     () =>
@@ -418,6 +505,96 @@ const canSubmit =
     }));
     setError("");
     setSuccess("");
+  };
+
+  const updateWholesaleDeliveryProfile = (key, value) => {
+    let nextValue = value;
+
+    if (key === "state") {
+      nextValue = String(value || "").toUpperCase().slice(0, 2);
+    }
+
+    if (key === "zip") {
+      nextValue = String(value || "")
+        .replace(/\D/g, "")
+        .slice(0, 5);
+    }
+
+    setDeliveryProfileDraft((current) => ({
+      ...current,
+      [key]: nextValue,
+    }));
+    setError("");
+    setSuccess("");
+  };
+
+  const saveWholesaleDeliveryProfile = async () => {
+    const nextProfile = {
+      businessName: String(deliveryProfileDraft.businessName || "").trim(),
+      phone: String(deliveryProfileDraft.phone || "").trim(),
+      addressLine1: String(deliveryProfileDraft.addressLine1 || "").trim(),
+      addressLine2: String(deliveryProfileDraft.addressLine2 || "").trim(),
+      city: String(deliveryProfileDraft.city || "").trim(),
+      state: String(deliveryProfileDraft.state || "").trim().toUpperCase(),
+      zip: String(deliveryProfileDraft.zip || "")
+        .replace(/\D/g, "")
+        .slice(0, 5),
+      deliveryNotes: String(deliveryProfileDraft.deliveryNotes || "").trim(),
+    };
+
+    if (
+      !nextProfile.businessName ||
+      !nextProfile.phone ||
+      !nextProfile.addressLine1 ||
+      !nextProfile.city ||
+      nextProfile.state.length !== 2 ||
+      nextProfile.zip.length !== 5
+    ) {
+      setError(
+        "Complete the business name, phone, street address, city, state, and 5-digit ZIP before saving the delivery address."
+      );
+      return;
+    }
+
+    setDeliverySaving(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const saved = await api.updateMyPartnerDeliveryProfile(nextProfile);
+
+      const normalized = {
+        businessName:
+          saved?.business_name || nextProfile.businessName,
+        phone: saved?.phone || nextProfile.phone,
+        addressLine1:
+          saved?.address_line1 || nextProfile.addressLine1,
+        addressLine2:
+          saved?.address_line2 || nextProfile.addressLine2,
+        city: saved?.city || nextProfile.city,
+        state: saved?.state || nextProfile.state,
+        zip: saved?.zip || nextProfile.zip,
+        deliveryNotes:
+          saved?.delivery_notes || nextProfile.deliveryNotes,
+      };
+
+      setDeliveryProfileDraft(normalized);
+      window.dispatchEvent(
+        new CustomEvent("nf-partner-delivery-profile-changed", {
+          detail: normalized,
+        })
+      );
+      setSuccess(
+        "Delivery address saved. It will carry into Partner Checkout."
+      );
+    } catch (saveError) {
+      setError(
+        saveError?.message ||
+          "The delivery address could not be saved."
+      );
+    } finally {
+      setDeliverySaving(false);
+    }
   };
 
   const updateLine = (index, key, value) => {
@@ -1261,14 +1438,30 @@ const canSubmit =
                     Infused {money(activeSize.infused_price_cents)} each
                   </p>
                 </div>
-                <button
-                  type="button"
-                  className="nf-bulk-add-primary"
-                  disabled={form.items.length >= 50}
-                  onClick={() => addBulkLine(activeSize.id)}
-                >
-                  + Add {activeSize.label} Item
-                </button>
+                <div className="nf-bulk-workspace-actions">
+                  <button
+                    type="button"
+                    className="nf-bulk-add-primary"
+                    disabled={form.items.length >= 50}
+                    onClick={() => addBulkLine(activeSize.id)}
+                  >
+                    + Add {activeSize.label} Item
+                  </button>
+                  <button
+                    type="button"
+                    className="nf-bulk-cart-now"
+                    onClick={addWholesaleToCart}
+                    disabled={
+                      busy ||
+                      !validLines ||
+                      duplicateSelections ||
+                      form.items.length < 1 ||
+                      !fulfillmentValid
+                    }
+                  >
+                    {busy ? "Adding…" : "Add to Cart"}
+                  </button>
+                </div>
               </div>
 
               {visibleBulkLines.length === 0 ? (
@@ -1487,10 +1680,86 @@ const canSubmit =
                 )}
 
                 {form.fulfillmentMethod === "delivery" && (
-                  <div className="nf-bulk-fulfillment delivery">
-                    <strong>Local Delivery · fee based on ZIP.</strong>{" "}
-                    The final delivery fee is calculated from the delivery ZIP in checkout and included before payment.
-                  </div>
+                  <>
+                    <div className="nf-bulk-fulfillment delivery">
+                      <strong>Local Delivery · fee based on ZIP.</strong>{" "}
+                      The final delivery fee is calculated from the saved
+                      delivery ZIP and included before payment.
+                    </div>
+
+                    <div className="nf-bulk-delivery-profile">
+                      <div className="nf-bulk-delivery-profile-head">
+                        <div>
+                          <h4>Delivery address</h4>
+                          <p>
+                            Save the location this wholesale order should be
+                            delivered to. This address carries into checkout.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          className="nf-bulk-delivery-save"
+                          onClick={saveWholesaleDeliveryProfile}
+                          disabled={deliverySaving}
+                        >
+                          {deliverySaving ? "Saving…" : "Save Delivery Address"}
+                        </button>
+                      </div>
+
+                      <div className="nf-bulk-meta">
+                        {[
+                          ["businessName", "Business / location name"],
+                          ["phone", "Phone"],
+                          ["addressLine1", "Street address"],
+                          ["addressLine2", "Address line 2"],
+                          ["city", "City"],
+                          ["state", "State"],
+                          ["zip", "ZIP"],
+                        ].map(([key, label]) => (
+                          <div
+                            className={`nf-bulk-field ${
+                              ["addressLine1", "addressLine2"].includes(key)
+                                ? "full"
+                                : ""
+                            }`}
+                            key={key}
+                          >
+                            <label>{label}</label>
+                            <input
+                              value={deliveryProfileDraft[key]}
+                              maxLength={
+                                key === "state"
+                                  ? 2
+                                  : key === "zip"
+                                    ? 5
+                                    : 250
+                              }
+                              onChange={(event) =>
+                                updateWholesaleDeliveryProfile(
+                                  key,
+                                  event.target.value
+                                )
+                              }
+                            />
+                          </div>
+                        ))}
+
+                        <div className="nf-bulk-field full">
+                          <label>Delivery notes</label>
+                          <textarea
+                            value={deliveryProfileDraft.deliveryNotes}
+                            onChange={(event) =>
+                              updateWholesaleDeliveryProfile(
+                                "deliveryNotes",
+                                event.target.value
+                              )
+                            }
+                            placeholder="Building details, gate code, receiving instructions, or other delivery notes."
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </>
                 )}
               </div>
             </>
@@ -1623,19 +1892,15 @@ const canSubmit =
             </div>
           ) : (
             <button
-              type="submit"
+              type="button"
               className="btn solid"
-              disabled={
-                loading ||
-                busy ||
-                !catalog.enabled ||
-                !validLines ||
-                duplicateSelections ||
-                form.items.length < 1 ||
-                !fulfillmentValid
+              onClick={() =>
+                window.dispatchEvent(
+                  new CustomEvent("nf-open-partner-cart")
+                )
               }
             >
-              {busy ? "Adding…" : "Add Wholesale Items to Cart"}
+              Checkout
             </button>
           )}
         </form>

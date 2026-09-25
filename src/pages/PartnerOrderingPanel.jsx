@@ -89,7 +89,7 @@ export default function PartnerOrderingPanel({ account }) {
       {tab === "retail" ? (
         <PartnerReplenishmentPanel account={account} />
       ) : tab === "bulk" ? (
-        <PartnerBulkOrderPanel key="bulk" mode="bulk" />
+        <PartnerBulkOrderPanel key="bulk" mode="bulk" account={account} />
       ) : (
         <PartnerGiftRequestPanel />
       )}
