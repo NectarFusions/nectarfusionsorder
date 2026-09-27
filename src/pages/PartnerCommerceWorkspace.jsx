@@ -122,7 +122,8 @@ const FOODSERVICE_SIZE_LABELS = {
   one_gallon: "1 Gallon",
   five_gallon: "5 Gallon",
 };
-const FOODSERVICE_CATALOG_PRICE = {
+/* PARTNER PROGRAM HARDENING V13 */
+const FOODSERVICE_PRICE_FALLBACK = {
   half_gallon: { natural: 5500, infused: 6500 },
   one_gallon: { natural: 10000, infused: 12000 },
   five_gallon: { natural: 45000, infused: 55000 },
@@ -132,7 +133,8 @@ const itemRule = (item, key, fallback = null) =>
     ? item.rules[key]
     : fallback;
 
-export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBusy }) {
+export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBusy, onManagePassword }) {
+  /* PARTNER PASSWORD SETUP V11.1 */
   const [section, setSection] = useState("dashboard");
   const [programs, setPrograms] = useState([]);
   const [packages, setPackages] = useState([]);
@@ -141,6 +143,7 @@ export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBu
   const [retailCatalog, setRetailCatalog] = useState([]);
   const [giftPricing, setGiftPricing] = useState({});
   const [giftFlavors, setGiftFlavors] = useState([]);
+  const [foodservicePricing, setFoodservicePricing] = useState(FOODSERVICE_PRICE_FALLBACK);
   const [foodserviceFlavors, setFoodserviceFlavors] = useState([]);
   const [activeProgram, setActiveProgram] = useState("");
   const [selectedPackage, setSelectedPackage] = useState(null);
@@ -168,6 +171,7 @@ export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBu
     sponsorDisplayName: account?.business_name || "",
     recognitionName: "",
     notes: "",
+    annualRenewal: false,
   });
   const [profile, setProfile] = useState({
     businessName: account?.business_name || "",
@@ -236,7 +240,25 @@ export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBu
         setGiftFlavors(flavors || []);
       }
       if (approved.some((row) => row.program_key === "foodservice")) {
-        setFoodserviceFlavors(await api.listPartnerPackageFlavorOptions());
+        const [pricing, flavors] = await Promise.all([
+          api.getPartnerFoodservicePricing(),
+          api.listPartnerPackageFlavorOptions(),
+        ]);
+        setFoodservicePricing({
+          half_gallon: {
+            ...FOODSERVICE_PRICE_FALLBACK.half_gallon,
+            ...(pricing?.half_gallon || {}),
+          },
+          one_gallon: {
+            ...FOODSERVICE_PRICE_FALLBACK.one_gallon,
+            ...(pricing?.one_gallon || {}),
+          },
+          five_gallon: {
+            ...FOODSERVICE_PRICE_FALLBACK.five_gallon,
+            ...(pricing?.five_gallon || {}),
+          },
+        });
+        setFoodserviceFlavors(flavors || []);
       }
     } catch (loadError) {
       setError(loadError?.message || "The partner commerce workspace could not be loaded.");
@@ -545,7 +567,7 @@ export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBu
     if (item?.unit_price_cents != null && Number.isFinite(Number(item.unit_price_cents))) {
       return Number(item.unit_price_cents);
     }
-    return Number(FOODSERVICE_CATALOG_PRICE[item?.size_id]?.[honeyType] || 0);
+    return Number(foodservicePricing?.[item?.size_id]?.[honeyType] || 0);
   };
 
   const foodservicePrice = foodserviceItems.reduce((sum, item) => {
@@ -677,8 +699,8 @@ export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBu
       sponsor_display_name: hiveConfig.sponsorDisplayName.trim(),
       recognition_name: hiveConfig.recognitionName.trim() || null,
       notes: hiveConfig.notes.trim() || null,
-      recurring: true,
-      cadence: "annual",
+      recurring: hiveConfig.annualRenewal === true,
+      cadence: hiveConfig.annualRenewal === true ? "annual" : null,
     };
 
     setPartnerStoreCart([{
@@ -1169,7 +1191,7 @@ export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBu
 
       <div className="nf-commerce-builder-total">
         <div><span>{selectedPackage.recurring_allowed ? "Annual Hive Partner package" : "Hive Partner package"}</span><strong>{hivePrice ? money(hivePrice) : "Price pending"}</strong></div>
-        <button className="nf-commerce-btn primary" type="button" disabled={!hivePrice} onClick={addHivePackage}>Continue to Fulfillment & Payment</button>
+        <button className="nf-commerce-btn primary" type="button" disabled={!hivePrice} onClick={addHivePackage}>Continue to Payment</button>
       </div>
     </div>
   );
@@ -1408,6 +1430,17 @@ export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBu
               {programs.length ? programs.map((row) => (
                 <div className="nf-commerce-program-row" key={row.program_key}><strong>{programName(row)}</strong><span>{row.status}</span></div>
               )) : <p>No programs have been assigned yet.</p>}
+            </div>
+            <div className="nf-commerce-card soft">
+              <h4>Sign-in & security</h4>
+              <p>Use your approved email and password to sign in. Secure email links remain available as a backup.</p>
+              <button
+                className="nf-commerce-btn"
+                type="button"
+                onClick={onManagePassword}
+              >
+                Create or Change Password
+              </button>
             </div>
           </div>
           <div className="nf-commerce-note" style={{ marginTop: 14 }}>Program access is approved independently by NectarFusions. Retail, Foodservice, Business Gifting, and Hive Partners can all live on this same account.</div>

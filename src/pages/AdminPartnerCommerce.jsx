@@ -188,6 +188,45 @@ export default function AdminPartnerCommerce() {
     finally { setBusy(""); }
   };
 
+
+  /* PARTNER SQUARE RECONCILE V12 */
+  const checkPartnerSquareStatus = async (order) => {
+    const key = `square:${order.id}`;
+    setBusy(key);
+    setError("");
+    setNotice("");
+
+    try {
+      const result = await api.syncPartnerStoreOrderSquare(order.id);
+
+      if (!result.synced) {
+        setError(
+          result.message ||
+          "Square has not confirmed this partner payment yet."
+        );
+        return;
+      }
+
+      setNotice(
+        result.message ||
+        `Square confirmed partner order ${order.order_no} is paid.`
+      );
+
+      if (result.recurringWarning) {
+        setError(result.recurringWarning);
+      }
+
+      await refresh();
+    } catch (syncError) {
+      setError(
+        syncError?.message ||
+        "Partner Square status could not be checked."
+      );
+    } finally {
+      setBusy("");
+    }
+  };
+
   const changeRecurringStatus = async (id, status) => {
     setBusy(`recurring:${id}`); setError("");
     try { await api.adminUpdatePartnerRecurringOrder(id, { status }); await refresh(); }
@@ -384,7 +423,7 @@ export default function AdminPartnerCommerce() {
         </div>
       </>}
 
-      {tab === "orders" && <div className="nf-apc-card"><h3>Partner Orders</h3><p>Every order carries its program and package snapshot.</p>{orders.map((order) => <div className="nf-apc-row" key={order.id}><div><span>Order</span><strong>{order.order_no}<br />{order.business_name}</strong></div><div><span>Program / package</span><strong>{programLabel(order.program_key)}<br />{order.package_snapshot?.name || "Legacy order"}</strong></div><div><span>Total</span><strong>{money(order.total_cents)}<br />{order.paid ? "Paid" : "Unpaid"}</strong></div><select value={order.status} disabled={busy === `order:${order.id}`} onChange={(e) => changeOrderStatus(order.id, e.target.value)}>{ORDER_STATUS.map((status) => <option key={status} value={status}>{pretty(status)}</option>)}</select></div>)}{!orders.length && <p>No partner orders yet.</p>}</div>}
+      {tab === "orders" && <div className="nf-apc-card"><h3>Partner Orders</h3><p>Every order carries its program and package snapshot. Awaiting-payment orders can be reconciled directly with Square if a webhook is delayed.</p>{orders.map((order) => <div className="nf-apc-row" key={order.id}><div><span>Order</span><strong>{order.order_no}<br />{order.business_name}</strong></div><div><span>Program / package</span><strong>{programLabel(order.program_key)}<br />{order.package_snapshot?.name || "Legacy order"}</strong></div><div><span>Total</span><strong>{money(order.total_cents)}<br />{order.paid ? "Paid" : "Unpaid"}</strong></div><div style={{ display: "grid", gap: 6 }}><select value={order.status} disabled={busy === `order:${order.id}` || busy === `square:${order.id}`} onChange={(e) => changeOrderStatus(order.id, e.target.value)}>{ORDER_STATUS.map((status) => <option key={status} value={status}>{pretty(status)}</option>)}</select>{!order.paid && order.status === "awaiting_payment" ? <button className="nf-apc-btn" type="button" disabled={busy === `square:${order.id}`} onClick={() => checkPartnerSquareStatus(order)}>{busy === `square:${order.id}` ? "Checking Square…" : "Check Square Status"}</button> : null}</div></div>)}{!orders.length && <p>No partner orders yet.</p>}</div>}
 
       {tab === "fulfillment" && <div className="nf-apc-card"><h3>Fulfillment Queue</h3><p>Paid partner orders from every program move through one operational queue.</p>{fulfillmentOrders.map((order) => <div className="nf-apc-row" key={order.id}><div><span>Order</span><strong>{order.order_no}<br />{order.business_name}</strong></div><div><span>Program</span><strong>{programLabel(order.program_key)}</strong></div><div><span>Fulfillment</span><strong>{pretty(order.fulfillment_method)}<br />{order.package_snapshot?.name || "Partner order"}</strong></div><select value={order.status} disabled={busy === `order:${order.id}`} onChange={(e) => changeOrderStatus(order.id, e.target.value)}>{ORDER_STATUS.map((status) => <option key={status} value={status}>{pretty(status)}</option>)}</select></div>)}{!fulfillmentOrders.length && <p>No paid partner orders are waiting for fulfillment.</p>}</div>}
 

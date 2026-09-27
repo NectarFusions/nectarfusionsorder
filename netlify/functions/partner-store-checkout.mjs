@@ -42,7 +42,8 @@ const allowedGiftFlavorNames = new Set([
   "chipotle","cinnamon","lemon","madagascar vanilla","original",
 ]);
 
-const bulkPrices = {
+/* PARTNER PROGRAM HARDENING V13 */
+const foodservicePriceFallback = {
   half_gallon:{label:"1/2 Gallon",natural:5500,infused:6500},
   one_gallon:{label:"1 Gallon",natural:10000,infused:12000},
   five_gallon:{label:"5 Gallon",natural:45000,infused:55000},
@@ -91,8 +92,15 @@ async function buildValidatedOrder({ admin, account, body, programs }) {
   const rawItems = Array.isArray(body.items) ? body.items.slice(0, 200) : [];
   if (!rawItems.length) throw new Error("Your cart is empty.");
 
-  const fulfillment = clean(body.fulfillmentMethod, 20);
-  if (!["pickup","delivery"].includes(fulfillment)) {
+  const sponsorshipOnly =
+    rawItems.length > 0 &&
+    rawItems.every((item) => item?.category === "sponsorship");
+
+  const fulfillment = sponsorshipOnly
+    ? "not_required"
+    : clean(body.fulfillmentMethod, 20);
+
+  if (!sponsorshipOnly && !["pickup","delivery"].includes(fulfillment)) {
     throw new Error("Choose Coleman Pickup or Local Delivery.");
   }
 
@@ -128,11 +136,20 @@ async function buildValidatedOrder({ admin, account, body, programs }) {
     if (!programKeys.has(pkg.program_key)) {
       throw new Error("This partner account is not approved for that program.");
     }
-    if (fulfillment === "pickup" && pkg.pickup_allowed !== true) {
-      throw new Error("Pickup is not available for this package.");
-    }
-    if (fulfillment === "delivery" && pkg.delivery_allowed !== true) {
-      throw new Error("Local delivery is not available for this package.");
+    if (fulfillment === "not_required") {
+      if (
+        pkg.program_key !== "hive_partners" ||
+        pkg.configuration_schema?.fulfillment !== "not_required"
+      ) {
+        throw new Error("This package requires a physical fulfillment method.");
+      }
+    } else {
+      if (fulfillment === "pickup" && pkg.pickup_allowed !== true) {
+        throw new Error("Pickup is not available for this package.");
+      }
+      if (fulfillment === "delivery" && pkg.delivery_allowed !== true) {
+        throw new Error("Local delivery is not available for this package.");
+      }
     }
     packageRecord = pkg;
   }
@@ -155,6 +172,9 @@ async function buildValidatedOrder({ admin, account, body, programs }) {
   }
   if (sponsorshipItems.length && !programKeys.has("hive_partners")) {
     throw new Error("Hive Partners ordering is not approved for this account.");
+  }
+  if (sponsorshipItems.length && sponsorshipItems.length !== rawItems.length) {
+    throw new Error("Hive Partner sponsorships must be checked out separately from physical partner orders.");
   }
 
   const flavorIds = [
@@ -221,6 +241,30 @@ async function buildValidatedOrder({ admin, account, body, programs }) {
     pack_size:12,
     ...(giftPricingSetting?.value || {}),
   };
+
+
+  const { data: foodservicePricingSetting, error: foodservicePricingError } =
+    await admin
+      .from("settings")
+      .select("value")
+      .eq("key", "partner_foodservice_pricing")
+      .maybeSingle();
+  if (foodservicePricingError) throw foodservicePricingError;
+
+  const foodservicePricing = {
+    half_gallon: {
+      ...foodservicePriceFallback.half_gallon,
+      ...(foodservicePricingSetting?.value?.half_gallon || {}),
+    },
+    one_gallon: {
+      ...foodservicePriceFallback.one_gallon,
+      ...(foodservicePricingSetting?.value?.one_gallon || {}),
+    },
+    five_gallon: {
+      ...foodservicePriceFallback.five_gallon,
+      ...(foodservicePricingSetting?.value?.five_gallon || {}),
+    },
+  };
   const giftPackSize = Math.max(
     1,
     Number.parseInt(giftPricing.pack_size,10) || 12
@@ -283,7 +327,7 @@ async function buildValidatedOrder({ admin, account, body, programs }) {
     const honeyType = clean(raw.honeyType,20);
     const sizeId = clean(raw.sizeId,30);
     const quantity = int(raw.quantity);
-    const pricing = bulkPrices[sizeId];
+    const pricing = foodservicePricing[sizeId];
 
     if (!pricing) throw new Error("A wholesale container size is invalid.");
     if (!["natural","infused"].includes(honeyType)) throw new Error("Choose Natural or Infused wholesale honey.");
@@ -568,7 +612,7 @@ async function buildValidatedOrder({ admin, account, body, programs }) {
 
         const unit = definition.unit_price_cents != null
           ? Number(definition.unit_price_cents)
-          : Number(bulkPrices[item.size_id]?.[item.details?.honey_type] || 0);
+          : Number(foodservicePricing[item.size_id]?.[item.details?.honey_type] || 0);
         if (!unit || unit < 1) throw new Error(`Pricing is missing for ${definition.product_key}.`);
         item.unit_price_cents = unit;
         item.line_total_cents = unit * item.quantity;
@@ -745,7 +789,9 @@ const ownerEmail = ({ account, order, items }) => {
 
   const address = order.fulfillment_method === "delivery"
     ? [order.address_line1,order.address_line2,[order.city,order.state,order.zip].filter(Boolean).join(", ")].filter(Boolean).join("<br>")
-    : PICKUP_ADDRESS;
+    : order.fulfillment_method === "not_required"
+      ? "No physical fulfillment required"
+      : PICKUP_ADDRESS;
 
   return `
     <div style="font-family:Arial,sans-serif;color:#173C52;max-width:760px;margin:auto">
@@ -757,7 +803,7 @@ const ownerEmail = ({ account, order, items }) => {
       <p><strong>Card processing fee:</strong> ${money(order.processing_fee_cents)}</p>
       <p style="font-size:20px"><strong>Order total:</strong> ${money(order.total_cents)}</p>
       <hr style="border:0;border-top:1px solid #D7E2E8">
-      <p><strong>Fulfillment:</strong> ${order.fulfillment_method==="delivery"?"Local Delivery":"Coleman Pickup"}</p>
+      <p><strong>Fulfillment:</strong> ${order.fulfillment_method==="delivery"?"Local Delivery":order.fulfillment_method==="not_required"?"Not required":"Coleman Pickup"}</p>
       <p><strong>Business:</strong> ${esc(order.business_name)}</p>
       <p><strong>Phone:</strong> ${esc(order.phone||"")}</p>
       <p><strong>Address / pickup:</strong><br>${address}</p>

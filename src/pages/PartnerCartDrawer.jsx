@@ -413,9 +413,9 @@ export default function PartnerCartDrawer({ account }) {
       packageId: packageItem?.packageId || null,
       packageConfiguration: packageItem?.packageConfiguration || null,
       reorderOfOrderId: reorderItem?.reorderOfOrderId || null,
-      fulfillmentMethod: checkout.fulfillmentMethod,
-      neededBy: checkout.neededBy || null,
-      preferredDeliveryDays: checkout.preferredDeliveryDays,
+      fulfillmentMethod: sponsorshipOnly ? "not_required" : checkout.fulfillmentMethod,
+      neededBy: sponsorshipOnly ? null : (checkout.neededBy || null),
+      preferredDeliveryDays: sponsorshipOnly ? [] : checkout.preferredDeliveryDays,
       currentInventoryNotes:
         checkout.currentInventoryNotes.trim() || null,
       requestNotes: checkout.requestNotes.trim() || null,
@@ -544,7 +544,14 @@ export default function PartnerCartDrawer({ account }) {
           )}
 
           <section className="nf-partner-cart-checkout">
-            <h3>Checkout & Fulfillment</h3>
+            <h3>{sponsorshipOnly ? "Checkout & Payment" : "Checkout & Fulfillment"}</h3>
+
+            {/* PARTNER PROGRAM HARDENING V13 */}
+            {sponsorshipOnly ? (
+              <div className="nf-partner-cart-note">
+                <strong>No physical fulfillment required.</strong> Hive Partner sponsorships move directly to secure payment. Your annual partnership begins when payment is confirmed.
+              </div>
+            ) : null}
 
             {retailJars > 0 && retailJars < 12 ? (
               <div className="nf-partner-cart-error">
@@ -553,7 +560,10 @@ export default function PartnerCartDrawer({ account }) {
               </div>
             ) : null}
 
-            <div className="nf-partner-cart-fulfill">
+            <div
+              className="nf-partner-cart-fulfill"
+              style={{ display: sponsorshipOnly ? "none" : undefined }}
+            >
               <button
                 type="button"
                 className={
@@ -590,7 +600,7 @@ export default function PartnerCartDrawer({ account }) {
               </button>
             </div>
 
-            {checkout.fulfillmentMethod === "pickup" ? (
+            {!sponsorshipOnly && (checkout.fulfillmentMethod === "pickup" ? (
               <div className="nf-partner-cart-note">
                 <strong>Coleman Pickup:</strong> {PICKUP_ADDRESS}. NectarFusions
                 will confirm pickup timing.
@@ -677,10 +687,10 @@ export default function PartnerCartDrawer({ account }) {
                   </div>
                 </div>
               </div>
-            )}
+            ))}
 
             <div className="nf-partner-cart-grid">
-              <div className="nf-partner-cart-field">
+              {!sponsorshipOnly ? <div className="nf-partner-cart-field">
                 <label>Needed by</label>
                 <input
                   type="date"
@@ -693,7 +703,7 @@ export default function PartnerCartDrawer({ account }) {
                     setQuote(null);
                   }}
                 />
-              </div>
+              </div> : null}
 
               {retailJars > 0 ? (
                 <div className="nf-partner-cart-field full">

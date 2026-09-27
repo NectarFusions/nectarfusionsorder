@@ -14,7 +14,29 @@ const clean = (value, max = 5000) => {
   return text ? text.slice(0, max) : null;
 };
 
-async function findOrInviteUser(admin, email, businessName) {
+/* PARTNER APPROVAL ONBOARDING V11 */
+/* PARTNER PASSWORD SETUP V11.1 */
+const partnerPortalRedirect = (req) => {
+  const configured = String(
+    process.env.PARTNER_PORTAL_URL ||
+    process.env.URL ||
+    process.env.DEPLOY_PRIME_URL ||
+    ""
+  ).trim();
+
+  if (configured) {
+    return `${configured.replace(/\/+$/, "")}/partner/login?setup=password`;
+  }
+
+  try {
+    const origin = new URL(req.url).origin;
+    return `${origin.replace(/\/+$/, "")}/partner/login?setup=password`;
+  } catch {
+    return "https://nectar-fusions.com/partner/login?setup=password";
+  }
+};
+
+async function findOrInviteUser(admin, email, businessName, redirectTo) {
   let page = 1;
   let user = null;
   let inviteSent = false;
@@ -28,6 +50,7 @@ async function findOrInviteUser(admin, email, businessName) {
 
   if (!user) {
     const { data, error } = await admin.auth.admin.inviteUserByEmail(email, {
+      redirectTo,
       data: { partner_business_name: businessName },
     });
     if (error) throw error;
@@ -142,7 +165,7 @@ export default async (req) => {
       if (partnerError) return json(500, { error: partnerError.message });
 
       try {
-        const inviteResult = await findOrInviteUser(admin, String(partner.email || "").toLowerCase(), partner.business_name);
+        const inviteResult = await findOrInviteUser(admin, String(partner.email || "").toLowerCase(), partner.business_name, partnerPortalRedirect(req));
         const authUser = inviteResult.user;
         if (authUser?.id) {
           const { data: existingMapping } = await admin
@@ -211,7 +234,7 @@ export default async (req) => {
       }).eq("id", partnerId);
       if (partner?.email) {
         try {
-          const inviteResult = await findOrInviteUser(admin, partner.email.toLowerCase(), partner.business_name);
+          const inviteResult = await findOrInviteUser(admin, partner.email.toLowerCase(), partner.business_name, partnerPortalRedirect(req));
           const authUser = inviteResult.user;
           if (authUser?.id) {
             const { data: existingMapping } = await admin.from("partner_users").select("partner_id,user_id").eq("user_id", authUser.id).maybeSingle();

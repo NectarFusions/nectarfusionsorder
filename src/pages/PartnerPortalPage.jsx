@@ -112,6 +112,72 @@ const PORTAL_CSS = `
   color:#8C2525;
   line-height:1.55;
 }
+.nf-partner-portal-success {
+  padding:12px 14px;
+  border:1px solid #A8D1B3;
+  border-radius:12px;
+  background:#F1FAF3;
+  color:#315E3D;
+  line-height:1.55;
+}
+.nf-partner-login-divider {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  color:#8A7B70;
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+}
+.nf-partner-login-divider::before,
+.nf-partner-login-divider::after {
+  content:"";
+  flex:1;
+  height:1px;
+  background:#E3D8CC;
+}
+
+/* PARTNER PASSWORD SETUP V11.1 */
+.nf-partner-password-setup {
+  margin:0 0 18px;
+  padding:22px;
+  border:1px solid #B9D7C2;
+  border-radius:20px;
+  background:
+    radial-gradient(circle at 96% 8%,rgba(247,196,28,.12),transparent 30%),
+    #F6FCF7;
+}
+.nf-partner-password-setup h3 {
+  margin:6px 0 8px;
+  color:#213D29;
+  font-size:24px;
+}
+.nf-partner-password-setup p {
+  margin:0 0 14px;
+  color:#53695A;
+  line-height:1.6;
+}
+.nf-partner-password-fields {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+.nf-partner-password-actions {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:14px;
+}
+.nf-partner-password-help {
+  margin-top:10px;
+  color:#6C635B;
+  font-size:13px;
+  line-height:1.5;
+}
+@media(max-width:640px) {
+  .nf-partner-password-fields { grid-template-columns:1fr; }
+}
 .nf-partner-portal-status {
   display:grid;
   justify-items:center;
@@ -967,6 +1033,18 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
   const [access, setAccess] = useState({ kind: "loading" });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [linkBusy, setLinkBusy] = useState(false);
+  const [linkSent, setLinkSent] = useState(false);
+  const [resetBusy, setResetBusy] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+  const [showPasswordSetup, setShowPasswordSetup] = useState(
+    () => new URLSearchParams(window.location.search).get("setup") === "password"
+  );
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordSetupBusy, setPasswordSetupBusy] = useState(false);
+  const [passwordSetupMessage, setPasswordSetupMessage] = useState("");
+  const [passwordSetupError, setPasswordSetupError] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [resourceBusyId, setResourceBusyId] = useState("");
@@ -1038,6 +1116,90 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
     } finally {
       setBusy(false);
     }
+  };
+
+  const sendSecureLink = async () => {
+    if (!email.trim() || linkBusy) return;
+
+    setLinkBusy(true);
+    setLinkSent(false);
+    setError("");
+
+    try {
+      await api.requestPartnerPortalLink(email.trim());
+      setLinkSent(true);
+    } catch (linkError) {
+      setError(accessErrorMessage(linkError));
+    } finally {
+      setLinkBusy(false);
+    }
+  };
+
+  const sendPasswordReset = async () => {
+    if (!email.trim() || resetBusy) return;
+
+    setResetBusy(true);
+    setResetSent(false);
+    setError("");
+
+    try {
+      await api.requestPartnerPasswordReset(email.trim());
+      setResetSent(true);
+    } catch (resetError) {
+      setError(accessErrorMessage(resetError));
+    } finally {
+      setResetBusy(false);
+    }
+  };
+
+  const cleanPasswordSetupUrl = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("setup");
+    url.searchParams.delete("recovery");
+    window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+  };
+
+  const savePartnerPassword = async (event) => {
+    event?.preventDefault?.();
+
+    if (passwordSetupBusy) return;
+
+    setPasswordSetupError("");
+    setPasswordSetupMessage("");
+
+    if (newPassword.length < 8) {
+      setPasswordSetupError("Use at least 8 characters for your password.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordSetupError("The two passwords do not match.");
+      return;
+    }
+
+    setPasswordSetupBusy(true);
+
+    try {
+      await api.setPartnerPassword(newPassword);
+      setNewPassword("");
+      setConfirmPassword("");
+      setPasswordSetupMessage(
+        "Password saved. Next time you can sign in with your email and password."
+      );
+      cleanPasswordSetupUrl();
+    } catch (passwordError) {
+      setPasswordSetupError(accessErrorMessage(passwordError));
+    } finally {
+      setPasswordSetupBusy(false);
+    }
+  };
+
+  const closePasswordSetup = () => {
+    setShowPasswordSetup(false);
+    setNewPassword("");
+    setConfirmPassword("");
+    setPasswordSetupError("");
+    cleanPasswordSetupUrl();
   };
 
   const signOut = async () => {
@@ -1199,7 +1361,7 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
                   </div>
                   <h3>Sign In to Your Account</h3>
                   <p>
-                    Use the email and password connected to your approved NectarFusions partner account.
+                    Use the approved email connected to your NectarFusions partner account. We can email you a secure sign-in link, or you can use your password if you already have one.
                   </p>
                   <p>
                     Need help accessing your account? Contact{" "}
@@ -1222,6 +1384,7 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
                       value={email}
                       onChange={(event) => {
                         setEmail(event.target.value);
+                        setLinkSent(false);
                         if (error) setError("");
                       }}
                     />
@@ -1257,18 +1420,149 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
                     className="btn solid"
                     disabled={!canSubmit}
                   >
-                    {busy ? "Signing in…" : "Sign In"}
+                    {busy ? "Signing in…" : "Sign In with Password"}
                   </button>
+
+                  <div className="nf-partner-login-divider">
+                    <span>or</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn ghost"
+                    disabled={!email.trim() || linkBusy}
+                    onClick={sendSecureLink}
+                  >
+                    {linkBusy ? "Sending secure link…" : "Email Me a Secure Sign-In Link"}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btn ghost"
+                    disabled={!email.trim() || resetBusy}
+                    onClick={sendPasswordReset}
+                  >
+                    {resetBusy ? "Sending password email…" : "Create or Reset Password"}
+                  </button>
+
+                  {resetSent && (
+                    <div className="nf-partner-portal-success" role="status">
+                      Check your email. The password link will bring you back here to choose a password.
+                    </div>
+                  )}
+
+                  {linkSent && (
+                    <div className="nf-partner-portal-success" role="status">
+                      Check your email. Your secure Partner Portal link will bring you back here and sign you in.
+                    </div>
+                  )}
+
+                  {/* PARTNER APPROVAL ONBOARDING V11 */}
                 </form>
               </div>
             )}
 
             {access.kind === "partner" && (
-              <PartnerCommerceWorkspace
-                account={account}
-                onSignOut={signOut}
-                signOutBusy={busy}
-              />
+              <>
+                {showPasswordSetup && (
+                  <section className="nf-partner-password-setup">
+                    <div className="nf-modern-kicker">
+                      Sign-in security
+                    </div>
+                    <h3>Create Your Partner Portal Password</h3>
+                    <p>
+                      Choose a password for {account?.email}. Supabase Auth stores it securely. NectarFusions never stores or displays your plain-text password.
+                    </p>
+
+                    <form onSubmit={savePartnerPassword}>
+                      <div className="nf-partner-password-fields">
+                        <div className="nf-partner-login-field">
+                          <label htmlFor="partner-new-password">New password</label>
+                          <input
+                            id="partner-new-password"
+                            type="password"
+                            autoComplete="new-password"
+                            minLength={8}
+                            value={newPassword}
+                            onChange={(event) => {
+                              setNewPassword(event.target.value);
+                              setPasswordSetupError("");
+                              setPasswordSetupMessage("");
+                            }}
+                          />
+                        </div>
+
+                        <div className="nf-partner-login-field">
+                          <label htmlFor="partner-confirm-password">Confirm password</label>
+                          <input
+                            id="partner-confirm-password"
+                            type="password"
+                            autoComplete="new-password"
+                            minLength={8}
+                            value={confirmPassword}
+                            onChange={(event) => {
+                              setConfirmPassword(event.target.value);
+                              setPasswordSetupError("");
+                              setPasswordSetupMessage("");
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {passwordSetupError && (
+                        <div className="nf-partner-portal-error" role="alert" style={{ marginTop: 12 }}>
+                          {passwordSetupError}
+                        </div>
+                      )}
+
+                      {passwordSetupMessage && (
+                        <div className="nf-partner-portal-success" role="status" style={{ marginTop: 12 }}>
+                          {passwordSetupMessage}
+                        </div>
+                      )}
+
+                      <div className="nf-partner-password-actions">
+                        <button
+                          type="submit"
+                          className="btn solid"
+                          disabled={passwordSetupBusy}
+                        >
+                          {passwordSetupBusy ? "Saving password…" : "Save Password"}
+                        </button>
+
+                        <button
+                          type="button"
+                          className="btn ghost"
+                          onClick={closePasswordSetup}
+                          disabled={passwordSetupBusy}
+                        >
+                          {passwordSetupMessage ? "Done" : "Set Up Later"}
+                        </button>
+                      </div>
+                    </form>
+
+                    <div className="nf-partner-password-help">
+                      Use at least 8 characters. If you forget your password later, choose “Create or Reset Password” on the Partner Portal login screen.
+                    </div>
+                  </section>
+                )}
+
+                <PartnerCommerceWorkspace
+                  account={account}
+                  onSignOut={signOut}
+                  signOutBusy={busy}
+                  onManagePassword={() => {
+                    setPasswordSetupMessage("");
+                    setPasswordSetupError("");
+                    setShowPasswordSetup(true);
+                    requestAnimationFrame(() => {
+                      document
+                        .querySelector(".nf-partner-password-setup")
+                        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    });
+                  }}
+                />
+              </>
             )}
 
             {false && access.kind === "partner" && !account?.partner_type && (

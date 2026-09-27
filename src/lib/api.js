@@ -418,6 +418,59 @@ export const signIn = (email, password) =>
     return data;
   });
 
+export async function requestPartnerPortalLink(email) {
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+  if (!normalizedEmail || !normalizedEmail.includes("@")) {
+    throw new Error("Enter the approved partner email address.");
+  }
+
+  const { error } = await supabase.auth.signInWithOtp({
+    email: normalizedEmail,
+    options: {
+      shouldCreateUser: false,
+      emailRedirectTo: `${window.location.origin}/partner/login`,
+    },
+  });
+
+  if (error) throw new Error(error.message);
+  return true;
+}
+
+/* PARTNER PASSWORD SETUP V11.1 */
+export async function setPartnerPassword(password) {
+  const nextPassword = String(password || "");
+
+  if (nextPassword.length < 8) {
+    throw new Error("Use at least 8 characters for your password.");
+  }
+
+  const { data, error } = await supabase.auth.updateUser({
+    password: nextPassword,
+  });
+
+  if (error) throw new Error(error.message);
+  return data?.user || null;
+}
+
+export async function requestPartnerPasswordReset(email) {
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+
+  if (!normalizedEmail || !normalizedEmail.includes("@")) {
+    throw new Error("Enter the approved partner email address first.");
+  }
+
+  const redirectTo =
+    `${window.location.origin}/partner/login?setup=password&recovery=1`;
+
+  const { error } = await supabase.auth.resetPasswordForEmail(
+    normalizedEmail,
+    { redirectTo }
+  );
+
+  if (error) throw new Error(error.message);
+  return true;
+}
+
 export const signOut = () => supabase.auth.signOut();
 export const session = () => supabase.auth.getSession().then(({ data }) => data.session);
 export const onAuth = (cb) => supabase.auth.onAuthStateChange((_e, s) => cb(s));
@@ -2863,6 +2916,16 @@ export async function getPartnerRetailPackageCatalog() {
   return Array.isArray(data) ? data : [];
 }
 
+/* PARTNER PROGRAM HARDENING V13 */
+export async function getPartnerFoodservicePricing() {
+  const { data, error } = await supabase.rpc(
+    "get_partner_foodservice_pricing"
+  );
+
+  if (error) throw new Error(error.message);
+  return data || {};
+}
+
 export async function listPartnerPackageFlavorOptions(names = []) {
   let query = supabase
     .from("flavors")
@@ -3049,6 +3112,51 @@ export async function listAllAdminPartnerStoreOrders() {
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   return data ?? [];
+}
+
+/* PARTNER SQUARE RECONCILE V12 */
+export async function syncPartnerStoreOrderSquare(orderId) {
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
+
+  if (sessionError) throw new Error(sessionError.message);
+
+  const accessToken = session?.access_token;
+  if (!accessToken) {
+    throw new Error("Admin sign-in is required to check Square.");
+  }
+
+  const response = await fetch(
+    "/.netlify/functions/partner-order-square-sync",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ orderId }),
+    }
+  );
+
+  const text = await response.text();
+  let result = {};
+
+  try {
+    result = text ? JSON.parse(text) : {};
+  } catch {
+    result = {};
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      result.error ||
+      "Partner Square status could not be checked."
+    );
+  }
+
+  return result;
 }
 
 export async function adminSetPartnerStoreOrderStatus(orderId, status) {
