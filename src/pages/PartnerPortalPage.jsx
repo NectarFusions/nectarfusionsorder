@@ -4,6 +4,7 @@ import PartnerEventsPanel from "./PartnerEventsPanel";
 import PartnerOrderingPanel from "./PartnerOrderingPanel";
 import PartnerPricingGuide from "./PartnerPricingGuide";
 import PartnerCartDrawer from "./PartnerCartDrawer";
+import PartnerCommerceWorkspace from "./PartnerCommerceWorkspace";
 
 const PORTAL_CSS = `
 .nf-partner-portal-page {
@@ -1262,7 +1263,15 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
               </div>
             )}
 
-            {access.kind === "partner" && !account?.partner_type && (
+            {access.kind === "partner" && (
+              <PartnerCommerceWorkspace
+                account={account}
+                onSignOut={signOut}
+                signOutBusy={busy}
+              />
+            )}
+
+            {false && access.kind === "partner" && !account?.partner_type && (
               <section className="nf-partner-type-setup">
                 <div>
                   <div className="nf-modern-kicker">One-time setup</div>
@@ -1362,7 +1371,7 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
               </section>
             )}
 
-            {access.kind === "partner" && account?.partner_type && (
+            {false && access.kind === "partner" && account?.partner_type && (
               <>
                 <div className="nf-partner-workspace-head">
                   <div>

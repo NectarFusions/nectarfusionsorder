@@ -1,12 +1,15 @@
+// NF MY NECTARFUSIONS V8
 import { Fragment } from "react";
 import { useState, useMemo, useEffect, useLayoutEffect, useCallback, useRef } from "react";
 import * as api from "./lib/api";
 import { getPartnerStoreCartCount } from "./lib/partnerStoreCart";
 import PartnerPage from "./pages/PartnerPage";
 import PartnerPortalPage from "./pages/PartnerPortalPage";
+import MyNectarFusionsPage from "./pages/MyNectarFusionsPage";
 import AdminPartnerManagement from "./pages/AdminPartnerManagement";
 import AdminPartnerEvents from "./pages/AdminPartnerEvents";
 import AdminPartnerResources from "./pages/AdminPartnerResources";
+import AdminPartnerCommerce from "./pages/AdminPartnerCommerce";
 import MarketConfirmationPage from "./pages/MarketConfirmationPage";
 import ReviewsPage, { HONEY_HIVE_URL, ReviewHomeCard } from "./pages/ReviewsPage";
 import AdminReviewsPanel from "./pages/AdminReviewsPanel";
@@ -468,6 +471,7 @@ const ClubBenefitIcon = ({ kind }) => {
 const TOKEN_RE = /^\/order\/([0-9a-f-]{36})\/?$/i;
 const CLUB_TOKEN_RE = /^\/club\/([0-9a-f-]{36})\/?$/i;
 const PARTNER_LOGIN_RE = /^\/partner\/login\/?$/i;
+const MY_NECTARFUSIONS_RE = /^\/my\/?$/i;
 
 const tokenFromUrl = () =>
   (window.location.pathname.match(TOKEN_RE) || [])[1] || null;
@@ -477,6 +481,9 @@ const clubTokenFromUrl = () =>
 
 const partnerLoginFromUrl = () =>
   PARTNER_LOGIN_RE.test(window.location.pathname);
+
+const myNectarFusionsFromUrl = () =>
+  MY_NECTARFUSIONS_RE.test(window.location.pathname);
 
 
 const specialEventReturnFromUrl = () => {
@@ -495,6 +502,13 @@ const pushPartnerLoginUrl = () =>
     { view: "partnerPortal" },
     "",
     "/partner/login"
+  );
+
+const pushMyNectarFusionsUrl = () =>
+  window.history.pushState(
+    { view: "myNectarFusions" },
+    "",
+    "/my"
   );
 
 const pushOrderUrl = (token) =>
@@ -11874,9 +11888,11 @@ export default function App() {
   const [view, setView] = useState(() =>
     partnerLoginFromUrl()
       ? "partnerPortal"
-      : specialEventReturnFromUrl()
-        ? "events"
-        : "shop"
+      : myNectarFusionsFromUrl()
+        ? "myNectarFusions"
+        : specialEventReturnFromUrl()
+          ? "events"
+          : "shop"
   );
   const [err, setErr] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -11890,6 +11906,7 @@ export default function App() {
   const [typeInfo, setTypeInfo] = useState(false);
   const [typeNotice, setTypeNotice] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [cartTrayDismissed, setCartTrayDismissed] = useState(false);
@@ -12010,20 +12027,22 @@ export default function App() {
   }, [view]);
 
   useEffect(() => {
-    const syncPartnerRoute = () => {
+    const syncSpecialRoutes = () => {
       const partnerRouteOpen = partnerLoginFromUrl();
+      const customerRouteOpen = myNectarFusionsFromUrl();
 
       setView((currentView) => {
         if (partnerRouteOpen) return "partnerPortal";
-        if (currentView === "partnerPortal") return "shop";
+        if (customerRouteOpen) return "myNectarFusions";
+        if (["partnerPortal", "myNectarFusions"].includes(currentView)) return "shop";
         return currentView;
       });
     };
 
-    window.addEventListener("popstate", syncPartnerRoute);
+    window.addEventListener("popstate", syncSpecialRoutes);
 
     return () =>
-      window.removeEventListener("popstate", syncPartnerRoute);
+      window.removeEventListener("popstate", syncSpecialRoutes);
   }, []);
 
   /* If someone lands on /order/<token> — from their email, a bookmark, or
@@ -12569,16 +12588,46 @@ export default function App() {
         day: slot.kind === "delivery" ? iso(slot.date) : null,
         marketDateId: slot.kind === "market" ? slot.m.id : null,
       });
-      // Save the order URL immediately. The order already exists once placeOrder returns,
-      // so a temporary confirmation-response failure must never encourage a duplicate order.
-      pushOrderUrl(r.token);
+      // The order is now safely stored. Send the customer directly
+      // to Square instead of showing a separate payment-required page.
+      try {
+        const paymentUrl = await api.payLink(r.token);
+        window.location.assign(paymentUrl);
+        return;
+      } catch (paymentError) {
+        // The order already exists, so never let the customer accidentally
+        // create a duplicate order if Square is temporarily unavailable.
+        // Fall back to the saved order page only as an error-recovery path.
+        pushOrderUrl(r.token);
 
-      // Supabase can occasionally return an empty response while the new order is becoming
-      // available to the confirmation lookup. Retry that lookup before showing an error.
-      const full = await api.getOrderWithRetry(r.token);
-      setReceipt({ ...full, token: r.token, email: cust.email, address: cust.address, city: cust.city, zip });
-      setCart([]); setSlot(null); setMethod(null); setZip(""); setCtaOff(false); setReviewOpen(false); setCheckoutOpen(false); setCartOpen(false);
-      reload();  // stock may have moved
+        const full = await api.getOrderWithRetry(r.token);
+        setReceipt({
+          ...full,
+          token: r.token,
+          email: cust.email,
+          address: cust.address,
+          city: cust.city,
+          zip,
+        });
+
+        setCart([]);
+        setSlot(null);
+        setMethod(null);
+        setZip("");
+        setCtaOff(false);
+        setReviewOpen(false);
+        setCheckoutOpen(false);
+        setCartOpen(false);
+
+        reload();
+
+        setErr(
+          "Your order was saved, but Square checkout could not open automatically. Please use the payment button below."
+        );
+
+        setBusy(false);
+        return;
+      }
     } catch (e) { setErr(e.message); }
     setBusy(false);
   }
@@ -12812,6 +12861,21 @@ export default function App() {
 
               <button
                 className="nf-admin-gear"
+                onClick={() => {
+                  setMenuOpen(false);
+                  setAccountMenuOpen(true);
+                }}
+                aria-label="Account login"
+                title="Account login"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle cx="12" cy="8" r="3.4" stroke="currentColor" strokeWidth="1.8" />
+                  <path d="M5.5 20c.8-4 3-6 6.5-6s5.7 2 6.5 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                </svg>
+              </button>
+
+              <button
+                className="nf-admin-gear"
                 onClick={() => setView(isAdmin ? "admin" : "login")}
                 aria-label="Admin"
                 title="Admin"
@@ -12825,6 +12889,155 @@ export default function App() {
             </div>
           </div>
         </header>
+
+        {accountMenuOpen && (
+          <div
+            role="presentation"
+            onClick={() => setAccountMenuOpen(false)}
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 1400,
+              display: "grid",
+              placeItems: "center",
+              padding: 20,
+              background: "rgba(27,16,5,.58)",
+              backdropFilter: "blur(4px)",
+            }}
+          >
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="nf-account-choice-title"
+              onClick={(event) => event.stopPropagation()}
+              style={{
+                width: "min(560px, 100%)",
+                padding: "28px",
+                borderRadius: 22,
+                border: "1px solid #E5D7C3",
+                background: "#FFFCF7",
+                boxShadow: "0 28px 80px rgba(27,16,5,.28)",
+              }}
+            >
+              <div className="nf-modern-kicker">Account Access</div>
+              <h2
+                id="nf-account-choice-title"
+                style={{
+                  margin: "8px 0 6px",
+                  fontFamily: "'Bebas Neue', Impact, sans-serif",
+                  fontSize: 42,
+                  lineHeight: .95,
+                  color: c.cocoa,
+                }}
+              >
+                Where are you signing in?
+              </h2>
+              <p style={{ margin: "0 0 20px", color: c.brown, fontSize: 14, lineHeight: 1.65 }}>
+                Choose the account that matches how you use NectarFusions.
+              </p>
+
+              <div style={{ display: "grid", gap: 12 }}>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => {
+                    setAccountMenuOpen(false);
+                    pushMyNectarFusionsUrl();
+                    setView("myNectarFusions");
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "17px 18px",
+                    textAlign: "left",
+                    display: "grid",
+                    gridTemplateColumns: "44px minmax(0,1fr)",
+                    gap: 13,
+                    alignItems: "center",
+                    background: "#FFFFFF",
+                  }}
+                >
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      width: 44,
+                      height: 44,
+                      display: "grid",
+                      placeItems: "center",
+                      borderRadius: 13,
+                      background: "#EAF7FF",
+                      color: "#176A94",
+                      fontSize: 21,
+                    }}
+                  >
+                    ♡
+                  </span>
+                  <span>
+                    <strong style={{ display: "block", color: c.cocoa, fontSize: 16 }}>
+                      My NectarFusions
+                    </strong>
+                    <span style={{ display: "block", marginTop: 4, color: c.tan, fontSize: 12.5, lineHeight: 1.5 }}>
+                      Personal orders, reorders, Honey Club, favorites, and delivery details.
+                    </span>
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => {
+                    setAccountMenuOpen(false);
+                    pushPartnerLoginUrl();
+                    setView("partnerPortal");
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "17px 18px",
+                    textAlign: "left",
+                    display: "grid",
+                    gridTemplateColumns: "44px minmax(0,1fr)",
+                    gap: 13,
+                    alignItems: "center",
+                    background: "#FFFFFF",
+                  }}
+                >
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      width: 44,
+                      height: 44,
+                      display: "grid",
+                      placeItems: "center",
+                      borderRadius: 13,
+                      background: "#FFF3C4",
+                      color: "#7B5821",
+                      fontSize: 20,
+                      fontWeight: 900,
+                    }}
+                  >
+                    B
+                  </span>
+                  <span>
+                    <strong style={{ display: "block", color: c.cocoa, fontSize: 16 }}>
+                      Partner Portal
+                    </strong>
+                    <span style={{ display: "block", marginTop: 4, color: c.tan, fontSize: 12.5, lineHeight: 1.5 }}>
+                      Retail, foodservice, business gifting, and Hive Partner accounts.
+                    </span>
+                  </span>
+                </button>
+              </div>
+
+              <button
+                type="button"
+                className="btn ghost"
+                onClick={() => setAccountMenuOpen(false)}
+                style={{ width: "100%", marginTop: 14, padding: 10 }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
 
         {!big && (eyebrow || title) && (
           <section className="nf-page-heading">
@@ -12959,11 +13172,111 @@ export default function App() {
     );
   };
 
+  const reorderFromMyNectarFusions = (order, account) => {
+    const nextCart = [];
+    let skipped = 0;
+
+    for (const item of order?.items || []) {
+      const flavor = cat?.flavors?.find(
+        (row) => String(row.id) === String(item.flavor_id) || row.name === item.flavor_name
+      );
+      const size = cat?.sizes?.find((row) => String(row.id) === String(item.size_id));
+      const typeId = String(item.type || "regular");
+      if (!flavor || flavor.active === false || !size || !flavorAvailableForType(flavor, size.id, typeId)) {
+        skipped += Number(item.qty || 0);
+        continue;
+      }
+
+      const limit = inventoryLimit(flavor.id, size.id, typeId);
+      const requestedQty = Math.max(1, Number(item.qty || 1));
+      const qty = limit === null ? requestedQty : Math.min(requestedQty, Math.max(0, limit));
+      if (qty < 1) {
+        skipped += requestedQty;
+        continue;
+      }
+
+      if (qty < requestedQty) skipped += requestedQty - qty;
+      nextCart.push({
+        flavor_id: flavor.id,
+        flavor: flavor.name,
+        hex: flavor.hex,
+        size_id: size.id,
+        type: typeId,
+        qty,
+      });
+    }
+
+    if (!nextCart.length) {
+      setErr("Those items are not currently available to reorder. Open the shop to choose today’s available flavors and sizes.");
+      return { ok: false };
+    }
+
+    setCart(nextCart);
+    setCust((current) => ({
+      ...current,
+      name: account?.name || current.name,
+      phone: account?.phone || current.phone,
+      email: account?.email || current.email,
+      address: account?.address_line1 || current.address,
+      city: account?.city || current.city,
+    }));
+    if (account?.zip) setZip(account.zip);
+    setErr(skipped ? `${skipped} jar${skipped === 1 ? " was" : "s were"} unavailable and not added. The rest of the order is in your cart at today’s availability and pricing.` : null);
+    pushHome();
+    setView("shop");
+    window.setTimeout(() => setCartOpen(true), 80);
+    return { ok: true, skipped };
+  };
+
+  const applyMyNectarFusionsProfileToCheckout = (account) => {
+    if (!account) return;
+    setCust((current) => ({
+      ...current,
+      name: account.name || current.name,
+      phone: account.phone || current.phone,
+      email: account.email || current.email,
+      address: account.address_line1 || current.address,
+      city: account.city || current.city,
+    }));
+    if (account.zip) {
+      setZip(account.zip);
+      setSubZip(account.zip);
+    }
+  };
+
+  const shopFlavorFromMyNectarFusions = (flavorId, account) => {
+    applyMyNectarFusionsProfileToCheckout(account);
+    const flavor = cat?.flavors?.find((item) => String(item.id) === String(flavorId));
+    if (flavor) {
+      const choice = (cat.sizes ?? [])
+        .flatMap((size) => [
+          { sizeId: size.id, typeId: "regular" },
+          ...(spunEnabled ? [{ sizeId: size.id, typeId: "spun" }] : []),
+        ])
+        .find((item) => {
+          if (!flavorAvailableForType(flavor, item.sizeId, item.typeId)) return false;
+          const limit = inventoryLimit(flavor.id, item.sizeId, item.typeId);
+          return limit === null || limit > 0;
+        });
+      if (choice) {
+        setPickSize(choice.sizeId);
+        setPickType(choice.typeId);
+      }
+    }
+    pushHome();
+    setView("shop");
+    setTopPickFocusId(String(flavorId));
+    window.setTimeout(() => {
+      document.getElementById(`flavor-card-${flavorId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 180);
+  };
+
   const nav = (
     <>
       <button className="btn ghost" onClick={() => setView("about")}>About</button>
       <button className="btn ghost" onClick={() => setView("find")}>Find Us</button>
       <button className="btn ghost" onClick={() => setView("subscribe")}>Honey Club</button>
+      <button className="btn ghost" onClick={() => { pushMyNectarFusionsUrl(); setView("myNectarFusions"); }}>My NectarFusions</button>
       <button className="btn ghost" onClick={() => setView("help")}>Help | FAQ</button>
       <button className="btn ghost" onClick={() => setView("reviews")}>Reviews</button>
       <button className="btn ghost" onClick={() => setView("partner")}>Partner</button>
@@ -12985,6 +13298,30 @@ export default function App() {
           setView("shop");
         }}
       />
+    );
+  }
+
+  /* ================= MY NECTARFUSIONS ================= */
+  if (view === "myNectarFusions" || myNectarFusionsFromUrl()) {
+    return (
+      <div className="nf">
+        <style>{CSS}</style>
+        <MyNectarFusionsPage
+          Header={Header}
+          catalog={cat}
+          onBack={(account) => { applyMyNectarFusionsProfileToCheckout(account); pushHome(); setView("shop"); }}
+          onReorder={reorderFromMyNectarFusions}
+          onShopFlavor={shopFlavorFromMyNectarFusions}
+          onJoinClub={(account) => { applyMyNectarFusionsProfileToCheckout(account); pushHome(); setView("subscribe"); }}
+          onOpenOrder={async (token) => {
+            pushOrderUrl(token);
+            const found = await api.getOrderWithRetry(token);
+            setReceipt({ ...found, token });
+            setErr(null);
+            setView("shop");
+          }}
+        />
+      </div>
     );
   }
 
@@ -13012,7 +13349,7 @@ export default function App() {
         pushPartnerLoginUrl();
         setView("partnerPortal");
       }}
-      submitInquiry={api.submitCustomerRequest}
+      submitProgramApplication={api.submitPartnerProgramApplication}
     />;
   }
 
@@ -16449,6 +16786,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
   const [dates, setDates] = useState([]);
   const [retailLocations, setRetailLocations] = useState([]);
   const [customerRequests, setCustomerRequests] = useState([]);
+  const [partnerProgramApplications, setPartnerProgramApplications] = useState([]);
   const [requestView, setRequestView] = useState("open");
   const [adminTab, setAdminTab] = useState("fulfillment");
   const [q, setQ] = useState("");
@@ -16476,18 +16814,20 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
 
   const pull = useCallback(async () => {
     try {
-      const [o, s, d, r, cr] = await Promise.all([
+      const [o, s, d, r, cr, pa] = await Promise.all([
         api.listOrders(),
         api.listSubs(),
         api.listAllMarketDates(),
         api.listRetailLocations(),
         api.listCustomerRequests(),
+        api.listAdminPartnerProgramApplications(),
       ]);
       setOrders(o);
       setSubs(s);
       setDates(d);
       setRetailLocations(r);
       setCustomerRequests(cr);
+      setPartnerProgramApplications(pa);
     } catch (e) { setErr(e.message); }
   }, []);
   useEffect(() => { pull(); }, [pull]);
@@ -16743,6 +17083,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
   const resolvedRequests = customerRequests.filter((request) => request.status === "resolved");
   const shownRequests = requestView === "resolved" ? resolvedRequests : openRequests;
   const newRequestCount = customerRequests.filter((request) => request.status === "new").length;
+  const newPartnerApplicationCount = partnerProgramApplications.filter((application) => application.status === "pending").length;
 
   const today = api.today();
 
@@ -17354,7 +17695,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
     ["reviews", "Reviews"],
     ["flavorRequests", "Flavor Requests"],
     ["orders", `Orders (${standardActiveOrders.length + standardPendingPaymentOrders.length})`],
-    ["partnerProgram", "Partner Program"],
+    ["partnerCommerce", "Partner Commerce", newPartnerApplicationCount],
     ["partnerEvents", "Partner Events"],
     ["partnerResources", "Partner Resources"],
     ["retail", `Retail Locator (${retailLocations.filter((r) => r.active).length})`],
@@ -17388,11 +17729,42 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
         {err && <div className="err" style={{ marginBottom: 16 }}>{err}</div>}
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: 8, marginBottom: 22 }}>
-          {displayedAdminTabs.map(([id, label]) => (
+          {displayedAdminTabs.map(([id, label, badgeCount = 0]) => (
             <button key={id} className={`btn ${adminTab === id ? "on" : ""}`}
-              style={{ padding: "11px 9px", fontSize: 12.5 }}
+              style={{
+                padding: "11px 9px",
+                fontSize: 12.5,
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 7,
+              }}
               onClick={() => { setAdminTab(id); setQ(""); }}>
-              {label}
+              <span>{label}</span>
+              {Number(badgeCount) > 0 && (
+                <span
+                  className="nf-admin-new-badge"
+                  aria-label={`${badgeCount} new submission${Number(badgeCount) === 1 ? "" : "s"}`}
+                  title={`${badgeCount} new partner submission${Number(badgeCount) === 1 ? "" : "s"}`}
+                  style={{
+                    minWidth: 22,
+                    height: 22,
+                    padding: "0 7px",
+                    borderRadius: 999,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "#FF3B30",
+                    color: "#fff",
+                    fontSize: 11,
+                    fontWeight: 900,
+                    lineHeight: 1,
+                    boxShadow: "0 0 0 2px rgba(255,255,255,.75)",
+                  }}
+                >
+                  {badgeCount}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -19501,8 +19873,8 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
           </>
         )}
 
-        {adminTab === "partnerProgram" && (
-          <AdminPartnerManagement />
+        {adminTab === "partnerCommerce" && (
+          <AdminPartnerCommerce />
         )}
 
         {adminTab === "partnerEvents" && (

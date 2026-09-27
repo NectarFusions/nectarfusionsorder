@@ -115,6 +115,24 @@ const ownerEmail = ({ account, request }) => {
       ? request.preferred_delivery_days.map(readable).join(", ")
       : "No preferred days provided";
 
+  const fulfillmentChargeCents =
+    Number(request.fulfillment_charge_cents || 0);
+  const checkoutFeeCents = Math.max(
+    0,
+    Number(request.confirmed_total_cents || 0) -
+      Number(request.requested_subtotal_cents || 0) -
+      fulfillmentChargeCents
+  );
+  const deliveryAddress = [
+    account.address_line1,
+    account.address_line2,
+    account.city,
+    account.state,
+    account.zip,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
   return `
 <div style="background:${COLORS.cream};padding:22px 14px;font-family:Helvetica,Arial,sans-serif">
   <div style="max-width:620px;margin:0 auto;background:#fff;border-radius:10px;border:2px solid ${COLORS.amber};overflow:hidden">
@@ -136,7 +154,8 @@ const ownerEmail = ({ account, request }) => {
         <strong>Contact:</strong> ${esc(account.contact_name || "Not provided")}<br>
         <strong>Email:</strong> ${esc(account.email || "Not provided")}<br>
         <strong>Needed by:</strong> ${esc(readableDate(request.needed_by))}<br>
-        <strong>Fulfillment:</strong> ${esc(readable(request.fulfillment_method || "flexible"))}<br>
+        <strong>Fulfillment:</strong> ${esc(readable(request.fulfillment_method || "pickup"))}<br>
+        <strong>${request.fulfillment_method === "delivery" ? "Delivery address" : "Pickup address"}:</strong> ${esc(request.fulfillment_method === "delivery" ? (deliveryAddress || "Partner address on file") : "122 E Railway St, Coleman, MI 48618")}<br>
         <strong>Preferred delivery days:</strong> ${esc(deliveryDays)}
       </div>
 
@@ -153,8 +172,11 @@ const ownerEmail = ({ account, request }) => {
         </tbody>
       </table>
 
-      <div style="margin-top:14px;padding:13px;background:#F1F8FC;border-radius:7px;color:${COLORS.blue};font-size:15px">
-        <strong>Requested subtotal: ${esc(cents(request.requested_subtotal_cents))}</strong>
+      <div style="margin-top:14px;padding:13px;background:#F1F8FC;border-radius:7px;color:${COLORS.blue};font-size:15px;line-height:1.65">
+        <strong>Products: ${esc(cents(request.requested_subtotal_cents))}</strong><br>
+        <strong>${request.fulfillment_method === "delivery" ? "Local delivery" : "Coleman pickup"}: ${request.fulfillment_method === "delivery" ? esc(cents(fulfillmentChargeCents)) : "FREE"}</strong><br>
+        <strong>Card processing fee (4%): ${esc(cents(checkoutFeeCents))}</strong><br>
+        <strong>Estimated total: ${esc(cents(request.confirmed_total_cents))}</strong>
       </div>
 
       ${
@@ -245,7 +267,7 @@ export default async (req) => {
   const payload = {
     p_needed_by: cleanOptional(body.neededBy, 10),
     p_fulfillment_method:
-      cleanOptional(body.fulfillmentMethod, 30) || "flexible",
+      cleanOptional(body.fulfillmentMethod, 30) || "pickup",
     p_preferred_delivery_days:
       cleanDays(body.preferredDeliveryDays),
     p_current_inventory_notes:
@@ -291,7 +313,8 @@ export default async (req) => {
       .select(
         "id,partner_id,status,needed_by,fulfillment_method," +
           "preferred_delivery_days,current_inventory_notes," +
-          "request_notes,requested_subtotal_cents,submitted_at," +
+          "request_notes,requested_subtotal_cents,fulfillment_charge_cents," +
+          "confirmed_total_cents,submitted_at," +
           "items:partner_replenishment_items(" +
           "id,flavor_name,size_id,texture,quantity," +
           "unit_price_cents,line_total_cents" +
@@ -316,7 +339,8 @@ export default async (req) => {
     await userClient
       .from("partner_accounts")
       .select(
-        "id,business_name,public_name,contact_name,email"
+        "id,business_name,public_name,contact_name,email," +
+        "address_line1,address_line2,city,state,zip"
       )
       .eq("id", request.partner_id)
       .single();

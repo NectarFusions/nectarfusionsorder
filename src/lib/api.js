@@ -359,6 +359,57 @@ export async function submitSpecialEventOrder(request, designFile) {
   return data;
 }
 
+/* ---------- My NectarFusions v8 ---------- */
+
+export async function requestMyNectarFusionsLink(email) {
+  const redirectTo = `${window.location.origin}/my`;
+  const { data, error } = await supabase.auth.signInWithOtp({
+    email: String(email || "").trim(),
+    options: {
+      shouldCreateUser: true,
+      emailRedirectTo: redirectTo,
+    },
+  });
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+async function myNectarFusionsRequest(action, payload = {}) {
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw new Error(sessionError.message);
+  const accessToken = sessionData?.session?.access_token;
+  if (!accessToken) throw new Error("Sign in to My NectarFusions first.");
+
+  const response = await fetch("/.netlify/functions/customer-account", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ action, ...payload }),
+  });
+  const text = await response.text();
+  let data = {};
+  try { data = text ? JSON.parse(text) : {}; } catch { data = {}; }
+  if (!response.ok) throw new Error(data.error || "My NectarFusions could not be updated.");
+  return data;
+}
+
+export async function getMyNectarFusionsContext() {
+  return myNectarFusionsRequest("context");
+}
+
+export async function updateMyNectarFusionsProfile(profile) {
+  const data = await myNectarFusionsRequest("update_profile", { profile });
+  return data.account;
+}
+
+export async function setMyNectarFusionsFavorite(flavorId, enabled) {
+  const data = await myNectarFusionsRequest("set_favorite", { flavorId, enabled });
+  return data.favorites || [];
+}
+
+
 /* ---------- auth ---------- */
 
 export const signIn = (email, password) =>
@@ -412,7 +463,8 @@ export async function getPartnerPortalContext() {
           "relationship_status,partner_level,partner_level_updated_at," +
           "auth_access_enabled,preferred_delivery_days,preferred_fulfillment," +
           "receiving_notes,delivery_notes,locator_permission," +
-          "event_submission_enabled,address_line1,address_line2,city,state,zip"
+          "event_submission_enabled,address_line1,address_line2,city,state,zip," +
+          "building_details,gate_access_code,preferred_contact_method"
         )
         .eq("id", partnerId)
         .maybeSingle(),
@@ -2507,6 +2559,514 @@ export function today() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+/* ---------- program-based partner applications + admin v2 ---------- */
+
+export async function submitPartnerProgramApplication(application) {
+  const response = await fetch("/.netlify/functions/partner-program-application", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(application || {}),
+  });
+
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(result?.error || "The partner application could not be submitted.");
+  }
+  return result;
+}
+
+async function partnerProgramAdminAction(payload) {
+  const { data, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw new Error(sessionError.message);
+  const token = data?.session?.access_token;
+  if (!token) throw new Error("Admin authentication is required.");
+
+  const response = await fetch("/.netlify/functions/partner-program-admin", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload || {}),
+  });
+
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(result?.error || "The partner program action could not be completed.");
+  }
+  return result;
+}
+
+export async function listAdminPartnerProgramApplications() {
+  const { data, error } = await supabase
+    .from("partner_program_applications")
+    .select(
+      "id,partner_id,program_key,status,applicant_name,applicant_email,applicant_phone," +
+      "business_type,website_social,use_location,application_notes,source,submitted_at," +
+      "reviewed_at,reviewed_by,admin_notes,created_at,updated_at," +
+      "partner:partner_accounts(id,business_name,contact_name,email,phone,relationship_status,auth_access_enabled)," +
+      "program:partner_programs(program_key,label,internal_label,description,active,sort)"
+    )
+    .order("submitted_at", { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function adminReviewPartnerProgramApplication(applicationId, status, adminNotes = null) {
+  const allowed = ["pending", "under_review", "needs_information", "approved", "declined", "withdrawn"];
+  if (!allowed.includes(status)) throw new Error("Choose a valid application status.");
+  return partnerProgramAdminAction({
+    action: "review_application",
+    applicationId,
+    status,
+    adminNotes,
+  });
+}
+
+export async function listAdminPartnerRecurringOrders() {
+  const { data, error } = await supabase
+    .from("partner_recurring_orders")
+    .select(
+      "id,partner_id,program_key,package_id,status,cadence_value,cadence_unit,next_order_on," +
+      "configuration_snapshot,fulfillment_method,created_from_order_id,last_order_id,created_at,updated_at," +
+      "partner:partner_accounts(id,business_name,contact_name,email)," +
+      "package:partner_packages(id,package_key,name)," +
+      "program:partner_programs(program_key,label)"
+    )
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function adminUpdatePartnerRecurringOrder(id, patch) {
+  const allowedStatuses = ["active", "paused", "cancelled"];
+  const payload = {};
+  if (Object.prototype.hasOwnProperty.call(patch || {}, "status")) {
+    if (!allowedStatuses.includes(patch.status)) throw new Error("Choose a valid recurring status.");
+    payload.status = patch.status;
+  }
+  if (Object.prototype.hasOwnProperty.call(patch || {}, "next_order_on")) {
+    payload.next_order_on = patch.next_order_on || null;
+  }
+  payload.updated_at = new Date().toISOString();
+
+  const { data, error } = await supabase
+    .from("partner_recurring_orders")
+    .update(payload)
+    .eq("id", id)
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function listAdminPartnerAutomationRules() {
+  const { data, error } = await supabase
+    .from("partner_automation_rules")
+    .select(
+      "id,program_key,package_id,event_key,action_key,delay_days,active,subject_template,body_template," +
+      "created_at,updated_at,package:partner_packages(id,package_key,name),program:partner_programs(program_key,label)"
+    )
+    .order("program_key", { ascending: true })
+    .order("delay_days", { ascending: true });
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function adminSavePartnerAutomationRule(rule) {
+  const payload = {
+    program_key: String(rule?.program_key || "").trim(),
+    package_id: rule?.package_id || null,
+    event_key: String(rule?.event_key || "fulfilled").trim(),
+    action_key: String(rule?.action_key || "reorder_reminder").trim(),
+    delay_days: Math.max(0, Number.parseInt(rule?.delay_days, 10) || 0),
+    active: rule?.active !== false,
+    subject_template: String(rule?.subject_template || "").trim() || null,
+    body_template: String(rule?.body_template || "").trim() || null,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (!payload.program_key) throw new Error("Choose an automation program.");
+
+  if (rule?.id) {
+    const { data, error } = await supabase
+      .from("partner_automation_rules")
+      .update(payload)
+      .eq("id", rule.id)
+      .select("*")
+      .single();
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  const { data, error } = await supabase
+    .from("partner_automation_rules")
+    .insert(payload)
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function listAdminPartnerReorderDueOrders() {
+  const today = new Date().toISOString().slice(0, 10);
+  const { data, error } = await supabase
+    .from("partner_store_orders")
+    .select(
+      "id,order_no,partner_id,program_key,package_id,package_snapshot,business_name,email,status," +
+      "reorder_due_on,fulfilled_at,total_cents,created_at"
+    )
+    .eq("status", "fulfilled")
+    .not("reorder_due_on", "is", null)
+    .lte("reorder_due_on", today)
+    .order("reorder_due_on", { ascending: true });
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+
+/* ---------- partner operations v3 ---------- */
+
+export async function listAdminPartnerAutomationEvents() {
+  const { data, error } = await supabase
+    .from("partner_automation_events")
+    .select(
+      "id,rule_id,partner_id,order_id,recurring_order_id,program_key,package_id," +
+      "event_key,action_key,due_on,status,recipient_email,subject,attempt_count," +
+      "last_attempt_at,sent_at,error_message,metadata,created_at,updated_at," +
+      "partner:partner_accounts(id,business_name,contact_name,email)," +
+      "package:partner_packages(id,package_key,name)"
+    )
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function runAdminPartnerAutomationNow() {
+  const { data, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw new Error(sessionError.message);
+  const token = data?.session?.access_token;
+  if (!token) throw new Error("Admin authentication is required.");
+
+  const response = await fetch("/.netlify/functions/partner-automation-run", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result?.error || "Partner automation could not be run.");
+  return result;
+}
+
+export async function adminSavePartnerPackageItem(item) {
+  const nullablePackageInt = (value) => {
+    if (value === "" || value == null) return null;
+    const parsed = Number.parseInt(value, 10);
+    return Number.isFinite(parsed) ? parsed : null;
+  };
+
+  const payload = {
+    package_id: item?.package_id,
+    product_key: String(item?.product_key || "").trim(),
+    category: String(item?.category || "").trim(),
+    quantity: nullablePackageInt(item?.quantity),
+    flavor_id: item?.flavor_id || null,
+    flavor_name: String(item?.flavor_name || "").trim() || null,
+    size_id: String(item?.size_id || "").trim() || null,
+    texture: String(item?.texture || "").trim() || null,
+    unit_price_cents: nullablePackageInt(item?.unit_price_cents),
+    rules: item?.rules && typeof item.rules === "object" ? item.rules : {},
+    sort: nullablePackageInt(item?.sort) || 0,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (!payload.package_id) throw new Error("Save the package before adding package contents.");
+  if (!payload.product_key) throw new Error("Package items require a product key.");
+  if (!payload.category) throw new Error("Package items require a category.");
+  if (payload.quantity != null && payload.quantity < 1) throw new Error("Package item quantity must be at least 1.");
+  if (payload.unit_price_cents != null && payload.unit_price_cents < 0) throw new Error("Package item price cannot be negative.");
+
+  if (item?.id) {
+    const { data, error } = await supabase
+      .from("partner_package_items")
+      .update(payload)
+      .eq("id", item.id)
+      .select("*")
+      .single();
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  const { data, error } = await supabase
+    .from("partner_package_items")
+    .insert(payload)
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function adminDeletePartnerPackageItem(itemId) {
+  if (!itemId) throw new Error("Choose a package item.");
+  const { error } = await supabase
+    .from("partner_package_items")
+    .delete()
+    .eq("id", itemId);
+  if (error) throw new Error(error.message);
+}
+
+
+/* ---------- universal partner commerce ---------- */
+
+export async function listMyPartnerPrograms() {
+  const { data, error } = await supabase
+    .from("partner_account_programs")
+    .select(
+      "partner_id,program_key,status,approved_at,created_at,updated_at," +
+      "program:partner_programs(program_key,label,internal_label,description,active,sort)"
+    )
+    .order("program_key");
+
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function listPartnerPackages() {
+  const { data, error } = await supabase
+    .from("partner_packages")
+    .select(
+      "id,package_key,program_key,name,description,image_url,active,package_type," +
+      "price_mode,base_price_cents,minimum_quantity,default_quantity,quantity_increment," +
+      "flavor_selection_count,allowed_flavor_names,allowed_size_ids,allowed_textures," +
+      "customization_options,pickup_allowed,delivery_allowed,recurring_allowed," +
+      "default_reorder_interval_days,configuration_schema,sort,created_at,updated_at," +
+      "items:partner_package_items(id,product_key,category,quantity,flavor_id,flavor_name,size_id,texture,unit_price_cents,rules,sort)"
+    )
+    .eq("active", true)
+    .order("sort", { ascending: true })
+    .order("name", { ascending: true });
+
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function getPartnerRetailPackageCatalog() {
+  const { data, error } = await supabase.rpc(
+    "get_partner_retail_package_catalog"
+  );
+  if (error) throw new Error(error.message);
+  return Array.isArray(data) ? data : [];
+}
+
+export async function listPartnerPackageFlavorOptions(names = []) {
+  let query = supabase
+    .from("flavors")
+    .select("id,name,image_url,active,sort")
+    .eq("active", true)
+    .order("sort", { ascending: true })
+    .order("name", { ascending: true });
+
+  if (Array.isArray(names) && names.length) {
+    query = query.in("name", names);
+  }
+
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function listPartnerRecurringOrders() {
+  const { data, error } = await supabase
+    .from("partner_recurring_orders")
+    .select(
+      "id,partner_id,program_key,package_id,status,cadence_value,cadence_unit," +
+      "next_order_on,configuration_snapshot,fulfillment_method,created_from_order_id," +
+      "last_order_id,created_at,updated_at," +
+      "package:partner_packages(id,package_key,name)," +
+      "program:partner_programs(program_key,label)"
+    )
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function manageMyPartnerRecurringOrder(recurringOrderId, action) {
+  const { data, error } = await supabase.rpc(
+    "manage_my_partner_recurring_order",
+    {
+      p_recurring_order_id: recurringOrderId,
+      p_action: action,
+    }
+  );
+  if (error) throw new Error(error.message);
+  return data || {};
+}
+
+export async function updateMyPartnerFulfillmentProfile(profile) {
+  const { data, error } = await supabase.rpc(
+    "update_my_partner_fulfillment_profile",
+    {
+      p_business_name: String(profile?.businessName || "").trim(),
+      p_phone: String(profile?.phone || "").trim(),
+      p_address_line1: String(profile?.addressLine1 || "").trim(),
+      p_address_line2: String(profile?.addressLine2 || "").trim() || null,
+      p_city: String(profile?.city || "").trim(),
+      p_state: String(profile?.state || "").trim().toUpperCase(),
+      p_zip: String(profile?.zip || "").replace(/\D/g, "").slice(0, 5),
+      p_delivery_notes: String(profile?.deliveryNotes || "").trim() || null,
+      p_building_details: String(profile?.buildingDetails || "").trim() || null,
+      p_gate_access_code: String(profile?.gateAccessCode || "").trim() || null,
+      p_preferred_contact_method:
+        String(profile?.preferredContactMethod || "").trim() || null,
+      p_preferred_fulfillment:
+        String(profile?.preferredFulfillment || "").trim() || null,
+    }
+  );
+  if (error) throw new Error(error.message);
+  return data || {};
+}
+
+const nullableInt = (value) => {
+  if (value === "" || value == null) return null;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+export async function listAdminPartnerProgramAccounts() {
+  const { data, error } = await supabase
+    .from("partner_accounts")
+    .select(
+      "id,business_name,public_name,contact_name,email,phone,relationship_status,auth_access_enabled," +
+      "created_at,updated_at," +
+      "programs:partner_account_programs(program_key,status,approved_at,approved_by,admin_notes,updated_at," +
+      "program:partner_programs(program_key,label,internal_label,description,active,sort))"
+    )
+    .order("business_name", { ascending: true });
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function adminSetPartnerProgramStatus(partnerId, programKey, status, adminNotes = null) {
+  const allowed = ["pending", "approved", "declined", "suspended"];
+  if (!allowed.includes(status)) throw new Error("Invalid program status.");
+  return partnerProgramAdminAction({
+    action: "set_program_status",
+    partnerId,
+    programKey,
+    status,
+    adminNotes,
+  });
+}
+
+export async function listAdminPartnerPackages() {
+  const { data, error } = await supabase
+    .from("partner_packages")
+    .select(
+      "*,items:partner_package_items(id,package_id,product_key,category,quantity,flavor_id," +
+      "flavor_name,size_id,texture,unit_price_cents,rules,sort,created_at,updated_at)"
+    )
+    .order("program_key", { ascending: true })
+    .order("sort", { ascending: true })
+    .order("name", { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((pkg) => ({
+    ...pkg,
+    items: [...(pkg.items || [])].sort((a, b) => Number(a.sort || 0) - Number(b.sort || 0)),
+  }));
+}
+
+export async function adminSavePartnerPackage(pkg) {
+  const payload = {
+    package_key: String(pkg?.package_key || "").trim(),
+    program_key: String(pkg?.program_key || "").trim(),
+    name: String(pkg?.name || "").trim(),
+    description: String(pkg?.description || "").trim() || null,
+    image_url: String(pkg?.image_url || "").trim() || null,
+    active: pkg?.active === true,
+    package_type: String(pkg?.package_type || "starter"),
+    price_mode: String(pkg?.price_mode || "catalog"),
+    base_price_cents: nullableInt(pkg?.base_price_cents),
+    minimum_quantity: nullableInt(pkg?.minimum_quantity),
+    default_quantity: nullableInt(pkg?.default_quantity),
+    quantity_increment: nullableInt(pkg?.quantity_increment),
+    flavor_selection_count: nullableInt(pkg?.flavor_selection_count),
+    allowed_flavor_names: Array.isArray(pkg?.allowed_flavor_names)
+      ? pkg.allowed_flavor_names
+      : [],
+    allowed_size_ids: Array.isArray(pkg?.allowed_size_ids)
+      ? pkg.allowed_size_ids
+      : [],
+    allowed_textures: Array.isArray(pkg?.allowed_textures)
+      ? pkg.allowed_textures
+      : [],
+    customization_options:
+      pkg?.customization_options && typeof pkg.customization_options === "object"
+        ? pkg.customization_options
+        : {},
+    pickup_allowed: pkg?.pickup_allowed !== false,
+    delivery_allowed: pkg?.delivery_allowed !== false,
+    recurring_allowed: pkg?.recurring_allowed === true,
+    default_reorder_interval_days: nullableInt(pkg?.default_reorder_interval_days),
+    configuration_schema:
+      pkg?.configuration_schema && typeof pkg.configuration_schema === "object"
+        ? pkg.configuration_schema
+        : {},
+    sort: nullableInt(pkg?.sort) || 0,
+    updated_at: new Date().toISOString(),
+  };
+
+  let query = supabase.from("partner_packages");
+  if (pkg?.id) {
+    const { data, error } = await query
+      .update(payload)
+      .eq("id", pkg.id)
+      .select("*")
+      .single();
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  const { data, error } = await query.insert(payload).select("*").single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function listAllAdminPartnerStoreOrders() {
+  const { data, error } = await supabase
+    .from("partner_store_orders")
+    .select(
+      "id,order_no,partner_id,status,program_key,package_id,package_snapshot," +
+      "configuration_snapshot,reorder_of_order_id,fulfillment_method,business_name," +
+      "subtotal_cents,delivery_fee_cents,processing_fee_cents,total_cents,paid,paid_at," +
+      "reorder_due_on,created_at,updated_at"
+    )
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function adminSetPartnerStoreOrderStatus(orderId, status) {
+  const allowed = [
+    "awaiting_payment", "paid", "queued", "preparing", "ready",
+    "out_for_delivery", "pickup_ready", "fulfilled", "cancelled",
+  ];
+  if (!allowed.includes(status)) throw new Error("Invalid partner order status.");
+  const { data, error } = await supabase
+    .from("partner_store_orders")
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq("id", orderId)
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
 /* ---------- unified partner store ---------- */
 
 async function partnerStoreCheckoutRequest(mode, payload) {
@@ -2569,7 +3129,9 @@ export async function listPartnerStoreOrders() {
   const { data, error } = await supabase
     .from("partner_store_orders")
     .select(
-      "id,token,order_no,partner_id,status,fulfillment_method,needed_by," +
+      "id,token,order_no,partner_id,status,program_key,package_id,package_snapshot," +
+      "configuration_snapshot,reorder_of_order_id,reorder_due_on,fulfilled_at," +
+      "fulfillment_method,needed_by," +
       "preferred_delivery_days,current_inventory_notes,request_notes," +
       "business_name,contact_name,email,phone,address_line1,address_line2," +
       "city,state,zip,delivery_notes,subtotal_cents,delivery_fee_cents," +
@@ -2593,7 +3155,9 @@ export async function listAdminPartnerStoreOrders(partnerId) {
   const { data, error } = await supabase
     .from("partner_store_orders")
     .select(
-      "id,token,order_no,partner_id,status,fulfillment_method,needed_by," +
+      "id,token,order_no,partner_id,status,program_key,package_id,package_snapshot," +
+      "configuration_snapshot,reorder_of_order_id,reorder_due_on,fulfilled_at," +
+      "fulfillment_method,needed_by," +
       "preferred_delivery_days,current_inventory_notes,request_notes," +
       "business_name,contact_name,email,phone,address_line1,address_line2," +
       "city,state,zip,delivery_notes,subtotal_cents,delivery_fee_cents," +

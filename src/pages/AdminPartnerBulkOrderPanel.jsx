@@ -430,7 +430,7 @@ export default function AdminPartnerBulkOrderPanel({
 
       <div className="nf-abr-note">
         Bulk container pricing is isolated from retail inventory and Square.
-        Gift sets are unpriced until you enter a custom-item amount here.
+        Gift set base pricing is calculated from the established partner gift rates.
         Market pickup is paid at the market table, and delivery fees stay
         outside the product quote because they are charged at drop-off.
       </div>
@@ -656,9 +656,17 @@ export default function AdminPartnerBulkOrderPanel({
                         <br />
                         Quantity: {gift.quantity}
                         <br />
-                        Flavors:{" "}
-                        {(gift.flavor_names || []).join(", ") ||
-                          "Not specified"}
+                        Flavor quantities:{" "}
+                        {Array.isArray(gift.flavor_breakdown) &&
+                        gift.flavor_breakdown.length > 0
+                          ? gift.flavor_breakdown
+                              .map(
+                                (item) =>
+                                  `${item.flavor_name}: ${item.quantity}`
+                              )
+                              .join(" · ")
+                          : (gift.flavor_names || []).join(", ") ||
+                            "Not specified"}
                         {gift.lid_color ? (
                           <>
                             <br />
@@ -774,7 +782,7 @@ export default function AdminPartnerBulkOrderPanel({
                   </label>
 
                   <label className="nf-abr-field">
-                    <span>Gift set / custom item charge</span>
+                    <span>Additional custom item charge</span>
                     <input
                       type="number"
                       min="0"

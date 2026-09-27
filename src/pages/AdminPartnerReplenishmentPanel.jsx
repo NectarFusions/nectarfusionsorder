@@ -252,8 +252,14 @@ export default function AdminPartnerReplenishmentPanel({
   }, [draft.fulfillmentCharge]);
 
   const subtotal = selected ? itemSubtotal(selected) : 0;
+  const squareCheckoutFeeCents =
+    fulfillmentCents === null
+      ? 0
+      : Math.round((subtotal + fulfillmentCents) * 0.04);
   const quoteTotal =
-    fulfillmentCents === null ? subtotal : subtotal + fulfillmentCents;
+    fulfillmentCents === null
+      ? subtotal
+      : subtotal + fulfillmentCents + squareCheckoutFeeCents;
 
   const updateDraft = (patch) => {
     setDraft((current) => ({ ...current, ...patch }));
@@ -291,7 +297,7 @@ export default function AdminPartnerReplenishmentPanel({
 
     if (action === "quote" && fulfillmentCents === null) {
       setError(
-        "Enter a fulfillment charge of $0.00 or more before publishing the quote."
+        "The fulfillment charge could not be calculated for this request."
       );
       return;
     }
@@ -615,19 +621,24 @@ export default function AdminPartnerReplenishmentPanel({
                   </label>
 
                   <label className="nf-arr-field">
-                    <span>Fulfillment charge</span>
+                    <span>
+                      {selected?.fulfillment_method === "delivery"
+                        ? "ZIP based delivery charge"
+                        : "Fulfillment charge"}
+                    </span>
                     <input
                       type="number"
                       min="0"
                       step="0.01"
                       inputMode="decimal"
                       value={draft.fulfillmentCharge}
-                      onChange={(event) =>
-                        updateDraft({
-                          fulfillmentCharge: event.target.value,
-                        })
-                      }
+                      readOnly
                     />
+                    <small>
+                      {selected?.fulfillment_method === "delivery"
+                        ? "Calculated automatically from the partner ZIP code."
+                        : "Pickup is free."}
+                    </small>
                   </label>
                 </div>
 
@@ -642,6 +653,10 @@ export default function AdminPartnerReplenishmentPanel({
                         ? "Invalid"
                         : money(fulfillmentCents)}
                     </strong>
+                  </span>
+                  <span>
+                    Card processing fee (4%):{" "}
+                    <strong>{money(squareCheckoutFeeCents)}</strong>
                   </span>
                   <span>
                     Quote total: <strong>{money(quoteTotal)}</strong>

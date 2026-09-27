@@ -148,21 +148,83 @@ export default async (req) => {
 
         const { data: partnerStoreOrder } = await supa
           .from("partner_store_orders")
-          .select("id,paid")
+          .select(
+            "id,paid,partner_id,program_key,package_id,configuration_snapshot," +
+            "fulfillment_method,business_name,phone,address_line1,address_line2,city,state,zip,delivery_notes"
+          )
           .eq("square_order_id", p.order_id)
           .maybeSingle();
 
         if (partnerStoreOrder && !partnerStoreOrder.paid) {
+          const paidAt = new Date().toISOString();
           await supa
             .from("partner_store_orders")
             .update({
               paid: true,
-              paid_at: new Date().toISOString(),
+              paid_at: paidAt,
               square_payment_id: p.id,
               status: "paid",
-              updated_at: new Date().toISOString(),
+              updated_at: paidAt,
             })
             .eq("id", partnerStoreOrder.id);
+
+          const requested = partnerStoreOrder.configuration_snapshot?.requested || {};
+          if (requested.recurring === true && partnerStoreOrder.package_id) {
+            const { data: pkg } = await supa
+              .from("partner_packages")
+              .select("id,program_key,recurring_allowed")
+              .eq("id", partnerStoreOrder.package_id)
+              .maybeSingle();
+
+            if (pkg?.recurring_allowed === true) {
+              let cadenceValue = 1;
+              let cadenceUnit = "month";
+              if (requested.cadence === "quarterly") cadenceValue = 3;
+              if (requested.cadence === "annual") { cadenceValue = 1; cadenceUnit = "year"; }
+              if (requested.cadence === "custom") {
+                cadenceValue = Math.min(365, Math.max(1, Number.parseInt(requested.custom_interval_days, 10) || 30));
+                cadenceUnit = "day";
+              }
+
+              const recurringRow = {
+                partner_id: partnerStoreOrder.partner_id,
+                program_key: pkg.program_key,
+                package_id: pkg.id,
+                status: "active",
+                cadence_value: cadenceValue,
+                cadence_unit: cadenceUnit,
+                next_order_on: null,
+                configuration_snapshot: partnerStoreOrder.configuration_snapshot || {},
+                fulfillment_method: partnerStoreOrder.fulfillment_method,
+                delivery_profile_snapshot: {
+                  business_name: partnerStoreOrder.business_name,
+                  phone: partnerStoreOrder.phone,
+                  address_line1: partnerStoreOrder.address_line1,
+                  address_line2: partnerStoreOrder.address_line2,
+                  city: partnerStoreOrder.city,
+                  state: partnerStoreOrder.state,
+                  zip: partnerStoreOrder.zip,
+                  delivery_notes: partnerStoreOrder.delivery_notes,
+                },
+                created_from_order_id: partnerStoreOrder.id,
+                last_order_id: partnerStoreOrder.id,
+                updated_at: paidAt,
+              };
+
+              const { data: existingRecurring } = await supa
+                .from("partner_recurring_orders")
+                .select("id")
+                .eq("created_from_order_id", partnerStoreOrder.id)
+                .maybeSingle();
+
+              if (!existingRecurring) {
+                const { error: recurringError } = await supa
+                  .from("partner_recurring_orders")
+                  .insert(recurringRow);
+                if (recurringError && recurringError.code !== "23505") throw recurringError;
+              }
+            }
+          }
 
           console.log(
             "Partner store order paid:",

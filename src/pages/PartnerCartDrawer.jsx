@@ -27,11 +27,12 @@ const money = (cents) =>
   }).format(Number(cents || 0) / 100);
 
 const groupLabel = {
-  retail: "Retailer Replenishment",
-  bulk: "Wholesale & Bulk",
-  gift: "Gift Sets",
+  retail: "Retail Package",
+  bulk: "Foodservice",
+  gift: "Business Gifting",
   gift_addon: "Gift Add-ons",
   custom_label: "Custom Labels",
+  sponsorship: "Hive Partners",
 };
 
 const displayName = (item) => {
@@ -49,6 +50,10 @@ const displayName = (item) => {
 
   if (item.category === "gift") {
     return `${item.containerLabel} · ${item.flavorName}`;
+  }
+
+  if (item.category === "sponsorship") {
+    return item.name || item.packageName || "Hive Partner Sponsorship";
   }
 
   return item.name || "Custom Labels";
@@ -377,6 +382,11 @@ export default function PartnerCartDrawer({ account }) {
     .filter((item) => item.category === "retail")
     .reduce((sum, item) => sum + Number(item.quantity || 0), 0);
 
+  const sponsorshipOnly =
+    cart.length > 0 && cart.every((item) => item.category === "sponsorship");
+
+
+
   const subtotal = cart.reduce(
     (sum, item) =>
       sum + Number(item.quantity || 0) * Number(item.unitPriceCents || 0),
@@ -394,16 +404,24 @@ export default function PartnerCartDrawer({ account }) {
     [cart]
   );
 
-  const payload = () => ({
-    items: cart,
-    fulfillmentMethod: checkout.fulfillmentMethod,
-    neededBy: checkout.neededBy || null,
-    preferredDeliveryDays: checkout.preferredDeliveryDays,
-    currentInventoryNotes:
-      checkout.currentInventoryNotes.trim() || null,
-    requestNotes: checkout.requestNotes.trim() || null,
-    deliveryProfile: profile,
-  });
+  const payload = () => {
+    const packageItem = cart.find((item) => item.packageId);
+    const reorderItem = cart.find((item) => item.reorderOfOrderId);
+
+    return {
+      items: cart,
+      packageId: packageItem?.packageId || null,
+      packageConfiguration: packageItem?.packageConfiguration || null,
+      reorderOfOrderId: reorderItem?.reorderOfOrderId || null,
+      fulfillmentMethod: checkout.fulfillmentMethod,
+      neededBy: checkout.neededBy || null,
+      preferredDeliveryDays: checkout.preferredDeliveryDays,
+      currentInventoryNotes:
+        checkout.currentInventoryNotes.trim() || null,
+      requestNotes: checkout.requestNotes.trim() || null,
+      deliveryProfile: profile,
+    };
+  };
 
   const review = async () => {
     if (!cart.length) return;
@@ -479,7 +497,7 @@ export default function PartnerCartDrawer({ account }) {
         <div className="nf-partner-cart-head">
           <div>
             <h2>Partner Checkout</h2>
-            <p>Everything from your store order checks out together.</p>
+            <p>Your package, fulfillment, payment, and reorder snapshot stay together.</p>
           </div>
           <button
             type="button"
@@ -494,8 +512,8 @@ export default function PartnerCartDrawer({ account }) {
         <div className="nf-partner-cart-body">
           {!cart.length ? (
             <div className="nf-partner-cart-empty">
-              Your partner cart is empty. Close this cart and add products
-              from Retailer Replenishment, Wholesale & Bulk, or Gift Sets.
+              Your partner cart is empty. Close this cart and choose a package
+              from one of your approved NectarFusions programs.
             </div>
           ) : (
             groups.map((group) => (

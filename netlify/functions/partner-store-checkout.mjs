@@ -1,3 +1,4 @@
+// NF PARTNER PROGRAM BUILDERS V4
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import { square, site } from "./_square.mjs";
@@ -77,13 +78,16 @@ const itemName = (item) => {
   if (item.category === "custom_label") {
     return "Custom design + printing & labeling";
   }
+  if (item.category === "sponsorship") {
+    return item.size_label || "Hive Partner Sponsorship";
+  }
   return item.product_key;
 };
 
 const uniqueOrderNo = () =>
   `NF-P-${Date.now().toString(36).toUpperCase()}-${crypto.randomUUID().slice(0,4).toUpperCase()}`;
 
-async function buildValidatedOrder({ admin, account, body }) {
+async function buildValidatedOrder({ admin, account, body, programs }) {
   const rawItems = Array.isArray(body.items) ? body.items.slice(0, 200) : [];
   if (!rawItems.length) throw new Error("Your cart is empty.");
 
@@ -99,18 +103,58 @@ async function buildValidatedOrder({ admin, account, body }) {
       ).slice(0,7)
     : [];
 
+  const programKeys = new Set((programs || []).map((row) => row.program_key));
+  const packageId = clean(body.packageId, 80);
+  let packageRecord = null;
+
+  if (packageId) {
+    const { data: pkg, error: packageError } = await admin
+      .from("partner_packages")
+      .select(
+        "id,package_key,program_key,name,description,active,package_type,price_mode," +
+        "base_price_cents,minimum_quantity,default_quantity,quantity_increment," +
+        "flavor_selection_count,allowed_flavor_names,allowed_size_ids,allowed_textures," +
+        "customization_options,pickup_allowed,delivery_allowed,recurring_allowed," +
+        "default_reorder_interval_days,configuration_schema,sort," +
+        "items:partner_package_items(id,product_key,category,quantity,flavor_id,flavor_name,size_id,texture,unit_price_cents,rules,sort)"
+      )
+      .eq("id", packageId)
+      .eq("active", true)
+      .maybeSingle();
+
+    if (packageError || !pkg) {
+      throw new Error("That partner package is no longer available.");
+    }
+    if (!programKeys.has(pkg.program_key)) {
+      throw new Error("This partner account is not approved for that program.");
+    }
+    if (fulfillment === "pickup" && pkg.pickup_allowed !== true) {
+      throw new Error("Pickup is not available for this package.");
+    }
+    if (fulfillment === "delivery" && pkg.delivery_allowed !== true) {
+      throw new Error("Local delivery is not available for this package.");
+    }
+    packageRecord = pkg;
+  }
+
   const retailItems = rawItems.filter((item) => item?.category === "retail");
   const bulkItems = rawItems.filter((item) => item?.category === "bulk");
   const giftItems = rawItems.filter((item) => item?.category === "gift");
   const addonItems = rawItems.filter((item) => item?.category === "gift_addon");
   const customLabelItems = rawItems.filter((item) => item?.category === "custom_label");
+  const sponsorshipItems = rawItems.filter((item) => item?.category === "sponsorship");
 
-  const partnerType = normalize(account.partner_type);
-  if (retailItems.length && !["retail","both"].includes(partnerType)) {
-    throw new Error("Retail products are not available for this partner type.");
+  if (retailItems.length && !programKeys.has("retail")) {
+    throw new Error("Retail ordering is not approved for this account.");
   }
-  if (bulkItems.length && !["wholesale","both"].includes(partnerType)) {
-    throw new Error("Wholesale products are not available for this partner type.");
+  if (bulkItems.length && !programKeys.has("foodservice")) {
+    throw new Error("Foodservice ordering is not approved for this account.");
+  }
+  if ((giftItems.length || addonItems.length || customLabelItems.length) && !programKeys.has("business_gifting")) {
+    throw new Error("Business Gifting is not approved for this account.");
+  }
+  if (sponsorshipItems.length && !programKeys.has("hive_partners")) {
+    throw new Error("Hive Partners ordering is not approved for this account.");
   }
 
   const flavorIds = [
@@ -263,7 +307,7 @@ async function buildValidatedOrder({ admin, account, body }) {
       quantity,
       unit_price_cents:unit,
       line_total_cents:unit*quantity,
-      details:{honey_type:honeyType,notes:clean(raw.notes,1000)},
+      details:{honey_type:honeyType,notes:clean(raw.notes,1000),package_item_id:clean(raw.packageItemId,80),package_product_key:clean(raw.packageProductKey,160)},
     });
   }
 
@@ -277,13 +321,18 @@ async function buildValidatedOrder({ admin, account, body }) {
     if (!flavor?.active || !allowedGiftFlavorNames.has(normalize(flavor.name))) {
       throw new Error("Partner Gift Sets are limited to the current core flavors.");
     }
+    const packageGiftOrder = packageRecord?.program_key === "business_gifting";
     if (
       !quantity ||
-      quantity < giftPackSize ||
+      quantity < 1 ||
       quantity > 996 ||
-      quantity % giftPackSize !== 0
+      (!packageGiftOrder && (quantity < giftPackSize || quantity % giftPackSize !== 0))
     ) {
-      throw new Error(`Gift flavors must be ordered in packs of ${giftPackSize}.`);
+      throw new Error(
+        packageGiftOrder
+          ? "That Business Gifting package quantity is invalid."
+          : `Gift flavors must be ordered in packs of ${giftPackSize}.`
+      );
     }
 
     const unit =
@@ -365,7 +414,189 @@ async function buildValidatedOrder({ admin, account, body }) {
     });
   }
 
+
+  for (const raw of sponsorshipItems) {
+    if (!packageRecord || packageRecord.program_key !== "hive_partners") {
+      throw new Error("Hive Partner sponsorships must be purchased from an active Hive Partner package.");
+    }
+    const quantity = int(raw.quantity) || 1;
+    if (quantity !== 1) throw new Error("Hive Partner packages are purchased one annual partnership at a time.");
+
+    const sponsorshipDefs = (packageRecord.items || []).filter((item) => item.category === "sponsorship");
+    const itemizedTotal = sponsorshipDefs.reduce(
+      (sum, item) => sum + Number(item.unit_price_cents || 0) * Number(item.quantity || 1),
+      0
+    );
+    const unit = packageRecord.price_mode === "fixed" && packageRecord.base_price_cents != null
+      ? Number(packageRecord.base_price_cents)
+      : itemizedTotal;
+    if (!unit || unit < 1) {
+      throw new Error("This Hive Partner package still needs an annual price before checkout.");
+    }
+
+    finalItems.push({
+      category:"sponsorship",
+      product_key:packageRecord.package_key,
+      flavor_id:null,
+      flavor_name:null,
+      size_id:null,
+      size_label:packageRecord.name,
+      texture:null,
+      quantity:1,
+      unit_price_cents:unit,
+      line_total_cents:unit,
+      details:{
+        sponsor_display_name:clean(raw.sponsorDisplayName,200),
+        recognition_name:clean(raw.recognitionName,200),
+        notes:clean(raw.notes,3000),
+      },
+    });
+  }
+
   if (!finalItems.length) throw new Error("Your cart does not contain any valid products.");
+
+  if (packageRecord) {
+    const schema = packageRecord.configuration_schema || {};
+    const builder = clean(schema.builder, 80);
+
+    if (builder === "retail_shelf") {
+      const packageItems = finalItems.filter((item) => item.category === "retail");
+      if (packageItems.length !== finalItems.length) {
+        throw new Error("Retail shelf packages can only contain retail jar items.");
+      }
+
+      const flavorCount = Number(schema.flavor_selection_count || packageRecord.flavor_selection_count || 0);
+      const quantityPerFlavor = Number(schema.quantity_per_flavor || 6);
+      const expectedTotal = Number(packageRecord.default_quantity || flavorCount * quantityPerFlavor);
+      const uniqueFlavors = [...new Set(packageItems.map((item) => normalize(item.flavor_name)))];
+      const uniqueSizes = [...new Set(packageItems.map((item) => item.size_id))];
+      const uniqueTextures = [...new Set(packageItems.map((item) => item.texture))];
+
+      if (uniqueFlavors.length !== flavorCount) {
+        throw new Error(`${packageRecord.name} requires exactly ${flavorCount} flavors.`);
+      }
+      if (packageItems.some((item) => item.quantity !== quantityPerFlavor)) {
+        throw new Error(`${packageRecord.name} requires ${quantityPerFlavor} jars of each flavor.`);
+      }
+      if (packageItems.reduce((sum, item) => sum + item.quantity, 0) !== expectedTotal) {
+        throw new Error(`${packageRecord.name} requires exactly ${expectedTotal} jars.`);
+      }
+      if (uniqueSizes.length !== 1 || uniqueTextures.length !== 1) {
+        throw new Error("All jars in a retail shelf package must use the same size and texture.");
+      }
+      if (packageRecord.allowed_size_ids?.length && !packageRecord.allowed_size_ids.includes(uniqueSizes[0])) {
+        throw new Error("That jar size is not allowed for this package.");
+      }
+      if (packageRecord.allowed_textures?.length && !packageRecord.allowed_textures.includes(uniqueTextures[0])) {
+        throw new Error("That texture is not allowed for this package.");
+      }
+
+      const fixed = Array.isArray(schema.fixed_flavors)
+        ? schema.fixed_flavors.map(normalize).sort()
+        : [];
+      if (fixed.length) {
+        const selected = [...uniqueFlavors].sort();
+        if (JSON.stringify(fixed) !== JSON.stringify(selected)) {
+          throw new Error(`${packageRecord.name} uses the complete fixed core flavor collection.`);
+        }
+      }
+    }
+
+    if (builder === "business_gifting") {
+      const packageGiftItems = finalItems.filter((item) => item.category === "gift");
+      const disallowed = finalItems.filter((item) =>
+        !["gift", "gift_addon", "custom_label"].includes(item.category)
+      );
+      const expectedTotal = Number(packageRecord.default_quantity || schema.gift_quantity || 0);
+      const giftTotal = packageGiftItems.reduce((sum, item) => sum + item.quantity, 0);
+
+      if (disallowed.length || packageGiftItems.length !== 1) {
+        throw new Error("Business Gifting packages use one configured gift product plus optional finishing add-ons.");
+      }
+      if (!expectedTotal || giftTotal !== expectedTotal) {
+        throw new Error(`${packageRecord.name} requires exactly ${expectedTotal} gifts.`);
+      }
+      if (finalItems.some((item) => item.category === "gift_addon" && item.quantity !== expectedTotal)) {
+        throw new Error("Gift finishing add-ons must match the package gift quantity.");
+      }
+    }
+
+
+    if (builder === "foodservice") {
+      const packageItems = finalItems.filter((item) => item.category === "bulk");
+      const disallowed = finalItems.filter((item) => item.category !== "bulk");
+      const definitions = (packageRecord.items || []).filter((item) => item.category === "bulk");
+      if (disallowed.length || !definitions.length || packageItems.length !== definitions.length) {
+        throw new Error(`${packageRecord.name} must match its configured Foodservice package contents.`);
+      }
+
+      const used = new Set();
+      for (const item of packageItems) {
+        const definition = definitions.find((row) => String(row.id) === String(item.details?.package_item_id));
+        if (!definition || used.has(definition.id)) {
+          throw new Error("A Foodservice package line no longer matches the current package definition.");
+        }
+        used.add(definition.id);
+
+        const expectedQty = Number(definition.quantity || 1);
+        if (item.quantity !== expectedQty) {
+          throw new Error(`${packageRecord.name} requires the preset quantity for ${definition.product_key}.`);
+        }
+        if (definition.size_id && item.size_id !== definition.size_id) {
+          throw new Error("A Foodservice container size does not match the current package definition.");
+        }
+        if (packageRecord.allowed_size_ids?.length && !packageRecord.allowed_size_ids.includes(item.size_id)) {
+          throw new Error("That Foodservice size is not allowed for this package.");
+        }
+
+        const honeyRule = normalize(definition.rules?.honey_type || "choice");
+        if (["natural","infused"].includes(honeyRule) && item.details?.honey_type !== honeyRule) {
+          throw new Error(`${definition.product_key} has a fixed honey type in this package.`);
+        }
+        if (item.details?.honey_type === "infused") {
+          if (!item.flavor_id || !item.flavor_name) throw new Error("Choose a flavor for each infused Foodservice line.");
+          if (definition.flavor_id && String(definition.flavor_id) !== String(item.flavor_id)) {
+            throw new Error(`${definition.product_key} uses a fixed flavor.`);
+          }
+          if (definition.flavor_name && normalize(definition.flavor_name) !== normalize(item.flavor_name)) {
+            throw new Error(`${definition.product_key} uses a fixed flavor.`);
+          }
+          if (packageRecord.allowed_flavor_names?.length && !packageRecord.allowed_flavor_names.map(normalize).includes(normalize(item.flavor_name))) {
+            throw new Error(`${item.flavor_name} is not available for this Foodservice package.`);
+          }
+        }
+
+        const unit = definition.unit_price_cents != null
+          ? Number(definition.unit_price_cents)
+          : Number(bulkPrices[item.size_id]?.[item.details?.honey_type] || 0);
+        if (!unit || unit < 1) throw new Error(`Pricing is missing for ${definition.product_key}.`);
+        item.unit_price_cents = unit;
+        item.line_total_cents = unit * item.quantity;
+      }
+
+      const uniqueRequired = schema.unique_flavors !== false && Number(packageRecord.flavor_selection_count || 0) > 1;
+      if (uniqueRequired) {
+        const flavors = packageItems.filter((item) => item.details?.honey_type === "infused").map((item) => normalize(item.flavor_name));
+        if (new Set(flavors).size !== flavors.length) {
+          throw new Error("Choose different infused flavors for each Foodservice flavor selection.");
+        }
+      }
+    }
+
+    if (builder === "hive_sponsorship") {
+      const packageItems = finalItems.filter((item) => item.category === "sponsorship");
+      if (packageItems.length !== 1 || packageItems.length !== finalItems.length) {
+        throw new Error("Hive Partner packages use one annual sponsorship line.");
+      }
+      const sponsorshipDefs = (packageRecord.items || []).filter((item) => item.category === "sponsorship");
+      const expected = packageRecord.price_mode === "fixed" && packageRecord.base_price_cents != null
+        ? Number(packageRecord.base_price_cents)
+        : sponsorshipDefs.reduce((sum, item) => sum + Number(item.unit_price_cents || 0) * Number(item.quantity || 1), 0);
+      if (!expected || expected < 1) throw new Error("This Hive Partner package still needs an annual price.");
+      packageItems[0].unit_price_cents = expected;
+      packageItems[0].line_total_cents = expected;
+    }
+  }
 
   const subtotalCents = finalItems.reduce((sum,item)=>sum+item.line_total_cents,0);
 
@@ -406,8 +637,82 @@ async function buildValidatedOrder({ admin, account, body }) {
   const processingFeeCents = Math.round((subtotalCents + deliveryFeeCents) * PROCESSING_RATE);
   const totalCents = subtotalCents + deliveryFeeCents + processingFeeCents;
 
+  let reorderOfOrderId = null;
+  const requestedReorderId = clean(body.reorderOfOrderId, 80);
+  if (requestedReorderId) {
+    if (!/^[0-9a-f-]{36}$/i.test(requestedReorderId)) {
+      throw new Error("The reorder source is invalid.");
+    }
+    const { data: source, error: sourceError } = await admin
+      .from("partner_store_orders")
+      .select("id,partner_id")
+      .eq("id", requestedReorderId)
+      .eq("partner_id", account.id)
+      .maybeSingle();
+    if (sourceError || !source) throw new Error("The previous order could not be used for reorder.");
+    reorderOfOrderId = source.id;
+  }
+
+  let requestedConfiguration = {};
+  if (body.packageConfiguration && typeof body.packageConfiguration === "object" && !Array.isArray(body.packageConfiguration)) {
+    const serialized = JSON.stringify(body.packageConfiguration);
+    if (serialized.length > 20000) throw new Error("Package configuration is too large.");
+    requestedConfiguration = JSON.parse(serialized);
+  }
+
+  const packageSnapshot = packageRecord
+    ? {
+        id: packageRecord.id,
+        package_key: packageRecord.package_key,
+        program_key: packageRecord.program_key,
+        name: packageRecord.name,
+        description: packageRecord.description,
+        package_type: packageRecord.package_type,
+        default_quantity: packageRecord.default_quantity,
+        flavor_selection_count: packageRecord.flavor_selection_count,
+        allowed_flavor_names: packageRecord.allowed_flavor_names,
+        allowed_size_ids: packageRecord.allowed_size_ids,
+        allowed_textures: packageRecord.allowed_textures,
+        recurring_allowed: packageRecord.recurring_allowed,
+        default_reorder_interval_days: packageRecord.default_reorder_interval_days,
+        configuration_schema: packageRecord.configuration_schema,
+        price_mode: packageRecord.price_mode,
+        base_price_cents: packageRecord.base_price_cents,
+        items: (packageRecord.items || []).map((item) => ({ id:item.id,product_key:item.product_key,category:item.category,quantity:item.quantity,flavor_id:item.flavor_id,flavor_name:item.flavor_name,size_id:item.size_id,texture:item.texture,unit_price_cents:item.unit_price_cents,rules:item.rules,sort:item.sort })),
+      }
+    : null;
+
+  const programKey = packageRecord?.program_key ||
+    (retailItems.length ? "retail" : bulkItems.length ? "foodservice" : (giftItems.length || addonItems.length || customLabelItems.length) ? "business_gifting" : sponsorshipItems.length ? "hive_partners" : null);
+
+  const configurationSnapshot = packageRecord
+    ? {
+        requested: requestedConfiguration,
+        validated_items: finalItems.map((item) => ({
+          category: item.category,
+          product_key: item.product_key,
+          flavor_id: item.flavor_id,
+          flavor_name: item.flavor_name,
+          size_id: item.size_id,
+          size_label: item.size_label,
+          texture: item.texture,
+          quantity: item.quantity,
+          unit_price_cents: item.unit_price_cents,
+          line_total_cents: item.line_total_cents,
+          details: item.details,
+        })),
+        fulfillment_method: fulfillment,
+        total_cents: totalCents,
+      }
+    : null;
+
   return {
     finalItems,fulfillment,neededBy,
+    programKey,
+    packageRecord,
+    packageSnapshot,
+    configurationSnapshot,
+    reorderOfOrderId,
     preferredDeliveryDays:fulfillment==="delivery"?preferredDeliveryDays:[],
     currentInventoryNotes:clean(body.currentInventoryNotes,5000),
     requestNotes:clean(body.requestNotes,5000),
@@ -505,12 +810,22 @@ export default async (req) => {
     .eq("id",mapping.partner_id)
     .single();
 
-  if (accountError || !account || account.auth_access_enabled!==true || !["retail","wholesale","both"].includes(account.partner_type) || !allowedRelationshipStatuses.has(account.relationship_status)) {
+  if (accountError || !account || account.auth_access_enabled!==true || !allowedRelationshipStatuses.has(account.relationship_status)) {
     return json(403,{error:"Partner ordering is not available for this account."});
   }
 
+  const { data:programs, error:programError } = await admin
+    .from("partner_account_programs")
+    .select("program_key,status")
+    .eq("partner_id", account.id)
+    .eq("status", "approved");
+
+  if (programError || !programs?.length) {
+    return json(403,{error:"No approved NectarFusions partner programs are enabled for this account."});
+  }
+
   let validated;
-  try { validated = await buildValidatedOrder({admin,account,body}); }
+  try { validated = await buildValidatedOrder({admin,account,body,programs}); }
   catch(error){ return json(400,{error:error?.message||"The partner order could not be validated."}); }
 
   if (body.mode === "quote") {
@@ -551,6 +866,11 @@ export default async (req) => {
       partner_id:account.id,
       submitted_by:userData.user.id,
       status:"awaiting_payment",
+      program_key:validated.programKey,
+      package_id:validated.packageRecord?.id||null,
+      package_snapshot:validated.packageSnapshot,
+      configuration_snapshot:validated.configurationSnapshot,
+      reorder_of_order_id:validated.reorderOfOrderId,
       fulfillment_method:validated.fulfillment,
       needed_by:validated.neededBy,
       preferred_delivery_days:validated.preferredDeliveryDays,
