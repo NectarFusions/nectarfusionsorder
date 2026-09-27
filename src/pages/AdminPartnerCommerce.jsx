@@ -9,8 +9,32 @@ const PROGRAMS = [
 ];
 const PROGRAM_STATUS = ["pending", "approved", "declined", "suspended"];
 const APPLICATION_STATUS = ["pending", "under_review", "needs_information", "approved", "declined", "withdrawn"];
-const ORDER_STATUS = ["awaiting_payment", "paid", "queued", "preparing", "ready", "out_for_delivery", "pickup_ready", "fulfilled", "cancelled"];
-const FULFILLMENT_STATUS = new Set(["paid", "queued", "preparing", "ready", "out_for_delivery", "pickup_ready"]);
+/* PARTNER PAYMENT INTEGRITY V15 */
+const PAYMENT_PENDING_STATUS = ["awaiting_payment", "cancelled"];
+const PAID_FULFILLMENT_STATUS = [
+  "queued",
+  "preparing",
+  "ready",
+  "out_for_delivery",
+  "pickup_ready",
+  "fulfilled",
+  "cancelled",
+];
+const FULFILLMENT_STATUS = new Set(["paid", ...PAID_FULFILLMENT_STATUS]);
+
+const orderStatusOptions = (order) => {
+  if (!order?.paid) {
+    return [...new Set([order?.status, ...PAYMENT_PENDING_STATUS].filter(Boolean))];
+  }
+
+  if (order?.status === "paid") {
+    return ["paid", ...PAID_FULFILLMENT_STATUS];
+  }
+
+  return [
+    ...new Set([order?.status, ...PAID_FULFILLMENT_STATUS].filter(Boolean)),
+  ];
+};
 const TABS = [
   ["applications", "Applications"],
   ["partners", "Partners"],
@@ -494,9 +518,25 @@ export default function AdminPartnerCommerce() {
         </div>
       </>}
 
-      {tab === "orders" && <div className="nf-apc-card"><h3>Partner Orders</h3><p>Every order carries its program and package snapshot. Awaiting-payment orders can be reconciled directly with Square if a webhook is delayed.</p>{orders.map((order) => <div className="nf-apc-row" key={order.id}><div><span>Order</span><strong>{order.order_no}<br />{order.business_name}</strong></div><div><span>Program / package</span><strong>{programLabel(order.program_key)}<br />{order.package_snapshot?.name || "Legacy order"}</strong></div><div><span>Total</span><strong>{money(order.total_cents)}<br />{order.paid ? "Paid" : "Unpaid"}</strong></div><div style={{ display: "grid", gap: 6 }}><select value={order.status} disabled={busy === `order:${order.id}` || busy === `square:${order.id}`} onChange={(e) => changeOrderStatus(order.id, e.target.value)}>{ORDER_STATUS.map((status) => <option key={status} value={status}>{pretty(status)}</option>)}</select>{!order.paid && order.status === "awaiting_payment" ? <button className="nf-apc-btn" type="button" disabled={busy === `square:${order.id}`} onClick={() => checkPartnerSquareStatus(order)}>{busy === `square:${order.id}` ? "Checking Square…" : "Check Square Status"}</button> : null}</div></div>)}{!orders.length && <p>No partner orders yet.</p>}</div>}
+      {tab === "orders" && <div className="nf-apc-card"><h3>Partner Orders</h3><p>Every order carries its program and package snapshot. Paid status is controlled by Square. If a webhook is delayed, use Check Square Status to verify payment before fulfillment.</p>{orders.map((order) => <div className="nf-apc-row" key={order.id}><div><span>Order</span><strong>{order.order_no}<br />{order.business_name}</strong></div><div><span>Program / package</span><strong>{programLabel(order.program_key)}<br />{order.package_snapshot?.name || "Legacy order"}</strong></div><div><span>Total</span><strong>{money(order.total_cents)}<br />{order.paid ? "Paid" : "Unpaid"}</strong></div><div style={{ display: "grid", gap: 6 }}><select value={order.status} disabled={busy === `order:${order.id}` || busy === `square:${order.id}`} onChange={(e) => changeOrderStatus(order.id, e.target.value)}>{orderStatusOptions(order).map((status) => (
+                  <option
+                    key={status}
+                    value={status}
+                    disabled={status === "paid"}
+                  >
+                    {status === "paid" ? "Paid · Square verified" : pretty(status)}
+                  </option>
+                ))}</select>{!order.paid && order.status === "awaiting_payment" ? <button className="nf-apc-btn" type="button" disabled={busy === `square:${order.id}`} onClick={() => checkPartnerSquareStatus(order)}>{busy === `square:${order.id}` ? "Checking Square…" : "Check Square Status"}</button> : null}</div></div>)}{!orders.length && <p>No partner orders yet.</p>}</div>}
 
-      {tab === "fulfillment" && <div className="nf-apc-card"><h3>Fulfillment Queue</h3><p>Paid partner orders from every program move through one operational queue.</p>{fulfillmentOrders.map((order) => <div className="nf-apc-row" key={order.id}><div><span>Order</span><strong>{order.order_no}<br />{order.business_name}</strong></div><div><span>Program</span><strong>{programLabel(order.program_key)}</strong></div><div><span>Fulfillment</span><strong>{pretty(order.fulfillment_method)}<br />{order.package_snapshot?.name || "Partner order"}</strong></div><select value={order.status} disabled={busy === `order:${order.id}`} onChange={(e) => changeOrderStatus(order.id, e.target.value)}>{ORDER_STATUS.map((status) => <option key={status} value={status}>{pretty(status)}</option>)}</select></div>)}{!fulfillmentOrders.length && <p>No paid partner orders are waiting for fulfillment.</p>}</div>}
+      {tab === "fulfillment" && <div className="nf-apc-card"><h3>Fulfillment Queue</h3><p>Paid partner orders from every program move through one operational queue.</p>{fulfillmentOrders.map((order) => <div className="nf-apc-row" key={order.id}><div><span>Order</span><strong>{order.order_no}<br />{order.business_name}</strong></div><div><span>Program</span><strong>{programLabel(order.program_key)}</strong></div><div><span>Fulfillment</span><strong>{pretty(order.fulfillment_method)}<br />{order.package_snapshot?.name || "Partner order"}</strong></div><select value={order.status} disabled={busy === `order:${order.id}`} onChange={(e) => changeOrderStatus(order.id, e.target.value)}>{orderStatusOptions(order).map((status) => (
+                  <option
+                    key={status}
+                    value={status}
+                    disabled={status === "paid"}
+                  >
+                    {status === "paid" ? "Paid · Square verified" : pretty(status)}
+                  </option>
+                ))}</select></div>)}{!fulfillmentOrders.length && <p>No paid partner orders are waiting for fulfillment.</p>}</div>}
 
       {tab === "recurring" && <div className="nf-apc-card"><h3>Recurring Orders</h3><p>Recurring gifting, future Foodservice schedules, and sponsorship renewals stay tied to the same partner and program.</p>{recurring.map((row) => <div className="nf-apc-row" key={row.id}><div><span>Partner</span><strong>{row.partner?.business_name || "Partner"}<br />{programLabel(row.program_key)}</strong></div><div><span>Package</span><strong>{row.package?.name || "—"}</strong></div><div><span>Cadence / next</span><strong>{row.cadence_value} {pretty(row.cadence_unit)}<br />{date(row.next_order_on)}</strong></div><select value={row.status} disabled={busy === `recurring:${row.id}`} onChange={(e) => changeRecurringStatus(row.id, e.target.value)}><option value="active">Active</option><option value="paused">Paused</option><option value="cancelled">Cancelled</option></select></div>)}{!recurring.length && <p>No recurring partner orders yet.</p>}</div>}
 

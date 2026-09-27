@@ -3185,20 +3185,33 @@ export async function syncPartnerStoreOrderSquare(orderId) {
   return result;
 }
 
+/* PARTNER PAYMENT INTEGRITY V15 */
 export async function adminSetPartnerStoreOrderStatus(orderId, status) {
   const allowed = [
-    "awaiting_payment", "paid", "queued", "preparing", "ready",
+    "awaiting_payment", "queued", "preparing", "ready",
     "out_for_delivery", "pickup_ready", "fulfilled", "cancelled",
   ];
-  if (!allowed.includes(status)) throw new Error("Invalid partner order status.");
-  const { data, error } = await supabase
-    .from("partner_store_orders")
-    .update({ status, updated_at: new Date().toISOString() })
-    .eq("id", orderId)
-    .select("*")
-    .single();
+
+  if (status === "paid") {
+    throw new Error(
+      "Paid status is controlled by Square and cannot be set manually."
+    );
+  }
+
+  if (!allowed.includes(status)) {
+    throw new Error("Invalid partner order status.");
+  }
+
+  const { data, error } = await supabase.rpc(
+    "admin_set_partner_store_order_status",
+    {
+      p_order_id: orderId,
+      p_status: status,
+    }
+  );
+
   if (error) throw new Error(error.message);
-  return data;
+  return data || {};
 }
 
 /* ---------- unified partner store ---------- */
