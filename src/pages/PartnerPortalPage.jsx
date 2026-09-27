@@ -1045,6 +1045,13 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
   const [passwordSetupBusy, setPasswordSetupBusy] = useState(false);
   const [passwordSetupMessage, setPasswordSetupMessage] = useState("");
   const [passwordSetupError, setPasswordSetupError] = useState("");
+  /* PARTNER PASSWORD COMPLETION V11.2 */
+  const [passwordResetSuccess, setPasswordResetSuccess] = useState(
+    () =>
+      new URLSearchParams(window.location.search).get("password") === "updated"
+        ? "Password updated successfully. Sign in with your email and new password."
+        : ""
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [resourceBusyId, setResourceBusyId] = useState("");
@@ -1184,9 +1191,16 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
       setNewPassword("");
       setConfirmPassword("");
       setPasswordSetupMessage(
-        "Password saved. Next time you can sign in with your email and password."
+        "Password updated successfully. Returning you to sign in…"
       );
       cleanPasswordSetupUrl();
+
+      // Give the user a moment to see the success confirmation,
+      // then end the recovery/setup session and return to normal sign-in.
+      await new Promise((resolve) => window.setTimeout(resolve, 900));
+      await api.signOut();
+      window.location.replace("/partner/login?password=updated");
+      return;
     } catch (passwordError) {
       setPasswordSetupError(accessErrorMessage(passwordError));
     } finally {
@@ -1371,8 +1385,20 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
 
                 <form
                   className="nf-partner-login-card"
-                  onSubmit={submit}
+                  onSubmit={(event) => {
+                    setPasswordResetSuccess("");
+                    submit(event);
+                  }}
                 >
+                  {passwordResetSuccess && (
+                    <div
+                      className="nf-partner-portal-success"
+                      role="status"
+                      aria-live="polite"
+                    >
+                      {passwordResetSuccess}
+                    </div>
+                  )}
                   <div className="nf-partner-login-field">
                     <label htmlFor="partner-login-email">
                       Partner email

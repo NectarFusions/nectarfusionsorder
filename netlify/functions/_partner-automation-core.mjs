@@ -56,19 +56,41 @@ const template = (value, vars) => {
   return output;
 };
 
-const defaultSubject = (action, packageName) => {
-  if (action === "renewal_reminder") return `Your NectarFusions ${packageName} renewal`;
-  if (action === "recurring_reminder") return `Your next NectarFusions ${packageName} order`;
+/* PARTNER AUTOMATION PREVIEW V14 */
+const defaultSubject = (action, packageName, programKey) => {
+  if (action === "renewal_reminder" || programKey === "hive_partners") {
+    return `Your NectarFusions ${packageName} renewal is coming up`;
+  }
+  if (action === "recurring_reminder") {
+    return `Review your next NectarFusions ${packageName} order`;
+  }
   return `Time to restock ${packageName}`;
 };
 
-const defaultBody = ({ action, businessName, packageName, orderNo, dueDate, portalUrl }) => {
-  const intro = action === "renewal_reminder"
-    ? `Your ${packageName} renewal is coming up.`
-    : action === "recurring_reminder"
-      ? `Your recurring ${packageName} order is ready for your review.`
+const defaultBody = ({ action, programKey, businessName, packageName, orderNo, dueDate, portalUrl }) => {
+  const isRenewal = action === "renewal_reminder" || programKey === "hive_partners";
+  const isRecurring = action === "recurring_reminder";
+
+  const intro = isRenewal
+    ? `Your annual ${packageName} partnership renewal is coming up.`
+    : isRecurring
+      ? `Your next ${packageName} order is ready for your review.`
       : `It may be time to restock ${packageName}.`;
+
+  const actionCopy = isRenewal
+    ? "Open your Partner Portal to review your sponsorship details and renew securely. Your sponsorship is not charged automatically."
+    : isRecurring
+      ? "Open your Partner Portal to review quantities, flavors, and fulfillment before placing your next order. Nothing is charged automatically."
+      : "Open your Partner Portal to reorder exactly, modify the package, or review the current package and fulfillment details before payment.";
+
+  const buttonLabel = isRenewal
+    ? "Review Sponsorship"
+    : isRecurring
+      ? "Review Next Order"
+      : "Open Partner Portal";
+
   const orderLine = orderNo ? `<p style="margin:0 0 14px;color:#627984">Previous order: <strong>${esc(orderNo)}</strong></p>` : "";
+
   return `
     <div style="font-family:Arial,sans-serif;max-width:620px;margin:0 auto;color:#173c4f;line-height:1.55">
       <div style="padding:24px;border-radius:18px;background:#102e40;color:#fff">
@@ -79,8 +101,8 @@ const defaultBody = ({ action, businessName, packageName, orderNo, dueDate, port
         <p style="font-size:18px;margin-top:0">${esc(intro)}</p>
         <p><strong>${esc(packageName)}</strong>${dueDate ? ` · ${esc(dueDate)}` : ""}</p>
         ${orderLine}
-        <p>Open your Partner Portal to reorder exactly, modify the package, or review the current package and fulfillment details before payment.</p>
-        <p style="margin:24px 0"><a href="${esc(portalUrl)}" style="display:inline-block;padding:12px 18px;border-radius:10px;background:#f7c41c;color:#102e40;text-decoration:none;font-weight:800">Open Partner Portal</a></p>
+        <p>${esc(actionCopy)}</p>
+        <p style="margin:24px 0"><a href="${esc(portalUrl)}" style="display:inline-block;padding:12px 18px;border-radius:10px;background:#f7c41c;color:#102e40;text-decoration:none;font-weight:800">${esc(buttonLabel)}</a></p>
         <p style="font-size:12px;color:#758892">Questions? Reply to this email or contact ${esc(OWNER)}.</p>
       </div>
     </div>`;
@@ -173,15 +195,15 @@ async function finishEvent(admin, eventId, patch) {
   if (error) throw error;
 }
 
-async function sendReminder({ admin, resend, rule, source, recurring = false, dueOn }) {
+export async function buildPartnerAutomationMessage({ rule, source, recurring = false, dueOn }) {
   const businessName = source.business_name || source.partner?.business_name || "NectarFusions Partner";
   const contactName = source.contact_name || source.partner?.contact_name || "";
   const recipient = clean(source.email || source.partner?.email, 320);
   const packageName = source.package_snapshot?.name || source.package?.name || rule.package?.name || "Partner Package";
   const orderNo = source.order_no || "";
   const siteUrl = (clean(process.env.URL, 1000) || DEFAULT_SITE).replace(/\/$/, "");
-  const reorderParam = source.id && !recurring ? `&reorder=${encodeURIComponent(source.id)}` : "";
-  const portalUrl = `${siteUrl}/?partner=login${reorderParam}`;
+  const reorderParam = source.id && !recurring ? `?reorder=${encodeURIComponent(source.id)}` : "";
+  const portalUrl = `${siteUrl}/partner/login${reorderParam}`;
   const vars = {
     business_name: businessName,
     contact_name: contactName,
@@ -190,11 +212,11 @@ async function sendReminder({ admin, resend, rule, source, recurring = false, du
     due_date: dueOn || "",
     portal_url: portalUrl,
   };
-  const subject = template(rule.subject_template, vars) || defaultSubject(rule.action_key, packageName);
+  const subject = template(rule.subject_template, vars) || defaultSubject(rule.action_key, packageName, rule.program_key);
   const customBody = template(rule.body_template, vars);
   const html = customBody
     ? `<div style="font-family:Arial,sans-serif;max-width:620px;margin:0 auto;color:#173c4f;line-height:1.55;white-space:pre-wrap">${esc(customBody)}<p><a href="${esc(portalUrl)}">Open Partner Portal</a></p></div>`
-    : defaultBody({ action: rule.action_key, businessName, packageName, orderNo, dueDate: dueOn, portalUrl });
+    : defaultBody({ action: rule.action_key, programKey: rule.program_key, businessName, packageName, orderNo, dueDate: dueOn, portalUrl });
 
   return { recipient, subject, html, portalUrl };
 }
@@ -259,7 +281,7 @@ export async function runPartnerAutomation({ source = "scheduled" } = {}) {
             continue;
           }
 
-          const message = await sendReminder({ admin, resend, rule, source: order, dueOn });
+          const message = await buildPartnerAutomationMessage({ rule, source: order, dueOn });
           if (!message.recipient) {
             await finishEvent(admin, claim.id, { status: "skipped", error_message: "Partner email is missing." });
             summary.skipped += 1;
@@ -324,7 +346,7 @@ export async function runPartnerAutomation({ source = "scheduled" } = {}) {
         if (!claim) continue;
 
         try {
-          const message = await sendReminder({ admin, resend, rule, source: recurring, recurring: true, dueOn: recurring.next_order_on });
+          const message = await buildPartnerAutomationMessage({ rule, source: recurring, recurring: true, dueOn: recurring.next_order_on });
           if (!message.recipient) {
             await finishEvent(admin, claim.id, { status: "skipped", error_message: "Partner email is missing." });
             summary.skipped += 1;

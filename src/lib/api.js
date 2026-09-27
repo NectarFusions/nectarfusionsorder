@@ -2798,6 +2798,32 @@ export async function listAdminPartnerAutomationEvents() {
   return data ?? [];
 }
 
+/* PARTNER AUTOMATION PREVIEW V14 */
+export async function previewAdminPartnerAutomationRule(ruleId) {
+  const { data, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw new Error(sessionError.message);
+
+  const token = data?.session?.access_token;
+  if (!token) throw new Error("Admin authentication is required.");
+
+  const response = await fetch("/.netlify/functions/partner-automation-preview", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ ruleId }),
+  });
+
+  const result = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(result?.error || "Automation preview could not be created.");
+  }
+
+  return result;
+}
+
 export async function runAdminPartnerAutomationNow() {
   const { data, error: sessionError } = await supabase.auth.getSession();
   if (sessionError) throw new Error(sessionError.message);

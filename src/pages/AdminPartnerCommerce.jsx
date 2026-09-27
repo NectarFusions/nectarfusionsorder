@@ -80,6 +80,7 @@ export default function AdminPartnerCommerce() {
   const [recurring, setRecurring] = useState([]);
   const [automation, setAutomation] = useState([]);
   const [automationEvents, setAutomationEvents] = useState([]);
+  /* PARTNER AUTOMATION PREVIEW V14 */
   const [dueOrders, setDueOrders] = useState([]);
   const [draft, setDraft] = useState(emptyPackage());
   const [itemDraft, setItemDraft] = useState(emptyPackageItem());
@@ -278,6 +279,76 @@ export default function AdminPartnerCommerce() {
     finally { setBusy(""); }
   };
 
+  const previewAutomation = async (rule) => {
+    const previewWindow = window.open(
+      "",
+      "_blank",
+      "width=760,height=900,scrollbars=yes,resizable=yes"
+    );
+
+    if (!previewWindow) {
+      setError("Allow pop-ups for this site to preview automation emails.");
+      return;
+    }
+
+    previewWindow.opener = null;
+    previewWindow.document.title = "NectarFusions Automation Preview";
+    previewWindow.document.body.style.fontFamily = "Arial, sans-serif";
+    previewWindow.document.body.style.padding = "24px";
+    previewWindow.document.body.textContent = "Building preview…";
+
+    setBusy(`preview:${rule.id}`);
+    setError("");
+
+    try {
+      const result = await api.previewAdminPartnerAutomationRule(rule.id);
+
+      previewWindow.document.open();
+      previewWindow.document.write("<!doctype html><html><head><meta charset='utf-8'><title>NectarFusions Automation Preview</title></head><body></body></html>");
+      previewWindow.document.close();
+
+      const summary = previewWindow.document.createElement("div");
+      summary.style.maxWidth = "620px";
+      summary.style.margin = "0 auto 18px";
+      summary.style.padding = "14px 16px";
+      summary.style.border = "1px solid #dce8ed";
+      summary.style.borderRadius = "12px";
+      summary.style.background = "#f7fbfd";
+
+      const label = previewWindow.document.createElement("div");
+      label.textContent = "PREVIEW ONLY · NO EMAIL SENT";
+      label.style.fontSize = "11px";
+      label.style.fontWeight = "800";
+      label.style.letterSpacing = ".08em";
+      label.style.color = "#167bb6";
+
+      const subject = previewWindow.document.createElement("div");
+      subject.textContent = `Subject: ${result.subject || "NectarFusions Partner Reminder"}`;
+      subject.style.marginTop = "8px";
+      subject.style.fontWeight = "700";
+      subject.style.color = "#173c4f";
+
+      summary.append(label, subject);
+      previewWindow.document.body.appendChild(summary);
+
+      const frame = previewWindow.document.createElement("iframe");
+      frame.title = "Partner automation email preview";
+      frame.style.width = "100%";
+      frame.style.minHeight = "680px";
+      frame.style.border = "0";
+      frame.srcdoc = result.html || "<p>No email body was returned.</p>";
+      previewWindow.document.body.appendChild(frame);
+    } catch (previewError) {
+      previewWindow.document.body.textContent =
+        previewError?.message || "Automation preview could not be created.";
+      setError(
+        previewError?.message || "Automation preview could not be created."
+      );
+    } finally {
+      setBusy("");
+    }
+  };
+
   const runAutomationNow = async () => {
     setBusy("run-automation"); setError(""); setNotice("");
     try {
@@ -432,13 +503,21 @@ export default function AdminPartnerCommerce() {
       {tab === "automation" && <div style={{ display: "grid", gap: 12 }}>
         <div className="nf-apc-note">Automation is now operational, not just a due-date list. Fulfilled-order reminders run from the package rule, recurring schedules can send on each cadence, every attempt is logged, and failed sends can be retried on the next run.</div>
         <div className="nf-apc-card">
-          <div className="nf-apc-head"><div><h3>Automation Rules</h3><p>Use placeholders in templates: {{business_name}}, {{contact_name}}, {{package_name}}, {{order_no}}, {{due_date}}, {{portal_url}}.</p></div><button className="nf-apc-btn primary" disabled={busy === "run-automation"} onClick={runAutomationNow}>{busy === "run-automation" ? "Running…" : "Run Due Automation Now"}</button></div>
+          <div className="nf-apc-head"><div><h3>Automation Rules</h3>{/* PARTNER AUTOMATION PREVIEW V14.1 */}<p>{"Use placeholders in templates: {{business_name}}, {{contact_name}}, {{package_name}}, {{order_no}}, {{due_date}}, {{portal_url}}."}</p></div><button className="nf-apc-btn primary" disabled={busy === "run-automation"} onClick={runAutomationNow}>{busy === "run-automation" ? "Running…" : "Run Due Automation Now"}</button></div>
           {automation.map((rule) => <div className="nf-apc-card" style={{ marginTop: 9, padding: 11 }} key={rule.id}>
             <div className="nf-apc-row" style={{ border: 0, padding: 0 }}>
               <div><span>Package</span><strong>{rule.package?.name || programLabel(rule.program_key)}</strong></div>
               <div><span>Trigger</span><strong>{pretty(rule.event_key)}<br />{pretty(rule.action_key)}</strong></div>
               <label className="nf-apc-field"><span>{rule.event_key === "fulfilled" ? "Days after fulfillment" : "Days before due date"}</span><input type="number" min="0" defaultValue={rule.delay_days} onBlur={(e) => Number(e.target.value) !== Number(rule.delay_days) && saveAutomation(rule, { delay_days: Number(e.target.value) })} /></label>
               <label style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, fontWeight: 800 }}><input type="checkbox" checked={rule.active} onChange={(e) => saveAutomation(rule, { active: e.target.checked })} /> Active</label>
+              <button
+                className="nf-apc-btn"
+                type="button"
+                disabled={busy === `preview:${rule.id}`}
+                onClick={() => previewAutomation(rule)}
+              >
+                {busy === `preview:${rule.id}` ? "Opening…" : "Preview Email"}
+              </button>
             </div>
             <div className="nf-apc-template">
               <label className="nf-apc-field"><span>Email subject override</span><input defaultValue={rule.subject_template || ""} placeholder="Leave blank for the NectarFusions default" onBlur={(e) => e.target.value !== (rule.subject_template || "") && saveAutomation(rule, { subject_template: e.target.value || null })} /></label>
