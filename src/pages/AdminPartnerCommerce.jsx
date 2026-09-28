@@ -153,6 +153,13 @@ export default function AdminPartnerCommerce() {
     setBusy(key); setError(""); setNotice("");
     try {
       const result = await api.adminReviewPartnerProgramApplication(application.id, status);
+
+      setApplications((current) =>
+        current.map((row) =>
+          row.id === application.id ? { ...row, status } : row
+        )
+      );
+
       setNotice(
         result?.inviteError
           ? `${programLabel(application.program_key)} was approved, but the portal invite needs attention: ${result.inviteError}`
@@ -431,7 +438,7 @@ export default function AdminPartnerCommerce() {
       {tab === "applications" && <div className="nf-apc-card">
         <div className="nf-apc-head"><div><h3>Program Applications</h3><p>Every selected program is reviewed separately. Approving the first program enables the same partner account; later approvals unlock additional programs.</p></div></div>
         <div style={{ display: "grid", gap: 9, marginTop: 12 }}>
-          {applications.map((application) => <div className="nf-apc-app" key={application.id}>
+          {pendingApplications.map((application) => <div className="nf-apc-app" key={application.id}>
             <div><span className="nf-apc-pill">{programLabel(application.program_key)}</span><h4>{application.partner?.business_name || "Partner account"}</h4><div className="meta">{application.applicant_name || application.partner?.contact_name || "—"}<br />{application.applicant_email || application.partner?.email || "—"}<br />Submitted {date(application.submitted_at)}</div></div>
             <div><span>Business type</span><strong>{application.business_type || "—"}</strong><div className="meta" style={{ marginTop: 8 }}>{application.use_location || "No location supplied"}</div></div>
             <div><span>Status</span><strong>{pretty(application.status)}</strong>{application.application_notes && <div className="meta" style={{ marginTop: 8 }}>{application.application_notes}</div>}</div>
@@ -442,7 +449,7 @@ export default function AdminPartnerCommerce() {
               <button className="nf-apc-btn danger" disabled={busy === `application:${application.id}`} onClick={() => reviewApplication(application, "declined")}>Decline</button>
             </div>
           </div>)}
-          {!applications.length && <p>No program applications yet.</p>}
+          {!pendingApplications.length && <p>No program applications need review.</p>}
         </div>
       </div>}
 
