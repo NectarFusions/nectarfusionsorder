@@ -473,6 +473,44 @@ const CLUB_TOKEN_RE = /^\/club\/([0-9a-f-]{36})\/?$/i;
 const PARTNER_LOGIN_RE = /^\/partner\/login\/?$/i;
 const MY_NECTARFUSIONS_RE = /^\/my\/?$/i;
 
+const PUBLIC_VIEW_PATHS = Object.freeze({
+  shop: "/",
+  subscribe: "/honey-club",
+  eventGateway: "/special-events",
+  events: "/special-events/order",
+  partner: "/partner",
+  find: "/find-us",
+  reviews: "/reviews",
+  about: "/about",
+  help: "/order-help",
+  policy: "/policies",
+  login: "/admin/login",
+  admin: "/admin",
+});
+
+const PUBLIC_PATH_VIEWS = Object.freeze(
+  Object.fromEntries(
+    Object.entries(PUBLIC_VIEW_PATHS).map(([viewName, routePath]) => [
+      routePath,
+      viewName,
+    ])
+  )
+);
+
+const normalizePublicPath = (pathname = "/") => {
+  const clean = String(pathname || "/").split("?")[0].split("#")[0];
+  if (clean === "/") return "/";
+  return clean.replace(/\/+$/, "") || "/";
+};
+
+const publicViewFromUrl = () =>
+  PUBLIC_PATH_VIEWS[
+    normalizePublicPath(window.location.pathname)
+  ] || null;
+
+const publicPathForView = (viewName) =>
+  PUBLIC_VIEW_PATHS[viewName] || null;
+
 const tokenFromUrl = () =>
   (window.location.pathname.match(TOKEN_RE) || [])[1] || null;
 
@@ -11892,7 +11930,7 @@ export default function App() {
         ? "myNectarFusions"
         : specialEventReturnFromUrl()
           ? "events"
-          : "shop"
+          : publicViewFromUrl() || "shop"
   );
   const [err, setErr] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -11915,6 +11953,7 @@ export default function App() {
   const [dockHasEntered, setDockHasEntered] = useState(false);
   const siteSearchRef = useRef(null);
   const shopScrollRestoreRef = useRef(null);
+  const publicRouteSyncRef = useRef(false);
   const [siteSearchHelp, setSiteSearchHelp] = useState("");
   const [siteSearchOpen, setSiteSearchOpen] = useState(false);
   const [searchedOrderNo, setSearchedOrderNo] = useState("");
@@ -12027,22 +12066,60 @@ export default function App() {
   }, [view]);
 
   useEffect(() => {
-    const syncSpecialRoutes = () => {
-      const partnerRouteOpen = partnerLoginFromUrl();
-      const customerRouteOpen = myNectarFusionsFromUrl();
+    if (typeof window === "undefined") return;
+
+    if (publicRouteSyncRef.current) {
+      publicRouteSyncRef.current = false;
+      return;
+    }
+
+    if (
+      tokenFromUrl() ||
+      clubTokenFromUrl() ||
+      partnerLoginFromUrl() ||
+      myNectarFusionsFromUrl() ||
+      specialEventReturnFromUrl()
+    ) {
+      return;
+    }
+
+    const nextPath = publicPathForView(view);
+    if (!nextPath) return;
+
+    const currentPath = normalizePublicPath(
+      window.location.pathname
+    );
+
+    if (currentPath === nextPath) return;
+
+    window.history.pushState(
+      { view },
+      "",
+      nextPath
+    );
+  }, [view]);
+
+  useEffect(() => {
+    const syncRouteFromLocation = () => {
+      const nextView = partnerLoginFromUrl()
+        ? "partnerPortal"
+        : myNectarFusionsFromUrl()
+          ? "myNectarFusions"
+          : specialEventReturnFromUrl()
+            ? "events"
+            : publicViewFromUrl() || "shop";
 
       setView((currentView) => {
-        if (partnerRouteOpen) return "partnerPortal";
-        if (customerRouteOpen) return "myNectarFusions";
-        if (["partnerPortal", "myNectarFusions"].includes(currentView)) return "shop";
-        return currentView;
+        if (currentView === nextView) return currentView;
+        publicRouteSyncRef.current = true;
+        return nextView;
       });
     };
 
-    window.addEventListener("popstate", syncSpecialRoutes);
+    window.addEventListener("popstate", syncRouteFromLocation);
 
     return () =>
-      window.removeEventListener("popstate", syncSpecialRoutes);
+      window.removeEventListener("popstate", syncRouteFromLocation);
   }, []);
 
   /* If someone lands on /order/<token> — from their email, a bookmark, or
