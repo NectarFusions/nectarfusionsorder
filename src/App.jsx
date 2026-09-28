@@ -14460,22 +14460,141 @@ export default function App() {
           <section
             className="card"
             style={{
-              marginTop: 22, marginBottom: 28, padding: "22px 20px",
+              position: "relative",
+              overflow: "hidden",
+              marginTop: 24,
+              marginBottom: 32,
+              padding: "clamp(28px,5vw,46px)",
               border: "2px solid #F7C41C",
-              background: "linear-gradient(135deg, #FFFDF5 0%, #FFF4CC 100%)",
-              boxShadow: "0 14px 34px rgba(74,51,19,.08)",
+              borderRadius: 26,
+              background:
+                "radial-gradient(circle at 92% 10%, rgba(247,196,28,.24), transparent 27%), linear-gradient(135deg, #12384D 0%, #185B78 58%, #1B6F91 100%)",
+              boxShadow: "0 22px 52px rgba(35,45,51,.18)",
             }}
           >
-            <div className="nf-modern-kicker">Weddings · Showers · Events · Gifts</div>
-            <div className="display" style={{ fontSize: 31, color: c.darkBrown, marginTop: 5 }}>
+            <div
+              aria-hidden="true"
+              style={{
+                position: "absolute",
+                width: 210,
+                height: 210,
+                right: -72,
+                bottom: -112,
+                borderRadius: "50%",
+                border: "34px solid rgba(255,255,255,.055)",
+              }}
+            />
+
+            <div
+              className="nf-modern-kicker"
+              style={{
+                position: "relative",
+                zIndex: 1,
+                color: "#F7C41C",
+                letterSpacing: ".085em",
+              }}
+            >
+              Weddings · Showers · Events · Gifts
+            </div>
+
+            <div
+              className="display"
+              style={{
+                position: "relative",
+                zIndex: 1,
+                maxWidth: 760,
+                marginTop: 7,
+                fontSize: "clamp(39px,6vw,62px)",
+                lineHeight: .94,
+                color: "#FFFFFF",
+              }}
+            >
               PLANNING SOMETHING SPECIAL?
             </div>
-            <p style={{ margin: "8px 0 14px", maxWidth: 680, fontSize: 14.5, lineHeight: 1.65, color: c.brown }}>
-              Need honey favors, gifts, custom quantities, or jars for a wedding, party, shower,
-              corporate event, or celebration? Tell us what you&rsquo;re planning and we&rsquo;ll help build the right order.
+
+            <p
+              style={{
+                position: "relative",
+                zIndex: 1,
+                margin: "12px 0 0",
+                maxWidth: 650,
+                fontSize: 15,
+                lineHeight: 1.7,
+                fontWeight: 650,
+                color: "#E4F0F5",
+              }}
+            >
+              Create memorable honey favors for weddings, showers,
+              celebrations, and business events. Choose a bundle or
+              build the exact quantity you need.
             </p>
-            <button type="button" className="btn solid" style={{ padding: "12px 16px" }} onClick={() => setView("eventGateway")}>
-              Start a Special Event Request →
+
+            <div
+              style={{
+                position: "relative",
+                zIndex: 1,
+                display: "flex",
+                gap: 8,
+                flexWrap: "wrap",
+                marginTop: 18,
+              }}
+            >
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  minHeight: 34,
+                  padding: "7px 11px",
+                  borderRadius: 999,
+                  background: "rgba(255,255,255,.12)",
+                  border: "1px solid rgba(255,255,255,.18)",
+                  color: "#FFFFFF",
+                  fontSize: 11.5,
+                  fontWeight: 900,
+                  letterSpacing: ".035em",
+                }}
+              >
+                25 · 50 · 100 FAVOR BUNDLES
+              </span>
+
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  minHeight: 34,
+                  padding: "7px 11px",
+                  borderRadius: 999,
+                  background: "rgba(247,196,28,.16)",
+                  border: "1px solid rgba(247,196,28,.42)",
+                  color: "#FFE379",
+                  fontSize: 11.5,
+                  fontWeight: 900,
+                  letterSpacing: ".035em",
+                }}
+              >
+                CUSTOM QUANTITIES
+              </span>
+            </div>
+
+            <button
+              type="button"
+              className="btn solid"
+              style={{
+                position: "relative",
+                zIndex: 1,
+                marginTop: 20,
+                padding: "13px 20px",
+                minHeight: 50,
+                borderColor: "#F7C41C",
+                background: "#F7C41C",
+                color: "#173C52",
+                fontSize: 15,
+                fontWeight: 950,
+                boxShadow: "0 8px 20px rgba(0,0,0,.14)",
+              }}
+              onClick={() => setView("eventGateway")}
+            >
+              Plan Your Event →
             </button>
           </section>
 
