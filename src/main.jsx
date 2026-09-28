@@ -124,6 +124,18 @@ function isFulfillmentRoute() {
   );
 }
 
+
+function isSearchLandingRoute() {
+  const path = window.location.pathname.replace(/\/+$/, "") || "/";
+
+  return [
+    "/wedding-honey-favors",
+    "/corporate-honey-gifts",
+    "/wholesale-michigan-honey",
+    "/michigan-infused-honey",
+  ].includes(path);
+}
+
 if (!rootElement) {
   document.body.innerHTML =
     '<pre style="padding:20px">NectarFusions error: index.html does not contain an element with id="root".</pre>';
@@ -146,6 +158,26 @@ if (!rootElement) {
         root.render(
           <ErrorScreen
             title="Honey Club settings could not start"
+            error={error}
+          />
+        );
+      });
+  } else if (isSearchLandingRoute()) {
+    import("./SearchLandingPages.jsx")
+      .then(({ default: SearchLandingPages }) => {
+        root.render(
+          <React.StrictMode>
+            <ErrorBoundary>
+              <SearchLandingPages />
+            </ErrorBoundary>
+          </React.StrictMode>
+        );
+      })
+      .catch((error) => {
+        console.error("Search landing page startup error:", error);
+        root.render(
+          <ErrorScreen
+            title="NectarFusions page could not start"
             error={error}
           />
         );
