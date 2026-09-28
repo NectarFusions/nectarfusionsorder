@@ -46,7 +46,30 @@ const CSS = `
 `;
 
 export default function PartnerPage({ Header, styles, onBack, onPartnerLogin, submitProgramApplication }) {
-  const [selectedPrograms, setSelectedPrograms] = useState([]);
+  const [specialEventReferral] = useState(() => {
+    if (typeof window === "undefined") return false;
+
+    try {
+      const referred =
+        window.sessionStorage.getItem(
+          "nf-special-event-business-referral"
+        ) === "1";
+
+      if (referred) {
+        window.sessionStorage.removeItem(
+          "nf-special-event-business-referral"
+        );
+      }
+
+      return referred;
+    } catch {
+      return false;
+    }
+  });
+
+  const [selectedPrograms, setSelectedPrograms] = useState(() =>
+    specialEventReferral ? ["business_gifting"] : []
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(null);
@@ -145,6 +168,53 @@ export default function PartnerPage({ Header, styles, onBack, onPartnerLogin, su
         </section>
 
         
+
+
+        {specialEventReferral && (
+          <section
+            className="nf-program-section"
+            style={{ marginTop: 20 }}
+          >
+            <div
+              className="nf-program-note"
+              style={{
+                borderLeftWidth: 6,
+                padding: "18px 20px",
+                background: "#FFF7D9",
+              }}
+            >
+              <strong
+                style={{
+                  display: "block",
+                  marginBottom: 5,
+                  color: "#4A3313",
+                  fontSize: 17,
+                }}
+              >
+                Planning a special event for a business?
+              </strong>
+
+              <span style={{ display: "block" }}>
+                Business accounts are reviewed for partner-only
+                special offers, volume event ordering, and
+                business gifting options. We selected{" "}
+                <strong>Business Gifting</strong> for you. Complete
+                the Partner application to request access; once
+                approved, your business offers and ordering tools
+                will be available through the Partner Portal.
+              </span>
+
+              <button
+                type="button"
+                className="btn solid"
+                onClick={scrollToApplication}
+                style={{ marginTop: 13 }}
+              >
+                Continue to Partner Signup →
+              </button>
+            </div>
+          </section>
+        )}
 
         <section className="nf-program-section">
           <div className="nf-program-heading">

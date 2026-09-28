@@ -13395,6 +13395,241 @@ export default function App() {
     />;
   }
 
+
+  /* ================= SPECIAL EVENT AUDIENCE GATEWAY ================= */
+  if (view === "eventGateway") {
+    const chooseBusinessEventPath = () => {
+      try {
+        window.sessionStorage.setItem(
+          "nf-special-event-business-referral",
+          "1"
+        );
+      } catch {
+        // Continue even if session storage is unavailable.
+      }
+
+      setView("partner");
+    };
+
+    return (
+      <div className="nf">
+        <style>{CSS}</style>
+        <Header
+          eyebrow="Special Event Honey"
+          title="WHO ARE YOU ORDERING FOR?"
+          right={
+            <button
+              className="btn ghost"
+              onClick={() => setView("shop")}
+            >
+              Back to shop
+            </button>
+          }
+        />
+
+        <main
+          className="nf-wrap"
+          style={{
+            maxWidth: 940,
+            paddingTop: 34,
+            paddingBottom: 100,
+          }}
+        >
+          <section
+            style={{
+              padding: "clamp(24px,5vw,42px)",
+              border: "1px solid #E6D6B8",
+              borderRadius: 26,
+              background:
+                "linear-gradient(145deg,#FFFDF8,#FFF4CC)",
+              boxShadow: "0 18px 44px rgba(74,51,19,.09)",
+            }}
+          >
+            <div
+              className="nf-modern-kicker"
+              style={{ color: "#A96500" }}
+            >
+              We&apos;ll send you to the right ordering experience
+            </div>
+
+            <div
+              className="display"
+              style={{
+                marginTop: 7,
+                color: "#4A3313",
+                fontSize: "clamp(38px,6vw,62px)",
+                lineHeight: .95,
+              }}
+            >
+              INDIVIDUAL OR BUSINESS?
+            </div>
+
+            <p
+              style={{
+                maxWidth: 700,
+                margin: "11px 0 0",
+                color: "#5F6F78",
+                fontSize: 15,
+                lineHeight: 1.7,
+                fontWeight: 650,
+              }}
+            >
+              Personal celebrations and business events use
+              different ordering options so we can show you the
+              quantities, offers, and customization that fit your
+              event.
+            </p>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns:
+                  "repeat(auto-fit,minmax(260px,1fr))",
+                gap: 16,
+                marginTop: 24,
+              }}
+            >
+              <button
+                type="button"
+                className="btn"
+                onClick={() => setView("events")}
+                style={{
+                  minHeight: 245,
+                  padding: 24,
+                  borderRadius: 20,
+                  textAlign: "left",
+                  display: "block",
+                  background: "#FFFFFF",
+                }}
+              >
+                <span
+                  style={{
+                    display: "block",
+                    fontSize: 12,
+                    fontWeight: 900,
+                    letterSpacing: ".08em",
+                    textTransform: "uppercase",
+                    color: "#A96500",
+                  }}
+                >
+                  Personal event
+                </span>
+
+                <span
+                  className="display"
+                  style={{
+                    display: "block",
+                    marginTop: 8,
+                    fontSize: 38,
+                    color: "#4A3313",
+                  }}
+                >
+                  INDIVIDUAL
+                </span>
+
+                <span
+                  style={{
+                    display: "block",
+                    marginTop: 10,
+                    fontSize: 14,
+                    lineHeight: 1.65,
+                    fontWeight: 700,
+                    color: "#5F6F78",
+                  }}
+                >
+                  Weddings, showers, parties, celebrations,
+                  personal gifts, and community events. Shop 25,
+                  50, or 100-favor bundles or build an exact
+                  custom order.
+                </span>
+
+                <span
+                  style={{
+                    display: "block",
+                    marginTop: 18,
+                    fontWeight: 900,
+                    color: "#A96500",
+                  }}
+                >
+                  Continue to Special Event Honey →
+                </span>
+              </button>
+
+              <button
+                type="button"
+                className="btn"
+                onClick={chooseBusinessEventPath}
+                style={{
+                  minHeight: 245,
+                  padding: 24,
+                  borderRadius: 20,
+                  textAlign: "left",
+                  display: "block",
+                  background:
+                    "linear-gradient(145deg,#153B51,#1D6584)",
+                  borderColor: "#153B51",
+                  color: "#FFFFFF",
+                }}
+              >
+                <span
+                  style={{
+                    display: "block",
+                    fontSize: 12,
+                    fontWeight: 900,
+                    letterSpacing: ".08em",
+                    textTransform: "uppercase",
+                    color: "#F7C41C",
+                  }}
+                >
+                  Company or organization
+                </span>
+
+                <span
+                  className="display"
+                  style={{
+                    display: "block",
+                    marginTop: 8,
+                    fontSize: 38,
+                    color: "#FFFFFF",
+                  }}
+                >
+                  BUSINESS
+                </span>
+
+                <span
+                  style={{
+                    display: "block",
+                    marginTop: 10,
+                    fontSize: 14,
+                    lineHeight: 1.65,
+                    fontWeight: 700,
+                    color: "#E1EDF2",
+                  }}
+                >
+                  Businesses are reviewed for partner-only
+                  special offers, volume event options, and
+                  business gifting. Apply through the NectarFusions
+                  Partner Portal to access approved offers.
+                </span>
+
+                <span
+                  style={{
+                    display: "block",
+                    marginTop: 18,
+                    fontWeight: 900,
+                    color: "#F7C41C",
+                  }}
+                >
+                  Continue to Partner Signup →
+                </span>
+              </button>
+            </div>
+          </section>
+        </main>
+      </div>
+    );
+  }
+
   /* ================= SPECIAL EVENTS ================= */
   if (view === "events") {
     const allFlavors = (cat?.flavors || []).filter(
@@ -14239,7 +14474,7 @@ export default function App() {
               Need honey favors, gifts, custom quantities, or jars for a wedding, party, shower,
               corporate event, or celebration? Tell us what you&rsquo;re planning and we&rsquo;ll help build the right order.
             </p>
-            <button type="button" className="btn solid" style={{ padding: "12px 16px" }} onClick={() => setView("events")}>
+            <button type="button" className="btn solid" style={{ padding: "12px 16px" }} onClick={() => setView("eventGateway")}>
               Start a Special Event Request →
             </button>
           </section>

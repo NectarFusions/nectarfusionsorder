@@ -17,6 +17,25 @@ const eventTypes = [
   "Other",
 ];
 
+const eventBundles = [
+  {
+    quantity: 25,
+    title: "25 Favor Bundle",
+    note: "A simple starting point for showers, intimate weddings, parties, and smaller celebrations.",
+  },
+  {
+    quantity: 50,
+    title: "50 Favor Bundle",
+    note: "A popular fit for weddings, client events, showers, celebrations, and guest gifting.",
+    popular: true,
+  },
+  {
+    quantity: 100,
+    title: "100 Favor Bundle",
+    note: "Built for larger weddings, conferences, community events, hospitality, and celebrations.",
+  },
+];
+
 const lidColors = [
   ["Red", "#E22D2D"],
   ["Orange", "#FF6A00"],
@@ -440,6 +459,7 @@ export default function SpecialEventOrderPage({
 
   const [bearQty, setBearQty] = useState(0);
   const [hexQty, setHexQty] = useState(0);
+  const [selectedBundleQty, setSelectedBundleQty] = useState(0);
   const [lidColor, setLidColor] = useState("");
   const [dipperChoice, setDipperChoice] = useState("no");
   const [dipperQty, setDipperQty] = useState(0);
@@ -818,6 +838,47 @@ export default function SpecialEventOrderPage({
     }
   };
 
+  const chooseEventBundle = (quantity) => {
+    setSelectedBundleQty(quantity);
+    setBearQty(0);
+    setHexQty(0);
+    setLidColor("");
+    setErr("");
+  };
+
+  const chooseBundleContainer = (container) => {
+    if (!selectedBundleQty) return;
+
+    if (container === "bear") {
+      setBearQty(selectedBundleQty);
+      setHexQty(0);
+    } else {
+      setHexQty(selectedBundleQty);
+      setBearQty(0);
+      setLidColor("");
+    }
+
+    setErr("");
+    window.setTimeout(() => {
+      document
+        .getElementById("event-favor-container")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+  };
+
+  const useCustomEventOrder = () => {
+    setSelectedBundleQty(0);
+    setBearQty(0);
+    setHexQty(0);
+    setLidColor("");
+    setErr("");
+    window.setTimeout(() => {
+      document
+        .getElementById("event-favor-container")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+  };
+
   const backToShop = () => {
     if (specialEventReturnFromUrl()) {
       window.history.replaceState({}, "", "/");
@@ -921,6 +982,230 @@ export default function SpecialEventOrderPage({
         className="nf-wrap"
         style={{ paddingTop: 26, maxWidth: 900 }}
       >
+
+        <section
+          className="card"
+          style={{
+            padding: 24,
+            marginBottom: 16,
+            border: `2px solid ${colors.gold}`,
+            background:
+              "linear-gradient(135deg,#FFFDF5 0%,#FFF1B8 100%)",
+          }}
+        >
+          <div className="nf-modern-kicker">
+            Start with your guest count
+          </div>
+
+          <div
+            className="display"
+            style={{
+              fontSize: 32,
+              color: colors.dark,
+              marginTop: 5,
+            }}
+          >
+            CHOOSE AN EVENT FAVOR BUNDLE
+          </div>
+
+          <p
+            style={{
+              margin: "8px 0 18px",
+              fontSize: 14.5,
+              lineHeight: 1.65,
+              color: "#4E7892",
+              fontWeight: 700,
+              maxWidth: 760,
+            }}
+          >
+            Most event orders start with the number of guests. Choose
+            25, 50, or 100 individual honey favors, then choose your
+            container, flavors, and finishing touches. Need a different
+            amount? You can still build an exact custom order below.
+          </p>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(auto-fit,minmax(190px,1fr))",
+              gap: 12,
+            }}
+          >
+            {eventBundles.map((bundle) => {
+              const selected =
+                selectedBundleQty === bundle.quantity;
+
+              return (
+                <button
+                  key={bundle.quantity}
+                  type="button"
+                  aria-pressed={selected}
+                  className={`btn ${selected ? "on" : ""}`}
+                  onClick={() =>
+                    chooseEventBundle(bundle.quantity)
+                  }
+                  style={{
+                    position: "relative",
+                    display: "block",
+                    minHeight: 180,
+                    padding: "22px 16px 18px",
+                    textAlign: "left",
+                    borderRadius: 18,
+                  }}
+                >
+                  {bundle.popular && (
+                    <span
+                      style={{
+                        position: "absolute",
+                        top: 10,
+                        right: 10,
+                        padding: "5px 8px",
+                        borderRadius: 999,
+                        background: selected
+                          ? "rgba(255,255,255,.2)"
+                          : "#4E7892",
+                        color: "#fff",
+                        fontSize: 10,
+                        fontWeight: 900,
+                        letterSpacing: ".06em",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      Most Popular
+                    </span>
+                  )}
+
+                  <span
+                    className="display"
+                    style={{
+                      display: "block",
+                      marginTop: bundle.popular ? 18 : 0,
+                      fontSize: 28,
+                      lineHeight: 1,
+                    }}
+                  >
+                    {bundle.title}
+                  </span>
+
+                  <span
+                    style={{
+                      display: "block",
+                      marginTop: 10,
+                      fontSize: 13,
+                      lineHeight: 1.55,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {bundle.note}
+                  </span>
+
+                  <span
+                    style={{
+                      display: "block",
+                      marginTop: 12,
+                      fontSize: 12,
+                      fontWeight: 900,
+                    }}
+                  >
+                    {selected ? "✓ Selected" : "Choose bundle →"}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {selectedBundleQty > 0 && (
+            <div
+              style={{
+                marginTop: 16,
+                padding: 16,
+                borderRadius: 14,
+                border: "1px solid #E3CF99",
+                background: "#FFFDF8",
+              }}
+            >
+              <div
+                style={{
+                  fontWeight: 900,
+                  fontSize: 16,
+                  color: colors.dark,
+                }}
+              >
+                {selectedBundleQty}-favor bundle selected
+              </div>
+
+              <p
+                style={{
+                  margin: "5px 0 12px",
+                  color: "#4E7892",
+                  fontWeight: 700,
+                  lineHeight: 1.55,
+                }}
+              >
+                Now choose the container for all{" "}
+                {selectedBundleQty} favors. You can customize
+                flavors and finishing touches below.
+              </p>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns:
+                    "repeat(auto-fit,minmax(210px,1fr))",
+                  gap: 9,
+                }}
+              >
+                <button
+                  type="button"
+                  className={`btn ${
+                    safeBearQty === selectedBundleQty &&
+                    safeHexQty === 0
+                      ? "on"
+                      : ""
+                  }`}
+                  onClick={() =>
+                    chooseBundleContainer("bear")
+                  }
+                >
+                  Use {selectedBundleQty} Plastic Bears
+                </button>
+
+                <button
+                  type="button"
+                  className={`btn ${
+                    safeHexQty === selectedBundleQty &&
+                    safeBearQty === 0
+                      ? "on"
+                      : ""
+                  }`}
+                  onClick={() =>
+                    chooseBundleContainer("hex")
+                  }
+                >
+                  Use {selectedBundleQty} Glass Hexagons
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              marginTop: 14,
+            }}
+          >
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={useCustomEventOrder}
+            >
+              Need another quantity? Build a Custom Event Order
+            </button>
+          </div>
+        </section>
+
         <section
           className="card"
           style={{
@@ -932,7 +1217,7 @@ export default function SpecialEventOrderPage({
           }}
         >
           <div className="nf-modern-kicker">
-            Build your special event order
+            Order details
           </div>
 
           <div
@@ -943,7 +1228,7 @@ export default function SpecialEventOrderPage({
               marginTop: 5,
             }}
           >
-            START WITH YOUR BUDGET + DATE
+            ADD YOUR DATE + BUDGET
           </div>
 
           <p
@@ -955,10 +1240,10 @@ export default function SpecialEventOrderPage({
                   fontWeight: 700,
             }}
           >
-            Build your favors, see the total change as you go,
-            and check out securely through Square. If the order
-            moves above your target budget, you can still approve
-            it or ask us to help adjust it.
+            Your selected bundle or custom quantity will update
+            the total as you go. Add your event date and an optional
+            target budget, then finish your favor details and check
+            out securely through Square.
           </p>
 
           <div
@@ -1346,6 +1631,7 @@ export default function SpecialEventOrderPage({
         </section>
 
         <section
+          id="event-favor-container"
           className="card"
           style={{ padding: 20, marginBottom: 16 }}
         >
@@ -1427,6 +1713,7 @@ export default function SpecialEventOrderPage({
                 step="1"
                 value={bearQty}
                 onChange={(event) => {
+                  setSelectedBundleQty(0);
                   setBearQty(event.target.value);
                   setErr("");
                 }}
@@ -1579,6 +1866,7 @@ export default function SpecialEventOrderPage({
                 step="1"
                 value={hexQty}
                 onChange={(event) => {
+                  setSelectedBundleQty(0);
                   setHexQty(event.target.value);
                   setErr("");
                 }}
