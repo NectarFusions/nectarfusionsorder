@@ -1,1 +1,15 @@
-/*    /index.html   200
+/honey-club             /index.html   200
+/special-events         /index.html   200
+/special-events/order   /index.html   200
+/partner                /index.html   200
+/find-us                /index.html   200
+/reviews                /index.html   200
+/about                  /index.html   200
+/order-help             /index.html   200
+/policies               /index.html   200
+/admin                  /index.html   200
+/admin/login            /index.html   200
+/partner/login          /index.html   200
+/my                     /index.html   200
+/order/*                /index.html   200
+/club/*                 /index.html   200

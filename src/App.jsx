@@ -497,6 +497,83 @@ const PUBLIC_PATH_VIEWS = Object.freeze(
   )
 );
 
+const SEO_ORIGIN = "https://nectar-fusions.com";
+
+const SEO_BY_VIEW = Object.freeze({
+  shop: {
+    title: "NectarFusions | Michigan Raw & Infused Honey",
+    description:
+      "Shop Michigan raw unfiltered honey and small-batch infused honey from NectarFusions. Real ingredients, cold-infused flavors, gifts, Honey Club, and more.",
+    image: "/nectarfusions-honey-hero.webp",
+  },
+  subscribe: {
+    title: "Honey Club | Michigan Honey Subscription | NectarFusions",
+    description:
+      "Join the NectarFusions Honey Club for recurring Michigan honey, flavor discovery, member benefits, and convenient fulfillment.",
+    image: "/nf-drizzle.png",
+  },
+  eventGateway: {
+    title: "Honey Favors & Event Gifts | NectarFusions",
+    description:
+      "Plan NectarFusions honey favors and gifts for weddings, showers, celebrations, community events, and business events.",
+    image: "/images/partner-gift-bear-2oz.jpg",
+  },
+  events: {
+    title: "Wedding Honey Favors & Event Honey | NectarFusions",
+    description:
+      "Order 2 oz Michigan honey favors for weddings, showers, parties, and celebrations. Choose 25, 50, or 100 favors or build a custom quantity.",
+    image: "/images/partner-gift-hexagonal.jpg",
+  },
+  partner: {
+    title: "Wholesale & Retail Honey Partner Program | NectarFusions",
+    description:
+      "Partner with NectarFusions for retail, foodservice, business gifting, or Hive Partner opportunities through one Michigan honey partner account.",
+    image: "/logo.png",
+  },
+  find: {
+    title: "Find NectarFusions Honey in Michigan | Markets & Retailers",
+    description:
+      "Find NectarFusions Michigan honey at current markets, retail partners, and local purchasing locations.",
+    image: "/nectarfusions-honey-hero.webp",
+  },
+  reviews: {
+    title: "NectarFusions Honey Reviews | Michigan Raw & Infused Honey",
+    description:
+      "Read customer reviews and experiences with NectarFusions raw Michigan honey and infused honey flavors.",
+    image: "/nf-bundles.png",
+  },
+  about: {
+    title: "About NectarFusions | Family-Owned Michigan Honey",
+    description:
+      "Learn the NectarFusions story, our Michigan honey roots, and our approach to raw unfiltered honey and small-batch cold-infused flavors.",
+    image: "/nf-founders.png",
+  },
+  help: {
+    title: "Order Help & FAQ | NectarFusions",
+    description:
+      "Get help with a NectarFusions order and find answers to common questions about ordering, fulfillment, honey, and customer support.",
+    image: "/logo.png",
+  },
+  policy: {
+    title: "Policies | NectarFusions",
+    description:
+      "Review NectarFusions ordering, fulfillment, cancellation, delivery, and customer policies.",
+    image: "/logo.png",
+  },
+});
+
+const setSeoMeta = (attribute, key, content) => {
+  let tag = document.head.querySelector(`meta[${attribute}="${key}"]`);
+
+  if (!tag) {
+    tag = document.createElement("meta");
+    tag.setAttribute(attribute, key);
+    document.head.appendChild(tag);
+  }
+
+  tag.setAttribute("content", content);
+};
+
 const normalizePublicPath = (pathname = "/") => {
   const clean = String(pathname || "/").split("?")[0].split("#")[0];
   if (clean === "/") return "/";
@@ -624,6 +701,7 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&fa
   box-shadow:0 3px 10px rgba(74,51,19,.06);
   transition:transform .15s ease,border-color .15s,background .15s,box-shadow .15s;
 }
+.nf a.btn { text-decoration:none; }
 .btn:hover { transform:translateY(-1px); border-color:${c.amber}; background:#FFFDF7; box-shadow:0 7px 18px rgba(74,51,19,.10); }
 .btn:active { transform:translateY(0); }
 .btn:focus-visible { outline:none; border-color:${c.amber}; box-shadow:0 0 0 4px rgba(247,196,28,.22); }
@@ -12100,6 +12178,127 @@ export default function App() {
   }, [view]);
 
   useEffect(() => {
+    if (typeof window === "undefined" || typeof document === "undefined") {
+      return;
+    }
+
+    const privateRoute =
+      Boolean(tokenFromUrl()) ||
+      Boolean(clubTokenFromUrl()) ||
+      partnerLoginFromUrl() ||
+      myNectarFusionsFromUrl() ||
+      ["admin", "login", "partnerPortal", "myNectarFusions"].includes(view);
+
+    const seo = SEO_BY_VIEW[view] || SEO_BY_VIEW.shop;
+    const publicPath = publicPathForView(view) || "/";
+    const canonicalUrl = `${SEO_ORIGIN}${publicPath}`;
+    const imageUrl = `${SEO_ORIGIN}${seo.image}`;
+
+    document.title = privateRoute ? "NectarFusions" : seo.title;
+
+    setSeoMeta(
+      "name",
+      "description",
+      privateRoute
+        ? "Secure NectarFusions account and order information."
+        : seo.description
+    );
+
+    setSeoMeta(
+      "name",
+      "robots",
+      privateRoute
+        ? "noindex,nofollow,noarchive"
+        : "index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"
+    );
+
+    setSeoMeta("property", "og:site_name", "NectarFusions");
+    setSeoMeta("property", "og:type", "website");
+    setSeoMeta("property", "og:title", privateRoute ? "NectarFusions" : seo.title);
+    setSeoMeta(
+      "property",
+      "og:description",
+      privateRoute
+        ? "Secure NectarFusions account and order information."
+        : seo.description
+    );
+    setSeoMeta(
+      "property",
+      "og:image",
+      privateRoute ? `${SEO_ORIGIN}/logo.png` : imageUrl
+    );
+    setSeoMeta(
+      "property",
+      "og:url",
+      privateRoute ? window.location.href : canonicalUrl
+    );
+
+    setSeoMeta("name", "twitter:card", "summary_large_image");
+    setSeoMeta("name", "twitter:title", privateRoute ? "NectarFusions" : seo.title);
+    setSeoMeta(
+      "name",
+      "twitter:description",
+      privateRoute
+        ? "Secure NectarFusions account and order information."
+        : seo.description
+    );
+    setSeoMeta(
+      "name",
+      "twitter:image",
+      privateRoute ? `${SEO_ORIGIN}/logo.png` : imageUrl
+    );
+
+    const existingCanonical = document.head.querySelector(
+      'link[rel="canonical"]'
+    );
+
+    if (privateRoute) {
+      existingCanonical?.remove();
+    } else {
+      const canonical =
+        existingCanonical || document.createElement("link");
+
+      canonical.setAttribute("rel", "canonical");
+      canonical.setAttribute("href", canonicalUrl);
+
+      if (!existingCanonical) {
+        document.head.appendChild(canonical);
+      }
+    }
+
+    let pageSchema = document.getElementById("nf-page-schema");
+
+    if (privateRoute) {
+      pageSchema?.remove();
+    } else {
+      if (!pageSchema) {
+        pageSchema = document.createElement("script");
+        pageSchema.id = "nf-page-schema";
+        pageSchema.type = "application/ld+json";
+        document.head.appendChild(pageSchema);
+      }
+
+      pageSchema.textContent = JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": view === "about" ? "AboutPage" : "WebPage",
+        name: seo.title,
+        description: seo.description,
+        url: canonicalUrl,
+        primaryImageOfPage: {
+          "@type": "ImageObject",
+          url: imageUrl,
+        },
+        isPartOf: {
+          "@id": `${SEO_ORIGIN}/#website`,
+        },
+        about: {
+          "@id": `${SEO_ORIGIN}/#organization`,
+        },
+      });
+    }
+  }, [view, receipt?.token]);
+
+  useEffect(() => {
     const syncRouteFromLocation = () => {
       const nextView = partnerLoginFromUrl()
         ? "partnerPortal"
@@ -13348,16 +13547,31 @@ export default function App() {
     }, 180);
   };
 
+  const handlePublicLink = (event, nextView) => {
+    if (
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    setView(nextView);
+  };
+
   const nav = (
     <>
-      <button className="btn ghost" onClick={() => setView("about")}>About</button>
-      <button className="btn ghost" onClick={() => setView("find")}>Find Us</button>
-      <button className="btn ghost" onClick={() => setView("subscribe")}>Honey Club</button>
+      <a className="btn ghost" href="/about" onClick={(event) => handlePublicLink(event, "about")}>About</a>
+      <a className="btn ghost" href="/find-us" onClick={(event) => handlePublicLink(event, "find")}>Find Us</a>
+      <a className="btn ghost" href="/honey-club" onClick={(event) => handlePublicLink(event, "subscribe")}>Honey Club</a>
       <button className="btn ghost" onClick={() => { pushMyNectarFusionsUrl(); setView("myNectarFusions"); }}>My NectarFusions</button>
-      <button className="btn ghost" onClick={() => setView("help")}>Help | FAQ</button>
-      <button className="btn ghost" onClick={() => setView("reviews")}>Reviews</button>
-      <button className="btn ghost" onClick={() => setView("partner")}>Partner</button>
-      <button className="btn ghost" onClick={() => setView("policy")}>Policies</button>
+      <a className="btn ghost" href="/order-help" onClick={(event) => handlePublicLink(event, "help")}>Help | FAQ</a>
+      <a className="btn ghost" href="/reviews" onClick={(event) => handlePublicLink(event, "reviews")}>Reviews</a>
+      <a className="btn ghost" href="/partner" onClick={(event) => handlePublicLink(event, "partner")}>Partner</a>
+      <a className="btn ghost" href="/policies" onClick={(event) => handlePublicLink(event, "policy")}>Policies</a>
     </>
   );
 
@@ -13566,10 +13780,12 @@ export default function App() {
                 marginTop: 24,
               }}
             >
-              <button
-                type="button"
+              <a
+                href="/special-events/order"
                 className="btn"
-                onClick={() => setView("events")}
+                onClick={(event) =>
+                  handlePublicLink(event, "events")
+                }
                 style={{
                   minHeight: 245,
                   padding: 24,
@@ -13577,6 +13793,7 @@ export default function App() {
                   textAlign: "left",
                   display: "block",
                   background: "#FFFFFF",
+                  textDecoration: "none",
                 }}
               >
                 <span
@@ -13630,7 +13847,7 @@ export default function App() {
                 >
                   Continue to Special Event Honey →
                 </span>
-              </button>
+              </a>
 
               <button
                 type="button"
@@ -14653,8 +14870,8 @@ export default function App() {
               </span>
             </div>
 
-            <button
-              type="button"
+            <a
+              href="/special-events"
               className="btn solid"
               style={{
                 position: "relative",
@@ -14668,11 +14885,15 @@ export default function App() {
                 fontSize: 15,
                 fontWeight: 950,
                 boxShadow: "0 8px 20px rgba(0,0,0,.14)",
+                display: "inline-flex",
+                alignItems: "center",
               }}
-              onClick={() => setView("eventGateway")}
+              onClick={(event) =>
+                handlePublicLink(event, "eventGateway")
+              }
             >
               Plan Your Event →
-            </button>
+            </a>
           </section>
 
           <section className="nf-type-selector-section">
