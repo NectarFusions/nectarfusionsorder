@@ -11,7 +11,7 @@ const clean = (value, max = 5000) => {
 };
 
 const esc = (value) =>
-  String(value ?? "").replace(/[<>&\"]/g, (character) => ({
+  String(value ?? "").replace(/[<>&"]/g, (character) => ({
     "<": "&lt;",
     ">": "&gt;",
     "&": "&amp;",

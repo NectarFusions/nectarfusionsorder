@@ -84,11 +84,6 @@ const cleanGiftSets = (value) =>
             gift?.thank_you_tag_quantity || 0
           ),
           bee_charm_quantity: Number(gift?.bee_charm_quantity || 0),
-          dipper_quantity: Number(gift?.dipper_quantity || 0),
-          thank_you_tag_quantity: Number(
-            gift?.thank_you_tag_quantity || 0
-          ),
-          bee_charm_quantity: Number(gift?.bee_charm_quantity || 0),
           custom_details: cleanOptional(gift?.custom_details, 1000),
         };
       })
