@@ -460,6 +460,7 @@ export default function SpecialEventOrderPage({
   const [bearQty, setBearQty] = useState(0);
   const [hexQty, setHexQty] = useState(0);
   const [selectedBundleQty, setSelectedBundleQty] = useState(0);
+  const [selectedBundleContainer, setSelectedBundleContainer] = useState("");
   const [lidColor, setLidColor] = useState("");
   const [dipperChoice, setDipperChoice] = useState("no");
   const [dipperQty, setDipperQty] = useState(0);
@@ -840,6 +841,7 @@ export default function SpecialEventOrderPage({
 
   const chooseEventBundle = (quantity) => {
     setSelectedBundleQty(quantity);
+    setSelectedBundleContainer("");
     setBearQty(0);
     setHexQty(0);
     setLidColor("");
@@ -848,6 +850,8 @@ export default function SpecialEventOrderPage({
 
   const chooseBundleContainer = (container) => {
     if (!selectedBundleQty) return;
+
+    setSelectedBundleContainer(container);
 
     if (container === "bear") {
       setBearQty(selectedBundleQty);
@@ -868,6 +872,7 @@ export default function SpecialEventOrderPage({
 
   const useCustomEventOrder = () => {
     setSelectedBundleQty(0);
+    setSelectedBundleContainer("");
     setBearQty(0);
     setHexQty(0);
     setLidColor("");
@@ -1659,6 +1664,8 @@ export default function SpecialEventOrderPage({
               marginTop: 14,
             }}
           >
+            {(selectedBundleContainer === "" ||
+              selectedBundleContainer === "bear") && (
             <article
               style={{
                 border: "1px solid #E2D6C4",
@@ -1797,7 +1804,10 @@ export default function SpecialEventOrderPage({
                 {dollars(bearCents)}
               </div>
             </article>
+            )}
 
+            {(selectedBundleContainer === "" ||
+              selectedBundleContainer === "hex") && (
             <article
               style={{
                 border: "1px solid #E2D6C4",
@@ -1882,6 +1892,7 @@ export default function SpecialEventOrderPage({
                 {dollars(hexCents)}
               </div>
             </article>
+            )}
           </div>
         </section>
 
