@@ -191,12 +191,15 @@ export default function PartnerPricingGuide({ account }) {
         )}
 
         <section className="nf-pricing-guide-card">
-          <h4>Gifts & Custom Requests</h4>
+          <h4>Business Gifting</h4>
           <p>
-            Partner gift pricing is the same for Retail, Wholesale, and
-            Both partner types. Both 2 oz gift containers are sold in packs of{" "}
-            {giftPricing.pack_size || 12}. Gift container flavors are ordered in
-            packs of {giftPricing.pack_size || 12}.
+            <strong>Client Gift 20, Business Gift 50, and Event Gift 100</strong>
+            are individual ready-to-gift 2 oz honeys. They do not come in a multi-jar
+            gift box. <strong>Signature Six</strong> is the boxed business gift: six
+            2 oz glass hexagons in a showcased tasting collection with five signature
+            NectarFusions flavors plus one rotating seasonal discovery. Current
+            Signature Six pricing is tiered by recipient count and is shown in
+            Program Packages.
           </p>
 
           <table className="nf-pricing-guide-table">
@@ -258,7 +261,7 @@ export default function PartnerPricingGuide({ account }) {
                 <td>{cents(giftPricing.addon_suggested_retail_cents)}</td>
               </tr>
               <tr>
-                <td>Gift Set Add-ons (all three)</td>
+                <td>Individual Gift Add-ons (all three)</td>
                 <td><strong>{cents(giftPricing.addon_bundle_price_cents)}</strong></td>
                 <td>{cents(giftPricing.addon_bundle_suggested_retail_cents)}</td>
               </tr>
@@ -273,9 +276,10 @@ export default function PartnerPricingGuide({ account }) {
       </div>
 
       <div className="nf-pricing-guide-note">
-        Gifts and custom requests are available to every partner type.
-        Core partner flavors are Chipotle, Cinnamon, Lemon,
-        Madagascar Vanilla, and Original.
+        Business Gifting is available to every partner type. Client Gift 20,
+        Business Gift 50, and Event Gift 100 are individual gifts without a multi-jar
+        gift box. Signature Six is the boxed collection and uses five signature flavors
+        plus one rotating seasonal discovery.
       </div>
     </div>
   );

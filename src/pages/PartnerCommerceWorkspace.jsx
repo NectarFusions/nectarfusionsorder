@@ -149,8 +149,9 @@ export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBu
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [retailConfig, setRetailConfig] = useState({ sizeId: "", texture: "regular", flavorIds: [] });
   const [giftConfig, setGiftConfig] = useState({
-    containerType: "bear",
+    containerType: "hex",
     flavorId: "",
+    quantity: "12",
     lidColor: "",
     dipper: false,
     thankYouTag: false,
@@ -228,13 +229,7 @@ export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBu
       if (approved.some((row) => row.program_key === "business_gifting")) {
         const [pricing, flavors] = await Promise.all([
           api.getPartnerGiftPricing(),
-          api.listPartnerPackageFlavorOptions([
-            "Original",
-            "Cinnamon",
-            "Lemon",
-            "Madagascar Vanilla",
-            "Chipotle",
-          ]),
+          api.listPartnerPackageFlavorOptions(),
         ]);
         setGiftPricing(pricing || {});
         setGiftFlavors(flavors || []);
@@ -321,7 +316,39 @@ export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBu
       const allowed = giftFlavors.filter((flavor) =>
         !pkg.allowed_flavor_names?.length || pkg.allowed_flavor_names.includes(flavor.name)
       );
-      setGiftConfig((current) => ({ ...current, flavorId: allowed[0]?.id || "" }));
+      setGiftConfig((current) => ({
+        ...current,
+        containerType: "hex",
+        flavorId: allowed[0]?.id || "",
+        quantity: String(pkg.default_quantity || pkg.minimum_quantity || 12),
+        lidColor: "",
+        dipper: false,
+        thankYouTag: false,
+        beeCharm: false,
+        customLabel: false,
+        customLabelNotes: "",
+        recurring: false,
+        cadence: "monthly",
+        customIntervalDays: "30",
+      }));
+    }
+
+    if (packageBuilder(pkg) === "signature_six") {
+      setGiftConfig((current) => ({
+        ...current,
+        containerType: "hex",
+        flavorId: "",
+        quantity: String(pkg.default_quantity || pkg.minimum_quantity || 12),
+        lidColor: "",
+        dipper: false,
+        thankYouTag: false,
+        beeCharm: false,
+        customLabel: false,
+        customLabelNotes: "",
+        recurring: false,
+        cadence: "monthly",
+        customIntervalDays: "30",
+      }));
     }
 
     if (packageBuilder(pkg) === "foodservice") {
@@ -533,6 +560,146 @@ export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBu
         category: "custom_label",
         name: "Custom design + printing & labeling",
         notes: giftConfig.customLabelNotes || "Custom label requested from package checkout.",
+        labelExamples: [],
+        quantity: 1,
+        unitPriceCents: Number(giftPricing?.custom_label_flat_cents || 3000),
+        packageId: selectedPackage.id,
+        packageKey: selectedPackage.package_key,
+        packageName: selectedPackage.name,
+        programKey: selectedPackage.program_key,
+        packageConfiguration: configuration,
+      });
+    }
+
+    setPartnerStoreCart(items);
+    setError("");
+    window.dispatchEvent(new Event("nf-open-partner-cart"));
+  };
+
+
+  const signatureSchema =
+    selectedPackage && packageBuilder(selectedPackage) === "signature_six"
+      ? selectedPackage.configuration_schema || {}
+      : {};
+  const signatureFlavorNames = [
+    ...(Array.isArray(signatureSchema.signature_flavors)
+      ? signatureSchema.signature_flavors
+      : []),
+    signatureSchema.seasonal_flavor,
+  ].filter(Boolean);
+  const signatureFlavorRows = signatureFlavorNames
+    .map((name) => giftFlavors.find((flavor) => flavor.name === name))
+    .filter(Boolean);
+  const signatureBoxQty = Math.max(0, Number.parseInt(giftConfig.quantity, 10) || 0);
+  const signaturePriceTiers = Array.isArray(signatureSchema.price_tiers)
+    ? signatureSchema.price_tiers
+    : [];
+  const signatureTier = signaturePriceTiers.find((tier) => {
+    const min = Number(tier?.min || 0);
+    const max = tier?.max == null ? Number.POSITIVE_INFINITY : Number(tier.max);
+    return signatureBoxQty >= min && signatureBoxQty <= max;
+  });
+  const signatureUnitPrice = Number(
+    signatureTier?.unit_price_cents ||
+      selectedPackage?.base_price_cents ||
+      3200
+  );
+  const signatureHoneyUnit =
+    Number(giftPricing?.hex_price_cents || 300) *
+    Number(signatureSchema.jars_per_box || 6);
+  const signaturePresentationUnit = Math.max(
+    0,
+    signatureUnitPrice - signatureHoneyUnit
+  );
+  const signaturePrice =
+    signatureBoxQty * signatureUnitPrice +
+    (giftConfig.customLabel
+      ? Number(giftPricing?.custom_label_flat_cents || 3000)
+      : 0);
+
+  const addSignatureSixPackage = () => {
+    if (!selectedPackage) return;
+
+    const minimum = Number(
+      signatureSchema.minimum_boxes || selectedPackage.minimum_quantity || 12
+    );
+    const customQuoteMin = Number(signatureSchema.custom_quote_min || 100);
+    if (signatureBoxQty < minimum) {
+      setError(`Signature Six business gifting starts at ${minimum} gift boxes.`);
+      return;
+    }
+    if (signatureBoxQty >= customQuoteMin) {
+      setError(
+        `For ${customQuoteMin}+ Signature Six boxes, use the custom-request area so NectarFusions can coordinate volume pricing and presentation.`
+      );
+      return;
+    }
+    if (
+      signatureFlavorRows.length !==
+      Number(signatureSchema.jars_per_box || 6)
+    ) {
+      setError(
+        "One of the Signature Six flavors is unavailable. NectarFusions needs to update the current seasonal collection."
+      );
+      return;
+    }
+
+    const configuration = {
+      builder: "signature_six",
+      box_quantity: signatureBoxQty,
+      jars_per_box: Number(signatureSchema.jars_per_box || 6),
+      flavor_names: signatureFlavorRows.map((flavor) => flavor.name),
+      seasonal_flavor: signatureSchema.seasonal_flavor || null,
+      custom_label: giftConfig.customLabel,
+      recurring: giftConfig.recurring,
+      cadence: giftConfig.recurring ? giftConfig.cadence : null,
+      custom_interval_days:
+        giftConfig.recurring && giftConfig.cadence === "custom"
+          ? Number(giftConfig.customIntervalDays || 30)
+          : null,
+    };
+
+    const items = signatureFlavorRows.map((flavor) => ({
+      id: `package:${selectedPackage.id}:signature-six:${flavor.id}`,
+      category: "gift",
+      containerType: "hex",
+      containerLabel: "2 oz Glass Hexagon",
+      flavorId: flavor.id,
+      flavorName: flavor.name,
+      lidColor: "",
+      quantity: signatureBoxQty,
+      unitPriceCents: Number(giftPricing?.hex_price_cents || 300),
+      packageId: selectedPackage.id,
+      packageKey: selectedPackage.package_key,
+      packageName: selectedPackage.name,
+      programKey: selectedPackage.program_key,
+      packageConfiguration: configuration,
+    }));
+
+    items.push({
+      id: `package:${selectedPackage.id}:signature-presentation`,
+      category: "gift_addon",
+      addonType: "signature_presentation",
+      name: "Signature Six presentation & curation",
+      containerType: "hex",
+      quantity: signatureBoxQty,
+      unitPriceCents: signaturePresentationUnit,
+      packageId: selectedPackage.id,
+      packageKey: selectedPackage.package_key,
+      packageName: selectedPackage.name,
+      programKey: selectedPackage.program_key,
+      packageConfiguration: configuration,
+    });
+
+    if (giftConfig.customLabel) {
+      items.push({
+        id: `package:${selectedPackage.id}:signature-insert`,
+        category: "custom_label",
+        name: "Signature Six branded insert setup",
+        purpose: "signature_insert",
+        notes:
+          giftConfig.customLabelNotes ||
+          "Branded Signature Six gift insert requested.",
         labelExamples: [],
         quantity: 1,
         unitPriceCents: Number(giftPricing?.custom_label_flat_cents || 3000),
@@ -1001,9 +1168,9 @@ export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBu
     <div className="nf-commerce-builder" id="nf-package-builder">
       <div className="nf-commerce-builder-head">
         <div>
-          <div className="nf-commerce-kicker">Configure business gifting</div>
+          <div className="nf-commerce-kicker">Individual Business Gifting</div>
           <h3>{selectedPackage.name}</h3>
-          <p>{giftQty} ready-to-gift NectarFusions products.</p>
+          <p>{giftQty} individual ready-to-gift NectarFusions honeys. These do not come in a multi-jar gift box. Choose Signature Six when you want the showcased six-honey gift box.</p>
         </div>
         <button className="nf-commerce-btn" type="button" onClick={() => setSelectedPackage(null)}>Close</button>
       </div>
@@ -1079,6 +1246,102 @@ export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBu
           <strong>{money(giftPrice)}</strong>
         </div>
         <button className="nf-commerce-btn primary" type="button" onClick={addGiftPackage}>Continue to Fulfillment & Payment</button>
+      </div>
+    </div>
+  );
+
+
+  const renderSignatureSixBuilder = () => (
+    <div className="nf-commerce-builder" id="nf-package-builder">
+      <div className="nf-commerce-builder-head">
+        <div>
+          <div className="nf-commerce-kicker">Premium Business Gifting</div>
+          <h3>NectarFusions Signature Six</h3>
+          <p>Michigan Honey Tasting Collection · six 2 oz glass hexagons in every showcased gift box.</p>
+        </div>
+        <button className="nf-commerce-btn" type="button" onClick={() => setSelectedPackage(null)}>Close</button>
+      </div>
+
+      <div className="nf-commerce-note">
+        <strong>5 NectarFusions favorites + 1 seasonal discovery.</strong> The collection is curated for you so every recipient gets the same polished tasting experience. The seasonal flavor rotates to keep repeat and holiday gifting fresh.
+      </div>
+
+      <div className="nf-commerce-grid">
+        {signatureFlavorNames.map((name, index) => (
+          <article className="nf-commerce-card soft" key={name}>
+            <div className="nf-commerce-kicker">
+              {index === signatureFlavorNames.length - 1 ? "Seasonal Discovery" : "Signature Flavor"}
+            </div>
+            <h4>{name}</h4>
+            <p>2 oz glass hexagon</p>
+          </article>
+        ))}
+      </div>
+
+      <div className="nf-commerce-field-grid">
+        <div className="nf-commerce-field">
+          <label>How many people are you gifting?</label>
+          <input
+            type="number"
+            min={signatureSchema.minimum_boxes || selectedPackage.minimum_quantity || 12}
+            max={(signatureSchema.custom_quote_min || 100) - 1}
+            step="1"
+            value={giftConfig.quantity}
+            onChange={(event) => setGiftConfig((current) => ({ ...current, quantity: event.target.value }))}
+          />
+          <span style={{ fontSize: 12, color: "#6b7d87" }}>
+            One Signature Six box per recipient. {signatureSchema.custom_quote_min || 100}+ boxes are custom quoted.
+          </span>
+        </div>
+        <div className="nf-commerce-field">
+          <label>Current box price</label>
+          <input readOnly value={money(signatureUnitPrice)} aria-label="Current Signature Six price per box" />
+        </div>
+        <div className="nf-commerce-field full">
+          <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <input type="checkbox" checked={giftConfig.customLabel} onChange={(event) => setGiftConfig((current) => ({ ...current, customLabel: event.target.checked }))} />
+            Add a branded gift insert / presentation card
+          </label>
+          <span style={{ fontSize: 12, color: "#6b7d87" }}>
+            NectarFusions stays on the jars. Your business can be featured on the presentation piece so the gift feels personal without hiding the product brand.
+          </span>
+        </div>
+        {giftConfig.customLabel && (
+          <div className="nf-commerce-field full">
+            <label>Branded insert details</label>
+            <textarea value={giftConfig.customLabelNotes} onChange={(event) => setGiftConfig((current) => ({ ...current, customLabelNotes: event.target.value }))} placeholder="Business name, logo notes, congratulations / thank-you message, event, holiday, colors, or recipient wording" />
+          </div>
+        )}
+        <div className="nf-commerce-field full">
+          <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <input type="checkbox" checked={giftConfig.recurring} onChange={(event) => setGiftConfig((current) => ({ ...current, recurring: event.target.checked }))} />
+            Make this a recurring business gifting order
+          </label>
+        </div>
+        {giftConfig.recurring && (
+          <div className="nf-commerce-field">
+            <label>Cadence</label>
+            <select value={giftConfig.cadence} onChange={(event) => setGiftConfig((current) => ({ ...current, cadence: event.target.value }))}>
+              <option value="monthly">Monthly</option>
+              <option value="quarterly">Quarterly</option>
+              <option value="custom">Custom interval</option>
+            </select>
+          </div>
+        )}
+        {giftConfig.recurring && giftConfig.cadence === "custom" && (
+          <div className="nf-commerce-field">
+            <label>Custom interval (days)</label>
+            <input type="number" min="1" max="365" value={giftConfig.customIntervalDays} onChange={(event) => setGiftConfig((current) => ({ ...current, customIntervalDays: event.target.value }))} />
+          </div>
+        )}
+      </div>
+
+      <div className="nf-commerce-builder-total">
+        <div>
+          <span>{signatureBoxQty} Signature Six gift boxes · {signatureBoxQty * Number(signatureSchema.jars_per_box || 6)} individual 2 oz jars</span>
+          <strong>{money(signaturePrice)}</strong>
+        </div>
+        <button className="nf-commerce-btn primary" type="button" onClick={addSignatureSixPackage}>Continue to Fulfillment & Payment</button>
       </div>
     </div>
   );
@@ -1310,7 +1573,7 @@ export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBu
                     <h4>{pkg.name}</h4>
                     <p>{pkg.description}</p>
                     <div className="meta">
-                      {pkg.default_quantity ? <span>{pkg.default_quantity} {pkg.program_key === "retail" ? "jars" : pkg.program_key === "business_gifting" ? "gifts" : pkg.program_key === "foodservice" ? "package units" : pkg.program_key === "hive_partners" ? "annual partnership" : "units"}</span> : null}
+                      {pkg.default_quantity ? <span>{pkg.default_quantity} {pkg.program_key === "retail" ? "jars" : packageBuilder(pkg) === "signature_six" ? "gift boxes" : pkg.program_key === "business_gifting" ? "individual gifts" : pkg.program_key === "foodservice" ? "package units" : pkg.program_key === "hive_partners" ? "annual partnership" : "units"}</span> : null}
                       {pkg.base_price_cents != null && pkg.price_mode === "fixed" ? <span>{money(pkg.base_price_cents)}</span> : null}
                       {pkg.flavor_selection_count ? <span>{pkg.flavor_selection_count} flavor{pkg.flavor_selection_count === 1 ? "" : "s"}</span> : null}
                       {pkg.program_key === "hive_partners" ? <span>Annual renewal</span> : pkg.default_reorder_interval_days ? <span>Reorder in {pkg.default_reorder_interval_days} days</span> : null}
@@ -1331,6 +1594,7 @@ export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBu
 
           {selectedPackage && packageBuilder(selectedPackage) === "retail_shelf" ? renderRetailBuilder() : null}
           {selectedPackage && packageBuilder(selectedPackage) === "business_gifting" ? renderGiftBuilder() : null}
+          {selectedPackage && packageBuilder(selectedPackage) === "signature_six" ? renderSignatureSixBuilder() : null}
           {selectedPackage && packageBuilder(selectedPackage) === "foodservice" ? renderFoodserviceBuilder() : null}
           {selectedPackage && packageBuilder(selectedPackage) === "hive_sponsorship" ? renderHiveBuilder() : null}
         </div>

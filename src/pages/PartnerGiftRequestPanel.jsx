@@ -1964,7 +1964,7 @@ export default function PartnerGiftRequestPanel() {
 
           <div className="nf-gift-product-title">
             <span className="nf-gift-product-eyebrow">
-              Gift container · sold by 12-count pack
+              Individual gift container · sold by 12-count pack
             </span>
             <h4>{meta.title}</h4>
             <div className="nf-gift-product-pricing">
@@ -2183,11 +2183,11 @@ export default function PartnerGiftRequestPanel() {
             <div className="nf-gift-kicker">
               Partner gifting
             </div>
-            <h2>Gift Sets & Custom Requests</h2>
+            <h2>Individual Gifts & Custom Requests</h2>
             <p>
-              Build event favors and custom gifting in one place.
-              Select a product and configure everything inside that
-              product card.
+              Use this area for individual 2 oz gifts and one-off custom requests.
+              These products do not come in a multi-jar gift box. For the showcased
+              six-honey gift box, choose the Signature Six from Program Packages.
             </p>
           </div>
 

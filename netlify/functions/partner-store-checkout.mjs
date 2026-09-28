@@ -59,6 +59,7 @@ const giftAddon = {
   thank_you_tag:"Thank You tag",
   bee_charm:"Bee charm",
   all_three:"Gift add-on set",
+  signature_presentation:"Signature Six presentation & curation",
 };
 
 const itemName = (item) => {
@@ -77,7 +78,9 @@ const itemName = (item) => {
     return `Gift add-on — ${giftAddon[item.product_key] || item.product_key}`;
   }
   if (item.category === "custom_label") {
-    return "Custom design + printing & labeling";
+    return item.details?.purpose === "signature_insert"
+      ? "Signature Six branded insert setup"
+      : "Custom design + printing & labeling";
   }
   if (item.category === "sponsorship") {
     return item.size_label || "Hive Partner Sponsorship";
@@ -355,6 +358,13 @@ async function buildValidatedOrder({ admin, account, body, programs }) {
     });
   }
 
+  const packageAllowedGiftFlavorNames =
+    packageRecord?.program_key === "business_gifting" &&
+    Array.isArray(packageRecord.allowed_flavor_names) &&
+    packageRecord.allowed_flavor_names.length
+      ? new Set(packageRecord.allowed_flavor_names.map(normalize))
+      : allowedGiftFlavorNames;
+
   for (const raw of giftItems) {
     const containerType = clean(raw.containerType,20);
     const quantity = int(raw.quantity);
@@ -362,8 +372,8 @@ async function buildValidatedOrder({ admin, account, body, programs }) {
     const flavor = flavorMap.get(clean(raw.flavorId,50));
 
     if (!config) throw new Error("A gift container selection is invalid.");
-    if (!flavor?.active || !allowedGiftFlavorNames.has(normalize(flavor.name))) {
-      throw new Error("Partner Gift Sets are limited to the current core flavors.");
+    if (!flavor?.active || !packageAllowedGiftFlavorNames.has(normalize(flavor.name))) {
+      throw new Error("That flavor is not available for this Business Gifting package.");
     }
     const packageGiftOrder = packageRecord?.program_key === "business_gifting";
     if (
@@ -398,8 +408,8 @@ async function buildValidatedOrder({ admin, account, body, programs }) {
       details:{
         container_type:containerType,
         container_label:config.label,
-        pack_size:giftPackSize,
-        packs:quantity/giftPackSize,
+        pack_size:packageGiftOrder ? null : giftPackSize,
+        packs:packageGiftOrder ? null : quantity/giftPackSize,
         lid_color:containerType==="bear"?clean(raw.lidColor,120):null,
         custom_details:clean(raw.customDetails,1000),
       },
@@ -414,10 +424,31 @@ async function buildValidatedOrder({ admin, account, body, programs }) {
     if (!giftAddon[addonType]) throw new Error("A gift add-on is invalid.");
     if (!quantity || quantity < 1 || quantity > 999) throw new Error("Gift add-on quantities must be between 1 and 999.");
 
-    const unit =
-      addonType === "all_three"
-        ? Number(giftPricing.addon_bundle_price_cents || 125)
-        : Number(giftPricing.addon_unit_price_cents || 50);
+    let unit;
+    if (addonType === "signature_presentation") {
+      if (packageRecord?.configuration_schema?.builder !== "signature_six") {
+        throw new Error("Signature Six presentation pricing is only available with the Signature Six package.");
+      }
+      const schema = packageRecord.configuration_schema || {};
+      const tiers = Array.isArray(schema.price_tiers) ? schema.price_tiers : [];
+      const tier = tiers.find((row) => {
+        const min = Number(row?.min || 0);
+        const max = row?.max == null ? Number.POSITIVE_INFINITY : Number(row.max);
+        return quantity >= min && quantity <= max;
+      });
+      const boxPrice = Number(tier?.unit_price_cents || packageRecord.base_price_cents || 0);
+      const jarsPerBox = Number(schema.jars_per_box || 6);
+      const honeyPrice = Number(giftPricing.hex_price_cents || 300) * jarsPerBox;
+      if (!boxPrice || boxPrice < honeyPrice) {
+        throw new Error("Signature Six pricing is not configured correctly.");
+      }
+      unit = boxPrice - honeyPrice;
+    } else {
+      unit =
+        addonType === "all_three"
+          ? Number(giftPricing.addon_bundle_price_cents || 125)
+          : Number(giftPricing.addon_unit_price_cents || 50);
+    }
 
     finalItems.push({
       category:"gift_addon",
@@ -454,7 +485,11 @@ async function buildValidatedOrder({ admin, account, body, programs }) {
       quantity:1,
       unit_price_cents:Number(giftPricing.custom_label_flat_cents || 3000),
       line_total_cents:Number(giftPricing.custom_label_flat_cents || 3000),
-      details:{notes:clean(raw.notes,3000),label_examples:examples},
+      details:{
+        notes:clean(raw.notes,3000),
+        label_examples:examples,
+        purpose:clean(raw.purpose,80),
+      },
     });
   }
 
@@ -543,6 +578,59 @@ async function buildValidatedOrder({ admin, account, body, programs }) {
         if (JSON.stringify(fixed) !== JSON.stringify(selected)) {
           throw new Error(`${packageRecord.name} uses the complete fixed core flavor collection.`);
         }
+      }
+    }
+
+
+    if (builder === "signature_six") {
+      const packageGiftItems = finalItems.filter((item) => item.category === "gift");
+      const presentationItems = finalItems.filter(
+        (item) => item.category === "gift_addon" && item.product_key === "signature_presentation"
+      );
+      const disallowed = finalItems.filter(
+        (item) =>
+          !["gift", "gift_addon", "custom_label"].includes(item.category) ||
+          (item.category === "gift_addon" && item.product_key !== "signature_presentation")
+      );
+      const jarsPerBox = Number(schema.jars_per_box || 6);
+      const boxQty = Number(packageGiftItems[0]?.quantity || 0);
+      const minimumBoxes = Number(schema.minimum_boxes || packageRecord.minimum_quantity || 12);
+      const customQuoteMin = Number(schema.custom_quote_min || 100);
+      const expectedNames = [
+        ...(Array.isArray(schema.signature_flavors) ? schema.signature_flavors : []),
+        schema.seasonal_flavor,
+      ].filter(Boolean).map(normalize).sort();
+      const actualNames = packageGiftItems.map((item) => normalize(item.flavor_name)).sort();
+
+      if (
+        disallowed.length ||
+        packageGiftItems.length !== jarsPerBox ||
+        presentationItems.length !== 1
+      ) {
+        throw new Error("Signature Six requires six curated honey jars and one presentation-box line.");
+      }
+      if (boxQty < minimumBoxes || boxQty >= customQuoteMin) {
+        throw new Error(
+          `Signature Six checkout supports ${minimumBoxes}–${customQuoteMin - 1} gift boxes. Larger orders require a custom quote.`
+        );
+      }
+      if (
+        packageGiftItems.some(
+          (item) =>
+            item.quantity !== boxQty ||
+            item.details?.container_type !== "hex"
+        )
+      ) {
+        throw new Error("Every Signature Six box uses the same six 2 oz glass hexagons.");
+      }
+      if (
+        expectedNames.length !== jarsPerBox ||
+        JSON.stringify(expectedNames) !== JSON.stringify(actualNames)
+      ) {
+        throw new Error("The Signature Six flavor collection no longer matches the current package.");
+      }
+      if (presentationItems[0].quantity !== boxQty) {
+        throw new Error("Signature Six presentation quantity must match the number of gift boxes.");
       }
     }
 

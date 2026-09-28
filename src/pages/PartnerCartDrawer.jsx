@@ -30,7 +30,7 @@ const groupLabel = {
   retail: "Retail Package",
   bulk: "Foodservice",
   gift: "Business Gifting",
-  gift_addon: "Gift Add-ons",
+  gift_addon: "Gift Presentation & Add-ons",
   custom_label: "Custom Labels",
   sponsorship: "Hive Partners",
 };

@@ -19,7 +19,7 @@ const PROGRAMS = [
     key: "business_gifting",
     action: "Gift NectarFusions",
     label: "Business Gifting",
-    copy: "Create client gifts, employee gifts, event favors, and recurring branded gifting from one account.",
+    copy: "Choose individual 20, 50, or 100-gift packages for clients, employees, and events, or choose the boxed Signature Six tasting collection for premium gifting.",
     accent: "#73558F",
   },
   {
