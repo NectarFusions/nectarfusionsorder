@@ -125,6 +125,12 @@ function isFulfillmentRoute() {
 }
 
 
+
+function isOperationsRoute() {
+  const path = window.location.pathname.replace(/\/+$/, "") || "/";
+  return path === "/admin/operations";
+}
+
 function isSearchLandingRoute() {
   const path = window.location.pathname.replace(/\/+$/, "") || "/";
 
@@ -142,7 +148,27 @@ if (!rootElement) {
 } else {
   const root = ReactDOM.createRoot(rootElement);
 
-  if (isFulfillmentRoute()) {
+  if (isOperationsRoute()) {
+    import("./pages/AdminOperationsPage.jsx")
+      .then(({ default: AdminOperationsPage }) => {
+        root.render(
+          <React.StrictMode>
+            <ErrorBoundary>
+              <AdminOperationsPage />
+            </ErrorBoundary>
+          </React.StrictMode>
+        );
+      })
+      .catch((error) => {
+        console.error("NFOS startup error:", error);
+        root.render(
+          <ErrorScreen
+            title="NectarFusions Operations could not start"
+            error={error}
+          />
+        );
+      });
+  } else if (isFulfillmentRoute()) {
     import("./SubscriptionFulfillmentPortal.jsx")
       .then(({ default: SubscriptionFulfillmentPortal }) => {
         root.render(
