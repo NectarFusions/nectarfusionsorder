@@ -82,11 +82,67 @@ Deno.serve(async (req: Request) => {
   if (!member.email) return json(400, { error: "Add an email address before sending an invite." });
 
   if (member.user_id) {
+    const { data: linkedData, error: linkedError } =
+      await admin.auth.admin.getUserById(member.user_id);
+    const linkedUser = linkedData?.user;
+
+    if (linkedError || !linkedUser) {
+      return json(409, {
+        error: "This NFOS profile is linked to an auth account that no longer exists.",
+        hint: "Repair the account link before sending another invitation.",
+      });
+    }
+
+    if (
+      linkedUser.email &&
+      linkedUser.email.toLowerCase() !== String(member.email).toLowerCase()
+    ) {
+      return json(409, {
+        error: "The linked auth account email no longer matches this NFOS profile.",
+        hint: "Update the profile/account link before sending another invitation.",
+      });
+    }
+
+    if (linkedUser.email_confirmed_at) {
+      return json(200, {
+        ok: true,
+        alreadyLinked: true,
+        confirmed: true,
+        memberId: member.id,
+        userId: linkedUser.id,
+        message: "This team member already has an active NFOS login.",
+      });
+    }
+
+    const { data: reinviteData, error: reinviteError } =
+      await admin.auth.admin.inviteUserByEmail(member.email, {
+        data: {
+          nfos_display_name: member.display_name,
+          nfos_invited: true,
+        },
+        redirectTo: "https://nectar-fusions.com/admin/operations",
+      });
+
+    if (reinviteError || !reinviteData?.user?.id) {
+      return json(400, {
+        error: reinviteError?.message || "A fresh employee invitation could not be sent.",
+      });
+    }
+
+    if (reinviteData.user.id !== member.user_id) {
+      return json(409, {
+        error: "Supabase returned a different auth account for this team profile.",
+        hint: "No NFOS profile link was changed.",
+      });
+    }
+
     return json(200, {
       ok: true,
-      alreadyLinked: true,
+      resent: true,
       memberId: member.id,
-      message: "This team profile is already linked to a login.",
+      userId: member.user_id,
+      email: member.email,
+      message: "Fresh invitation sent. The previous invite link can be ignored.",
     });
   }
 
