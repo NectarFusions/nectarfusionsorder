@@ -12,6 +12,8 @@ import { NfosTodayDashboard, NfosOperationsCalendar } from "../components/NfosAc
 import NfosTeamAccountability from "../components/NfosTeamAccountability";
 import NfosEmployeePortal from "../components/NfosEmployeePortal";
 import NfosItemEditor from "../components/NfosItemEditor";
+import NfosReceivingWorkspace from "../components/NfosReceivingWorkspace";
+import NfosSuppliersWorkspace from "../components/NfosSuppliersWorkspace";
 import useNfosResponsiveTables from "../lib/useNfosResponsiveTables";
 import "../styles/nfos.css";
 
@@ -24,11 +26,11 @@ const TABS = [
   ["calendar", "Calendar"],
   ["team", "Team"],
   ["inventory", "Inventory"],
-  ["receive", "Receive"],
+  ["receive", "Receiving"],
   ["move", "Adjust / Transfer"],
   ["items", "Items"],
   ["locations", "Locations"],
-  ["suppliers", "Suppliers"],
+  ["suppliers", "Suppliers & Vendors"],
   ["purchasing", "Purchasing"],
   ["recipes", "Recipes"],
   ["production", "Production"],
@@ -529,11 +531,11 @@ export default function AdminOperationsPage() {
     calendar:<NfosOperationsCalendar setTab={setTab}/>,
     team:<NfosTeamAccountability/>,
     inventory:<Inventory inventory={inventory} items={items} suppliers={suppliers} locations={locations} onSelectBarcode={chooseBarcode} onDone={refresh} onAdjust={(itemId)=>{setMoveInitialItemId(itemId);setTab("move");}}/>,
-    receive:<Receive items={items} locations={locations} suppliers={suppliers} onDone={refresh}/>,
+    receive:<NfosReceivingWorkspace items={items} locations={locations} suppliers={suppliers} lots={lots} onDone={refresh}/>,
     move:<MoveInventory items={items} locations={locations} lots={lots} onDone={refresh} initialItemId={moveInitialItemId}/>,
     items:<Items items={items} suppliers={suppliers} locations={locations} onDone={refresh} onSelectBarcode={chooseBarcode}/>,
     locations:<Locations locations={locations} onDone={refresh}/>,
-    suppliers:<Suppliers suppliers={suppliers} onDone={refresh}/>,
+    suppliers:<NfosSuppliersWorkspace suppliers={suppliers} onDone={refresh}/>,
     purchasing:<NfosPurchasing locations={locations} onInventoryChanged={refresh}/>,
     recipes:<RecipesModule items={items} onRefresh={refresh}/>,
     production:<ProductionModule items={items} locations={locations} lots={lots} onRefresh={refresh}/>,

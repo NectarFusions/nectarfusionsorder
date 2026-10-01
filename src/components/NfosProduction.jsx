@@ -3,6 +3,7 @@ import NfosBarcode from "./NfosBarcode";
 import NfosRecipeSopPdf from "./NfosRecipeSopPdf";
 import NfosProductionOrderEditor from "./NfosProductionOrderEditor";
 import NfosAdminProductionSuggestions from "./NfosAdminProductionSuggestions";
+import NfosProductionLog from "./NfosProductionLog";
 import * as nfos from "../lib/nfosApi";
 
 const qty = (value) => {
@@ -819,6 +820,7 @@ export function ProductionModule({ items, locations, lots, onRefresh }) {
   const [startLocationId, setStartLocationId] = useState("");
   const [startTexture, setStartTexture] = useState("regular");
   const [editOrder, setEditOrder] = useState(null);
+  const [productionView, setProductionView] = useState("log");
 
   const load = useCallback(async () => {
     setBusy(true); setError("");
@@ -906,8 +908,25 @@ export function ProductionModule({ items, locations, lots, onRefresh }) {
 
   const changed = async () => { await load(); await onRefresh?.(); };
 
+  const productionNav = <div className="nfos-workbook-view-switch">
+    <button className={`nfos-btn ${productionView==="log"?"":"secondary"}`} onClick={()=>setProductionView("log")}>Production Log</button>
+    <button className={`nfos-btn ${productionView==="operations"?"":"secondary"}`} onClick={()=>setProductionView("operations")}>Queue + Batch Work</button>
+  </div>;
+
+  if (productionView === "log") return <>
+    <Notice type="error">{error}</Notice><Notice>{message}</Notice>
+    {productionNav}
+    <NfosProductionLog
+      batches={batches}
+      busy={busy}
+      onRefresh={load}
+      onOpenBatch={(batchId)=>{setSelectedBatchId(batchId);setProductionView("operations");}}
+    />
+  </>;
+
   return <>
     <Notice type="error">{error}</Notice><Notice>{message}</Notice>
+    {productionNav}
     <NfosAdminProductionSuggestions onChanged={changed} />
     <div className="nfos-grid two">
       <div className="nfos-card">

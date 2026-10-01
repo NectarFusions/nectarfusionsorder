@@ -248,6 +248,30 @@ export async function createSupplier(input) {
   );
 }
 
+
+export async function updateSupplier(supplierId, input) {
+  return take(
+    supabase
+      .from("nfos_suppliers")
+      .update({
+        name: input.name.trim(),
+        vendor_code: input.vendorCode?.trim() || null,
+        category: input.category?.trim() || null,
+        contact_name: input.contactName?.trim() || null,
+        phone: input.phone?.trim() || null,
+        email: input.email?.trim() || null,
+        products_supplied: input.productsSupplied?.trim() || null,
+        preferred: Boolean(input.preferred),
+        active: input.active !== false,
+        notes: input.notes?.trim() || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", supplierId)
+      .select("*")
+      .single()
+  );
+}
+
 export async function lookupBarcode(value) {
   const code = value.trim();
   if (!code) return null;
