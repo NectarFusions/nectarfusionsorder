@@ -379,6 +379,9 @@ export default function AdminOperationsPage() {
 
   const currentTitle=TABS.find(x=>x[0]===tab)?.[1]||"Operations";
   return <div className="nfos-shell"><header className="nfos-topbar"><div className="nfos-topbar-inner"><div className="nfos-brand"><div className="nfos-mark">NF</div><div><div className="nfos-brand-title">NECTARFUSIONS OPERATIONS</div><div className="nfos-brand-sub">NFOS • Inventory + Production</div></div></div><div className="nfos-inline-actions top-actions"><span className="nfos-muted nfos-small">{session?.user?.email}</span><a className="nfos-btn ghost" href="/">Website</a><button className="nfos-btn ghost" onClick={logout}>Sign out</button></div></div></header>
-    <div className="nfos-layout"><aside className="nfos-side"><nav className="nfos-nav">{TABS.map(([key,label])=><button key={key} className={tab===key?"active":""} onClick={()=>setTab(key)}>{label}</button>)}</nav></aside>
+    <div className="nfos-layout"><aside className="nfos-side">
+      <label className="nfos-mobile-nav"><span>Section</span><select aria-label="NFOS section" value={tab} onChange={(e)=>setTab(e.target.value)}>{TABS.map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label>
+      <nav className="nfos-nav">{TABS.map(([key,label])=><button key={key} className={tab===key?"active":""} onClick={()=>setTab(key)}>{label}</button>)}</nav>
+    </aside>
       <main className="nfos-main"><div className="nfos-page-head"><div><h1>{currentTitle}</h1><p>{tab==="overview"?"What needs attention now, without hunting through spreadsheets.":tab==="calendar"?"Production, purchasing, deliveries and release dates in one operating calendar.":tab==="team"?"Assign work, see workload and preserve who did what.":"NectarFusions operational data is stored once and reused everywhere."}</p></div><button className="nfos-btn secondary" onClick={refresh} disabled={busy}>{busy?"Refreshing…":"Refresh"}</button></div>{error&&<div className="nfos-error">{error}</div>}{content}</main></div></div>;
 }

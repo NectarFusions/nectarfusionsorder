@@ -682,7 +682,10 @@ export default function NfosEmployeePortal({ session, access, onSignOut }) {
     </div></header>
 
     <div className="nfos-layout">
-      <aside className="nfos-side"><nav className="nfos-nav">{tabs.map(([key,label])=><button key={key} className={tab===key ? "active" : ""} onClick={()=>setTab(key)}>{label}{key==="work" && work.length ? ` (${work.length})` : ""}</button>)}</nav></aside>
+      <aside className="nfos-side">
+        <label className="nfos-mobile-nav"><span>Section</span><select aria-label="NFOS employee section" value={tab} onChange={(e)=>setTab(e.target.value)}>{tabs.map(([key,label])=><option key={key} value={key}>{label}{key==="work" && work.length ? ` (${work.length})` : ""}</option>)}</select></label>
+        <nav className="nfos-nav">{tabs.map(([key,label])=><button key={key} className={tab===key ? "active" : ""} onClick={()=>setTab(key)}>{label}{key==="work" && work.length ? ` (${work.length})` : ""}</button>)}</nav>
+      </aside>
       <main className="nfos-main">
         <div className="nfos-page-head"><div><h1>{tabs.find((x)=>x[0]===tab)?.[1] || "My Work"}</h1><p>Hi, {access?.display_name || "Team Member"} · {roleLabel(access?.role)}</p></div></div>
         {error&&<div className="nfos-error">{error}</div>}

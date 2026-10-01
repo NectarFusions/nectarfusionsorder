@@ -83,3 +83,419 @@
 
 /* NFOS System Health + Release Readiness — Phase 6 */
 .nfos-health-tabs{margin:16px 0}.nfos-health-blockers{display:flex;gap:6px;flex-wrap:wrap}
+
+/* ============================================================
+   NFOS Responsive / All-Platform Hardening — Phase 7
+   Phones, tablets, laptop/desktop, iOS Safari, Android Chrome.
+   ============================================================ */
+
+.nfos-shell,
+.nfos-shell * { min-width: 0; }
+
+.nfos-card,
+.nfos-stat,
+.nfos-main,
+.nfos-grid > *,
+.nfos-page-head > *,
+.nfos-topbar-inner > * { min-width: 0; }
+
+.nfos-card,
+.nfos-note,
+.nfos-error,
+.nfos-success,
+.nfos-muted,
+.nfos-page-head p,
+.nfos-table td,
+.nfos-table th { overflow-wrap: anywhere; }
+
+.nfos-btn,
+.nfos-nav button,
+.nfos-field input,
+.nfos-field select,
+.nfos-field textarea,
+.nfos-filterbar input,
+.nfos-filterbar select,
+.nfos-table-input { min-height: 44px; }
+
+.nfos-btn { touch-action: manipulation; }
+
+.nfos-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-inline: contain;
+  scrollbar-gutter: stable;
+}
+
+.nfos-table { max-width: none; }
+.nfos-mobile-nav { display: none; }
+
+@media (max-width: 1200px) {
+  .nfos-layout {
+    grid-template-columns: 190px minmax(0, 1fr);
+    gap: 16px;
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .nfos-grid.four {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .nfos-card { padding: 16px; }
+}
+
+@media (max-width: 900px) {
+  .nfos-topbar-inner {
+    padding: 12px 16px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .nfos-layout {
+    grid-template-columns: 1fr;
+    padding: 14px 16px 34px;
+    gap: 12px;
+  }
+
+  .nfos-side {
+    position: sticky;
+    top: 70px;
+    z-index: 15;
+    padding: 8px;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(15,73,96,.08);
+  }
+
+  .nfos-nav { display: none; }
+
+  .nfos-mobile-nav {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+  }
+
+  .nfos-mobile-nav span {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--nfos-muted);
+    text-transform: uppercase;
+    letter-spacing: .055em;
+    white-space: nowrap;
+  }
+
+  .nfos-mobile-nav select {
+    width: 100%;
+    min-height: 44px;
+    border: 1px solid var(--nfos-line);
+    background: white;
+    color: var(--nfos-ink);
+    border-radius: 9px;
+    padding: 9px 34px 9px 11px;
+    font: inherit;
+    font-weight: 750;
+  }
+
+  .nfos-page-head { gap: 12px; }
+
+  .nfos-recipes-layout,
+  .nfos-trace-layout,
+  .nfos-grid.two { grid-template-columns: 1fr; }
+
+  .nfos-supplier-setup-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .nfos-supplier-setup-title { grid-column: 1 / -1; }
+}
+
+@media (max-width: 680px) {
+  .nfos-shell { min-height: 100dvh; }
+
+  .nfos-topbar {
+    position: sticky;
+    top: 0;
+  }
+
+  .nfos-topbar-inner {
+    padding:
+      max(10px, env(safe-area-inset-top))
+      max(12px, env(safe-area-inset-right))
+      10px
+      max(12px, env(safe-area-inset-left));
+    align-items: center;
+  }
+
+  .nfos-brand {
+    flex: 1 1 210px;
+    gap: 9px;
+  }
+
+  .nfos-mark {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+  }
+
+  .nfos-brand-title {
+    font-size: 13px;
+    line-height: 1.2;
+  }
+
+  .nfos-brand-sub { font-size: 11px; }
+
+  .nfos-topbar .top-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 7px;
+  }
+
+  .nfos-topbar .top-actions > .nfos-muted {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    align-self: center;
+  }
+
+  .nfos-topbar .top-actions .nfos-btn {
+    padding: 8px 10px;
+    min-height: 40px;
+    white-space: nowrap;
+  }
+
+  .nfos-layout {
+    padding:
+      10px
+      max(10px, env(safe-area-inset-right))
+      max(24px, env(safe-area-inset-bottom))
+      max(10px, env(safe-area-inset-left));
+  }
+
+  .nfos-side {
+    top: 104px;
+    margin: 0 -2px;
+  }
+
+  .nfos-mobile-nav {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .nfos-mobile-nav span { display: none; }
+
+  .nfos-page-head {
+    flex-direction: column;
+    align-items: stretch;
+    margin-bottom: 12px;
+  }
+
+  .nfos-page-head h1 {
+    font-size: 23px;
+    line-height: 1.15;
+  }
+
+  .nfos-page-head h2 { font-size: 20px; }
+
+  .nfos-page-head > .nfos-btn,
+  .nfos-page-head > button { width: 100%; }
+
+  .nfos-card {
+    padding: 13px;
+    border-radius: 13px;
+    margin-bottom: 12px;
+  }
+
+  .nfos-grid.four,
+  .nfos-grid.two,
+  .nfos-form {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .nfos-stat { padding: 13px; }
+  .nfos-stat-value { font-size: 24px; }
+
+  .nfos-form { gap: 11px; }
+  .nfos-field.full { grid-column: auto; }
+
+  /* 16px prevents iOS Safari from zooming the page on focus. */
+  .nfos-field input,
+  .nfos-field select,
+  .nfos-field textarea,
+  .nfos-filterbar input,
+  .nfos-filterbar select,
+  .nfos-table-input,
+  .nfos-scan input { font-size: 16px; }
+
+  .nfos-filterbar {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .nfos-filterbar input,
+  .nfos-filterbar select {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .nfos-inline-actions { gap: 7px; }
+  .nfos-inline-actions.top-actions { justify-content: stretch; }
+
+  .nfos-table-wrap {
+    border-radius: 10px;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .nfos-table { min-width: 660px; }
+
+  .nfos-table th,
+  .nfos-table td {
+    padding: 10px;
+    font-size: 12px;
+  }
+
+  .nfos-table th { font-size: 10px; }
+
+  .nfos-table input,
+  .nfos-table select,
+  .nfos-batch-workspace .nfos-table input,
+  .nfos-batch-workspace .nfos-table select {
+    font-size: 16px;
+    min-height: 42px;
+    min-width: 110px;
+    max-width: 190px;
+  }
+
+  .nfos-task-card,
+  .nfos-notification-row,
+  .nfos-purchase-supplier,
+  .nfos-purchase-row,
+  .nfos-purchase-line-head,
+  .nfos-calendar-event { align-items: stretch; }
+
+  .nfos-task-card > .nfos-inline-actions,
+  .nfos-notification-row > .nfos-inline-actions,
+  .nfos-calendar-event > .nfos-inline-actions { width: 100%; }
+
+  .nfos-task-card > .nfos-inline-actions .nfos-btn,
+  .nfos-notification-row > .nfos-inline-actions .nfos-btn {
+    flex: 1 1 140px;
+  }
+
+  .nfos-plan-output {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .nfos-plan-output input { width: 100%; }
+
+  .nfos-base-pair,
+  .nfos-quick-lot-grid,
+  .nfos-receipt-form,
+  .nfos-mini-stats,
+  .nfos-supplier-setup-row { grid-template-columns: 1fr; }
+
+  .nfos-supplier-setup-title { grid-column: auto; }
+  .nfos-sop-step { padding: 11px; }
+
+  .nfos-employee-main {
+    padding:
+      14px
+      max(10px, env(safe-area-inset-right))
+      max(24px, env(safe-area-inset-bottom))
+      max(10px, env(safe-area-inset-left));
+  }
+
+  .nfos-login {
+    min-height: 100dvh;
+    padding:
+      max(16px, env(safe-area-inset-top))
+      max(12px, env(safe-area-inset-right))
+      max(16px, env(safe-area-inset-bottom))
+      max(12px, env(safe-area-inset-left));
+  }
+
+  .nfos-login-card {
+    padding: 20px 16px;
+    border-radius: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .nfos-brand-title { font-size: 12px; }
+  .nfos-brand-sub { display: none; }
+
+  .nfos-topbar .top-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .nfos-topbar .top-actions > .nfos-muted {
+    grid-column: 1 / -1;
+  }
+
+  .nfos-topbar .top-actions .nfos-btn { width: 100%; }
+
+  .nfos-inline-actions:not(.top-actions) { width: 100%; }
+
+  .nfos-inline-actions:not(.top-actions) > .nfos-btn,
+  .nfos-inline-actions:not(.top-actions) > button.nfos-btn,
+  .nfos-inline-actions:not(.top-actions) > a.nfos-btn {
+    flex: 1 1 100%;
+    width: 100%;
+    text-align: center;
+  }
+
+  .nfos-table { min-width: 600px; }
+
+  .nfos-stat-label { font-size: 11px; }
+  .nfos-stat-value { font-size: 22px; }
+  .nfos-card h2 { font-size: 19px; }
+  .nfos-card h3 { font-size: 17px; }
+
+  .nfos-note,
+  .nfos-error,
+  .nfos-success { padding: 11px; }
+}
+
+@media (max-width: 360px) {
+  .nfos-layout {
+    padding-left: 7px;
+    padding-right: 7px;
+  }
+
+  .nfos-card { padding: 11px; }
+  .nfos-table { min-width: 560px; }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .nfos-topbar { position: static; }
+  .nfos-side { position: static; }
+  .nfos-layout { padding-top: 8px; }
+}
+
+.nfos-btn:focus-visible,
+.nfos-nav button:focus-visible,
+.nfos-mobile-nav select:focus-visible,
+.nfos-field input:focus-visible,
+.nfos-field select:focus-visible,
+.nfos-field textarea:focus-visible {
+  outline: 3px solid rgba(23,108,134,.28);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nfos-shell *,
+  .nfos-shell *::before,
+  .nfos-shell *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+/* END NFOS RESPONSIVE PHASE 7 */
