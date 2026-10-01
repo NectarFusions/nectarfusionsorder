@@ -2155,3 +2155,104 @@
   }
 }
 /* END NFOS DESKTOP DASHBOARD RECOVERY */
+
+/* ============================================================
+   NFOS Warm Accent Theme
+   Replace the dark blue emphasis with a softer NectarFusions
+   honey accent and darker text for readability.
+   ============================================================ */
+:root {
+  --nfos-blue: #e3c15f;
+  --nfos-blue-2: #d4ae47;
+  --nfos-selected: #e3c15f;
+  --nfos-selected-bg: #fbf3d8;
+}
+
+.nfos-btn {
+  background: var(--nfos-blue) !important;
+  color: var(--nfos-ink) !important;
+}
+
+.nfos-btn:hover {
+  background: var(--nfos-blue-2) !important;
+  color: var(--nfos-ink) !important;
+}
+
+.nfos-btn.secondary {
+  background: #f6edd0 !important;
+  color: var(--nfos-ink) !important;
+  border: 1px solid #e2cf8f !important;
+}
+
+.nfos-btn.ghost {
+  background: #fffaf0 !important;
+  color: var(--nfos-ink) !important;
+  border: 1px solid #d9c27b !important;
+}
+
+.nfos-nav button.active,
+.nfos-select-list > button.active,
+.nfos-shell :where(
+  .nfos-nav button.active,
+  .nfos-select-list > button.active,
+  .nfos-btn[aria-pressed="true"],
+  button[aria-selected="true"]
+) {
+  background: #ead089 !important;
+  color: var(--nfos-ink) !important;
+  border-color: #d6b962 !important;
+  box-shadow: 0 0 0 3px rgba(214, 185, 98, .22) !important;
+}
+
+.nfos-shell :where(
+  .nfos-nav button.active,
+  .nfos-select-list > button.active,
+  .nfos-btn[aria-pressed="true"],
+  button[aria-selected="true"]
+)::after {
+  color: var(--nfos-ink) !important;
+}
+
+.nfos-filterbar input:focus,
+.nfos-filterbar select:focus,
+.nfos-field input:focus,
+.nfos-field select:focus,
+.nfos-field textarea:focus,
+.nfos-scan input:focus,
+.nfos-shell :where(button,a,input,select,textarea):focus-visible {
+  border-color: #d4ae47 !important;
+  outline: 4px solid rgba(212, 174, 71, .24) !important;
+}
+
+.nfos-scan input {
+  border-color: #d4ae47 !important;
+}
+
+.nfos-brand-sub,
+.nfos-stat-value,
+.nfos-login-card h1,
+.nfos-page-head h1,
+.nfos-card h2,
+.nfos-card h3 {
+  color: var(--nfos-ink) !important;
+}
+
+.nfos-stat[data-nfos-state="ok"]::after,
+.nfos-success[data-nfos-state="ok"]::before {
+  background: #4b8b67 !important;
+}
+
+.nfos-shell td[data-nfos-state="ok"] {
+  box-shadow: inset 5px 0 0 #4b8b67 !important;
+}
+
+.nfos-shell td[data-nfos-state="attention"] {
+  box-shadow: inset 5px 0 0 #d4ae47 !important;
+}
+
+.nfos-camera-scanner .nfos-btn,
+.nfos-camera-shell .nfos-btn {
+  background: #ead089 !important;
+  color: var(--nfos-ink) !important;
+}
+/* END NFOS WARM ACCENT THEME */
