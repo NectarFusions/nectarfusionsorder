@@ -15,6 +15,7 @@
     "@zxing/browser": "0.2.1",
     "@zxing/library": "0.23.0",
     "jsbarcode": "3.12.3",
+    "jspdf": "4.2.1",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "resend": "^6.17.2"

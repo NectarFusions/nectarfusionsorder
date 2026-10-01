@@ -248,23 +248,23 @@ export default function NfosTeamAccountability() {
       {!myWork.length ? <Empty>No work is assigned to your profile right now.</Empty> : <div className="nfos-table-wrap"><table className="nfos-table"><thead><tr><th>Work</th><th>Due</th><th>Priority</th><th>Status</th><th>Area</th></tr></thead><tbody>{myWork.map((w) => <tr key={w.work_key}><td><strong>{w.title}</strong><div className="nfos-muted nfos-small">{w.detail}</div></td><td>{fmtDate(w.due_date)}</td><td><StatusPill value={w.priority} /></td><td><StatusPill value={w.status} /></td><td>{w.route}</td></tr>)}</tbody></table></div>}
     </div>
 
-    <div className="nfos-grid two nfos-team-grid">
-      <div className="nfos-card">
-        <h2>Team workload</h2><p className="nfos-muted">Open work currently assigned across NFOS.</p>
-        {!workload.length ? <Empty>No active team profiles.</Empty> : <div className="nfos-table-wrap"><table className="nfos-table"><thead><tr><th>Team member</th><th>Role</th><th>Actions</th><th>Tasks</th><th>Production</th><th>Total</th></tr></thead><tbody>{workload.map((w) => <tr key={w.member_id}><td><strong>{w.display_name}</strong></td><td>{roleLabels(w.roles, w.role)}</td><td>{w.assigned_actions}</td><td>{w.manual_tasks}</td><td>{w.production_orders}</td><td><strong>{w.total_open_work}</strong></td></tr>)}</tbody></table></div>}
-      </div>
+    <div className="nfos-card nfos-team-workload-card">
+      <h2>Team workload</h2>
+      <p className="nfos-muted">Open work currently assigned across NFOS.</p>
+      {!workload.length ? <Empty>No active team profiles.</Empty> : <div className="nfos-table-wrap"><table className="nfos-table"><thead><tr><th>Team member</th><th>Role</th><th>Actions</th><th>Tasks</th><th>Production</th><th>Total</th></tr></thead><tbody>{workload.map((w) => <tr key={w.member_id}><td><strong>{w.display_name}</strong></td><td>{roleLabels(w.roles, w.role)}</td><td>{w.assigned_actions}</td><td>{w.manual_tasks}</td><td>{w.production_orders}</td><td><strong>{w.total_open_work}</strong></td></tr>)}</tbody></table></div>}
+    </div>
 
-      <div className="nfos-card">
-        <h2>Add team profile</h2><p className="nfos-muted">This creates an operational profile for assignments. It does not create a login yet.</p>
-        <form className="nfos-form" onSubmit={createMember}>
-          <div className="nfos-field full"><label>Name</label><input required value={memberForm.displayName} onChange={(e) => setMemberForm({ ...memberForm, displayName:e.target.value })} /></div>
-          <div className="nfos-field full"><label>Email</label><input type="email" value={memberForm.email} onChange={(e) => setMemberForm({ ...memberForm, email:e.target.value })} /></div>
-          <div className="nfos-field full"><label>Roles</label><RoleChoices value={memberForm.roles} onChange={(roles) => setMemberForm({ ...memberForm, roles })} /><div className="nfos-muted nfos-small">Choose one or more. Permissions are combined across all selected roles.</div></div>
-          <div className="nfos-field"><label>Default location</label><select value={memberForm.defaultLocationId} onChange={(e) => setMemberForm({ ...memberForm, defaultLocationId:e.target.value })}><option value="">None</option>{locations.filter((l) => l.active).map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}</select></div>
-          <div className="nfos-field full"><label>Notes</label><textarea value={memberForm.notes} onChange={(e) => setMemberForm({ ...memberForm, notes:e.target.value })} /></div>
-          <div className="nfos-field full"><button className="nfos-btn">Create team profile</button></div>
-        </form>
-      </div>
+    <div className="nfos-card nfos-team-profile-card">
+      <h2>Add team profile</h2>
+      <p className="nfos-muted">Create the person's NFOS profile here. After saving, use the Team directory to send their login or password setup email.</p>
+      <form className="nfos-form nfos-team-profile-form" onSubmit={createMember}>
+        <div className="nfos-field full"><label>Name</label><input required value={memberForm.displayName} onChange={(e) => setMemberForm({ ...memberForm, displayName:e.target.value })} /></div>
+        <div className="nfos-field full"><label>Email</label><input type="email" value={memberForm.email} onChange={(e) => setMemberForm({ ...memberForm, email:e.target.value })} /></div>
+        <div className="nfos-field full"><label>Roles</label><RoleChoices value={memberForm.roles} onChange={(roles) => setMemberForm({ ...memberForm, roles })} /><div className="nfos-muted nfos-small">Choose one or more roles. NFOS combines the permissions from every selected role.</div></div>
+        <div className="nfos-field"><label>Default location</label><select value={memberForm.defaultLocationId} onChange={(e) => setMemberForm({ ...memberForm, defaultLocationId:e.target.value })}><option value="">None</option>{locations.filter((l) => l.active).map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}</select></div>
+        <div className="nfos-field full"><label>Notes</label><textarea value={memberForm.notes} onChange={(e) => setMemberForm({ ...memberForm, notes:e.target.value })} /></div>
+        <div className="nfos-field full"><button className="nfos-btn">Create team profile</button></div>
+      </form>
     </div>
 
     <div className="nfos-card">

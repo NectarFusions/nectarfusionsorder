@@ -523,6 +523,43 @@ export async function createProductionOrderWithPlan(input) {
   );
 }
 
+export async function listProductionOrderOutputs(productionOrderId) {
+  return take(
+    supabase
+      .from("nfos_production_order_outputs")
+      .select("id,production_order_id,finished_item_id,quantity_planned,notes")
+      .eq("production_order_id", productionOrderId)
+      .order("created_at")
+  );
+}
+
+export async function updateProductionOrderWithPlan(input) {
+  return take(
+    supabase.rpc("nfos_update_production_order_with_plan", {
+      p_production_order_id: input.productionOrderId,
+      p_recipe_id: input.recipeId,
+      p_planned_quantity: Number(input.plannedQuantity),
+      p_texture: input.texture || "regular",
+      p_outputs: (input.outputs || []).map((row) => ({
+        item_id: row.item_id,
+        quantity: Number(row.quantity),
+        notes: row.notes?.trim() || null,
+      })),
+      p_due_date: input.dueDate || null,
+      p_priority: input.priority || "normal",
+      p_notes: input.notes?.trim() || null,
+    })
+  );
+}
+
+export async function deleteProductionOrder(productionOrderId) {
+  return take(
+    supabase.rpc("nfos_delete_production_order", {
+      p_production_order_id: productionOrderId,
+    })
+  );
+}
+
 export async function listBatches() {
   return take(
     supabase
