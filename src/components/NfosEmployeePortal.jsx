@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import * as nfos from "../lib/nfosApi";
+import useNfosResponsiveTables from "../lib/useNfosResponsiveTables";
 import NfosSystemHealth from "./NfosSystemHealth";
 import NfosReports from "./NfosReports";
 import NfosMarkets from "./NfosMarkets";
@@ -628,6 +629,7 @@ function AccessPanel({ access }) {
 }
 
 export default function NfosEmployeePortal({ session, access, onSignOut }) {
+  useNfosResponsiveTables();
   const permissions=useMemo(()=>new Set(access?.permissions || []),[access]);
   const tabs=useMemo(()=>{
     const rows=[["work","My Work"],["notifications","Notifications"]];

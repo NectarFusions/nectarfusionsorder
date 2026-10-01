@@ -10,6 +10,7 @@ import NfosPurchasing from "../components/NfosPurchasing";
 import { NfosTodayDashboard, NfosOperationsCalendar } from "../components/NfosActionDashboard";
 import NfosTeamAccountability from "../components/NfosTeamAccountability";
 import NfosEmployeePortal from "../components/NfosEmployeePortal";
+import useNfosResponsiveTables from "../lib/useNfosResponsiveTables";
 import "../styles/nfos.css";
 
 const TABS = [
@@ -337,6 +338,7 @@ function History({ transactions, items, locations, lots }) {
 }
 
 export default function AdminOperationsPage() {
+  useNfosResponsiveTables();
   const [authState,setAuthState]=useState("loading"); const [session,setSession]=useState(null);
   const [employeeAccess,setEmployeeAccess]=useState(null);
   const [tab,setTab]=useState("overview"); const [busy,setBusy]=useState(false); const [error,setError]=useState("");
