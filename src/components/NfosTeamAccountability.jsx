@@ -97,6 +97,7 @@ export default function NfosTeamAccountability() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [inviteBusy, setInviteBusy] = useState("");
+  const [deleteBusy, setDeleteBusy] = useState("");
 
   const load = useCallback(async () => {
     setBusy(true); setError("");
@@ -134,6 +135,23 @@ export default function NfosTeamAccountability() {
       setError(err?.message || "Could not send the employee invitation.");
     } finally { setInviteBusy(""); }
   };
+
+  const deleteMember = async (member) => {
+    const confirmed = window.confirm(
+      `Delete ${member.display_name} from NFOS?\n\nThis removes their NFOS login access and unassigns active work. Historical activity will be preserved.`
+    );
+    if (!confirmed) return;
+
+    setError(""); setMessage(""); setDeleteBusy(member.id);
+    try {
+      const result = await nfos.deleteTeamMember(member.id);
+      setMessage(result?.message || `${member.display_name} was deleted from NFOS.`);
+      await load();
+    } catch (err) {
+      setError(err?.message || "Could not delete the team member.");
+    } finally { setDeleteBusy(""); }
+  };
+
 
   const [taskForm, setTaskForm] = useState({ title:"", detail:"", category:"general", priority:"normal", dueDate:"", assignedMemberId:"", notes:"" });
   const createTask = async (e) => {
@@ -229,8 +247,49 @@ export default function NfosTeamAccountability() {
     </div>
 
     <div className="nfos-card">
-      <h2>Team directory</h2><p className="nfos-muted">Login-linked means the profile is connected to an individual authenticated account. Profile-only members can be assigned work now but cannot sign in yet.</p>
-      <div className="nfos-table-wrap"><table className="nfos-table nfos-team-mobile-table nfos-team-directory-table"><thead><tr><th>Name</th><th>Role</th><th>Email</th><th>Login</th><th>Default location</th><th>Status</th><th>Access</th></tr></thead><tbody>{members.map((m) => <tr key={m.id}><td><strong>{m.display_name}</strong></td><td>{roleLabel(m.role)}</td><td>{m.email || "—"}</td><td><span className={`nfos-pill ${m.login_linked ? "ok" : ""}`}>{m.login_linked ? "Linked" : "Profile only"}</span></td><td>{m.default_location_name || "—"}</td><td>{m.active ? "Active" : "Inactive"}</td><td>{m.login_linked ? <span className="nfos-pill ok">Login ready</span> : <button className="nfos-btn ghost" type="button" disabled={!m.active || !m.email || inviteBusy===m.id} onClick={()=>inviteMember(m)}>{inviteBusy===m.id ? "Sending…" : m.email ? "Send invite" : "Add email first"}</button>}</td></tr>)}</tbody></table></div>
+      <h2>Team directory</h2><p className="nfos-muted">Invite status reflects the employee's actual Supabase login state. Pending invitations can be resent at any time.</p>
+      <div className="nfos-table-wrap"><table className="nfos-table nfos-team-mobile-table nfos-team-directory-table">
+        <thead><tr><th>Name</th><th>Role</th><th>Email</th><th>Login</th><th>Default location</th><th>Status</th><th>Access</th><th>Actions</th></tr></thead>
+        <tbody>{members.map((m) => {
+          const loginReady = m.auth_status === "login_ready";
+          const inviteSent = m.auth_status === "invite_sent";
+          const linkedUnconfirmed = m.auth_status === "linked_unconfirmed";
+          const accountMissing = m.auth_status === "account_missing";
+          const loginLabel = loginReady ? "Login ready" : inviteSent ? "Invite sent" : linkedUnconfirmed ? "Invite pending" : accountMissing ? "Account missing" : "Not invited";
+          const loginClass = loginReady ? "ok" : accountMissing ? "low" : "";
+          const canInvite = !accountMissing && !loginReady;
+
+          return <tr key={m.id}>
+            <td><strong>{m.display_name}</strong></td>
+            <td>{roleLabel(m.role)}</td>
+            <td>{m.email || "—"}</td>
+            <td>
+              <span className={`nfos-pill ${loginClass}`}>{loginLabel}</span>
+              {inviteSent && m.invite_sent_at && <div className="nfos-muted nfos-small">Sent {fmtDateTime(m.invite_sent_at)}</div>}
+            </td>
+            <td>{m.default_location_name || "—"}</td>
+            <td>{m.active ? "Active" : "Inactive"}</td>
+            <td>
+              {loginReady ? <span className="nfos-pill ok">Login ready</span> :
+                accountMissing ? <span className="nfos-pill low">Repair needed</span> :
+                <button className="nfos-btn ghost" type="button"
+                  disabled={!m.active || !m.email || !canInvite || inviteBusy===m.id}
+                  onClick={()=>inviteMember(m)}>
+                  {inviteBusy===m.id ? "Sending…" : inviteSent || linkedUnconfirmed ? "Resend invite" : m.email ? "Send invite" : "Add email first"}
+                </button>}
+            </td>
+            <td>
+              {m.can_delete ?
+                <button className="nfos-btn ghost" type="button"
+                  disabled={deleteBusy===m.id}
+                  onClick={()=>deleteMember(m)}>
+                  {deleteBusy===m.id ? "Deleting…" : "Delete"}
+                </button> :
+                <span className="nfos-muted nfos-small">Protected</span>}
+            </td>
+          </tr>;
+        })}</tbody>
+      </table></div>
     </div>
 
     <div className="nfos-card">

@@ -963,6 +963,22 @@ export async function inviteTeamMember(memberId) {
   return data;
 }
 
+
+export async function deleteTeamMember(memberId) {
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+  const token = sessionData?.session?.access_token;
+  if (!token) throw new Error("Your admin session has expired. Sign in again before deleting a team member.");
+
+  const { data, error } = await supabase.functions.invoke("nfos-team-member-admin", {
+    body: { action: "delete", memberId },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (error) throw error;
+  if (data?.error) throw new Error(data.error);
+  return data;
+}
+
 export async function updateMyPassword(password) {
   const { data, error } = await supabase.auth.updateUser({ password });
   if (error) throw error;
