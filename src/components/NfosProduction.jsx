@@ -889,7 +889,7 @@ export function ProductionModule({ items, locations, lots, onRefresh }) {
   </>;
 }
 
-export function TraceabilityModule({ items, lots }) {
+export function TraceabilityModule({ items, lots, initialBatchId = "" }) {
   const [batches, setBatches] = useState([]);
   const [selectedId, setSelectedId] = useState("");
   const [inputs, setInputs] = useState([]);
@@ -908,6 +908,7 @@ export function TraceabilityModule({ items, lots }) {
     catch (err) { setError(err?.message || "Could not load traceability."); }
   }, []);
   useEffect(() => { loadBatches(); }, [loadBatches]);
+  useEffect(() => { if (initialBatchId) setSelectedId(initialBatchId); }, [initialBatchId]);
   useEffect(() => {
     if (!selectedId) { setInputs([]); setOutputs([]); setQuality([]); return; }
     Promise.all([nfos.listBatchInputs(selectedId), nfos.listBatchOutputs(selectedId), nfos.listQualityChecks(selectedId)])

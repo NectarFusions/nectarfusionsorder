@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import NfosBarcode from "../components/NfosBarcode";
+import NfosCameraScanner from "../components/NfosCameraScanner";
 import { ProductionModule, RecipesModule, TraceabilityModule } from "../components/NfosProduction";
 import * as nfos from "../lib/nfosApi";
 import NfosSystemHealth from "../components/NfosSystemHealth";
@@ -320,17 +321,139 @@ function Suppliers({ suppliers, onDone }) {
   return <div className="nfos-grid two"><div className="nfos-card"><h2>Suppliers</h2><div className="nfos-table-wrap"><table className="nfos-table"><thead><tr><th>Supplier</th><th>Code</th><th>Category</th><th>Preferred</th></tr></thead><tbody>{suppliers.map(x=><tr key={x.id}><td><strong>{x.name}</strong><div className="nfos-muted nfos-small">{x.email||x.phone||""}</div></td><td>{x.vendor_code||"—"}</td><td>{x.category||"—"}</td><td>{x.preferred?"Yes":""}</td></tr>)}</tbody></table></div></div><div className="nfos-card"><h2>Add supplier</h2>{error&&<div className="nfos-error">{error}</div>}{message&&<div className="nfos-success">{message}</div>}<form className="nfos-form" onSubmit={submit}><div className="nfos-field full"><label>Supplier name</label><input required value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/></div><div className="nfos-field"><label>Vendor code</label><input value={form.vendorCode} onChange={e=>setForm({...form,vendorCode:e.target.value})}/></div><div className="nfos-field"><label>Category</label><input value={form.category} onChange={e=>setForm({...form,category:e.target.value})}/></div><div className="nfos-field"><label>Contact</label><input value={form.contactName} onChange={e=>setForm({...form,contactName:e.target.value})}/></div><div className="nfos-field"><label>Phone</label><input value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/></div><div className="nfos-field full"><label>Email</label><input type="email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})}/></div><div className="nfos-field full"><label>Products supplied</label><input value={form.productsSupplied} onChange={e=>setForm({...form,productsSupplied:e.target.value})}/></div><div className="nfos-field full"><label>Notes</label><textarea value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})}/></div><div className="nfos-field full"><button className="nfos-btn">Create supplier</button></div></form></div></div>;
 }
 
-function Barcodes({ items, lots, initial, clearInitial }) {
-  const [scan,setScan]=useState(""); const [found,setFound]=useState(null); const [error,setError]=useState(""); const inputRef=useRef(null);
+function Barcodes({ items, lots, initial, clearInitial, onFoundEntity }) {
+  const [scan,setScan]=useState("");
+  const [found,setFound]=useState(null);
+  const [error,setError]=useState("");
+  const [lookupBusy,setLookupBusy]=useState(false);
+  const [cameraOpen,setCameraOpen]=useState(false);
+  const inputRef=useRef(null);
   const [selectedItemId,setSelectedItemId]=useState("");
-  useEffect(()=>{ if(initial?.barcode_value){setFound({entity_type:"item",entity_id:initial.item_id||initial.id,barcode_value:initial.barcode_value,label:initial.name,subtitle:initial.sku});setSelectedItemId(initial.item_id||initial.id);clearInitial?.();} },[initial,clearInitial]);
+
+  useEffect(()=>{
+    if(initial?.barcode_value){
+      setFound({
+        entity_type:"item",
+        entity_id:initial.item_id||initial.id,
+        barcode_value:initial.barcode_value,
+        label:initial.name,
+        subtitle:initial.sku
+      });
+      setSelectedItemId(initial.item_id||initial.id);
+      clearInitial?.();
+    }
+  },[initial,clearInitial]);
+
   useEffect(()=>{inputRef.current?.focus();},[]);
-  const lookup=async(e)=>{e?.preventDefault();setError("");try{const result=await nfos.lookupBarcode(scan);if(!result){setFound(null);setError("Barcode not found.");}else{setFound(result);}setScan("");}catch(err){setError(err?.message||"Could not look up barcode.");}};
+
+  const lookupValue=async(value,{source="manual"}={})=>{
+    const code=String(value||"").trim();
+    if(!code)return;
+
+    setError("");
+    setLookupBusy(true);
+    try{
+      const result=await nfos.lookupBarcode(code);
+      if(!result){
+        setFound(null);
+        setError(`Barcode ${code} was not found in NFOS.`);
+        return;
+      }
+
+      setFound(result);
+      if(source==="camera") onFoundEntity?.(result);
+    }catch(err){
+      setError(err?.message||"Could not look up barcode.");
+    }finally{
+      setLookupBusy(false);
+    }
+  };
+
+  const lookup=async(e)=>{
+    e?.preventDefault();
+    const code=scan;
+    setScan("");
+    await lookupValue(code);
+  };
+
+  const cameraDetected=async(value)=>{
+    setCameraOpen(false);
+    setScan(value);
+    await lookupValue(value,{source:"camera"});
+    setScan("");
+  };
+
   const selected=items.find(x=>x.id===selectedItemId);
-  return <><div className="nfos-card"><h2>Scan / look up</h2><p className="nfos-muted">USB and Bluetooth barcode scanners that act like a keyboard work here immediately. Scan the code and press Enter.</p><form className="nfos-scan" onSubmit={lookup}><input ref={inputRef} value={scan} onChange={e=>setScan(e.target.value)} placeholder="Scan or type NFOS barcode…"/><button className="nfos-btn">Look up</button></form>{error&&<div className="nfos-error" style={{marginTop:12}}>{error}</div>}{found&&<div style={{marginTop:16}}><NfosBarcode value={found.barcode_value} title={found.label} subtitle={found.subtitle}/></div>}</div>
-    <div className="nfos-grid two"><div className="nfos-card"><h2>Item labels</h2><div className="nfos-field"><label>Choose item</label><select value={selectedItemId} onChange={e=>setSelectedItemId(e.target.value)}><option value="">Choose item…</option>{items.filter(x=>x.active).map(x=><option key={x.id} value={x.id}>{x.sku} — {x.name}</option>)}</select></div>{selected&&<div style={{marginTop:16}}><NfosBarcode value={selected.barcode_value} title={selected.name} subtitle={selected.sku}/></div>}</div><div className="nfos-card"><h2>Lot labels</h2>{lots.length===0?<Empty>No lots have been received yet.</Empty>:<div className="nfos-table-wrap"><table className="nfos-table"><thead><tr><th>Lot</th><th>Received</th><th>Label</th></tr></thead><tbody>{lots.slice(0,40).map(l=>{const item=items.find(i=>i.id===l.item_id);return <tr key={l.id}><td><strong>{l.lot_code}</strong><div className="nfos-muted nfos-small">{item?.name||""}</div></td><td>{l.received_at?new Date(l.received_at).toLocaleDateString():"—"}</td><td><NfosBarcode compact value={l.barcode_value} /></td></tr>})}</tbody></table></div>}</div></div>
-    <div className="nfos-note">NFOS barcodes are internal Code 128 operational identifiers. They are not GS1 retail UPC/GTIN codes for grocery checkout. We can add GS1 mapping later without changing the internal NFOS IDs.</div></>;
+  const entityLabel=found?.entity_type==="batch"?"Production batch":found?.entity_type==="lot"?"Inventory lot":found?.entity_type==="item"?"NFOS item":"NFOS record";
+
+  return <>
+    <div className="nfos-card">
+      <div className="nfos-split-head">
+        <div>
+          <h2>Scan / look up</h2>
+          <p className="nfos-muted">Use your phone camera, a USB/Bluetooth scanner, or type an NFOS barcode manually.</p>
+        </div>
+        <button className="nfos-btn" type="button" onClick={()=>setCameraOpen((open)=>!open)}>
+          {cameraOpen?"Close camera":"Scan with phone camera"}
+        </button>
+      </div>
+
+      {cameraOpen&&<NfosCameraScanner onDetected={cameraDetected} onClose={()=>setCameraOpen(false)}/>}
+
+      <form className="nfos-scan" onSubmit={lookup} style={{marginTop:cameraOpen?14:0}}>
+        <input
+          ref={inputRef}
+          value={scan}
+          onChange={e=>setScan(e.target.value)}
+          placeholder="Scan or type NFOS barcode…"
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck="false"
+        />
+        <button className="nfos-btn" disabled={lookupBusy}>{lookupBusy?"Looking up…":"Look up"}</button>
+      </form>
+
+      {error&&<div className="nfos-error" style={{marginTop:12}}>{error}</div>}
+
+      {found&&<div className="nfos-scan-result">
+        <div className="nfos-split-head">
+          <div>
+            <span className="nfos-pill ok">{entityLabel}</span>
+            <h3 style={{margin:"8px 0 3px"}}>{found.label}</h3>
+            <div className="nfos-muted">{found.subtitle||""}</div>
+          </div>
+          <div className="nfos-mono">{found.barcode_value}</div>
+        </div>
+        <div style={{marginTop:14}}>
+          <NfosBarcode value={found.barcode_value} title={found.label} subtitle={found.subtitle}/>
+        </div>
+        {found.entity_type==="batch"&&<div className="nfos-note" style={{marginTop:12}}>Batch scans from the phone camera open this batch directly in Traceability.</div>}
+      </div>}
+    </div>
+
+    <div className="nfos-grid two">
+      <div className="nfos-card">
+        <h2>Item labels</h2>
+        <div className="nfos-field">
+          <label>Choose item</label>
+          <select value={selectedItemId} onChange={e=>setSelectedItemId(e.target.value)}>
+            <option value="">Choose item…</option>
+            {items.filter(x=>x.active).map(x=><option key={x.id} value={x.id}>{x.sku} — {x.name}</option>)}
+          </select>
+        </div>
+        {selected&&<div style={{marginTop:16}}><NfosBarcode value={selected.barcode_value} title={selected.name} subtitle={selected.sku}/></div>}
+      </div>
+
+      <div className="nfos-card">
+        <h2>Lot labels</h2>
+        {lots.length===0?<Empty>No lots have been received yet.</Empty>:<div className="nfos-table-wrap"><table className="nfos-table"><thead><tr><th>Lot</th><th>Received</th><th>Label</th></tr></thead><tbody>{lots.slice(0,40).map(l=>{const item=items.find(i=>i.id===l.item_id);return <tr key={l.id}><td><strong>{l.lot_code}</strong><div className="nfos-muted nfos-small">{item?.name||""}</div></td><td>{l.received_at?new Date(l.received_at).toLocaleDateString():"—"}</td><td><NfosBarcode compact value={l.barcode_value} /></td></tr>})}</tbody></table></div>}
+      </div>
+    </div>
+
+    <div className="nfos-note">NFOS barcodes are internal Code 128 operational identifiers. Phone scanning recognizes item, lot and production-batch barcodes. They are not GS1 retail UPC/GTIN codes for grocery checkout.</div>
+  </>;
 }
+
 
 function History({ transactions, items, locations, lots }) {
   const itemMap=useMemo(()=>Object.fromEntries(items.map(x=>[x.id,x])),[items]); const locMap=useMemo(()=>Object.fromEntries(locations.map(x=>[x.id,x])),[locations]); const lotMap=useMemo(()=>Object.fromEntries(lots.map(x=>[x.id,x])),[lots]);
@@ -344,6 +467,7 @@ export default function AdminOperationsPage() {
   const [tab,setTab]=useState("overview"); const [busy,setBusy]=useState(false); const [error,setError]=useState("");
   const [inventory,setInventory]=useState([]),[lowStock,setLowStock]=useState([]),[items,setItems]=useState([]),[locations,setLocations]=useState([]),[suppliers,setSuppliers]=useState([]),[lots,setLots]=useState([]),[transactions,setTransactions]=useState([]);
   const [barcodeInitial,setBarcodeInitial]=useState(null);
+  const [traceabilityInitialBatchId,setTraceabilityInitialBatchId]=useState("");
 
   const refresh=useCallback(async()=>{setBusy(true);setError("");try{const [inventoryRows,lowRows,itemRows,locationRows,supplierRows,lotRows,txRows]=await Promise.all([nfos.listInventory(),nfos.listLowStock(),nfos.listItems(),nfos.listLocations(),nfos.listSuppliers(),nfos.listLots(),nfos.listTransactions()]);setInventory(inventoryRows||[]);setLowStock(lowRows||[]);setItems(itemRows||[]);setLocations(locationRows||[]);setSuppliers(supplierRows||[]);setLots(lotRows||[]);setTransactions(txRows||[]);}catch(err){setError(err?.message||"Could not load NFOS.");}finally{setBusy(false);}},[]);
 
@@ -351,6 +475,7 @@ export default function AdminOperationsPage() {
   useEffect(()=>{if(authState==="ready") refresh();},[authState,refresh]);
 
   const chooseBarcode=(row)=>{setBarcodeInitial(row);setTab("barcodes");};
+  const handleScannedEntity=(found)=>{if(found?.entity_type==="batch"){setTraceabilityInitialBatchId(found.entity_id);setTab("traceability");}};
   const logout=async()=>{await nfos.signOutAdmin();setSession(null);setEmployeeAccess(null);setAuthState("signed_out");};
 
   if(authState==="loading") return <div className="nfos-login"><div className="nfos-login-card"><h2>Loading NFOS…</h2></div></div>;
@@ -372,8 +497,8 @@ export default function AdminOperationsPage() {
     purchasing:<NfosPurchasing locations={locations} onInventoryChanged={refresh}/>,
     recipes:<RecipesModule items={items} onRefresh={refresh}/>,
     production:<ProductionModule items={items} locations={locations} lots={lots} onRefresh={refresh}/>,
-    traceability:<TraceabilityModule items={items} lots={lots}/>,
-    barcodes:<Barcodes items={items} lots={lots} initial={barcodeInitial} clearInitial={()=>setBarcodeInitial(null)}/>,
+    traceability:<TraceabilityModule items={items} lots={lots} initialBatchId={traceabilityInitialBatchId}/>,
+    barcodes:<Barcodes items={items} lots={lots} initial={barcodeInitial} clearInitial={()=>setBarcodeInitial(null)} onFoundEntity={handleScannedEntity}/>,
     history:<History transactions={transactions} items={items} locations={locations} lots={lots}/>,
     reports:<NfosReports onOpenRoute={setTab}/>,
     health:<NfosSystemHealth onOpenRoute={setTab}/>,
