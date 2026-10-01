@@ -15,6 +15,10 @@ const roleLabel = (value) => ({
   purchasing_operator: "Purchasing Operator",
   viewer: "Viewer",
 }[value] || value || "Team Member");
+const roleLabels = (roles, fallback) => {
+  const values = Array.isArray(roles) && roles.length ? roles : [fallback].filter(Boolean);
+  return values.map(roleLabel).join(" + ") || "Team Member";
+};
 
 const qty = (value) => {
   const n = Number(value || 0);
@@ -623,7 +627,7 @@ function AccessPanel({ access }) {
   };
 
   return <div className="nfos-grid two">
-    <div className="nfos-card"><h2>My NFOS access</h2><div className="nfos-note"><strong>{roleLabel(access?.role)}</strong><br/>The portal only renders areas your role is authorized to use. Every write action is also permission-checked again on the server.</div><div className="nfos-permission-list">{(access?.permissions || []).map((p)=><span className="nfos-pill" key={p}>{p.replaceAll("_"," ")}</span>)}</div></div>
+    <div className="nfos-card"><h2>My NFOS access</h2><div className="nfos-note"><strong>{roleLabels(access?.roles, access?.role)}</strong><br/>The portal combines permissions from all of your assigned roles and only renders areas those roles are authorized to use. Every write action is also permission-checked again on the server.</div><div className="nfos-permission-list">{(access?.permissions || []).map((p)=><span className="nfos-pill" key={p}>{p.replaceAll("_"," ")}</span>)}</div></div>
     <div className="nfos-card"><h2>Change password</h2>{error&&<div className="nfos-error">{error}</div>}{message&&<div className="nfos-success">{message}</div>}<form className="nfos-form" onSubmit={savePassword}><div className="nfos-field full"><label>New password</label><input type="password" minLength="8" required value={password} onChange={(e)=>setPassword(e.target.value)}/></div><div className="nfos-field full"><label>Confirm password</label><input type="password" minLength="8" required value={confirm} onChange={(e)=>setConfirm(e.target.value)}/></div><div className="nfos-field full"><button className="nfos-btn" disabled={busy}>Save password</button></div></form></div>
   </div>;
 }
@@ -679,7 +683,7 @@ export default function NfosEmployeePortal({ session, access, onSignOut }) {
 
   return <div className="nfos-shell">
     <header className="nfos-topbar"><div className="nfos-topbar-inner">
-      <div className="nfos-brand"><div className="nfos-mark">NF</div><div><div className="nfos-brand-title">NECTARFUSIONS OPERATIONS</div><div className="nfos-brand-sub">{roleLabel(access?.role)}</div></div></div>
+      <div className="nfos-brand"><div className="nfos-mark">NF</div><div><div className="nfos-brand-title">NECTARFUSIONS OPERATIONS</div><div className="nfos-brand-sub">{roleLabels(access?.roles, access?.role)}</div></div></div>
       <div className="nfos-inline-actions top-actions"><span className="nfos-muted nfos-small">{session?.user?.email}</span><button className="nfos-btn ghost" onClick={onSignOut}>Sign out</button></div>
     </div></header>
 
@@ -689,7 +693,7 @@ export default function NfosEmployeePortal({ session, access, onSignOut }) {
         <nav className="nfos-nav">{tabs.map(([key,label])=><button key={key} className={tab===key ? "active" : ""} onClick={()=>setTab(key)}>{label}{key==="work" && work.length ? ` (${work.length})` : ""}</button>)}</nav>
       </aside>
       <main className="nfos-main">
-        <div className="nfos-page-head"><div><h1>{tabs.find((x)=>x[0]===tab)?.[1] || "My Work"}</h1><p>Hi, {access?.display_name || "Team Member"} · {roleLabel(access?.role)}</p></div></div>
+        <div className="nfos-page-head"><div><h1>{tabs.find((x)=>x[0]===tab)?.[1] || "My Work"}</h1><p>Hi, {access?.display_name || "Team Member"} · {roleLabels(access?.roles, access?.role)}</p></div></div>
         {error&&<div className="nfos-error">{error}</div>}
         {message&&<div className="nfos-success">{message}</div>}
 

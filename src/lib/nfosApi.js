@@ -871,12 +871,21 @@ export async function listOpenProductionOrdersForTeam() {
 }
 
 export async function createTeamMember(form) {
-  const { data, error } = await supabase.rpc("nfos_create_team_member", {
+  const { data, error } = await supabase.rpc("nfos_create_team_member_v2", {
     p_display_name: form.displayName?.trim(),
     p_email: form.email?.trim() || null,
-    p_role: form.role || "viewer",
+    p_roles: Array.isArray(form.roles) && form.roles.length ? form.roles : ["viewer"],
     p_default_location_id: form.defaultLocationId || null,
     p_notes: form.notes?.trim() || null,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function setTeamMemberRoles(memberId, roles) {
+  const { data, error } = await supabase.rpc("nfos_set_team_member_roles", {
+    p_member_id: memberId,
+    p_roles: roles,
   });
   if (error) throw error;
   return data;

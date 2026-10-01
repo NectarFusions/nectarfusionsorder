@@ -11,6 +11,32 @@ const ROLES = [
 ];
 
 const roleLabel = (value) => ROLES.find(([key]) => key === value)?.[1] || value || "—";
+const assignableRoles = ROLES.filter(([key]) => key !== "owner");
+const memberRoles = (member) => Array.isArray(member?.roles) && member.roles.length ? member.roles : [member?.role].filter(Boolean);
+const roleLabels = (roles, fallback) => {
+  const values = Array.isArray(roles) && roles.length ? roles : [fallback].filter(Boolean);
+  return values.map(roleLabel).join(" + ") || "—";
+};
+
+function RoleChoices({ value = [], onChange, disabled = false }) {
+  const selected = new Set(value);
+  return <div className="nfos-inline-actions" style={{ flexWrap: "wrap", alignItems: "center" }}>
+    {assignableRoles.map(([key, label]) => <label key={key} className="nfos-small" style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
+      <input
+        type="checkbox"
+        checked={selected.has(key)}
+        disabled={disabled}
+        onChange={(e) => {
+          const next = e.target.checked
+            ? [...value, key]
+            : value.filter((role) => role !== key);
+          onChange(next);
+        }}
+      />
+      {label}
+    </label>)}
+  </div>;
+}
 const fmtDate = (value) => {
   if (!value) return "—";
   const raw = String(value).slice(0, 10);
@@ -33,7 +59,7 @@ function StatusPill({ value }) {
 function MemberSelect({ members, value, onChange, includeBlank = true }) {
   return <select value={value || ""} onChange={(e) => onChange(e.target.value)}>
     {includeBlank && <option value="">Unassigned</option>}
-    {members.filter((m) => m.active).map((m) => <option key={m.id} value={m.id}>{m.display_name} — {roleLabel(m.role)}</option>)}
+    {members.filter((m) => m.active).map((m) => <option key={m.id} value={m.id}>{m.display_name} — {roleLabels(m.roles, m.role)}</option>)}
   </select>;
 }
 
@@ -98,6 +124,9 @@ export default function NfosTeamAccountability() {
   const [message, setMessage] = useState("");
   const [inviteBusy, setInviteBusy] = useState("");
   const [deleteBusy, setDeleteBusy] = useState("");
+  const [roleEditId, setRoleEditId] = useState("");
+  const [roleDraft, setRoleDraft] = useState([]);
+  const [roleBusy, setRoleBusy] = useState("");
 
   const load = useCallback(async () => {
     setBusy(true); setError("");
@@ -114,12 +143,12 @@ export default function NfosTeamAccountability() {
 
   useEffect(() => { load(); }, [load]);
 
-  const [memberForm, setMemberForm] = useState({ displayName:"", email:"", role:"production_operator", defaultLocationId:"", notes:"" });
+  const [memberForm, setMemberForm] = useState({ displayName:"", email:"", roles:["production_operator"], defaultLocationId:"", notes:"" });
   const createMember = async (e) => {
     e.preventDefault(); setError(""); setMessage("");
     try {
       await nfos.createTeamMember(memberForm);
-      setMemberForm({ displayName:"", email:"", role:"production_operator", defaultLocationId:"", notes:"" });
+      setMemberForm({ displayName:"", email:"", roles:["production_operator"], defaultLocationId:"", notes:"" });
       setMessage("Team profile created. Use Send invite in the directory when you are ready to give this person an individual NFOS login.");
       await load();
     } catch (err) { setError(err?.message || "Could not create team member."); }
@@ -152,6 +181,31 @@ export default function NfosTeamAccountability() {
     } finally { setDeleteBusy(""); }
   };
 
+
+  const startRoleEdit = (member) => {
+    setError("");
+    setMessage("");
+    setRoleEditId(member.id);
+    setRoleDraft(memberRoles(member).filter((role) => role !== "owner"));
+  };
+
+  const saveMemberRoles = async (member) => {
+    if (!roleDraft.length) {
+      setError("Select at least one role.");
+      return;
+    }
+
+    setError(""); setMessage(""); setRoleBusy(member.id);
+    try {
+      const result = await nfos.setTeamMemberRoles(member.id, roleDraft);
+      setMessage(`${member.display_name} roles updated to ${roleLabels(result?.roles || roleDraft)}.`);
+      setRoleEditId("");
+      setRoleDraft([]);
+      await load();
+    } catch (err) {
+      setError(err?.message || "Could not update team roles.");
+    } finally { setRoleBusy(""); }
+  };
 
   const [taskForm, setTaskForm] = useState({ title:"", detail:"", category:"general", priority:"normal", dueDate:"", assignedMemberId:"", notes:"" });
   const createTask = async (e) => {
@@ -197,7 +251,7 @@ export default function NfosTeamAccountability() {
     <div className="nfos-grid two nfos-team-grid">
       <div className="nfos-card">
         <h2>Team workload</h2><p className="nfos-muted">Open work currently assigned across NFOS.</p>
-        {!workload.length ? <Empty>No active team profiles.</Empty> : <div className="nfos-table-wrap"><table className="nfos-table"><thead><tr><th>Team member</th><th>Role</th><th>Actions</th><th>Tasks</th><th>Production</th><th>Total</th></tr></thead><tbody>{workload.map((w) => <tr key={w.member_id}><td><strong>{w.display_name}</strong></td><td>{roleLabel(w.role)}</td><td>{w.assigned_actions}</td><td>{w.manual_tasks}</td><td>{w.production_orders}</td><td><strong>{w.total_open_work}</strong></td></tr>)}</tbody></table></div>}
+        {!workload.length ? <Empty>No active team profiles.</Empty> : <div className="nfos-table-wrap"><table className="nfos-table"><thead><tr><th>Team member</th><th>Role</th><th>Actions</th><th>Tasks</th><th>Production</th><th>Total</th></tr></thead><tbody>{workload.map((w) => <tr key={w.member_id}><td><strong>{w.display_name}</strong></td><td>{roleLabels(w.roles, w.role)}</td><td>{w.assigned_actions}</td><td>{w.manual_tasks}</td><td>{w.production_orders}</td><td><strong>{w.total_open_work}</strong></td></tr>)}</tbody></table></div>}
       </div>
 
       <div className="nfos-card">
@@ -205,7 +259,7 @@ export default function NfosTeamAccountability() {
         <form className="nfos-form" onSubmit={createMember}>
           <div className="nfos-field full"><label>Name</label><input required value={memberForm.displayName} onChange={(e) => setMemberForm({ ...memberForm, displayName:e.target.value })} /></div>
           <div className="nfos-field full"><label>Email</label><input type="email" value={memberForm.email} onChange={(e) => setMemberForm({ ...memberForm, email:e.target.value })} /></div>
-          <div className="nfos-field"><label>Role</label><select value={memberForm.role} onChange={(e) => setMemberForm({ ...memberForm, role:e.target.value })}>{ROLES.map(([key,label]) => <option key={key} value={key}>{label}</option>)}</select></div>
+          <div className="nfos-field full"><label>Roles</label><RoleChoices value={memberForm.roles} onChange={(roles) => setMemberForm({ ...memberForm, roles })} /><div className="nfos-muted nfos-small">Choose one or more. Permissions are combined across all selected roles.</div></div>
           <div className="nfos-field"><label>Default location</label><select value={memberForm.defaultLocationId} onChange={(e) => setMemberForm({ ...memberForm, defaultLocationId:e.target.value })}><option value="">None</option>{locations.filter((l) => l.active).map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}</select></div>
           <div className="nfos-field full"><label>Notes</label><textarea value={memberForm.notes} onChange={(e) => setMemberForm({ ...memberForm, notes:e.target.value })} /></div>
           <div className="nfos-field full"><button className="nfos-btn">Create team profile</button></div>
@@ -247,9 +301,9 @@ export default function NfosTeamAccountability() {
     </div>
 
     <div className="nfos-card">
-      <h2>Team directory</h2><p className="nfos-muted">Invite status reflects the employee's actual Supabase login state. Pending invitations can be resent at any time.</p>
+      <h2>Team directory</h2><p className="nfos-muted">Each person can hold multiple NFOS roles. Their access is the combined permission set from every assigned role. Invite status reflects the employee's actual Supabase login state.</p>
       <div className="nfos-table-wrap"><table className="nfos-table nfos-team-mobile-table nfos-team-directory-table">
-        <thead><tr><th>Name</th><th>Role</th><th>Email</th><th>Login</th><th>Default location</th><th>Status</th><th>Access</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Name</th><th>Roles</th><th>Email</th><th>Login</th><th>Default location</th><th>Status</th><th>Access</th><th>Actions</th></tr></thead>
         <tbody>{members.map((m) => {
           const loginReady = m.auth_status === "login_ready";
           const inviteSent = m.auth_status === "invite_sent";
@@ -261,7 +315,7 @@ export default function NfosTeamAccountability() {
 
           return <tr key={m.id}>
             <td><strong>{m.display_name}</strong></td>
-            <td>{roleLabel(m.role)}</td>
+            <td><div className="nfos-inline-actions" style={{ flexWrap: "wrap" }}>{memberRoles(m).map((role) => <span className="nfos-pill" key={role}>{roleLabel(role)}</span>)}</div></td>
             <td>{m.email || "—"}</td>
             <td>
               <span className={`nfos-pill ${loginClass}`}>{loginLabel}</span>
@@ -279,13 +333,23 @@ export default function NfosTeamAccountability() {
                 </button>}
             </td>
             <td>
-              {m.can_delete ?
-                <button className="nfos-btn ghost" type="button"
-                  disabled={deleteBusy===m.id}
-                  onClick={()=>deleteMember(m)}>
-                  {deleteBusy===m.id ? "Deleting…" : "Delete"}
-                </button> :
-                <span className="nfos-muted nfos-small">Protected</span>}
+              {memberRoles(m).includes("owner") ? <span className="nfos-muted nfos-small">Protected</span> :
+                roleEditId===m.id ?
+                  <div style={{ minWidth: 260 }}>
+                    <RoleChoices value={roleDraft} onChange={setRoleDraft} disabled={roleBusy===m.id} />
+                    <div className="nfos-inline-actions" style={{ marginTop: 8 }}>
+                      <button className="nfos-btn secondary" type="button" disabled={!roleDraft.length || roleBusy===m.id} onClick={()=>saveMemberRoles(m)}>{roleBusy===m.id ? "Saving…" : "Save roles"}</button>
+                      <button className="nfos-btn ghost" type="button" disabled={roleBusy===m.id} onClick={()=>{setRoleEditId("");setRoleDraft([]);}}>Cancel</button>
+                    </div>
+                  </div> :
+                  <div className="nfos-inline-actions">
+                    <button className="nfos-btn ghost" type="button" onClick={()=>startRoleEdit(m)}>Edit roles</button>
+                    {m.can_delete && <button className="nfos-btn ghost" type="button"
+                      disabled={deleteBusy===m.id}
+                      onClick={()=>deleteMember(m)}>
+                      {deleteBusy===m.id ? "Deleting…" : "Delete"}
+                    </button>}
+                  </div>}
             </td>
           </tr>;
         })}</tbody>
