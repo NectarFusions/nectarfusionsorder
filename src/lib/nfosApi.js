@@ -963,12 +963,22 @@ export async function inviteTeamMember(memberId) {
   const token = sessionData?.session?.access_token;
   if (!token) throw new Error("Your admin session has expired. Sign in again before sending an invite.");
 
-  const { data, error } = await supabase.functions.invoke("nfos-team-invite", {
-    body: { memberId },
-    headers: { Authorization: `Bearer ${token}` },
+  const response = await fetch("/.netlify/functions/nfos-team-invite-direct", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ memberId }),
   });
-  if (error) throw error;
-  if (data?.error) throw new Error(data.error);
+
+  const data = await response.json().catch(() => null);
+  if (!response.ok || data?.error) {
+    const error = new Error(data?.error || `Invitation delivery failed (${response.status}).`);
+    if (data?.hint) error.hint = data.hint;
+    throw error;
+  }
+
   return data;
 }
 
