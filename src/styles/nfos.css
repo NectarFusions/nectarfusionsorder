@@ -904,3 +904,240 @@
 }
 
 /* END NFOS TEAM MOBILE READABILITY PHASE 7.3 */
+
+/* ============================================================
+   NFOS Global Mobile Readability - Phase 7.4
+   Applies to System Health, Inventory, Items, Locations,
+   Suppliers, Purchasing, Recipes, Barcodes and History.
+   ============================================================ */
+
+.nfos-shell[data-compact-tables="true"] {
+  overflow-x: hidden !important;
+  max-width: 100%;
+}
+
+.nfos-shell[data-compact-tables="true"] .nfos-main,
+.nfos-shell[data-compact-tables="true"] .nfos-card,
+.nfos-shell[data-compact-tables="true"] .nfos-table-wrap {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+/* Never chop ordinary prose or labels in half on compact screens. */
+.nfos-shell[data-compact-tables="true"] :where(
+  h1,h2,h3,h4,p,label,strong,button,
+  .nfos-muted,.nfos-note,.nfos-error,.nfos-success,
+  .nfos-stat-label,.nfos-stat-value,.nfos-pill
+) {
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  hyphens: none !important;
+}
+
+/* Technical strings may wrap only when they genuinely cannot fit. */
+.nfos-shell[data-compact-tables="true"] :where(
+  .nfos-mono,a
+) {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+/* Every NFOS data table becomes a readable card list on a real phone/tablet. */
+.nfos-shell[data-compact-tables="true"] .nfos-table-wrap {
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  scrollbar-gutter: auto !important;
+}
+
+.nfos-shell[data-compact-tables="true"] table.nfos-table {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  table-layout: auto !important;
+  border-collapse: separate !important;
+}
+
+.nfos-shell[data-compact-tables="true"] table.nfos-table thead {
+  display: none !important;
+}
+
+.nfos-shell[data-compact-tables="true"] table.nfos-table tbody {
+  display: grid !important;
+  grid-template-columns: 1fr;
+  width: 100% !important;
+  min-width: 0 !important;
+  gap: 10px;
+}
+
+.nfos-shell[data-compact-tables="true"] table.nfos-table tbody tr {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  border: 1px solid var(--nfos-line);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.nfos-shell[data-compact-tables="true"] table.nfos-table tbody tr:hover {
+  background: #fff;
+}
+
+.nfos-shell[data-compact-tables="true"] table.nfos-table tbody td {
+  display: grid !important;
+  grid-template-columns: minmax(104px, 31%) minmax(0, 1fr);
+  align-items: start;
+  gap: 11px;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  padding: 10px 12px !important;
+  border-bottom: 1px solid #edf1f2 !important;
+  text-align: left !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  hyphens: none !important;
+  line-height: 1.35;
+}
+
+.nfos-shell[data-compact-tables="true"] table.nfos-table tbody td:last-child {
+  border-bottom: 0 !important;
+}
+
+.nfos-shell[data-compact-tables="true"] table.nfos-table tbody td::before {
+  content: attr(data-label);
+  min-width: 0;
+  color: #52676f;
+  font-size: 10px;
+  line-height: 1.3;
+  font-weight: 800;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
+}
+
+.nfos-shell[data-compact-tables="true"] table.nfos-table tbody td[data-label=""] {
+  grid-template-columns: 1fr;
+}
+
+.nfos-shell[data-compact-tables="true"] table.nfos-table tbody td[data-label=""]::before {
+  display: none;
+}
+
+.nfos-shell[data-compact-tables="true"] table.nfos-table tbody td > * {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+/* Give the main identifying field the full card width where possible. */
+.nfos-shell[data-compact-tables="true"] table.nfos-table tbody td:is(
+  [data-original-label="Item"],
+  [data-original-label="Check"],
+  [data-original-label="Action"],
+  [data-original-label="Recipe"],
+  [data-original-label="Supplier"],
+  [data-original-label="Location"],
+  [data-original-label="Order"],
+  [data-original-label="Material"],
+  [data-original-label="Ingredient"],
+  [data-original-label="Finished SKU"],
+  [data-original-label="Name"]
+) {
+  grid-template-columns: 1fr !important;
+  padding-top: 13px !important;
+  padding-bottom: 13px !important;
+}
+
+.nfos-shell[data-compact-tables="true"] table.nfos-table tbody td:is(
+  [data-original-label="Item"],
+  [data-original-label="Check"],
+  [data-original-label="Action"],
+  [data-original-label="Recipe"],
+  [data-original-label="Supplier"],
+  [data-original-label="Location"],
+  [data-original-label="Order"],
+  [data-original-label="Material"],
+  [data-original-label="Ingredient"],
+  [data-original-label="Finished SKU"],
+  [data-original-label="Name"]
+)::before {
+  display: none;
+}
+
+/* Inputs and actions must fit inside the card rather than force it wider. */
+.nfos-shell[data-compact-tables="true"] table.nfos-table :where(
+  input,select,textarea,.nfos-table-input
+) {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  font-size: 16px !important;
+}
+
+.nfos-shell[data-compact-tables="true"] table.nfos-table .nfos-btn {
+  max-width: 100%;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+}
+
+.nfos-shell[data-compact-tables="true"] table.nfos-table .nfos-pill {
+  width: fit-content;
+  max-width: 100%;
+  white-space: normal !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+  hyphens: none !important;
+  line-height: 1.25;
+}
+
+/* Long descriptive values should use the available width naturally. */
+.nfos-shell[data-compact-tables="true"] table.nfos-table tbody td[data-original-label="Why it matters"],
+.nfos-shell[data-compact-tables="true"] table.nfos-table tbody td[data-original-label="Blockers"],
+.nfos-shell[data-compact-tables="true"] table.nfos-table tbody td[data-original-label="Reason"],
+.nfos-shell[data-compact-tables="true"] table.nfos-table tbody td[data-original-label="Detail"] {
+  grid-template-columns: 1fr !important;
+  gap: 5px;
+}
+
+.nfos-shell[data-compact-tables="true"] table.nfos-table tbody td[data-original-label="Why it matters"]::before,
+.nfos-shell[data-compact-tables="true"] table.nfos-table tbody td[data-original-label="Blockers"]::before,
+.nfos-shell[data-compact-tables="true"] table.nfos-table tbody td[data-original-label="Reason"]::before,
+.nfos-shell[data-compact-tables="true"] table.nfos-table tbody td[data-original-label="Detail"]::before {
+  display: block;
+  margin-bottom: 2px;
+}
+
+/* Cards and controls outside tables must also stay inside the viewport. */
+.nfos-shell[data-compact-tables="true"] .nfos-inline-actions,
+.nfos-shell[data-compact-tables="true"] .nfos-filterbar,
+.nfos-shell[data-compact-tables="true"] .nfos-form,
+.nfos-shell[data-compact-tables="true"] .nfos-base-entry,
+.nfos-shell[data-compact-tables="true"] .nfos-supplier-setup-row {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+@media (max-width: 430px) {
+  .nfos-shell[data-compact-tables="true"] table.nfos-table tbody td {
+    grid-template-columns: 92px minmax(0, 1fr);
+    gap: 8px;
+    padding: 9px 10px !important;
+  }
+
+  .nfos-shell[data-compact-tables="true"] .nfos-card {
+    padding-left: 11px;
+    padding-right: 11px;
+  }
+}
+
+/* END NFOS GLOBAL MOBILE READABILITY PHASE 7.4 */

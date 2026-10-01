@@ -1,5 +1,24 @@
 import { useEffect } from "react";
 
+const MOBILE_LABELS = {
+  "Company On Hand": "On hand",
+  "Company inventory?": "Company inv.",
+  "Suggested Qty": "Suggested qty",
+  "Suggested order": "Order qty",
+  "Production demand": "Prod. demand",
+  "After production": "After prod.",
+  "Production orders": "Prod. orders",
+  "Stocking unit": "Unit",
+  "Linked flavor": "Flavor",
+  "Default location": "Location",
+  "Basis equivalent": "Basis equiv.",
+  "Actual used": "Used",
+  "Quantity produced": "Qty produced",
+  "Finished SKU": "SKU",
+  "Finished lot": "Lot",
+  "Assigned to": "Assigned",
+};
+
 const compactDevice = () => {
   const viewportWidth = Number(window.visualViewport?.width || window.innerWidth || 0);
   const screenWidth = Number(window.screen?.width || 0);
@@ -31,7 +50,9 @@ export default function useNfosResponsiveTables() {
         table.querySelectorAll("tbody tr").forEach((row) => {
           Array.from(row.children).forEach((cell, index) => {
             if (cell.tagName !== "TD") return;
-            cell.dataset.label = headers[index] || "";
+            const original = headers[index] || "";
+            cell.dataset.originalLabel = original;
+            cell.dataset.label = MOBILE_LABELS[original] || original;
           });
         });
       });
