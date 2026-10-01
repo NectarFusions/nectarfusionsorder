@@ -11,6 +11,7 @@ import NfosPurchasing from "../components/NfosPurchasing";
 import { NfosTodayDashboard, NfosOperationsCalendar } from "../components/NfosActionDashboard";
 import NfosTeamAccountability from "../components/NfosTeamAccountability";
 import NfosEmployeePortal from "../components/NfosEmployeePortal";
+import NfosItemEditor from "../components/NfosItemEditor";
 import useNfosResponsiveTables from "../lib/useNfosResponsiveTables";
 import "../styles/nfos.css";
 
@@ -176,16 +177,28 @@ function Overview({ inventory, lowStock, setTab }) {
   );
 }
 
-function Inventory({ inventory, onSelectBarcode }) {
+function Inventory({ inventory, items, suppliers, locations, onSelectBarcode, onDone, onAdjust }) {
   const [search, setSearch] = useState("");
   const [type, setType] = useState("all");
+  const [editItemId, setEditItemId] = useState("");
+  const [message, setMessage] = useState("");
   const rows = useMemo(() => inventory.filter((row) => {
     const hay = `${row.name} ${row.sku} ${row.category || ""}`.toLowerCase();
     return (type === "all" || row.item_type === type) && hay.includes(search.toLowerCase());
   }), [inventory, search, type]);
 
-  return (
+  const editItem = items.find((row) => row.id === editItemId) || null;
+
+  return <>
+    {message && <div className="nfos-success">{message}</div>}
     <div className="nfos-card">
+      <div className="nfos-page-head" style={{ marginBottom: 12 }}>
+        <div>
+          <h2>Inventory</h2>
+          <p>Edit item setup here. Use Adjust qty for physical-count corrections so every quantity change remains in the inventory ledger.</p>
+        </div>
+      </div>
+
       <div className="nfos-filterbar">
         <input placeholder="Search item, SKU or category" value={search} onChange={(e) => setSearch(e.target.value)} />
         <select value={type} onChange={(e) => setType(e.target.value)}>
@@ -195,11 +208,12 @@ function Inventory({ inventory, onSelectBarcode }) {
       </div>
       <div className="nfos-table-wrap">
         <table className="nfos-table">
-          <thead><tr><th>Item</th><th>SKU</th><th>Type</th><th>Company On Hand</th><th>Online</th><th>Reorder</th><th>Target</th><th>Status</th><th>Barcode</th></tr></thead>
+          <thead><tr><th>Item</th><th>SKU</th><th>Type</th><th>Company On Hand</th><th>Online</th><th>Reorder</th><th>Target</th><th>Status</th><th>Actions</th></tr></thead>
           <tbody>{rows.map((row) => {
             const threshold = row.reorder_point == null ? null : Number(row.reorder_point);
             const planning = Number(row.planning_on_hand || 0);
             const isLow = threshold != null && planning <= threshold;
+            const item = items.find((entry) => entry.id === row.item_id);
             return <tr key={row.item_id}>
               <td><strong>{row.name}</strong><div className="nfos-muted nfos-small">{row.category || "—"}</div></td>
               <td className="nfos-mono">{row.sku}</td>
@@ -209,13 +223,31 @@ function Inventory({ inventory, onSelectBarcode }) {
               <td>{row.reorder_point == null ? "—" : qty(row.reorder_point)}</td>
               <td>{row.target_stock == null ? "—" : qty(row.target_stock)}</td>
               <td><span className={`nfos-pill ${isLow ? "low" : "ok"}`}>{isLow ? "LOW" : "OK"}</span></td>
-              <td><button className="nfos-btn ghost" type="button" onClick={() => onSelectBarcode(row)}>View</button></td>
+              <td>
+                <div className="nfos-inline-actions nfos-inventory-actions">
+                  <button className="nfos-btn" type="button" disabled={!item} onClick={() => setEditItemId(row.item_id)}>Edit</button>
+                  <button className="nfos-btn ghost" type="button" onClick={() => onAdjust?.(row.item_id)}>Adjust qty</button>
+                  <button className="nfos-btn ghost" type="button" onClick={() => onSelectBarcode(row)}>Barcode</button>
+                </div>
+              </td>
             </tr>;
           })}</tbody>
         </table>
       </div>
     </div>
-  );
+
+    {editItem && <NfosItemEditor
+      item={editItem}
+      suppliers={suppliers}
+      locations={locations}
+      onClose={() => setEditItemId("")}
+      onSaved={async () => {
+        setEditItemId("");
+        setMessage("Inventory item saved.");
+        await onDone?.();
+      }}
+    />}
+  </>;
 }
 
 function Receive({ items, locations, suppliers, onDone }) {
@@ -255,11 +287,12 @@ function Receive({ items, locations, suppliers, onDone }) {
   </div>;
 }
 
-function MoveInventory({ items, locations, lots, onDone }) {
+function MoveInventory({ items, locations, lots, onDone, initialItemId = "" }) {
   const [mode,setMode]=useState("adjust");
   const [form,setForm]=useState({itemId:"",quantity:"",direction:"add",locationId:"",fromLocationId:"",toLocationId:"",lotId:"",reason:"Physical count",notes:""});
   const [busy,setBusy]=useState(false),[error,setError]=useState(""),[success,setSuccess]=useState("");
   useEffect(()=>{ const main=locations.find(x=>x.code==="MAIN")?.id || locations[0]?.id || ""; setForm(f=>({...f,locationId:f.locationId||main,fromLocationId:f.fromLocationId||main})); },[locations]);
+  useEffect(()=>{ if(initialItemId) setForm(f=>({...f,itemId:initialItemId,lotId:""})); },[initialItemId]);
   const itemLots = lots.filter(l=>l.item_id===form.itemId);
   const submit=async(e)=>{e.preventDefault();setBusy(true);setError("");setSuccess("");try{
     if(mode==="adjust") await nfos.adjustInventory(form); else await nfos.transferInventory(form);
@@ -471,6 +504,7 @@ export default function AdminOperationsPage() {
   const [inventory,setInventory]=useState([]),[lowStock,setLowStock]=useState([]),[items,setItems]=useState([]),[locations,setLocations]=useState([]),[suppliers,setSuppliers]=useState([]),[lots,setLots]=useState([]),[transactions,setTransactions]=useState([]);
   const [barcodeInitial,setBarcodeInitial]=useState(null);
   const [traceabilityInitialBatchId,setTraceabilityInitialBatchId]=useState("");
+  const [moveInitialItemId,setMoveInitialItemId]=useState("");
 
   const refresh=useCallback(async()=>{setBusy(true);setError("");try{const [inventoryRows,lowRows,itemRows,locationRows,supplierRows,lotRows,txRows]=await Promise.all([nfos.listInventory(),nfos.listLowStock(),nfos.listItems(),nfos.listLocations(),nfos.listSuppliers(),nfos.listLots(),nfos.listTransactions()]);setInventory(inventoryRows||[]);setLowStock(lowRows||[]);setItems(itemRows||[]);setLocations(locationRows||[]);setSuppliers(supplierRows||[]);setLots(lotRows||[]);setTransactions(txRows||[]);}catch(err){setError(err?.message||"Could not load NFOS.");}finally{setBusy(false);}},[]);
 
@@ -494,9 +528,9 @@ export default function AdminOperationsPage() {
     notifications:<NfosNotificationCenter manager onOpenRoute={setTab}/>,
     calendar:<NfosOperationsCalendar setTab={setTab}/>,
     team:<NfosTeamAccountability/>,
-    inventory:<Inventory inventory={inventory} onSelectBarcode={chooseBarcode}/>,
+    inventory:<Inventory inventory={inventory} items={items} suppliers={suppliers} locations={locations} onSelectBarcode={chooseBarcode} onDone={refresh} onAdjust={(itemId)=>{setMoveInitialItemId(itemId);setTab("move");}}/>,
     receive:<Receive items={items} locations={locations} suppliers={suppliers} onDone={refresh}/>,
-    move:<MoveInventory items={items} locations={locations} lots={lots} onDone={refresh}/>,
+    move:<MoveInventory items={items} locations={locations} lots={lots} onDone={refresh} initialItemId={moveInitialItemId}/>,
     items:<Items items={items} suppliers={suppliers} locations={locations} onDone={refresh} onSelectBarcode={chooseBarcode}/>,
     locations:<Locations locations={locations} onDone={refresh}/>,
     suppliers:<Suppliers suppliers={suppliers} onDone={refresh}/>,
@@ -507,7 +541,7 @@ export default function AdminOperationsPage() {
     barcodes:<Barcodes items={items} lots={lots} initial={barcodeInitial} clearInitial={()=>setBarcodeInitial(null)} onFoundEntity={handleScannedEntity}/>,
     history:<History transactions={transactions} items={items} locations={locations} lots={lots}/>,
     reports:<NfosReports onOpenRoute={setTab}/>,
-    health:<NfosSystemHealth onOpenRoute={setTab}/>,
+    health:<NfosSystemHealth onOpenRoute={setTab} items={items} suppliers={suppliers} locations={locations} onChanged={refresh}/>,
   }[tab];
 
   const currentTitle=TABS.find(x=>x[0]===tab)?.[1]||"Operations";

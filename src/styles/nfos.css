@@ -2402,3 +2402,32 @@
   gap: 5px;
 }
 /* END NFOS PRODUCTION START + SUGGESTED EDIT APPROVAL */
+
+/* ============================================================
+   NFOS Inline Health Fixes + Inventory Editing
+   ============================================================ */
+.nfos-dialog-form { padding: 18px; }
+.nfos-dialog-message { margin: 16px 18px 0; }
+.nfos-item-editor-dialog,
+.nfos-supplier-editor-dialog { width: min(900px, 96vw); }
+
+.nfos-health-focus-field {
+  padding: 10px;
+  border: 1px solid #d4ae47;
+  border-radius: 10px;
+  background: #fffaf0;
+}
+
+.nfos-health-tabs { flex-wrap: wrap; }
+.nfos-health-blockers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.nfos-inventory-actions { flex-wrap: nowrap; }
+
+@media(max-width:820px){
+  .nfos-inventory-actions { flex-wrap: wrap; }
+  .nfos-dialog-form { padding: 12px; }
+}
+/* END NFOS INLINE HEALTH FIXES + INVENTORY EDITING */
