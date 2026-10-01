@@ -32,14 +32,14 @@ const MOBILE_LABELS = {
 
 const compactDevice = () => {
   const viewportWidth = Number(window.visualViewport?.width || window.innerWidth || 0);
-  const screenWidth = Number(window.screen?.width || 0);
-  const screenHeight = Number(window.screen?.height || 0);
-  const shortestScreenSide = Math.min(
-    screenWidth || Number.POSITIVE_INFINITY,
-    screenHeight || Number.POSITIVE_INFINITY
+  const coarsePointer = Boolean(
+    window.matchMedia?.("(pointer: coarse)")?.matches ||
+    Number(navigator.maxTouchPoints || 0) > 1
   );
 
-  return viewportWidth <= 1180 || shortestScreenSide <= 900;
+  // Phones always use the compact UI. Touch-first tablets keep it as well.
+  // Fine-pointer laptops/desktops stay in the dense desktop dashboard layout.
+  return viewportWidth <= 820 || (coarsePointer && viewportWidth <= 1180);
 };
 
 const stateForText = (value) => {
