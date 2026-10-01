@@ -2,8 +2,8 @@ import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 
 const FROM = "NectarFusions NFOS <orders@nectar-fusions.com>";
-const APP_URL = () =>
-  `${String(process.env.SITE_URL || "https://nectar-fusions.com").replace(/\/$/, "")}/admin/operations`;
+const SITE_URL = () => String(process.env.SITE_URL || "https://nectar-fusions.com").replace(/\/$/, "");
+const SETUP_URL = () => `${SITE_URL()}/.netlify/functions/nfos-team-setup`;
 
 const esc = (value) =>
   String(value ?? "").replace(/[<>&"]/g, (ch) => ({
@@ -19,32 +19,47 @@ const json = (status, body) =>
     headers: { "Cache-Control": "no-store" },
   });
 
-const inviteEmailHtml = ({ member, actionLink, signInMode }) => `
+const bytesToBase64Url = (bytes) =>
+  btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+
+const sha256Hex = async (value) => {
+  const data = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
+};
+
+const inviteEmailHtml = ({ member, setupUrl, existingAccount }) => `
   <div style="background:#f5efe7;padding:28px 14px;font-family:Arial,Helvetica,sans-serif;color:#17383d">
     <div style="max-width:620px;margin:0 auto;background:#fff;border:1px solid #e4ddd2;border-radius:14px;overflow:hidden">
       <div style="padding:26px 28px 18px;border-bottom:1px solid #eee5d8">
         <div style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#c58b17;font-weight:700">
           NectarFusions Operations
         </div>
-        <h1 style="font-size:28px;margin:8px 0 0;color:#17383d">Your NFOS access is ready</h1>
+        <h1 style="font-size:28px;margin:8px 0 0;color:#17383d">
+          ${existingAccount ? "Set up your NFOS password" : "Your NFOS access is ready"}
+        </h1>
       </div>
       <div style="padding:24px 28px">
         <p style="font-size:16px;line-height:1.65;margin-top:0">Hi ${esc(member.display_name || "there")},</p>
         <p style="font-size:15px;line-height:1.7">
-          You&rsquo;ve been given access to the NectarFusions Operations System (NFOS).
-          Use the secure button below to ${signInMode ? "sign in and confirm your email" : "accept your invitation"}.
+          ${existingAccount
+            ? "Use the secure setup page below to create or reset the password for your NectarFusions Operations System account."
+            : "You&rsquo;ve been given access to the NectarFusions Operations System. Use the secure setup page below to finish creating your login."}
         </p>
         <p style="margin:24px 0">
-          <a href="${esc(actionLink)}"
+          <a href="${esc(setupUrl)}"
              style="display:inline-block;background:#17383d;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:700">
-            Open NectarFusions NFOS
+            Set up NFOS access
           </a>
         </p>
         <p style="font-size:14px;line-height:1.65;color:#5d6d70">
-          After you open NFOS, you can set or change your password from the Access section.
+          On the next screen, press <strong>Continue to NFOS</strong>. You&rsquo;ll be signed in securely and taken directly to create your password.
         </p>
         <p style="font-size:12px;line-height:1.6;color:#7b8587;margin-bottom:0">
-          This secure link is time limited. If it expires, ask NectarFusions to resend your invitation.
+          This setup link is time limited. If it expires, ask NectarFusions to send another setup email.
         </p>
       </div>
     </div>
@@ -75,9 +90,7 @@ export default async (request) => {
 
   const { data: callerData, error: callerError } = await db.auth.getUser(token);
   const caller = callerData?.user;
-  if (callerError || !caller) {
-    return json(401, { error: "Admin session is invalid or expired." });
-  }
+  if (callerError || !caller) return json(401, { error: "Admin session is invalid or expired." });
 
   const { data: adminRow, error: adminError } = await db
     .from("admins")
@@ -85,9 +98,7 @@ export default async (request) => {
     .eq("user_id", caller.id)
     .maybeSingle();
 
-  if (adminError || !adminRow) {
-    return json(403, { error: "Only an NFOS admin can invite team members." });
-  }
+  if (adminError || !adminRow) return json(403, { error: "Only an NFOS admin can invite team members." });
 
   let body = {};
   try { body = await request.json(); }
@@ -115,9 +126,8 @@ export default async (request) => {
       : [member.role].filter(Boolean),
   };
 
+  const hadLinkedAccount = Boolean(member.user_id);
   let authUser = null;
-  let actionLink = "";
-  let signInMode = false;
 
   if (member.user_id) {
     const { data: linkedData, error: linkedError } = await db.auth.admin.getUserById(member.user_id);
@@ -126,7 +136,7 @@ export default async (request) => {
     if (linkedError || !authUser) {
       return json(409, {
         error: "This NFOS profile is linked to an auth account that no longer exists.",
-        hint: "Repair the account link before sending another invitation.",
+        hint: "Repair the account link before sending another setup email.",
       });
     }
 
@@ -134,59 +144,25 @@ export default async (request) => {
       return json(409, { error: "The linked auth account email no longer matches this NFOS profile." });
     }
 
-    if (authUser.email_confirmed_at) {
-      return json(200, {
-        ok: true,
-        alreadyLinked: true,
-        confirmed: true,
-        memberId: member.id,
-        userId: authUser.id,
-        message: "This team member already has an active NFOS login.",
-      });
-    }
-
-    await db.auth.admin.updateUserById(authUser.id, {
+    const { data: updatedData, error: updateError } = await db.auth.admin.updateUserById(authUser.id, {
       user_metadata: { ...(authUser.user_metadata || {}), ...metadata },
     });
-
-    const { data: linkData, error: linkError } = await db.auth.admin.generateLink({
-      type: "magiclink",
-      email: member.email,
-      options: { data: metadata, redirectTo: APP_URL() },
-    });
-
-    if (linkError || !linkData?.properties?.action_link || !linkData?.user?.id) {
-      return json(400, {
-        error: linkError?.message || "A fresh NFOS access link could not be generated.",
-      });
-    }
-
-    if (linkData.user.id !== member.user_id) {
-      return json(409, {
-        error: "Supabase returned a different auth account for this team profile.",
-        hint: "No NFOS profile link was changed.",
-      });
-    }
-
-    authUser = linkData.user;
-    actionLink = linkData.properties.action_link;
-    signInMode = true;
+    if (updateError) return json(400, { error: updateError.message });
+    authUser = updatedData?.user || authUser;
   } else {
-    const { data: linkData, error: linkError } = await db.auth.admin.generateLink({
-      type: "invite",
+    const { data: createdData, error: createError } = await db.auth.admin.createUser({
       email: member.email,
-      options: { data: metadata, redirectTo: APP_URL() },
+      email_confirm: false,
+      user_metadata: metadata,
     });
 
-    if (linkError || !linkData?.properties?.action_link || !linkData?.user?.id) {
+    authUser = createdData?.user;
+    if (createError || !authUser?.id) {
       return json(400, {
-        error: linkError?.message || "The NFOS invitation could not be generated.",
+        error: createError?.message || "The employee login account could not be created.",
         hint: "If this email already belongs to an existing account, link that account before inviting.",
       });
     }
-
-    authUser = linkData.user;
-    actionLink = linkData.properties.action_link;
 
     const { data: linkedMember, error: linkProfileError } = await db
       .from("nfos_team_members")
@@ -199,48 +175,62 @@ export default async (request) => {
     if (linkProfileError || !linkedMember || linkedMember.user_id !== authUser.id) {
       try { await db.auth.admin.deleteUser(authUser.id); } catch {}
       return json(500, {
-        error: "The invite was created but the NFOS profile could not be linked. No employee access was enabled.",
+        error: "The login account was created but the NFOS profile could not be linked. No employee access was enabled.",
       });
     }
   }
+
+  const rawSetupToken = bytesToBase64Url(crypto.getRandomValues(new Uint8Array(32)));
+  const setupHash = await sha256Hex(rawSetupToken);
+  const setupExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+  const { data: nonceData, error: nonceError } = await db.auth.admin.updateUserById(authUser.id, {
+    app_metadata: {
+      ...(authUser.app_metadata || {}),
+      nfos_setup: {
+        hash: setupHash,
+        expires_at: setupExpiresAt,
+        member_id: member.id,
+      },
+    },
+  });
+
+  if (nonceError || !nonceData?.user) {
+    return json(500, { error: nonceError?.message || "Could not create the secure NFOS setup session." });
+  }
+
+  authUser = nonceData.user;
+  const setupUrl = `${SETUP_URL()}?uid=${encodeURIComponent(authUser.id)}&token=${encodeURIComponent(rawSetupToken)}`;
 
   try {
     const result = await resend.emails.send({
       from: FROM,
       to: member.email,
-      subject: "Your NectarFusions NFOS invitation",
-      html: inviteEmailHtml({ member, actionLink, signInMode }),
+      subject: hadLinkedAccount
+        ? "Set up your NectarFusions NFOS password"
+        : "Your NectarFusions NFOS invitation",
+      html: inviteEmailHtml({ member, setupUrl, existingAccount: hadLinkedAccount }),
     });
 
     if (result?.error || !result?.data?.id) {
       throw new Error(result?.error?.message || "Resend did not return a delivery message ID.");
     }
 
-    console.log(JSON.stringify({
-      event: "nfos_team_invite_sent",
-      member_id: member.id,
-      auth_user_id: authUser.id,
-      provider: "resend",
-      provider_message_id: result.data.id,
-      mode: signInMode ? "magiclink" : "invite",
-    }));
-
     return json(200, {
       ok: true,
       memberId: member.id,
       userId: authUser.id,
-      resent: Boolean(member.user_id),
+      resent: hadLinkedAccount,
       provider: "resend",
       providerMessageId: result.data.id,
-      message: signInMode
-        ? "Fresh NFOS invitation accepted by NectarFusions email delivery."
+      message: hadLinkedAccount
+        ? "Password setup email accepted by NectarFusions email delivery."
         : "NFOS invitation created, linked and accepted by NectarFusions email delivery.",
     });
   } catch (error) {
-    console.error("NFOS invite Resend delivery failed", error);
     return json(502, {
-      error: `The NFOS access link was created, but NectarFusions email delivery failed: ${String(error?.message || error)}`,
-      hint: "Use Resend invite again. The team profile remains safely linked and unconfirmed.",
+      error: `The NFOS setup session was created, but NectarFusions email delivery failed: ${String(error?.message || error)}`,
+      hint: "Use the setup/invite button again. The team profile remains safely linked.",
     });
   }
 };

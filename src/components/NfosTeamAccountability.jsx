@@ -311,7 +311,7 @@ export default function NfosTeamAccountability() {
           const accountMissing = m.auth_status === "account_missing";
           const loginLabel = loginReady ? "Login ready" : inviteSent ? "Invite sent" : linkedUnconfirmed ? "Invite pending" : accountMissing ? "Account missing" : "Not invited";
           const loginClass = loginReady ? "ok" : accountMissing ? "low" : "";
-          const canInvite = !accountMissing && !loginReady;
+          const canInvite = !accountMissing;
 
           return <tr key={m.id}>
             <td><strong>{m.display_name}</strong></td>
@@ -324,13 +324,15 @@ export default function NfosTeamAccountability() {
             <td>{m.default_location_name || "—"}</td>
             <td>{m.active ? "Active" : "Inactive"}</td>
             <td>
-              {loginReady ? <span className="nfos-pill ok">Login ready</span> :
-                accountMissing ? <span className="nfos-pill low">Repair needed</span> :
-                <button className="nfos-btn ghost" type="button"
-                  disabled={!m.active || !m.email || !canInvite || inviteBusy===m.id}
-                  onClick={()=>inviteMember(m)}>
-                  {inviteBusy===m.id ? "Sending…" : inviteSent || linkedUnconfirmed ? "Resend invite" : m.email ? "Send invite" : "Add email first"}
-                </button>}
+              {accountMissing ? <span className="nfos-pill low">Repair needed</span> :
+                <div className="nfos-inline-actions" style={{ flexWrap: "wrap" }}>
+                  {loginReady&&<span className="nfos-pill ok">Login ready</span>}
+                  <button className="nfos-btn ghost" type="button"
+                    disabled={!m.active || !m.email || !canInvite || inviteBusy===m.id}
+                    onClick={()=>inviteMember(m)}>
+                    {inviteBusy===m.id ? "Sending…" : loginReady ? "Send password setup" : inviteSent || linkedUnconfirmed ? "Resend invite" : m.email ? "Send invite" : "Add email first"}
+                  </button>
+                </div>}
             </td>
             <td>
               {memberRoles(m).includes("owner") ? <span className="nfos-muted nfos-small">Protected</span> :
@@ -361,6 +363,6 @@ export default function NfosTeamAccountability() {
       {!activity.length ? <Empty>No attributed operational activity yet.</Empty> : <div className="nfos-table-wrap"><table className="nfos-table nfos-team-mobile-table nfos-team-activity-table"><thead><tr><th>When</th><th>Who</th><th>Activity</th><th>Detail</th></tr></thead><tbody>{activity.slice(0,100).map((a) => <tr key={a.activity_key}><td>{fmtDateTime(a.activity_at)}</td><td><strong>{a.performed_by}</strong></td><td>{a.title}</td><td className="nfos-muted">{a.detail}</td></tr>)}</tbody></table></div>}
     </div>
 
-    <div className="nfos-note">Individual employee invitations are enabled. Invited employees currently receive a secure read-only My Work Today portal; operational write permissions remain locked until the next role-hardening release.</div>
+    <div className="nfos-note">Employee setup emails open a protected first-login flow where each person creates their own password. Available NFOS areas and actions are controlled by the roles assigned to that team member.</div>
   </>;
 }

@@ -12,18 +12,37 @@ export async function getSession() {
   return data?.session || null;
 }
 
-export async function signInAdmin(email, password) {
+export async function signInNfos(email, password) {
   const { data, error } = await supabase.auth.signInWithPassword({
     email: email.trim(),
     password,
   });
   if (error) throw error;
-  const ok = await isAdmin();
-  if (!ok) {
-    await supabase.auth.signOut();
-    throw new Error("This account does not have NectarFusions Admin access.");
+
+  const session = data?.session || null;
+  if (!session) throw new Error("NFOS sign in did not create a session.");
+
+  let allowed = false;
+  try {
+    allowed = await isAdmin();
+    if (!allowed) {
+      const access = await getEmployeeAccess();
+      allowed = Boolean(access?.permissions?.includes("ops.view"));
+    }
+  } catch {
+    allowed = false;
   }
-  return data?.session || null;
+
+  if (!allowed) {
+    await supabase.auth.signOut();
+    throw new Error("This account does not have NectarFusions NFOS access.");
+  }
+
+  return session;
+}
+
+export async function signInAdmin(email, password) {
+  return signInNfos(email, password);
 }
 
 export async function signOutAdmin() {

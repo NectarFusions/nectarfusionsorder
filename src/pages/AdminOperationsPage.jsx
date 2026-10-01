@@ -66,7 +66,7 @@ function AdminLogin({ onSignedIn }) {
     setBusy(true);
     setError("");
     try {
-      const session = await nfos.signInAdmin(email, password);
+      const session = await nfos.signInNfos(email, password);
       onSignedIn(session);
     } catch (err) {
       setError(err?.message || "Could not sign in.");
@@ -85,8 +85,8 @@ function AdminLogin({ onSignedIn }) {
             <div className="nfos-brand-sub">Operations System</div>
           </div>
         </div>
-        <h1 style={{ marginTop: 22 }}>Admin Operations</h1>
-        <p className="nfos-muted">Use your existing NectarFusions admin account.</p>
+        <h1 style={{ marginTop: 22 }}>NFOS Sign in</h1>
+        <p className="nfos-muted">Admins and team members sign in with their NectarFusions NFOS account.</p>
         {error && <div className="nfos-error">{error}</div>}
         <form onSubmit={submit}>
           <div className="nfos-field">
@@ -99,6 +99,9 @@ function AdminLogin({ onSignedIn }) {
           </div>
           <button className="nfos-btn" disabled={busy}>{busy ? "Signing in…" : "Sign in"}</button>
         </form>
+        <div className="nfos-note" style={{ marginTop: 14 }}>
+          First time here? Use the secure setup email sent by NectarFusions to create your password before signing in.
+        </div>
       </div>
     </div>
   );
@@ -479,7 +482,10 @@ export default function AdminOperationsPage() {
   const logout=async()=>{await nfos.signOutAdmin();setSession(null);setEmployeeAccess(null);setAuthState("signed_out");};
 
   if(authState==="loading") return <div className="nfos-login"><div className="nfos-login-card"><h2>Loading NFOS…</h2></div></div>;
-  if(authState==="employee") return <NfosEmployeePortal session={session} access={employeeAccess} onSignOut={logout}/>;
+  if(authState==="employee") {
+    const forcePasswordSetup = new URLSearchParams(window.location.search).get("setup") === "password";
+    return <NfosEmployeePortal session={session} access={employeeAccess} onSignOut={logout} forcePasswordSetup={forcePasswordSetup}/>;
+  }
   if(authState!=="ready") return <AdminLogin onSignedIn={(s)=>{setSession(s);window.location.reload();}}/>;
 
   const content = {

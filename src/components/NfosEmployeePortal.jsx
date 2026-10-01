@@ -609,7 +609,7 @@ function ManagerPanel({ notify }) {
   </>;
 }
 
-function AccessPanel({ access }) {
+function AccessPanel({ access, firstSetup = false }) {
   const [password,setPassword]=useState("");
   const [confirm,setConfirm]=useState("");
   const [busy,setBusy]=useState(false);
@@ -621,18 +621,30 @@ function AccessPanel({ access }) {
     if(password.length<8){setError("Use at least 8 characters.");return;}
     if(password!==confirm){setError("Passwords do not match.");return;}
     setBusy(true);
-    try{await nfos.updateMyPassword(password);setPassword("");setConfirm("");setMessage("Password saved.");}
+    try{
+      await nfos.updateMyPassword(password);
+      setPassword("");
+      setConfirm("");
+      if(firstSetup){
+        const url=new URL(window.location.href);
+        url.searchParams.delete("setup");
+        window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+        setMessage("Password created. You can now sign in with your email and this password.");
+      }else{
+        setMessage("Password saved.");
+      }
+    }
     catch(err){setError(err?.message || "Could not update password.");}
     finally{setBusy(false);}
   };
 
   return <div className="nfos-grid two">
     <div className="nfos-card"><h2>My NFOS access</h2><div className="nfos-note"><strong>{roleLabels(access?.roles, access?.role)}</strong><br/>The portal combines permissions from all of your assigned roles and only renders areas those roles are authorized to use. Every write action is also permission-checked again on the server.</div><div className="nfos-permission-list">{(access?.permissions || []).map((p)=><span className="nfos-pill" key={p}>{p.replaceAll("_"," ")}</span>)}</div></div>
-    <div className="nfos-card"><h2>Change password</h2>{error&&<div className="nfos-error">{error}</div>}{message&&<div className="nfos-success">{message}</div>}<form className="nfos-form" onSubmit={savePassword}><div className="nfos-field full"><label>New password</label><input type="password" minLength="8" required value={password} onChange={(e)=>setPassword(e.target.value)}/></div><div className="nfos-field full"><label>Confirm password</label><input type="password" minLength="8" required value={confirm} onChange={(e)=>setConfirm(e.target.value)}/></div><div className="nfos-field full"><button className="nfos-btn" disabled={busy}>Save password</button></div></form></div>
+    <div className="nfos-card"><h2>{firstSetup ? "Create your password" : "Change password"}</h2>{firstSetup&&<div className="nfos-note" style={{marginBottom:12}}>Create the password you will use with your email for future NFOS sign-ins.</div>}{error&&<div className="nfos-error">{error}</div>}{message&&<div className="nfos-success">{message}</div>}<form className="nfos-form" onSubmit={savePassword}><div className="nfos-field full"><label>{firstSetup ? "Create password" : "New password"}</label><input type="password" autoComplete="new-password" minLength="8" required value={password} onChange={(e)=>setPassword(e.target.value)}/></div><div className="nfos-field full"><label>Confirm password</label><input type="password" autoComplete="new-password" minLength="8" required value={confirm} onChange={(e)=>setConfirm(e.target.value)}/></div><div className="nfos-field full"><button className="nfos-btn" disabled={busy}>{busy ? "Saving…" : firstSetup ? "Create password" : "Save password"}</button></div></form></div>
   </div>;
 }
 
-export default function NfosEmployeePortal({ session, access, onSignOut }) {
+export default function NfosEmployeePortal({ session, access, onSignOut, forcePasswordSetup = false }) {
   useNfosResponsiveTables();
   const permissions=useMemo(()=>new Set(access?.permissions || []),[access]);
   const tabs=useMemo(()=>{
@@ -648,7 +660,7 @@ export default function NfosEmployeePortal({ session, access, onSignOut }) {
     return rows;
   },[permissions]);
 
-  const [tab,setTab]=useState("work");
+  const [tab,setTab]=useState(forcePasswordSetup ? "access" : "work");
   const [work,setWork]=useState([]);
   const [busy,setBusy]=useState(true);
   const [error,setError]=useState("");
@@ -715,7 +727,7 @@ export default function NfosEmployeePortal({ session, access, onSignOut }) {
         {tab==="reports" && <NfosReports onOpenRoute={setTab}/>}
         {tab==="health" && <NfosSystemHealth onOpenRoute={setTab}/>}
         {tab==="manager" && <ManagerPanel notify={notify}/>}
-        {tab==="access" && <AccessPanel access={access}/>}
+        {tab==="access" && <AccessPanel access={access} firstSetup={forcePasswordSetup}/>}
       </main>
     </div>
   </div>;
