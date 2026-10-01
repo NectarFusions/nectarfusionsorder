@@ -1548,3 +1548,379 @@
 }
 
 /* END NFOS FINAL MOBILE UX PHASE 7.5 */
+
+/* ============================================================
+   NFOS UX + Readability - Phase 8
+   Readable typography, semantic status colors/icons, sticky
+   navigation, selection feedback and accessibility improvements.
+   ============================================================ */
+
+:root {
+  --nfos-ok: #2c7655;
+  --nfos-ok-bg: #e5f4ec;
+  --nfos-ok-border: #b9dfca;
+  --nfos-attn: #8a5a00;
+  --nfos-attn-bg: #fff3cf;
+  --nfos-attn-border: #efd27b;
+  --nfos-urgent: #a63232;
+  --nfos-urgent-bg: #fde9e7;
+  --nfos-urgent-border: #efb8b2;
+  --nfos-selected: #0f5f79;
+  --nfos-selected-bg: #e2f0f5;
+}
+
+/* ------------------------------------------------------------
+   Minimum readable typography
+   User requirement: nothing smaller than 14 pt.
+   ------------------------------------------------------------ */
+
+.nfos-shell {
+  font-size: 14pt !important;
+  line-height: 1.5;
+}
+
+.nfos-shell :where(
+  p,span,a,li,label,button,input,select,textarea,option,small,
+  td,th,.nfos-small,.nfos-mono,.nfos-pill,.nfos-stat-label,
+  .nfos-brand-sub,.nfos-mobile-nav span,.nfos-table-input,
+  .nfos-empty,.nfos-note,.nfos-error,.nfos-success
+) {
+  font-size: 14pt !important;
+  line-height: 1.45;
+}
+
+.nfos-shell table.nfos-table tbody td::before {
+  font-size: 14pt !important;
+  line-height: 1.35 !important;
+  letter-spacing: .02em !important;
+}
+
+.nfos-shell h1 {
+  font-size: 24pt !important;
+  line-height: 1.15;
+}
+
+.nfos-shell h2 {
+  font-size: 19pt !important;
+  line-height: 1.2;
+}
+
+.nfos-shell h3 {
+  font-size: 16pt !important;
+  line-height: 1.25;
+}
+
+.nfos-shell .nfos-stat-value {
+  font-size: 24pt !important;
+}
+
+/* Controls should be comfortably tappable as well as readable. */
+.nfos-shell :where(
+  .nfos-btn,.nfos-nav button,
+  input,select,textarea,.nfos-table-input
+) {
+  min-height: 48px !important;
+}
+
+/* ------------------------------------------------------------
+   Semantic status system: icon + color, never color alone.
+   ------------------------------------------------------------ */
+
+.nfos-pill[data-nfos-state],
+.nfos-error[data-nfos-state],
+.nfos-success[data-nfos-state] {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nfos-pill[data-nfos-state]::before,
+.nfos-error[data-nfos-state]::before,
+.nfos-success[data-nfos-state]::before {
+  content: attr(data-nfos-icon);
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 1.55em;
+  width: 1.55em;
+  height: 1.55em;
+  border-radius: 999px;
+  font-size: 14pt !important;
+  line-height: 1;
+  font-weight: 900;
+}
+
+.nfos-pill[data-nfos-state="ok"],
+.nfos-success[data-nfos-state="ok"] {
+  color: var(--nfos-ok) !important;
+  background: var(--nfos-ok-bg) !important;
+  border-color: var(--nfos-ok-border) !important;
+}
+
+.nfos-pill[data-nfos-state="ok"]::before,
+.nfos-success[data-nfos-state="ok"]::before {
+  color: white;
+  background: var(--nfos-ok);
+}
+
+.nfos-pill[data-nfos-state="attention"] {
+  color: var(--nfos-attn) !important;
+  background: var(--nfos-attn-bg) !important;
+  border-color: var(--nfos-attn-border) !important;
+}
+
+.nfos-pill[data-nfos-state="attention"]::before {
+  color: white;
+  background: #b77b00;
+}
+
+.nfos-pill[data-nfos-state="urgent"],
+.nfos-error[data-nfos-state="urgent"] {
+  color: var(--nfos-urgent) !important;
+  background: var(--nfos-urgent-bg) !important;
+  border-color: var(--nfos-urgent-border) !important;
+}
+
+.nfos-pill[data-nfos-state="urgent"]::before,
+.nfos-error[data-nfos-state="urgent"]::before {
+  color: white;
+  background: var(--nfos-urgent);
+}
+
+/* Table statuses get a visible semantic rail without interfering with
+   mobile field-label pseudo elements. */
+.nfos-shell td[data-nfos-state="ok"] {
+  box-shadow: inset 5px 0 0 var(--nfos-ok);
+  background: #f9fdfa !important;
+}
+
+.nfos-shell td[data-nfos-state="attention"] {
+  box-shadow: inset 5px 0 0 #d49a16;
+  background: #fffcf2 !important;
+}
+
+.nfos-shell td[data-nfos-state="urgent"] {
+  box-shadow: inset 5px 0 0 var(--nfos-urgent);
+  background: #fff9f8 !important;
+}
+
+/* Stat cards use a large icon in the corner plus a semantic border. */
+.nfos-stat[data-nfos-state] {
+  position: relative;
+  padding-right: 58px !important;
+  border-width: 2px !important;
+}
+
+.nfos-stat[data-nfos-state]::after {
+  content: attr(data-nfos-icon);
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  color: white;
+  font-size: 14pt !important;
+  font-weight: 900;
+}
+
+.nfos-stat[data-nfos-state="ok"] {
+  border-color: var(--nfos-ok-border) !important;
+  background: #f9fdfa;
+}
+
+.nfos-stat[data-nfos-state="ok"]::after {
+  background: var(--nfos-ok);
+}
+
+.nfos-stat[data-nfos-state="attention"] {
+  border-color: var(--nfos-attn-border) !important;
+  background: #fffdf6;
+}
+
+.nfos-stat[data-nfos-state="attention"]::after {
+  background: #b77b00;
+}
+
+.nfos-stat[data-nfos-state="urgent"] {
+  border-color: var(--nfos-urgent-border) !important;
+  background: #fffafa;
+}
+
+.nfos-stat[data-nfos-state="urgent"]::after {
+  background: var(--nfos-urgent);
+}
+
+/* ------------------------------------------------------------
+   Sticky navigation and sub-tabs
+   ------------------------------------------------------------ */
+
+/* Existing page selector remains sticky as the primary navigation. */
+.nfos-shell.nfos-compact-ui .nfos-side {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 160 !important;
+}
+
+/* Important in-page tab bars stay directly beneath the page selector. */
+.nfos-shell.nfos-compact-ui :where(.nfos-health-tabs,.nfos-report-tabs) {
+  position: sticky !important;
+  top: 72px !important;
+  z-index: 145 !important;
+  margin: 10px 0 14px !important;
+  padding: 8px !important;
+  border: 1px solid var(--nfos-line);
+  border-radius: 12px;
+  background: rgba(255,255,255,.98) !important;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 5px 16px rgba(15,73,96,.09);
+}
+
+/* Desktop topbar + important sub-tabs. */
+@media (min-width: 1181px) {
+  .nfos-shell :where(.nfos-health-tabs,.nfos-report-tabs) {
+    position: sticky !important;
+    top: 78px !important;
+    z-index: 18 !important;
+    padding: 8px !important;
+    border-radius: 12px;
+    background: rgba(255,255,255,.98) !important;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 4px 14px rgba(15,73,96,.08);
+  }
+}
+
+.nfos-shell :where(.nfos-card,.nfos-page-head) {
+  scroll-margin-top: 150px;
+}
+
+/* ------------------------------------------------------------
+   Selection, click and keyboard feedback
+   ------------------------------------------------------------ */
+
+.nfos-shell :where(
+  .nfos-nav button.active,
+  .nfos-select-list > button.active,
+  .nfos-btn[aria-pressed="true"],
+  button[aria-selected="true"]
+) {
+  color: white !important;
+  background: var(--nfos-selected) !important;
+  border-color: var(--nfos-selected) !important;
+  box-shadow: 0 0 0 3px rgba(15,95,121,.15);
+}
+
+.nfos-shell :where(
+  .nfos-nav button.active,
+  .nfos-select-list > button.active,
+  .nfos-btn[aria-pressed="true"],
+  button[aria-selected="true"]
+)::after {
+  content: " ✓";
+  font-weight: 900;
+}
+
+.nfos-shell .nfos-click-confirm {
+  transform: translateY(1px) scale(.985);
+  box-shadow: 0 0 0 4px rgba(224,173,52,.24) !important;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+
+.nfos-shell :where(
+  button,a,input,select,textarea
+):focus-visible {
+  outline: 4px solid rgba(15,95,121,.28) !important;
+  outline-offset: 3px !important;
+}
+
+/* Keep disabled controls readable but clearly inactive. */
+.nfos-shell :where(button,input,select,textarea):disabled {
+  opacity: .58;
+}
+
+/* ------------------------------------------------------------
+   Global confirmation toast
+   ------------------------------------------------------------ */
+
+.nfos-ux-toast {
+  position: fixed;
+  left: 50%;
+  bottom: max(24px, env(safe-area-inset-bottom));
+  z-index: 10000;
+  max-width: min(90vw, 520px);
+  padding: 12px 16px;
+  border: 1px solid #bcd2d9;
+  border-radius: 999px;
+  background: #103f50;
+  color: white;
+  font: 800 14pt/1.3 Inter, ui-sans-serif, system-ui, sans-serif;
+  box-shadow: 0 14px 38px rgba(0,0,0,.22);
+  opacity: 0;
+  transform: translate(-50%, 18px);
+  pointer-events: none;
+  transition: opacity .18s ease, transform .18s ease;
+}
+
+.nfos-ux-toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.nfos-ux-toast[data-state="ok"] {
+  background: var(--nfos-ok);
+}
+
+.nfos-ux-toast[data-state="attention"] {
+  background: #8a5a00;
+}
+
+.nfos-ux-toast[data-state="urgent"] {
+  background: var(--nfos-urgent);
+}
+
+/* ------------------------------------------------------------
+   Long-page helper
+   ------------------------------------------------------------ */
+
+.nfos-back-to-top {
+  position: fixed;
+  right: max(18px, env(safe-area-inset-right));
+  bottom: max(22px, env(safe-area-inset-bottom));
+  z-index: 9000;
+  min-width: 76px;
+  min-height: 48px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--nfos-blue);
+  color: white;
+  font: 850 14pt/1.2 Inter, ui-sans-serif, system-ui, sans-serif;
+  box-shadow: 0 10px 28px rgba(15,73,96,.24);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(18px);
+  pointer-events: none;
+  transition: opacity .18s ease, transform .18s ease;
+}
+
+.nfos-back-to-top.show {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* On mobile keep toast above the Back to Top button. */
+@media (max-width: 680px) {
+  .nfos-ux-toast {
+    bottom: calc(max(22px, env(safe-area-inset-bottom)) + 64px);
+    border-radius: 14px;
+    text-align: center;
+  }
+
+  .nfos-shell.nfos-compact-ui :where(.nfos-health-tabs,.nfos-report-tabs) {
+    top: 72px !important;
+  }
+}
+
+/* END NFOS UX READABILITY PHASE 8 */
