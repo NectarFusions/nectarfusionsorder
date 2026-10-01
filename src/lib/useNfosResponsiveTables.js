@@ -9,7 +9,7 @@ const compactDevice = () => {
     screenHeight || Number.POSITIVE_INFINITY
   );
 
-  return viewportWidth <= 820 || shortestScreenSide <= 900;
+  return viewportWidth <= 900 || shortestScreenSide <= 900;
 };
 
 export default function useNfosResponsiveTables() {

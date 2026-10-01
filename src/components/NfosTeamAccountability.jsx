@@ -197,7 +197,7 @@ export default function NfosTeamAccountability() {
 
     <div className="nfos-card">
       <h2>Live NFOS action assignments</h2><p className="nfos-muted">Assign the dynamic Today queue. When the underlying issue is resolved, the action disappears automatically.</p>
-      {!actions.length ? <Empty>No live actions need assignment.</Empty> : <div className="nfos-table-wrap"><table className="nfos-table"><thead><tr><th>Action</th><th>Date</th><th>Priority</th><th>Assigned to</th><th></th></tr></thead><tbody>{actions.map((a) => <ActionAssignmentRow key={a.action_key} action={a} members={members} onChanged={load} />)}</tbody></table></div>}
+      {!actions.length ? <Empty>No live actions need assignment.</Empty> : <div className="nfos-table-wrap"><table className="nfos-table nfos-team-mobile-table nfos-team-actions-table"><thead><tr><th>Action</th><th>Date</th><th>Priority</th><th>Assigned to</th><th>Save</th></tr></thead><tbody>{actions.map((a) => <ActionAssignmentRow key={a.action_key} action={a} members={members} onChanged={load} />)}</tbody></table></div>}
     </div>
 
     <div className="nfos-card">
@@ -230,12 +230,12 @@ export default function NfosTeamAccountability() {
 
     <div className="nfos-card">
       <h2>Team directory</h2><p className="nfos-muted">Login-linked means the profile is connected to an individual authenticated account. Profile-only members can be assigned work now but cannot sign in yet.</p>
-      <div className="nfos-table-wrap"><table className="nfos-table"><thead><tr><th>Name</th><th>Role</th><th>Email</th><th>Login</th><th>Default location</th><th>Status</th><th>Access</th></tr></thead><tbody>{members.map((m) => <tr key={m.id}><td><strong>{m.display_name}</strong></td><td>{roleLabel(m.role)}</td><td>{m.email || "—"}</td><td><span className={`nfos-pill ${m.login_linked ? "ok" : ""}`}>{m.login_linked ? "Linked" : "Profile only"}</span></td><td>{m.default_location_name || "—"}</td><td>{m.active ? "Active" : "Inactive"}</td><td>{m.login_linked ? <span className="nfos-pill ok">Login ready</span> : <button className="nfos-btn ghost" type="button" disabled={!m.active || !m.email || inviteBusy===m.id} onClick={()=>inviteMember(m)}>{inviteBusy===m.id ? "Sending…" : m.email ? "Send invite" : "Add email first"}</button>}</td></tr>)}</tbody></table></div>
+      <div className="nfos-table-wrap"><table className="nfos-table nfos-team-mobile-table nfos-team-directory-table"><thead><tr><th>Name</th><th>Role</th><th>Email</th><th>Login</th><th>Default location</th><th>Status</th><th>Access</th></tr></thead><tbody>{members.map((m) => <tr key={m.id}><td><strong>{m.display_name}</strong></td><td>{roleLabel(m.role)}</td><td>{m.email || "—"}</td><td><span className={`nfos-pill ${m.login_linked ? "ok" : ""}`}>{m.login_linked ? "Linked" : "Profile only"}</span></td><td>{m.default_location_name || "—"}</td><td>{m.active ? "Active" : "Inactive"}</td><td>{m.login_linked ? <span className="nfos-pill ok">Login ready</span> : <button className="nfos-btn ghost" type="button" disabled={!m.active || !m.email || inviteBusy===m.id} onClick={()=>inviteMember(m)}>{inviteBusy===m.id ? "Sending…" : m.email ? "Send invite" : "Add email first"}</button>}</td></tr>)}</tbody></table></div>
     </div>
 
     <div className="nfos-card">
       <h2>Activity feed</h2><p className="nfos-muted">Permanent operational attribution from NFOS audit fields.</p>
-      {!activity.length ? <Empty>No attributed operational activity yet.</Empty> : <div className="nfos-table-wrap"><table className="nfos-table"><thead><tr><th>When</th><th>Who</th><th>Activity</th><th>Detail</th></tr></thead><tbody>{activity.slice(0,100).map((a) => <tr key={a.activity_key}><td>{fmtDateTime(a.activity_at)}</td><td><strong>{a.performed_by}</strong></td><td>{a.title}</td><td className="nfos-muted">{a.detail}</td></tr>)}</tbody></table></div>}
+      {!activity.length ? <Empty>No attributed operational activity yet.</Empty> : <div className="nfos-table-wrap"><table className="nfos-table nfos-team-mobile-table nfos-team-activity-table"><thead><tr><th>When</th><th>Who</th><th>Activity</th><th>Detail</th></tr></thead><tbody>{activity.slice(0,100).map((a) => <tr key={a.activity_key}><td>{fmtDateTime(a.activity_at)}</td><td><strong>{a.performed_by}</strong></td><td>{a.title}</td><td className="nfos-muted">{a.detail}</td></tr>)}</tbody></table></div>}
     </div>
 
     <div className="nfos-note">Individual employee invitations are enabled. Invited employees currently receive a secure read-only My Work Today portal; operational write permissions remain locked until the next role-hardening release.</div>

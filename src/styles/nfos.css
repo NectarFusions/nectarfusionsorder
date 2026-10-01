@@ -775,3 +775,132 @@
 }
 
 /* END NFOS MOBILE DEVICE DETECTION PHASE 7.2 */
+
+/* ============================================================
+   NFOS Team Mobile Readability - Phase 7.3
+   Dedicated card layout for assignments, directory and activity.
+   ============================================================ */
+
+.nfos-shell[data-compact-tables="true"] {
+  overflow-x: hidden;
+}
+
+.nfos-shell[data-compact-tables="true"] .nfos-team-mobile-table {
+  display: block;
+  width: 100%;
+  min-width: 0 !important;
+  max-width: 100%;
+}
+
+.nfos-shell[data-compact-tables="true"] .nfos-team-mobile-table thead {
+  display: none;
+}
+
+.nfos-shell[data-compact-tables="true"] .nfos-team-mobile-table tbody {
+  display: grid;
+  width: 100%;
+  gap: 12px;
+}
+
+.nfos-shell[data-compact-tables="true"] .nfos-team-mobile-table tr {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--nfos-line);
+  border-radius: 13px;
+  background: #fff;
+}
+
+.nfos-shell[data-compact-tables="true"] .nfos-team-mobile-table td {
+  display: grid;
+  grid-template-columns: 108px minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 11px 12px;
+  border-bottom: 1px solid #edf1f2;
+  text-align: left !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: none;
+}
+
+.nfos-shell[data-compact-tables="true"] .nfos-team-mobile-table td:last-child {
+  border-bottom: 0;
+}
+
+.nfos-shell[data-compact-tables="true"] .nfos-team-mobile-table td::before {
+  content: attr(data-label);
+  min-width: 0;
+  color: #52676f;
+  font-size: 10px;
+  line-height: 1.3;
+  font-weight: 800;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.nfos-shell[data-compact-tables="true"] .nfos-team-mobile-table td > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.nfos-shell[data-compact-tables="true"] .nfos-team-actions-table td:first-child,
+.nfos-shell[data-compact-tables="true"] .nfos-team-directory-table td:first-child {
+  grid-template-columns: 1fr;
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+
+.nfos-shell[data-compact-tables="true"] .nfos-team-actions-table td:first-child::before,
+.nfos-shell[data-compact-tables="true"] .nfos-team-directory-table td:first-child::before {
+  display: none;
+}
+
+.nfos-shell[data-compact-tables="true"] .nfos-team-actions-table select,
+.nfos-shell[data-compact-tables="true"] .nfos-team-actions-table .nfos-btn,
+.nfos-shell[data-compact-tables="true"] .nfos-team-directory-table .nfos-btn {
+  width: 100%;
+  min-width: 0 !important;
+  max-width: 100%;
+  font-size: 16px;
+}
+
+.nfos-shell[data-compact-tables="true"] .nfos-team-mobile-table .nfos-pill {
+  width: fit-content;
+  max-width: 100%;
+  white-space: normal !important;
+  line-height: 1.25;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  hyphens: none;
+}
+
+.nfos-shell[data-compact-tables="true"] .nfos-team-activity-table td {
+  line-height: 1.4;
+}
+
+.nfos-shell[data-compact-tables="true"] .nfos-card:has(.nfos-team-mobile-table) .nfos-table-wrap {
+  overflow: visible !important;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+@media (max-width: 430px) {
+  .nfos-shell[data-compact-tables="true"] .nfos-team-mobile-table td {
+    grid-template-columns: 94px minmax(0, 1fr);
+    gap: 9px;
+    padding: 10px;
+  }
+}
+
+/* END NFOS TEAM MOBILE READABILITY PHASE 7.3 */
