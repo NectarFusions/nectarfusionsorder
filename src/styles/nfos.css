@@ -1141,3 +1141,410 @@
 }
 
 /* END NFOS GLOBAL MOBILE READABILITY PHASE 7.4 */
+
+/* ============================================================
+   NFOS Final Mobile UX - Phase 7.5
+   Whole-word wrapping, readable cards, sticky page navigation,
+   and compact layouts across every NFOS section.
+   ============================================================ */
+
+.nfos-shell.nfos-compact-ui {
+  overflow-x: hidden !important;
+  max-width: 100%;
+}
+
+.nfos-shell.nfos-compact-ui .nfos-main,
+.nfos-shell.nfos-compact-ui .nfos-card,
+.nfos-shell.nfos-compact-ui .nfos-grid,
+.nfos-shell.nfos-compact-ui .nfos-grid > *,
+.nfos-shell.nfos-compact-ui .nfos-form,
+.nfos-shell.nfos-compact-ui .nfos-field,
+.nfos-shell.nfos-compact-ui .nfos-table-wrap {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.nfos-shell.nfos-compact-ui :where(
+  h1,h2,h3,h4,h5,p,label,strong,button,option,
+  .nfos-muted,.nfos-note,.nfos-error,.nfos-success,
+  .nfos-stat-label,.nfos-stat-value,.nfos-pill,
+  .nfos-action-title,.nfos-action-copy,.nfos-calendar-event-copy
+) {
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  hyphens: none !important;
+}
+
+.nfos-shell.nfos-compact-ui .nfos-mono {
+  word-break: normal !important;
+  overflow-wrap: anywhere !important;
+  hyphens: none !important;
+}
+
+/* Sticky global section selector */
+.nfos-shell.nfos-compact-ui .nfos-topbar {
+  position: static !important;
+}
+
+.nfos-shell.nfos-compact-ui .nfos-layout {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 10px !important;
+  padding-top: 0 !important;
+  min-width: 0 !important;
+}
+
+.nfos-shell.nfos-compact-ui .nfos-side {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 120 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 8px !important;
+  border-radius: 0 0 12px 12px !important;
+  background: rgba(255,255,255,.98) !important;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 6px 18px rgba(15,73,96,.12) !important;
+}
+
+.nfos-shell.nfos-compact-ui .nfos-nav {
+  display: none !important;
+}
+
+.nfos-shell.nfos-compact-ui .nfos-mobile-nav {
+  display: grid !important;
+  grid-template-columns: 54px minmax(0,1fr) !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 100%;
+}
+
+.nfos-shell.nfos-compact-ui .nfos-mobile-nav span {
+  display: block !important;
+  color: var(--nfos-muted);
+  font-size: 10px !important;
+  line-height: 1.2;
+  font-weight: 850;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  white-space: nowrap !important;
+}
+
+.nfos-shell.nfos-compact-ui .nfos-mobile-nav select {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  min-height: 46px !important;
+  padding: 9px 36px 9px 12px !important;
+  border: 1px solid var(--nfos-line) !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+  color: var(--nfos-ink) !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+}
+
+/* Page headers and controls */
+.nfos-shell.nfos-compact-ui .nfos-page-head,
+.nfos-shell.nfos-compact-ui .nfos-split-head {
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 10px !important;
+}
+
+.nfos-shell.nfos-compact-ui .nfos-page-head > *,
+.nfos-shell.nfos-compact-ui .nfos-page-head .nfos-field {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.nfos-shell.nfos-compact-ui .nfos-page-head > .nfos-btn {
+  width: 100% !important;
+}
+
+.nfos-shell.nfos-compact-ui .nfos-filterbar {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 8px !important;
+}
+
+.nfos-shell.nfos-compact-ui .nfos-filterbar :where(input,select,button) {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+/* All multi-column blocks collapse cleanly */
+.nfos-shell.nfos-compact-ui :where(
+  .nfos-grid.four,
+  .nfos-grid.three,
+  .nfos-grid.two,
+  .nfos-recipes-layout,
+  .nfos-trace-layout,
+  .nfos-base-entry,
+  .nfos-quick-lot-grid,
+  .nfos-receipt-form,
+  .nfos-plan-output-grid,
+  .nfos-supplier-setup-row,
+  .nfos-purchasing-grid,
+  .nfos-team-grid
+) {
+  grid-template-columns: 1fr !important;
+}
+
+.nfos-shell.nfos-compact-ui .nfos-supplier-setup-title,
+.nfos-shell.nfos-compact-ui .nfos-field.full {
+  grid-column: auto !important;
+}
+
+.nfos-shell.nfos-compact-ui :where(
+  .nfos-purchase-supplier,
+  .nfos-purchase-row,
+  .nfos-purchase-line-head,
+  .nfos-calendar-event,
+  .nfos-task-card,
+  .nfos-sop-step-head
+) {
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+
+/* Sub-tabs */
+.nfos-shell.nfos-compact-ui :where(.nfos-health-tabs,.nfos-report-tabs) {
+  display: grid !important;
+  grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+  gap: 7px !important;
+  width: 100% !important;
+}
+
+.nfos-shell.nfos-compact-ui :where(.nfos-health-tabs,.nfos-report-tabs) .nfos-btn {
+  width: 100% !important;
+  min-width: 0 !important;
+  padding: 9px 7px !important;
+  font-size: 12px !important;
+}
+
+/* Every NFOS table becomes a vertical record */
+.nfos-shell.nfos-compact-ui .nfos-table-wrap {
+  overflow: visible !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  scrollbar-gutter: auto !important;
+}
+
+.nfos-shell.nfos-compact-ui table.nfos-table {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  table-layout: auto !important;
+  border-collapse: separate !important;
+}
+
+.nfos-shell.nfos-compact-ui table.nfos-table thead {
+  display: none !important;
+}
+
+.nfos-shell.nfos-compact-ui table.nfos-table tbody {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  gap: 10px !important;
+}
+
+.nfos-shell.nfos-compact-ui table.nfos-table tbody tr {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  border: 1px solid var(--nfos-line) !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+}
+
+.nfos-shell.nfos-compact-ui table.nfos-table tbody td {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  padding: 10px 12px !important;
+  border-bottom: 1px solid #edf1f2 !important;
+  text-align: left !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  hyphens: none !important;
+  overflow: visible !important;
+  line-height: 1.4 !important;
+}
+
+.nfos-shell.nfos-compact-ui table.nfos-table tbody td:last-child {
+  border-bottom: 0 !important;
+}
+
+.nfos-shell.nfos-compact-ui table.nfos-table tbody td::before {
+  content: attr(data-label);
+  display: block;
+  margin: 0 0 4px;
+  color: #52676f;
+  font-size: 10px !important;
+  line-height: 1.25;
+  font-weight: 850;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  hyphens: none !important;
+}
+
+.nfos-shell.nfos-compact-ui table.nfos-table tbody td[data-label=""]::before {
+  display: none !important;
+}
+
+.nfos-shell.nfos-compact-ui table.nfos-table tbody td:is(
+  [data-original-label="Item"],
+  [data-original-label="Check"],
+  [data-original-label="Action"],
+  [data-original-label="Work"],
+  [data-original-label="Recipe"],
+  [data-original-label="Supplier"],
+  [data-original-label="Location"],
+  [data-original-label="Order"],
+  [data-original-label="Material"],
+  [data-original-label="Ingredient"],
+  [data-original-label="Finished SKU"],
+  [data-original-label="Name"],
+  [data-original-label="Batch"],
+  [data-original-label="Person"]
+)::before {
+  display: none !important;
+}
+
+.nfos-shell.nfos-compact-ui table.nfos-table tbody td > * {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.nfos-shell.nfos-compact-ui table.nfos-table :where(input,select,textarea,.nfos-table-input) {
+  display: block;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  font-size: 16px !important;
+}
+
+.nfos-shell.nfos-compact-ui table.nfos-table .nfos-btn {
+  max-width: 100% !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+}
+
+.nfos-shell.nfos-compact-ui table.nfos-table .nfos-pill {
+  display: inline-flex !important;
+  width: auto !important;
+  max-width: 100% !important;
+  white-space: normal !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+  hyphens: none !important;
+  line-height: 1.25 !important;
+}
+
+/* Remaining non-table content */
+.nfos-shell.nfos-compact-ui .nfos-select-list > button {
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.nfos-shell.nfos-compact-ui .nfos-step-list li {
+  flex-direction: column !important;
+  align-items: flex-start !important;
+}
+
+.nfos-shell.nfos-compact-ui .nfos-plan-output {
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+
+.nfos-shell.nfos-compact-ui .nfos-plan-output input {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.nfos-shell.nfos-compact-ui .nfos-action-row,
+.nfos-shell.nfos-compact-ui .nfos-calendar-day {
+  grid-template-columns: 1fr !important;
+}
+
+.nfos-shell.nfos-compact-ui .nfos-barcode-card,
+.nfos-shell.nfos-compact-ui .nfos-barcode-card svg {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.nfos-shell.nfos-compact-ui .nfos-scan {
+  flex-direction: column !important;
+}
+
+.nfos-shell.nfos-compact-ui .nfos-scan :where(input,button) {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+@media (max-width: 480px) {
+  .nfos-shell.nfos-compact-ui .nfos-layout {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  .nfos-shell.nfos-compact-ui .nfos-card {
+    padding: 11px !important;
+  }
+
+  .nfos-shell.nfos-compact-ui table.nfos-table tbody td {
+    padding: 9px 10px !important;
+  }
+}
+
+/* CSS fallback for unusual mobile/tablet viewport reporting */
+@media (max-width: 1180px), (pointer: coarse) and (max-width: 1400px) {
+  .nfos-shell .nfos-topbar {
+    position: static !important;
+  }
+
+  .nfos-shell .nfos-layout {
+    grid-template-columns: 1fr !important;
+    padding-top: 0 !important;
+  }
+
+  .nfos-shell .nfos-side {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 120 !important;
+    height: auto !important;
+  }
+
+  .nfos-shell .nfos-nav {
+    display: none !important;
+  }
+
+  .nfos-shell .nfos-mobile-nav {
+    display: grid !important;
+  }
+}
+
+/* END NFOS FINAL MOBILE UX PHASE 7.5 */

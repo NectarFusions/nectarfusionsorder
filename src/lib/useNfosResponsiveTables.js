@@ -13,10 +13,21 @@ const MOBILE_LABELS = {
   "Default location": "Location",
   "Basis equivalent": "Basis equiv.",
   "Actual used": "Used",
+  "Actual quantity": "Actual qty",
   "Quantity produced": "Qty produced",
+  "Quantity made": "Qty made",
   "Finished SKU": "SKU",
   "Finished lot": "Lot",
   "Assigned to": "Assigned",
+  "Available cost source": "Cost source",
+  "Cost / unit": "Cost/unit",
+  "Gross margin": "Margin",
+  "Avg / unit": "Avg/unit",
+  "Square status": "Square",
+  "NFOS mapping": "NFOS map",
+  "Inventory value": "Inv. value",
+  "Needed by": "Need by",
+  "Team member": "Team member"
 };
 
 const compactDevice = () => {
@@ -28,19 +39,30 @@ const compactDevice = () => {
     screenHeight || Number.POSITIVE_INFINITY
   );
 
-  return viewportWidth <= 900 || shortestScreenSide <= 900;
+  return viewportWidth <= 1180 || shortestScreenSide <= 900;
 };
 
 export default function useNfosResponsiveTables() {
   useEffect(() => {
-    const root = document.querySelector(".nfos-shell");
-    if (!root) return undefined;
+    let root = null;
+    let tableObserver = null;
+
+    const cleanupRoot = () => {
+      tableObserver?.disconnect();
+      tableObserver = null;
+      root = null;
+    };
 
     const applyCompactMode = () => {
-      root.dataset.compactTables = compactDevice() ? "true" : "false";
+      if (!root) return;
+      const compact = compactDevice();
+      root.dataset.compactTables = compact ? "true" : "false";
+      root.classList.toggle("nfos-compact-ui", compact);
     };
 
     const applyLabels = () => {
+      if (!root) return;
+
       root.querySelectorAll("table.nfos-table").forEach((table) => {
         const headers = Array.from(table.querySelectorAll("thead th"))
           .map((th) => String(th.textContent || "").trim());
@@ -59,24 +81,47 @@ export default function useNfosResponsiveTables() {
     };
 
     const refresh = () => {
+      if (!root) return;
       applyCompactMode();
       applyLabels();
     };
 
-    refresh();
+    const attachRoot = () => {
+      const nextRoot = document.querySelector(".nfos-shell");
+      if (nextRoot === root) return;
 
-    const observer = new MutationObserver(() => applyLabels());
-    observer.observe(root, { childList: true, subtree: true });
+      cleanupRoot();
+      if (!nextRoot) return;
 
-    window.addEventListener("resize", refresh);
-    window.addEventListener("orientationchange", refresh);
-    window.visualViewport?.addEventListener("resize", refresh);
+      root = nextRoot;
+      refresh();
+
+      tableObserver = new MutationObserver(() => {
+        applyLabels();
+      });
+      tableObserver.observe(root, { childList: true, subtree: true });
+    };
+
+    const documentObserver = new MutationObserver(attachRoot);
+    documentObserver.observe(document.documentElement, { childList: true, subtree: true });
+
+    const onViewportChange = () => {
+      if (!root || !document.contains(root)) attachRoot();
+      refresh();
+    };
+
+    attachRoot();
+
+    window.addEventListener("resize", onViewportChange);
+    window.addEventListener("orientationchange", onViewportChange);
+    window.visualViewport?.addEventListener("resize", onViewportChange);
 
     return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", refresh);
-      window.removeEventListener("orientationchange", refresh);
-      window.visualViewport?.removeEventListener("resize", refresh);
+      documentObserver.disconnect();
+      cleanupRoot();
+      window.removeEventListener("resize", onViewportChange);
+      window.removeEventListener("orientationchange", onViewportChange);
+      window.visualViewport?.removeEventListener("resize", onViewportChange);
     };
   }, []);
 }
