@@ -2368,3 +2368,37 @@
   }
 }
 /* END NFOS SOP PDF + PRODUCTION EDITOR + TEAM DESKTOP POLISH */
+
+/* ============================================================
+   NFOS Production Start + Suggested Edit Approval
+   ============================================================ */
+.nfos-suggestion-change + .nfos-suggestion-change { margin-top: 4px; }
+.nfos-suggestion-review-card .nfos-table td { vertical-align: top; }
+.nfos-suggestion-history {
+  margin-top: 16px;
+  border-top: 1px solid var(--nfos-line);
+  padding-top: 12px;
+}
+.nfos-suggestion-history > summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--nfos-ink);
+}
+.nfos-start-ready {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.nfos-start-ready::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #d4ae47;
+}
+.nfos-started-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+/* END NFOS PRODUCTION START + SUGGESTED EDIT APPROVAL */

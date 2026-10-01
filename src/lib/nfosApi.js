@@ -1086,6 +1086,41 @@ export async function employeeStartAssignedBatch(orderId, locationId = null, pla
   if (error) throw error;
   return data;
 }
+export async function getEmployeeSuggestionWorkspace() {
+  const { data, error } = await supabase.rpc("nfos_employee_get_suggestion_workspace");
+  if (error) throw error;
+  return data;
+}
+
+export async function employeeSubmitProductionEditSuggestion(input) {
+  const { data, error } = await supabase.rpc("nfos_employee_submit_production_edit_suggestion", {
+    p_production_order_id: input.productionOrderId,
+    p_planned_quantity: Number(input.plannedQuantity),
+    p_due_date: input.dueDate || null,
+    p_priority: input.priority || "normal",
+    p_notes: input.notes?.trim() || null,
+    p_reason: input.reason?.trim() || null,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function getAdminSuggestionWorkspace() {
+  const { data, error } = await supabase.rpc("nfos_admin_get_suggestion_workspace");
+  if (error) throw error;
+  return data;
+}
+
+export async function adminReviewProductionEditSuggestion(requestId, action, reviewNotes = null) {
+  const { data, error } = await supabase.rpc("nfos_admin_review_production_edit_suggestion", {
+    p_request_id: requestId,
+    p_action: action,
+    p_review_notes: reviewNotes?.trim() || null,
+  });
+  if (error) throw error;
+  return data;
+}
+
 export async function employeeSetBatchStepCompletion(batchId, recipeStepId, completed, notes = null) {
   const { data, error } = await supabase.rpc("nfos_employee_set_batch_step_completion", {
     p_batch_id: batchId, p_recipe_step_id: recipeStepId, p_completed: completed, p_notes: notes,

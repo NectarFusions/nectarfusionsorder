@@ -5,6 +5,7 @@ import NfosSystemHealth from "./NfosSystemHealth";
 import NfosReports from "./NfosReports";
 import NfosMarkets from "./NfosMarkets";
 import NfosNotificationCenter from "./NfosNotificationCenter";
+import NfosSuggestionsPanel from "./NfosSuggestionsPanel";
 import "../styles/nfos.css";
 
 const roleLabel = (value) => ({
@@ -146,13 +147,18 @@ function ProductionPanel({ access, notify }) {
   useEffect(()=>{ if(selectedBatchId) loadBatch(selectedBatchId); },[selectedBatchId,loadBatch]);
 
   const startBatch=async(order)=>{
+    const confirmed=window.confirm(
+      `Start ${order.order_no} now?\n\nStarting creates the traceable production batch and locks admin Edit/Delete for this order.`
+    );
+    if(!confirmed)return;
+
     setBusy(true);
     try{
-      const result=await nfos.employeeStartAssignedBatch(order.id,null,null,"Started from employee portal.");
-      notify("success",`Started ${result.batch_code}.`);
+      const result=await nfos.employeeStartAssignedBatch(order.id,null,null,"Started by assigned operator from employee portal.");
+      notify("success",`${result.batch_code} started. Admin Edit/Delete is now locked for this production order.`);
       await load();
       setSelectedBatchId(result.id);
-    }catch(err){notify("error",err?.message || "Could not start batch.");}
+    }catch(err){notify("error",err?.message || "Could not start production.");}
     finally{setBusy(false);}
   };
 
@@ -256,12 +262,12 @@ function ProductionPanel({ access, notify }) {
   return <>
     <div className="nfos-card">
       <div className="nfos-page-head" style={{marginBottom:12}}>
-        <div><h2>Assigned production</h2><p>Start and execute only production assigned to your NFOS profile.</p></div>
+        <div><h2>Assigned production</h2><p>When you are ready to begin, press Start production. Until you start it, the admin can still edit or delete the planned order.</p></div>
         <button className="nfos-btn secondary" disabled={busy} onClick={load}>Refresh</button>
       </div>
       {!workspace.orders?.length ? <div className="nfos-empty">No open production orders are assigned to you.</div> :
         <div className="nfos-table-wrap"><table className="nfos-table"><thead><tr><th>Order</th><th>Recipe</th><th>Plan</th><th>Due</th><th>Status</th><th></th></tr></thead>
-        <tbody>{workspace.orders.map((o)=><tr key={o.id}><td className="nfos-mono">{o.order_no}</td><td><strong>{o.recipe_name}</strong><div className="nfos-muted nfos-small">{o.flavor_name || ""}</div></td><td>{qty(o.planned_quantity)} {o.planned_unit} · {o.planned_texture}</td><td>{fmtDate(o.due_date)}</td><td><StatusPill value={o.status}/></td><td>{!o.has_open_batch && <button className="nfos-btn ghost" onClick={()=>startBatch(o)}>Start batch</button>}</td></tr>)}</tbody>
+        <tbody>{workspace.orders.map((o)=><tr key={o.id}><td className="nfos-mono">{o.order_no}</td><td><strong>{o.recipe_name}</strong><div className="nfos-muted nfos-small">{o.flavor_name || ""}</div></td><td>{qty(o.planned_quantity)} {o.planned_unit} · {o.planned_texture}</td><td>{fmtDate(o.due_date)}</td><td><StatusPill value={o.status}/></td><td>{o.status === "planned" && !o.has_open_batch ? <button className="nfos-btn" disabled={busy} onClick={()=>startBatch(o)}>Start production</button> : <span className="nfos-pill ok nfos-started-label">Started</span>}</td></tr>)}</tbody>
         </table></div>}
     </div>
 
@@ -648,7 +654,7 @@ export default function NfosEmployeePortal({ session, access, onSignOut, forcePa
   useNfosResponsiveTables();
   const permissions=useMemo(()=>new Set(access?.permissions || []),[access]);
   const tabs=useMemo(()=>{
-    const rows=[["work","My Work"],["notifications","Notifications"]];
+    const rows=[["work","My Work"],["notifications","Notifications"],["suggestions","Suggest Edits"]];
     if(permissions.has("production.execute")) rows.push(["production","Production"]);
     if(permissions.has("inventory.manage")) rows.push(["inventory","Inventory"]);
     if(permissions.has("purchasing.manage")) rows.push(["purchasing","Purchasing"]);
@@ -718,7 +724,7 @@ export default function NfosEmployeePortal({ session, access, onSignOut, forcePa
           </div>
           <MyWork work={work} onRefresh={loadWork} busy={busy} onTaskStatus={taskStatus} onOpenArea={setTab}/>
         </>}
-        {tab==="notifications" && <NfosNotificationCenter manager={permissions.has("team.assign")} onOpenRoute={setTab}/>}
+        {tab==="notifications" && <NfosNotificationCenter manager={permissions.has("team.assign")} onOpenRoute={setTab}/>}\n        {tab==="suggestions" && <NfosSuggestionsPanel notify={notify}/>}
         {tab==="production" && <ProductionPanel access={access} notify={notify}/>}
         {tab==="inventory" && <InventoryPanel notify={notify}/>}
         {tab==="purchasing" && <PurchasingPanel notify={notify}/>}
