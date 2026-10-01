@@ -4,6 +4,7 @@ import NfosRecipeSopPdf from "./NfosRecipeSopPdf";
 import NfosProductionOrderEditor from "./NfosProductionOrderEditor";
 import NfosAdminProductionSuggestions from "./NfosAdminProductionSuggestions";
 import NfosProductionLog from "./NfosProductionLog";
+import NfosBatchDeleteDialog from "./NfosBatchDeleteDialog";
 import * as nfos from "../lib/nfosApi";
 
 const qty = (value) => {
@@ -413,7 +414,7 @@ export function RecipesModule({ items, onRefresh }) {
   </>;
 }
 
-function BatchWorkspace({ batch, items, locations, lots, onChanged }) {
+function BatchWorkspace({ batch, items, locations, lots, onChanged, onDelete }) {
   const [requirements, setRequirements] = useState([]);
   const [lotBalances, setLotBalances] = useState([]);
   const [qualityChecks, setQualityChecks] = useState([]);
@@ -747,7 +748,7 @@ function BatchWorkspace({ batch, items, locations, lots, onChanged }) {
 
   return <>
     <div className="nfos-card">
-      <div className="nfos-split-head"><div><h2 style={{ marginBottom: 4 }}>{batch.batch_code}</h2><div className="nfos-muted">{batch.flavor_name || batch.recipe_name} • Recipe v{batch.recipe_version} • <strong>{batch.texture === "spun" ? "Spun" : "Regular"}</strong> • {locationMap[batch.production_location_id]?.name || batch.production_location_name}</div></div><div className="nfos-inline-actions"><StatusPill value={batch.status} /><StatusPill value={batch.quality_status} /></div></div>
+      <div className="nfos-split-head"><div><h2 style={{ marginBottom: 4 }}>{batch.batch_code}</h2><div className="nfos-muted">{batch.flavor_name || batch.recipe_name} • Recipe v{batch.recipe_version} • <strong>{batch.texture === "spun" ? "Spun" : "Regular"}</strong> • {locationMap[batch.production_location_id]?.name || batch.production_location_name}</div></div><div className="nfos-inline-actions"><StatusPill value={batch.status} /><StatusPill value={batch.quality_status} />{["draft","in_progress"].includes(batch.status) && <button className="nfos-btn danger" type="button" onClick={onDelete}>Delete batch</button>}</div></div>
       <div style={{ maxWidth: 420, marginTop: 16 }}><NfosBarcode value={batch.barcode_value} title={batch.batch_code} subtitle={`${batch.flavor_name || batch.recipe_name} • Batch`} /></div>
     </div>
     <Notice type="error">{error}</Notice><Notice>{message}</Notice>
@@ -821,6 +822,7 @@ export function ProductionModule({ items, locations, lots, onRefresh }) {
   const [startTexture, setStartTexture] = useState("regular");
   const [editOrder, setEditOrder] = useState(null);
   const [productionView, setProductionView] = useState("log");
+  const [deleteBatchTarget, setDeleteBatchTarget] = useState(null);
 
   const load = useCallback(async () => {
     setBusy(true); setError("");
@@ -908,6 +910,22 @@ export function ProductionModule({ items, locations, lots, onRefresh }) {
 
   const changed = async () => { await load(); await onRefresh?.(); };
 
+  const batchDeleted = async (result) => {
+    const code = result?.batch_code || deleteBatchTarget?.batch_code || "Batch";
+    const orderNo = result?.order_no || deleteBatchTarget?.order_no || "source production order";
+    setDeleteBatchTarget(null);
+    setSelectedBatchId("");
+    if (result?.production_order_action === "deleted") {
+      setMessage(`${code} and ${orderNo} were deleted.`);
+    } else if (result?.production_order_action === "returned_to_queue") {
+      setMessage(`${code} was deleted. ${orderNo} was returned to the Production Queue.`);
+    } else {
+      setMessage(`${code} was deleted.`);
+    }
+    await load();
+    await onRefresh?.();
+  };
+
   const productionNav = <div className="nfos-workbook-view-switch">
     <button className={`nfos-btn ${productionView==="log"?"":"secondary"}`} onClick={()=>setProductionView("log")}>Production Log</button>
     <button className={`nfos-btn ${productionView==="operations"?"":"secondary"}`} onClick={()=>setProductionView("operations")}>Queue + Batch Work</button>
@@ -963,8 +981,20 @@ export function ProductionModule({ items, locations, lots, onRefresh }) {
       <div className="nfos-card"><h2>Create production order</h2><form className="nfos-form" onSubmit={createOrder}><div className="nfos-field full"><label>Active recipe</label><select required value={orderForm.recipeId} onChange={(e) => setOrderForm({ ...orderForm, recipeId: e.target.value, texture: "regular", outputs: {} })}><option value="">Choose recipe…</option>{activeRecipes.map((x) => <option key={x.id} value={x.id}>{x.flavor_name || x.name} — {x.name} v{x.version}</option>)}</select></div><div className="nfos-field"><label>Planned batch quantity</label><input required type="number" min="0.0001" step="any" value={orderForm.plannedQuantity} onChange={(e) => setOrderForm({ ...orderForm, plannedQuantity: e.target.value })} /></div><div className="nfos-field"><label>Recipe basis unit</label><input disabled value={selectedOrderRecipe?.basis_unit || "—"} /></div><div className="nfos-field"><label>Texture</label><select value={orderForm.texture} disabled={!selectedOrderRecipe} onChange={(e) => setOrderForm({ ...orderForm, texture: e.target.value, outputs: {} })}><option value="regular">Regular</option><option value="spun" disabled={selectedOrderRecipe && !selectedOrderRecipe.spun_eligible}>Spun</option></select>{selectedOrderRecipe && !selectedOrderRecipe.spun_eligible && <div className="nfos-muted nfos-small">This SOP is Regular only.</div>}</div><div className="nfos-field"><label>Due date</label><input type="date" value={orderForm.dueDate} onChange={(e) => setOrderForm({ ...orderForm, dueDate: e.target.value })} /></div><div className="nfos-field"><label>Priority</label><select value={orderForm.priority} onChange={(e) => setOrderForm({ ...orderForm, priority: e.target.value })}><option value="low">Low</option><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option></select></div><div className="nfos-field full"><label>Planned finished jars</label>{plannedFinishedItems.length ? <div className="nfos-plan-output-grid">{plannedFinishedItems.map((item) => <div className="nfos-plan-output" key={item.id}><div><strong>{item.name}</strong><div className="nfos-mono nfos-muted nfos-small">{item.sku}</div></div><input type="number" min="0" step="1" value={orderForm.outputs?.[item.id] || ""} onChange={(e) => setOrderForm({ ...orderForm, outputs: { ...(orderForm.outputs || {}), [item.id]: e.target.value } })} placeholder="0" /></div>)}</div> : <div className="nfos-note">Choose a recipe and texture to plan finished jar quantities.</div>}<div className="nfos-muted nfos-small" style={{ marginTop: 8 }}>{plannedOutputUnits > 0 ? `${qty(plannedOutputUnits)} total finished jars planned. NFOS will forecast their packaging automatically.` : "Jar quantities are optional at first. Ingredient demand will still be forecast, but packaging demand stays incomplete until jars are planned."}</div></div>{orderForm.texture === "spun" && orderForm.plannedQuantity && <div className="nfos-field full"><div className="nfos-note"><strong>Spun seed planning:</strong> this order will require approximately {qty(Number(orderForm.plannedQuantity || 0) * 16 * 0.10)} oz of prior NectarFusions natural spun honey seed. Seed remains a controlled production input, not a supplier purchase item.</div></div>}<div className="nfos-field full"><label>Notes</label><textarea value={orderForm.notes} onChange={(e) => setOrderForm({ ...orderForm, notes: e.target.value })} /></div><div className="nfos-field full"><button className="nfos-btn" disabled={busy || !activeRecipes.length}>Add to production queue</button></div></form></div>
     </div>
     <div className="nfos-card"><h2>Start a batch</h2><div className="nfos-form"><div className="nfos-field"><label>Production order</label><select value={startOrderId} onChange={(e) => setStartOrderId(e.target.value)}><option value="">Choose queued order…</option>{queue.filter((x) => x.status === "planned" && Number(x.batch_count || 0) === 0).map((x) => <option key={x.id} value={x.id}>{x.order_no} — {x.flavor_name || x.recipe_name} — {x.planned_texture === "spun" ? "Spun" : "Regular"} — {qty(x.planned_quantity)} {x.planned_unit}</option>)}</select></div><div className="nfos-field"><label>Production location</label><select value={startLocationId} onChange={(e) => setStartLocationId(e.target.value)}><option value="">Choose location…</option>{locations.filter((x) => x.active).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></div><div className="nfos-field"><label>Planned texture</label><input disabled value={selectedStartOrder ? (selectedStartOrder.planned_texture === "spun" ? "Spun" : "Regular") : "—"} />{selectedStartOrder?.planned_texture === "spun" && <div className="nfos-muted nfos-small">10% seed + 14-day cure controls will apply automatically.</div>}</div><div className="nfos-field full"><button className="nfos-btn" disabled={busy || !startOrderId || !startLocationId} onClick={start}>Start {startTexture === "spun" ? "Spun" : "Regular"} batch</button></div></div></div>
-    <div className="nfos-card"><h2>Batches</h2>{batches.length ? <div className="nfos-select-list nfos-batch-list">{batches.map((b) => <button key={b.id} className={selectedBatchId === b.id ? "active" : ""} onClick={() => setSelectedBatchId(b.id)}><span><strong>{b.batch_code}</strong><small>{b.flavor_name || b.recipe_name} • {b.texture === "spun" ? "Spun" : "Regular"} • {fmtDate(b.started_at)}</small></span><span className="nfos-inline-actions"><StatusPill value={b.status} /><StatusPill value={b.quality_status} />{b.status === "completed" && <StatusPill value={b.release_status} />}</span></button>)}</div> : <Empty>No production batches yet.</Empty>}</div>
-    {selectedBatch && <BatchWorkspace batch={selectedBatch} items={items} locations={locations} lots={lots} onChanged={changed} />}
+    <div className="nfos-card">
+      <div className="nfos-split-head">
+        <div><h2>Batches</h2><p className="nfos-muted">Accidental unposted batches can be deleted right here.</p></div>
+      </div>
+      {batches.length ? <div className="nfos-batch-list">{batches.map((b) => <div className="nfos-batch-manage-row" key={b.id}>
+        <button className={`nfos-batch-select ${selectedBatchId === b.id ? "active" : ""}`} onClick={() => setSelectedBatchId(b.id)}>
+          <span><strong>{b.batch_code}</strong><small>{b.flavor_name || b.recipe_name} • {b.texture === "spun" ? "Spun" : "Regular"} • {fmtDate(b.started_at)}</small></span>
+          <span className="nfos-inline-actions"><StatusPill value={b.status} /><StatusPill value={b.quality_status} />{b.status === "completed" && <StatusPill value={b.release_status} />}</span>
+        </button>
+        {["draft","in_progress"].includes(b.status) ? <button className="nfos-btn danger nfos-batch-row-delete" type="button" onClick={() => setDeleteBatchTarget(b)}>Delete</button> : <span className="nfos-muted nfos-small nfos-batch-row-delete">Locked</span>}
+      </div>)}</div> : <Empty>No production batches yet.</Empty>}
+    </div>
+    {selectedBatch && <BatchWorkspace batch={selectedBatch} items={items} locations={locations} lots={lots} onChanged={changed} onDelete={() => setDeleteBatchTarget(selectedBatch)} />}
+    {deleteBatchTarget && <NfosBatchDeleteDialog batch={deleteBatchTarget} onClose={() => setDeleteBatchTarget(null)} onDeleted={batchDeleted} />}
     {editOrder && <NfosProductionOrderEditor
       order={editOrder}
       recipes={recipes}

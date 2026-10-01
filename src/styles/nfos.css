@@ -2611,3 +2611,97 @@
   }
 }
 /* END NFOS Production Log Usability Polish */
+
+/* ============================================================
+   NFOS Easy Batch Delete
+   ============================================================ */
+.nfos-batch-manage-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.nfos-batch-select {
+  width: 100%;
+  border: 1px solid var(--nfos-line);
+  background: #fff;
+  border-radius: 11px;
+  padding: 11px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+  color: var(--nfos-ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.nfos-batch-select:hover { background: #fffaf0; }
+
+.nfos-batch-select.active {
+  border-color: #d6b34c;
+  background: #f7dc8a;
+  box-shadow: 0 0 0 2px rgba(214, 179, 76, .15);
+}
+
+.nfos-batch-select > span:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.nfos-batch-select small {
+  color: var(--nfos-muted);
+  font-size: 12px;
+}
+
+.nfos-batch-row-delete {
+  min-width: 78px;
+  align-self: center;
+}
+
+.nfos-batch-delete-dialog { width: min(760px, 96vw); }
+
+.nfos-batch-delete-body {
+  padding: 18px;
+  display: grid;
+  gap: 14px;
+}
+
+.nfos-delete-choice {
+  border: 1px solid var(--nfos-line);
+  border-radius: 12px;
+  padding: 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+}
+
+.nfos-delete-choice p {
+  margin: 5px 0 0;
+  color: var(--nfos-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.nfos-delete-choice-strong {
+  border-color: #ddb1ad;
+  background: #fff8f7;
+}
+
+@media(max-width:680px){
+  .nfos-batch-manage-row,
+  .nfos-delete-choice { grid-template-columns: 1fr; }
+
+  .nfos-batch-select {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .nfos-batch-row-delete { width: 100%; }
+}
+/* END NFOS EASY BATCH DELETE */

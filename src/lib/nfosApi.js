@@ -584,6 +584,15 @@ export async function deleteProductionOrder(productionOrderId) {
   );
 }
 
+export async function deleteUnpostedBatch(batchId, deleteProductionOrder = false) {
+  return take(
+    supabase.rpc("nfos_delete_unposted_batch", {
+      p_batch_id: batchId,
+      p_delete_production_order: Boolean(deleteProductionOrder),
+    })
+  );
+}
+
 export async function listBatches() {
   return take(
     supabase
