@@ -638,3 +638,140 @@
 }
 
 /* END NFOS MOBILE TABLES PHASE 7.1 */
+
+/* ============================================================
+   NFOS Mobile Device Detection — Phase 7.2
+   Force full-content card tables on real phones/tablets even
+   when the browser uses a desktop-style layout viewport.
+   ============================================================ */
+
+.nfos-shell[data-compact-tables="true"] {
+  overflow-x: hidden;
+}
+
+.nfos-shell[data-compact-tables="true"] .nfos-table-wrap {
+  overflow: visible !important;
+  max-width: 100%;
+  border: 0;
+  border-radius: 0;
+  scrollbar-gutter: auto;
+  background: transparent;
+}
+
+.nfos-shell[data-compact-tables="true"] .nfos-table[data-mobile-stack="true"] {
+  display: block;
+  width: 100%;
+  min-width: 0 !important;
+  max-width: 100%;
+  border-collapse: separate;
+}
+
+.nfos-shell[data-compact-tables="true"] .nfos-table[data-mobile-stack="true"] thead {
+  display: none;
+}
+
+.nfos-shell[data-compact-tables="true"] .nfos-table[data-mobile-stack="true"] tbody {
+  display: grid;
+  width: 100%;
+  gap: 10px;
+}
+
+.nfos-shell[data-compact-tables="true"] .nfos-table[data-mobile-stack="true"] tr {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--nfos-line);
+  border-radius: 12px;
+  background: var(--nfos-white);
+}
+
+.nfos-shell[data-compact-tables="true"] .nfos-table[data-mobile-stack="true"] td {
+  display: grid;
+  grid-template-columns: minmax(100px, 32%) minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 11px 12px;
+  border-bottom: 1px solid #edf1f2;
+  text-align: left !important;
+  white-space: normal !important;
+  overflow: visible;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: none;
+}
+
+.nfos-shell[data-compact-tables="true"] .nfos-table[data-mobile-stack="true"] td:last-child {
+  border-bottom: 0;
+}
+
+.nfos-shell[data-compact-tables="true"] .nfos-table[data-mobile-stack="true"] td::before {
+  content: attr(data-label);
+  min-width: 0;
+  color: #52676f;
+  font-size: 10px;
+  line-height: 1.3;
+  font-weight: 800;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.nfos-shell[data-compact-tables="true"] .nfos-table[data-mobile-stack="true"] td[data-label=""] {
+  grid-template-columns: 1fr;
+}
+
+.nfos-shell[data-compact-tables="true"] .nfos-table[data-mobile-stack="true"] td[data-label=""]::before {
+  display: none;
+}
+
+.nfos-shell[data-compact-tables="true"] .nfos-table[data-mobile-stack="true"] td > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.nfos-shell[data-compact-tables="true"] .nfos-table[data-mobile-stack="true"] strong,
+.nfos-shell[data-compact-tables="true"] .nfos-table[data-mobile-stack="true"] span,
+.nfos-shell[data-compact-tables="true"] .nfos-table[data-mobile-stack="true"] div {
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: none;
+}
+
+.nfos-shell[data-compact-tables="true"] .nfos-table[data-mobile-stack="true"] .nfos-pill {
+  width: fit-content;
+  max-width: 100%;
+  white-space: normal;
+  line-height: 1.25;
+}
+
+.nfos-shell[data-compact-tables="true"] .nfos-table[data-mobile-stack="true"] input,
+.nfos-shell[data-compact-tables="true"] .nfos-table[data-mobile-stack="true"] select,
+.nfos-shell[data-compact-tables="true"] .nfos-table[data-mobile-stack="true"] textarea {
+  width: 100%;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.nfos-shell[data-compact-tables="true"] .nfos-table[data-mobile-stack="true"] .nfos-inline-actions {
+  width: 100%;
+}
+
+.nfos-shell[data-compact-tables="true"] .nfos-table[data-mobile-stack="true"] .nfos-inline-actions .nfos-btn {
+  width: 100%;
+}
+
+@media (max-width: 430px) {
+  .nfos-shell[data-compact-tables="true"] .nfos-table[data-mobile-stack="true"] td {
+    grid-template-columns: 94px minmax(0, 1fr);
+    gap: 9px;
+    padding: 10px;
+  }
+}
+
+/* END NFOS MOBILE DEVICE DETECTION PHASE 7.2 */
