@@ -2705,3 +2705,214 @@
   .nfos-batch-row-delete { width: 100%; }
 }
 /* END NFOS EASY BATCH DELETE */
+
+/* ============================================================
+   NFOS Desktop Polish Batch — Change 1
+   Full-width sticky top navigation + readable desktop content.
+   DESKTOP ONLY. Mobile/tablet behavior is intentionally unchanged.
+   ============================================================ */
+@media (min-width: 901px) and (pointer: fine) {
+  .nfos-shell .nfos-topbar-inner {
+    max-width: 1920px !important;
+    padding-left: 28px !important;
+    padding-right: 28px !important;
+  }
+
+  .nfos-shell .nfos-layout {
+    display: block !important;
+    max-width: 1920px !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+    padding: 14px 28px 52px !important;
+  }
+
+  .nfos-shell .nfos-main {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+  }
+
+  .nfos-shell .nfos-side {
+    display: block !important;
+    position: sticky !important;
+    top: 68px !important;
+    z-index: 19 !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    margin: 0 0 18px !important;
+    padding: 8px 10px !important;
+    border-radius: 12px !important;
+    background: rgba(255,255,255,.97) !important;
+    box-shadow: 0 7px 24px rgba(15,73,96,.09) !important;
+    backdrop-filter: blur(10px);
+  }
+
+  .nfos-shell .nfos-nav {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 5px !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding: 1px 1px 4px !important;
+    scrollbar-width: thin;
+    overscroll-behavior-inline: contain;
+  }
+
+  .nfos-shell .nfos-nav button {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: max-content !important;
+    min-height: 36px !important;
+    padding: 8px 12px !important;
+    border-radius: 9px !important;
+    white-space: nowrap !important;
+    font-size: 13px !important;
+    line-height: 1.15 !important;
+  }
+
+  .nfos-shell .nfos-mobile-nav {
+    display: none !important;
+  }
+
+  .nfos-shell :where(
+    .nfos-card,
+    .nfos-note,
+    .nfos-error,
+    .nfos-success,
+    .nfos-muted,
+    .nfos-page-head p,
+    .nfos-field,
+    .nfos-stat,
+    .nfos-action-copy,
+    .nfos-calendar-event-copy
+  ) {
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+    hyphens: none !important;
+  }
+
+  .nfos-shell :where(.nfos-btn,.nfos-pill,.nfos-nav button) {
+    overflow-wrap: normal !important;
+    word-break: keep-all !important;
+    hyphens: none !important;
+  }
+
+  .nfos-shell .nfos-table-wrap {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .nfos-shell table.nfos-table,
+  .nfos-shell table.nfos-team-mobile-table {
+    width: 100% !important;
+    min-width: 980px !important;
+    max-width: none !important;
+    table-layout: auto !important;
+  }
+
+  .nfos-shell table.nfos-table th,
+  .nfos-shell table.nfos-team-mobile-table th {
+    white-space: nowrap !important;
+    overflow-wrap: normal !important;
+    word-break: keep-all !important;
+    hyphens: none !important;
+  }
+
+  .nfos-shell table.nfos-table td,
+  .nfos-shell table.nfos-team-mobile-table td {
+    white-space: nowrap !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+    hyphens: none !important;
+    min-width: max-content !important;
+  }
+
+  .nfos-shell table.nfos-table td.nfos-ledger-notes,
+  .nfos-shell table.nfos-table td[data-original-label="Notes"],
+  .nfos-shell table.nfos-table td[data-original-label="Reason"],
+  .nfos-shell table.nfos-table td[data-original-label="Detail"],
+  .nfos-shell table.nfos-table td[data-original-label="Why it matters"] {
+    white-space: normal !important;
+    min-width: 260px !important;
+    max-width: 420px !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+  }
+
+  .nfos-shell .nfos-mono {
+    white-space: nowrap !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+  }
+
+  .nfos-shell .nfos-receiving-ledger {
+    min-width: 1900px !important;
+    table-layout: auto !important;
+  }
+
+  .nfos-shell .nfos-receiving-ledger th:nth-child(1),
+  .nfos-shell .nfos-receiving-ledger td:nth-child(1) { min-width: 115px !important; }
+
+  .nfos-shell .nfos-receiving-ledger th:nth-child(2),
+  .nfos-shell .nfos-receiving-ledger td:nth-child(2) { min-width: 115px !important; }
+
+  .nfos-shell .nfos-receiving-ledger th:nth-child(3),
+  .nfos-shell .nfos-receiving-ledger td:nth-child(3) { min-width: 180px !important; }
+
+  .nfos-shell .nfos-receiving-ledger th:nth-child(4),
+  .nfos-shell .nfos-receiving-ledger td:nth-child(4) { min-width: 190px !important; }
+
+  .nfos-shell .nfos-receiving-ledger th:nth-child(5),
+  .nfos-shell .nfos-receiving-ledger td:nth-child(5) { min-width: 150px !important; }
+
+  .nfos-shell .nfos-receiving-ledger th:nth-child(6),
+  .nfos-shell .nfos-receiving-ledger td:nth-child(6) { min-width: 175px !important; }
+
+  .nfos-shell .nfos-receiving-ledger th:nth-child(7),
+  .nfos-shell .nfos-receiving-ledger td:nth-child(7) { min-width: 95px !important; }
+
+  .nfos-shell .nfos-receiving-ledger th:nth-child(8),
+  .nfos-shell .nfos-receiving-ledger td:nth-child(8),
+  .nfos-shell .nfos-receiving-ledger th:nth-child(9),
+  .nfos-shell .nfos-receiving-ledger td:nth-child(9),
+  .nfos-shell .nfos-receiving-ledger th:nth-child(10),
+  .nfos-shell .nfos-receiving-ledger td:nth-child(10),
+  .nfos-shell .nfos-receiving-ledger th:nth-child(11),
+  .nfos-shell .nfos-receiving-ledger td:nth-child(11),
+  .nfos-shell .nfos-receiving-ledger th:nth-child(12),
+  .nfos-shell .nfos-receiving-ledger td:nth-child(12) {
+    min-width: 105px !important;
+  }
+
+  .nfos-shell .nfos-receiving-ledger th:nth-child(13),
+  .nfos-shell .nfos-receiving-ledger td:nth-child(13) { min-width: 130px !important; }
+
+  .nfos-shell .nfos-receiving-ledger th:nth-child(14),
+  .nfos-shell .nfos-receiving-ledger td:nth-child(14) {
+    min-width: 330px !important;
+    max-width: 430px !important;
+    white-space: normal !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+  }
+
+  .nfos-shell .nfos-card {
+    max-width: none !important;
+  }
+
+  .nfos-shell .nfos-grid.two,
+  .nfos-shell .nfos-team-grid {
+    gap: 18px !important;
+  }
+
+  .nfos-shell .nfos-page-head {
+    margin-top: 2px !important;
+  }
+}
+/* END NFOS Desktop Polish Batch — Change 1 */
