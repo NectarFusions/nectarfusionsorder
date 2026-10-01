@@ -1,16 +1,35 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import NfosBarcode from "../components/NfosBarcode";
+import { ProductionModule, RecipesModule, TraceabilityModule } from "../components/NfosProduction";
 import * as nfos from "../lib/nfosApi";
+import NfosSystemHealth from "../components/NfosSystemHealth";
+import NfosReports from "../components/NfosReports";
+import NfosMarkets from "../components/NfosMarkets";
+import NfosNotificationCenter from "../components/NfosNotificationCenter";
+import NfosPurchasing from "../components/NfosPurchasing";
+import { NfosTodayDashboard, NfosOperationsCalendar } from "../components/NfosActionDashboard";
+import NfosTeamAccountability from "../components/NfosTeamAccountability";
+import NfosEmployeePortal from "../components/NfosEmployeePortal";
 import "../styles/nfos.css";
 
 const TABS = [
   ["overview", "Today"],
+  ["health", "System Health"],
+  ["reports", "Reports"],
+  ["markets", "Markets"],
+  ["notifications", "Notifications"],
+  ["calendar", "Calendar"],
+  ["team", "Team"],
   ["inventory", "Inventory"],
   ["receive", "Receive"],
   ["move", "Adjust / Transfer"],
   ["items", "Items"],
   ["locations", "Locations"],
   ["suppliers", "Suppliers"],
+  ["purchasing", "Purchasing"],
+  ["recipes", "Recipes"],
+  ["production", "Production"],
+  ["traceability", "Traceability"],
   ["barcodes", "Barcodes"],
   ["history", "History"],
 ];
@@ -136,13 +155,15 @@ function Overview({ inventory, lowStock, setTab }) {
           <div className="nfos-inline-actions">
             <button className="nfos-btn" onClick={() => setTab("receive")}>Receive inventory</button>
             <button className="nfos-btn secondary" onClick={() => setTab("move")}>Adjust / transfer</button>
+            <button className="nfos-btn secondary" onClick={() => setTab("purchasing")}>Purchasing</button>
+            <button className="nfos-btn secondary" onClick={() => setTab("production")}>Production</button>
             <button className="nfos-btn ghost" onClick={() => setTab("barcodes")}>Scan barcode</button>
           </div>
         </div>
         <div className="nfos-card">
-          <h3>Release 1 status</h3>
+          <h3>Release 2 status</h3>
           <div className="nfos-note">
-            Website finished-goods counts are bridged into the NFOS ledger during this transition. Ingredients, packaging, locations, lots, receiving, adjustments, transfers and internal barcodes now live in NFOS.
+            NFOS now connects inventory with versioned recipes, production orders, batches, quality checks, source lots, finished lots and batch barcodes. Complete a batch once and the inventory ledger updates behind it.
           </div>
         </div>
       </div>
@@ -317,35 +338,47 @@ function History({ transactions, items, locations, lots }) {
 
 export default function AdminOperationsPage() {
   const [authState,setAuthState]=useState("loading"); const [session,setSession]=useState(null);
+  const [employeeAccess,setEmployeeAccess]=useState(null);
   const [tab,setTab]=useState("overview"); const [busy,setBusy]=useState(false); const [error,setError]=useState("");
   const [inventory,setInventory]=useState([]),[lowStock,setLowStock]=useState([]),[items,setItems]=useState([]),[locations,setLocations]=useState([]),[suppliers,setSuppliers]=useState([]),[lots,setLots]=useState([]),[transactions,setTransactions]=useState([]);
   const [barcodeInitial,setBarcodeInitial]=useState(null);
 
   const refresh=useCallback(async()=>{setBusy(true);setError("");try{const [inventoryRows,lowRows,itemRows,locationRows,supplierRows,lotRows,txRows]=await Promise.all([nfos.listInventory(),nfos.listLowStock(),nfos.listItems(),nfos.listLocations(),nfos.listSuppliers(),nfos.listLots(),nfos.listTransactions()]);setInventory(inventoryRows||[]);setLowStock(lowRows||[]);setItems(itemRows||[]);setLocations(locationRows||[]);setSuppliers(supplierRows||[]);setLots(lotRows||[]);setTransactions(txRows||[]);}catch(err){setError(err?.message||"Could not load NFOS.");}finally{setBusy(false);}},[]);
 
-  useEffect(()=>{let alive=true;(async()=>{try{const s=await nfos.getSession();if(!alive)return;if(!s){setAuthState("signed_out");return;}const ok=await nfos.isAdmin();if(!alive)return;if(!ok){setAuthState("signed_out");return;}setSession(s);setAuthState("ready");}catch{if(alive)setAuthState("signed_out");}})();return()=>{alive=false};},[]);
+  useEffect(()=>{let alive=true;(async()=>{try{const s=await nfos.getSession();if(!alive)return;if(!s){setAuthState("signed_out");return;}const admin=await nfos.isAdmin();if(!alive)return;setSession(s);if(admin){setEmployeeAccess(null);setAuthState("ready");return;}try{const access=await nfos.getEmployeeAccess();if(!alive)return;if(access?.permissions?.includes("ops.view")){setEmployeeAccess(access);setAuthState("employee");return;}}catch{}setAuthState("signed_out");}catch{if(alive)setAuthState("signed_out");}})();return()=>{alive=false};},[]);
   useEffect(()=>{if(authState==="ready") refresh();},[authState,refresh]);
 
   const chooseBarcode=(row)=>{setBarcodeInitial(row);setTab("barcodes");};
-  const logout=async()=>{await nfos.signOutAdmin();setSession(null);setAuthState("signed_out");};
+  const logout=async()=>{await nfos.signOutAdmin();setSession(null);setEmployeeAccess(null);setAuthState("signed_out");};
 
   if(authState==="loading") return <div className="nfos-login"><div className="nfos-login-card"><h2>Loading NFOS…</h2></div></div>;
-  if(authState!=="ready") return <AdminLogin onSignedIn={(s)=>{setSession(s);setAuthState("ready");}}/>;
+  if(authState==="employee") return <NfosEmployeePortal session={session} access={employeeAccess} onSignOut={logout}/>;
+  if(authState!=="ready") return <AdminLogin onSignedIn={(s)=>{setSession(s);window.location.reload();}}/>;
 
   const content = {
-    overview:<Overview inventory={inventory} lowStock={lowStock} setTab={setTab}/>,
+    overview:<NfosTodayDashboard inventory={inventory} lowStock={lowStock} setTab={setTab} onRefresh={refresh}/>,
+    markets:<NfosMarkets manager notify={(type,msg)=>type==="error"?setError(msg):null}/>,
+    notifications:<NfosNotificationCenter manager onOpenRoute={setTab}/>,
+    calendar:<NfosOperationsCalendar setTab={setTab}/>,
+    team:<NfosTeamAccountability/>,
     inventory:<Inventory inventory={inventory} onSelectBarcode={chooseBarcode}/>,
     receive:<Receive items={items} locations={locations} suppliers={suppliers} onDone={refresh}/>,
     move:<MoveInventory items={items} locations={locations} lots={lots} onDone={refresh}/>,
     items:<Items items={items} suppliers={suppliers} locations={locations} onDone={refresh} onSelectBarcode={chooseBarcode}/>,
     locations:<Locations locations={locations} onDone={refresh}/>,
     suppliers:<Suppliers suppliers={suppliers} onDone={refresh}/>,
+    purchasing:<NfosPurchasing locations={locations} onInventoryChanged={refresh}/>,
+    recipes:<RecipesModule items={items} onRefresh={refresh}/>,
+    production:<ProductionModule items={items} locations={locations} lots={lots} onRefresh={refresh}/>,
+    traceability:<TraceabilityModule items={items} lots={lots}/>,
     barcodes:<Barcodes items={items} lots={lots} initial={barcodeInitial} clearInitial={()=>setBarcodeInitial(null)}/>,
     history:<History transactions={transactions} items={items} locations={locations} lots={lots}/>,
+    reports:<NfosReports onOpenRoute={setTab}/>,
+    health:<NfosSystemHealth onOpenRoute={setTab}/>,
   }[tab];
 
   const currentTitle=TABS.find(x=>x[0]===tab)?.[1]||"Operations";
-  return <div className="nfos-shell"><header className="nfos-topbar"><div className="nfos-topbar-inner"><div className="nfos-brand"><div className="nfos-mark">NF</div><div><div className="nfos-brand-title">NECTARFUSIONS OPERATIONS</div><div className="nfos-brand-sub">NFOS • Inventory Foundation</div></div></div><div className="nfos-inline-actions top-actions"><span className="nfos-muted nfos-small">{session?.user?.email}</span><a className="nfos-btn ghost" href="/">Website</a><button className="nfos-btn ghost" onClick={logout}>Sign out</button></div></div></header>
-    <div className="nfos-layout"><aside className="nfos-side"><nav className="nfos-nav">{TABS.map(([key,label])=><button key={key} className={tab===key?"active":""} onClick={()=>setTab(key)}>{label}{key==="overview"&&lowStock.length>0?` (${lowStock.length})`:""}</button>)}</nav></aside>
-      <main className="nfos-main"><div className="nfos-page-head"><div><h1>{currentTitle}</h1><p>{tab==="overview"?"What needs attention now, without hunting through spreadsheets.":"NectarFusions operational data is stored once and reused everywhere."}</p></div><button className="nfos-btn secondary" onClick={refresh} disabled={busy}>{busy?"Refreshing…":"Refresh"}</button></div>{error&&<div className="nfos-error">{error}</div>}{content}</main></div></div>;
+  return <div className="nfos-shell"><header className="nfos-topbar"><div className="nfos-topbar-inner"><div className="nfos-brand"><div className="nfos-mark">NF</div><div><div className="nfos-brand-title">NECTARFUSIONS OPERATIONS</div><div className="nfos-brand-sub">NFOS • Inventory + Production</div></div></div><div className="nfos-inline-actions top-actions"><span className="nfos-muted nfos-small">{session?.user?.email}</span><a className="nfos-btn ghost" href="/">Website</a><button className="nfos-btn ghost" onClick={logout}>Sign out</button></div></div></header>
+    <div className="nfos-layout"><aside className="nfos-side"><nav className="nfos-nav">{TABS.map(([key,label])=><button key={key} className={tab===key?"active":""} onClick={()=>setTab(key)}>{label}</button>)}</nav></aside>
+      <main className="nfos-main"><div className="nfos-page-head"><div><h1>{currentTitle}</h1><p>{tab==="overview"?"What needs attention now, without hunting through spreadsheets.":tab==="calendar"?"Production, purchasing, deliveries and release dates in one operating calendar.":tab==="team"?"Assign work, see workload and preserve who did what.":"NectarFusions operational data is stored once and reused everywhere."}</p></div><button className="nfos-btn secondary" onClick={refresh} disabled={busy}>{busy?"Refreshing…":"Refresh"}</button></div>{error&&<div className="nfos-error">{error}</div>}{content}</main></div></div>;
 }
