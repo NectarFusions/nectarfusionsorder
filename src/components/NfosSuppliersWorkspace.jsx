@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import * as nfos from "../lib/nfosApi";
+import NfosAlphaBand, { alphaRangeMatch } from "./NfosAlphaBand";
 
 const blank = () => ({
   name:"",
@@ -16,6 +17,7 @@ const blank = () => ({
 
 export default function NfosSuppliersWorkspace({ suppliers, onDone }) {
   const [search,setSearch]=useState("");
+  const [alpha,setAlpha]=useState("all");
   const [editingId,setEditingId]=useState("");
   const [form,setForm]=useState(blank());
   const [busy,setBusy]=useState(false);
@@ -24,8 +26,8 @@ export default function NfosSuppliersWorkspace({ suppliers, onDone }) {
 
   const filtered=useMemo(()=>suppliers.filter((row)=>{
     const hay=`${row.name} ${row.vendor_code||""} ${row.category||""} ${row.products_supplied||""} ${row.contact_name||""} ${row.email||""}`.toLowerCase();
-    return hay.includes(search.toLowerCase());
-  }),[suppliers,search]);
+    return hay.includes(search.toLowerCase()) && alphaRangeMatch(row.name,alpha);
+  }),[suppliers,search,alpha]);
 
   const vendorGroups=filtered.filter((row)=>String(row.vendor_code||"").startsWith("VND"));
   const actualSuppliers=filtered.filter((row)=>!String(row.vendor_code||"").startsWith("VND"));
@@ -83,7 +85,9 @@ export default function NfosSuppliersWorkspace({ suppliers, onDone }) {
       </div>
       <div className="nfos-filterbar">
         <input placeholder="Search supplier, category, product or contact…" value={search} onChange={(e)=>setSearch(e.target.value)}/>
+        <span className="nfos-muted nfos-small">{actualSuppliers.length} suppliers</span>
       </div>
+      <NfosAlphaBand value={alpha} onChange={setAlpha} label="Suppliers A–Z" />
       <div className="nfos-table-wrap">
         <table className="nfos-table">
           <thead><tr><th>Supplier</th><th>Category</th><th>Products supplied</th><th>Contact</th><th>Preferred</th><th>Active</th><th>Actions</th></tr></thead>

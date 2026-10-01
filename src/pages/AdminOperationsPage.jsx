@@ -14,6 +14,7 @@ import NfosEmployeePortal from "../components/NfosEmployeePortal";
 import NfosItemEditor from "../components/NfosItemEditor";
 import NfosReceivingWorkspace from "../components/NfosReceivingWorkspace";
 import NfosSuppliersWorkspace from "../components/NfosSuppliersWorkspace";
+import NfosAlphaBand, { alphaRangeMatch } from "../components/NfosAlphaBand";
 import useNfosResponsiveTables from "../lib/useNfosResponsiveTables";
 import "../styles/nfos.css";
 
@@ -182,12 +183,15 @@ function Overview({ inventory, lowStock, setTab }) {
 function Inventory({ inventory, items, suppliers, locations, onSelectBarcode, onDone, onAdjust }) {
   const [search, setSearch] = useState("");
   const [type, setType] = useState("all");
+  const [alpha, setAlpha] = useState("all");
   const [editItemId, setEditItemId] = useState("");
   const [message, setMessage] = useState("");
   const rows = useMemo(() => inventory.filter((row) => {
     const hay = `${row.name} ${row.sku} ${row.category || ""}`.toLowerCase();
-    return (type === "all" || row.item_type === type) && hay.includes(search.toLowerCase());
-  }), [inventory, search, type]);
+    return (type === "all" || row.item_type === type)
+      && hay.includes(search.toLowerCase())
+      && alphaRangeMatch(row.name, alpha);
+  }), [inventory, search, type, alpha]);
 
   const editItem = items.find((row) => row.id === editItemId) || null;
 
@@ -208,6 +212,7 @@ function Inventory({ inventory, items, suppliers, locations, onSelectBarcode, on
         </select>
         <span className="nfos-muted nfos-small">{rows.length} records</span>
       </div>
+      <NfosAlphaBand value={alpha} onChange={setAlpha} label="Inventory A–Z" />
       <div className="nfos-table-wrap">
         <table className="nfos-table">
           <thead><tr><th>Item</th><th>SKU</th><th>Type</th><th>Company On Hand</th><th>Online</th><th>Reorder</th><th>Target</th><th>Status</th><th>Actions</th></tr></thead>
@@ -322,14 +327,14 @@ function MoveInventory({ items, locations, lots, onDone, initialItemId = "" }) {
 }
 
 function Items({ items, suppliers, locations, onDone, onSelectBarcode }) {
-  const [search,setSearch]=useState(""); const [selectedId,setSelectedId]=useState("");
+  const [search,setSearch]=useState(""); const [alpha,setAlpha]=useState("all"); const [selectedId,setSelectedId]=useState("");
   const selected=items.find(x=>x.id===selectedId);
   const [draft,setDraft]=useState(null); const [busy,setBusy]=useState(false),[message,setMessage]=useState(""),[error,setError]=useState("");
   useEffect(()=>{ if(selected) setDraft({...selected}); },[selectedId, selected]);
-  const rows=items.filter(x=>`${x.name} ${x.sku}`.toLowerCase().includes(search.toLowerCase()));
+  const rows=items.filter(x=>`${x.name} ${x.sku}`.toLowerCase().includes(search.toLowerCase()) && alphaRangeMatch(x.name,alpha));
   const save=async()=>{setBusy(true);setError("");setMessage("");try{await nfos.updateItem(selected.id,{reorder_point:draft.reorder_point===""?null:Number(draft.reorder_point),target_stock:draft.target_stock===""?null:Number(draft.target_stock),preferred_order_qty:draft.preferred_order_qty===""?null:Number(draft.preferred_order_qty),preferred_supplier_id:draft.preferred_supplier_id||null,default_location_id:draft.default_location_id||null,active:Boolean(draft.active),notes:draft.notes||null});setMessage("Item settings saved.");await onDone();}catch(e){setError(e?.message||"Could not update item.");}finally{setBusy(false);}};
   return <div className="nfos-grid two">
-    <div className="nfos-card"><div className="nfos-filterbar"><input placeholder="Search items" value={search} onChange={e=>setSearch(e.target.value)}/></div><div className="nfos-table-wrap"><table className="nfos-table"><thead><tr><th>Item</th><th>Type</th><th>SKU</th></tr></thead><tbody>{rows.map(x=><tr key={x.id} onClick={()=>setSelectedId(x.id)} style={{cursor:"pointer",background:selectedId===x.id?"#eef6f7":undefined}}><td><strong>{x.name}</strong></td><td>{typeLabel(x.item_type)}</td><td className="nfos-mono">{x.sku}</td></tr>)}</tbody></table></div></div>
+    <div className="nfos-card"><div className="nfos-filterbar"><input placeholder="Search items" value={search} onChange={e=>setSearch(e.target.value)}/><span className="nfos-muted nfos-small">{rows.length} items</span></div><NfosAlphaBand value={alpha} onChange={setAlpha} label="Items A–Z" /><div className="nfos-table-wrap"><table className="nfos-table"><thead><tr><th>Item</th><th>Type</th><th>SKU</th></tr></thead><tbody>{rows.map(x=><tr key={x.id} onClick={()=>setSelectedId(x.id)} style={{cursor:"pointer",background:selectedId===x.id?"#eef6f7":undefined}}><td><strong>{x.name}</strong></td><td>{typeLabel(x.item_type)}</td><td className="nfos-mono">{x.sku}</td></tr>)}</tbody></table></div></div>
     <div className="nfos-card">{!draft?<Empty>Select an item to manage its operating rules.</Empty>:<>
       <h2>{draft.name}</h2><div className="nfos-muted nfos-mono" style={{marginBottom:14}}>{draft.sku}</div>{error&&<div className="nfos-error">{error}</div>}{message&&<div className="nfos-success">{message}</div>}
       <div className="nfos-form">
@@ -367,6 +372,7 @@ function Barcodes({ items, lots, initial, clearInitial, onFoundEntity }) {
   const [cameraOpen,setCameraOpen]=useState(false);
   const inputRef=useRef(null);
   const [selectedItemId,setSelectedItemId]=useState("");
+  const [lotAlpha,setLotAlpha]=useState("all");
 
   useEffect(()=>{
     if(initial?.barcode_value){
@@ -422,6 +428,14 @@ function Barcodes({ items, lots, initial, clearInitial, onFoundEntity }) {
   };
 
   const selected=items.find(x=>x.id===selectedItemId);
+  const lotRows=useMemo(()=>lots
+    .map((lot)=>({lot,item:items.find((item)=>item.id===lot.item_id)}))
+    .filter(({item})=>alphaRangeMatch(item?.name||"",lotAlpha))
+    .sort((a,b)=>{
+      const nameCompare=String(a.item?.name||"").localeCompare(String(b.item?.name||""));
+      if(nameCompare!==0)return nameCompare;
+      return String(b.lot.received_at||"").localeCompare(String(a.lot.received_at||""));
+    }),[lots,items,lotAlpha]);
   const entityLabel=found?.entity_type==="batch"?"Production batch":found?.entity_type==="lot"?"Inventory lot":found?.entity_type==="item"?"NFOS item":"NFOS record";
 
   return <>
@@ -469,22 +483,30 @@ function Barcodes({ items, lots, initial, clearInitial, onFoundEntity }) {
       </div>}
     </div>
 
-    <div className="nfos-grid two">
+    <div className="nfos-grid two nfos-barcode-label-layout">
       <div className="nfos-card">
         <h2>Item labels</h2>
+        <p className="nfos-muted">Choose an inventory item to view or print its reusable item barcode.</p>
         <div className="nfos-field">
           <label>Choose item</label>
           <select value={selectedItemId} onChange={e=>setSelectedItemId(e.target.value)}>
             <option value="">Choose item…</option>
-            {items.filter(x=>x.active).map(x=><option key={x.id} value={x.id}>{x.sku} — {x.name}</option>)}
+            {items.filter(x=>x.active).sort((a,b)=>a.name.localeCompare(b.name)).map(x=><option key={x.id} value={x.id}>{x.sku} — {x.name}</option>)}
           </select>
         </div>
         {selected&&<div style={{marginTop:16}}><NfosBarcode value={selected.barcode_value} title={selected.name} subtitle={selected.sku}/></div>}
       </div>
 
       <div className="nfos-card">
-        <h2>Lot labels</h2>
-        {lots.length===0?<Empty>No lots have been received yet.</Empty>:<div className="nfos-table-wrap"><table className="nfos-table"><thead><tr><th>Lot</th><th>Received</th><th>Label</th></tr></thead><tbody>{lots.slice(0,40).map(l=>{const item=items.find(i=>i.id===l.item_id);return <tr key={l.id}><td><strong>{l.lot_code}</strong><div className="nfos-muted nfos-small">{item?.name||""}</div></td><td>{l.received_at?new Date(l.received_at).toLocaleDateString():"—"}</td><td><NfosBarcode compact value={l.barcode_value} /></td></tr>})}</tbody></table></div>}
+        <div className="nfos-split-head">
+          <div>
+            <h2>Lot labels</h2>
+            <p className="nfos-muted">Browse lots alphabetically by item name, then select the label you need.</p>
+          </div>
+          <span className="nfos-pill nfos-lot-label-count">{lotRows.length} shown</span>
+        </div>
+        <NfosAlphaBand value={lotAlpha} onChange={setLotAlpha} label="Lot labels by item" />
+        {lots.length===0?<Empty>No lots have been received yet.</Empty>:lotRows.length===0?<div className="nfos-empty nfos-alpha-list-empty">No lot labels fall in this letter range.</div>:<div className="nfos-table-wrap"><table className="nfos-table"><thead><tr><th>Item</th><th>Lot</th><th>Received</th><th>Label</th></tr></thead><tbody>{lotRows.map(({lot:l,item})=><tr key={l.id}><td><strong>{item?.name||"—"}</strong><div className="nfos-muted nfos-small">{item?.sku||""}</div></td><td className="nfos-mono"><strong>{l.lot_code}</strong></td><td>{l.received_at?new Date(l.received_at).toLocaleDateString():"—"}</td><td><NfosBarcode compact value={l.barcode_value} /></td></tr>)}</tbody></table></div>}
       </div>
     </div>
 

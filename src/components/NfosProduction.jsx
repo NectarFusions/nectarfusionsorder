@@ -5,6 +5,7 @@ import NfosProductionOrderEditor from "./NfosProductionOrderEditor";
 import NfosAdminProductionSuggestions from "./NfosAdminProductionSuggestions";
 import NfosProductionLog from "./NfosProductionLog";
 import NfosBatchDeleteDialog from "./NfosBatchDeleteDialog";
+import NfosAlphaBand, { alphaRangeMatch } from "./NfosAlphaBand";
 import * as nfos from "../lib/nfosApi";
 
 const qty = (value) => {
@@ -332,6 +333,7 @@ export function RecipesModule({ items, onRefresh }) {
   const [recipes, setRecipes] = useState([]);
   const [flavors, setFlavors] = useState([]);
   const [selectedId, setSelectedId] = useState("");
+  const [recipeAlpha, setRecipeAlpha] = useState("all");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -364,7 +366,18 @@ export function RecipesModule({ items, onRefresh }) {
 
   useEffect(() => { load(); }, [load]);
 
+  const visibleRecipes = useMemo(
+    () => recipes.filter((recipe) => alphaRangeMatch(recipe.name || recipe.flavor_name || recipe.recipe_key, recipeAlpha)),
+    [recipes, recipeAlpha]
+  );
   const selected = recipes.find((x) => x.id === selectedId);
+
+  useEffect(() => {
+    if (!visibleRecipes.length) return;
+    if (!visibleRecipes.some((recipe) => recipe.id === selectedId)) {
+      setSelectedId(visibleRecipes[0].id);
+    }
+  }, [visibleRecipes, selectedId]);
 
   const create = async (event) => {
     event.preventDefault();
@@ -392,7 +405,8 @@ export function RecipesModule({ items, onRefresh }) {
         <div className="nfos-card">
           <h2>Recipe versions</h2>
           <p className="nfos-muted">A batch always points to the exact recipe version used. Editing the future never rewrites the past.</p>
-          {recipes.length ? <div className="nfos-select-list">{recipes.map((r) => <button key={r.id} className={selectedId === r.id ? "active" : ""} onClick={() => setSelectedId(r.id)}><span><strong>{r.name}</strong><small>{r.flavor_name || r.recipe_key} • v{r.version}</small></span><StatusPill value={r.status} /></button>)}</div> : <Empty>No recipes have been entered yet.</Empty>}
+          <NfosAlphaBand value={recipeAlpha} onChange={setRecipeAlpha} label="Recipes A–Z" />
+          {recipes.length===0 ? <Empty>No recipes have been entered yet.</Empty> : visibleRecipes.length ? <div className="nfos-select-list">{visibleRecipes.map((r) => <button key={r.id} className={selectedId === r.id ? "active" : ""} onClick={() => setSelectedId(r.id)}><span><strong>{r.name}</strong><small>{r.flavor_name || r.recipe_key} • v{r.version}</small></span><StatusPill value={r.status} /></button>)}</div> : <Empty>No recipes fall in this letter range.</Empty>}
         </div>
         <div className="nfos-card">
           <h3>Create recipe</h3>

@@ -2916,3 +2916,84 @@
   }
 }
 /* END NFOS Desktop Polish Batch — Change 1 */
+
+/* ============================================================
+   NFOS Desktop Polish Batch — Change 2
+   Alphabet range bands + stacked Barcode label sections.
+   DESKTOP ONLY.
+   ============================================================ */
+.nfos-alpha-filter {
+  display: none;
+}
+
+@media (min-width: 901px) and (pointer: fine) {
+  .nfos-alpha-filter {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 10px 0 14px;
+  }
+
+  .nfos-alpha-filter-label {
+    flex: 0 0 auto;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--nfos-muted);
+    white-space: nowrap;
+  }
+
+  .nfos-alpha-band {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .nfos-alpha-chip {
+    border: 1px solid var(--nfos-line);
+    background: #fff;
+    color: var(--nfos-ink);
+    border-radius: 999px;
+    padding: 6px 11px;
+    min-width: 46px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease, box-shadow .15s ease;
+  }
+
+  .nfos-alpha-chip:hover {
+    background: #fffaf0;
+    border-color: #d9bd72;
+  }
+
+  .nfos-alpha-chip.active {
+    background: #f7dc8a;
+    border-color: #d6b34c;
+    box-shadow: 0 0 0 2px rgba(214,179,76,.13);
+  }
+
+  .nfos-barcode-label-layout {
+    grid-template-columns: 1fr !important;
+    gap: 18px !important;
+  }
+
+  .nfos-barcode-label-layout > .nfos-card {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .nfos-lot-label-count {
+    margin-left: auto;
+    white-space: nowrap;
+  }
+
+  .nfos-alpha-list-empty {
+    margin-top: 10px;
+  }
+}
+/* END NFOS Desktop Polish Batch — Change 2 */
