@@ -18,27 +18,78 @@ import NfosAlphaBand, { alphaRangeMatch } from "../components/NfosAlphaBand";
 import useNfosResponsiveTables from "../lib/useNfosResponsiveTables";
 import "../styles/nfos.css";
 
-const TABS = [
-  ["overview", "Today"],
-  ["health", "System Health"],
-  ["reports", "Reports"],
-  ["markets", "Markets"],
-  ["notifications", "Notifications"],
-  ["calendar", "Calendar"],
-  ["team", "Team"],
-  ["inventory", "Inventory"],
-  ["receive", "Receiving"],
-  ["move", "Adjust / Transfer"],
-  ["items", "Items"],
-  ["locations", "Locations"],
-  ["suppliers", "Suppliers & Vendors"],
-  ["purchasing", "Purchasing"],
-  ["recipes", "Recipes"],
-  ["production", "Production"],
-  ["traceability", "Traceability"],
-  ["barcodes", "Barcodes"],
-  ["history", "History"],
+const NAV_GROUPS = [
+  {
+    label: "START",
+    tabs: [
+      ["dashboard", "Dashboard", "view"],
+      ["overview", "Today", "view"],
+    ],
+  },
+  {
+    label: "DAILY WORK",
+    tabs: [
+      ["receive", "Receiving", "edit"],
+      ["production", "Production", "edit"],
+      ["markets", "Sales / Markets", "edit"],
+      ["move", "Adjustments", "edit"],
+    ],
+  },
+  {
+    label: "INVENTORY & PURCHASING",
+    tabs: [
+      ["inventory", "Inventory", "view"],
+      ["purchasing", "Purchasing", "edit"],
+      ["locations", "Locations", "edit"],
+      ["barcodes", "Barcodes", "view"],
+    ],
+  },
+  {
+    label: "PRODUCTS & RECIPES",
+    tabs: [
+      ["recipes", "Recipes", "edit"],
+      ["items", "Items", "edit"],
+      ["suppliers", "Suppliers", "edit"],
+    ],
+  },
+  {
+    label: "REPORTING",
+    tabs: [
+      ["traceability", "Traceability", "view"],
+      ["reports", "Reports", "view"],
+      ["history", "Audit History", "view"],
+    ],
+  },
+  {
+    label: "MANAGEMENT",
+    tabs: [
+      ["calendar", "Calendar", "view"],
+      ["team", "Team", "edit"],
+      ["notifications", "Notifications", "view"],
+      ["health", "System Health", "edit"],
+    ],
+  },
 ];
+
+const TABS = NAV_GROUPS.flatMap((group) => group.tabs);
+
+function NfosNavIcon({ mode }) {
+  if (mode === "edit") {
+    return (
+      <svg className="nfos-nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 20l4.4-1.1L19.1 8.2l-3.3-3.3L5.1 15.6 4 20Z" />
+        <path d="M14.7 6l3.3 3.3" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg className="nfos-nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6S2.5 12 2.5 12Z" />
+      <circle cx="12" cy="12" r="2.6" />
+    </svg>
+  );
+}
 
 const typeLabel = (type) =>
   ({ finished_good: "Finished", material: "Ingredient", packaging: "Packaging" }[type] || type);
@@ -524,7 +575,7 @@ export default function AdminOperationsPage() {
   useNfosResponsiveTables();
   const [authState,setAuthState]=useState("loading"); const [session,setSession]=useState(null);
   const [employeeAccess,setEmployeeAccess]=useState(null);
-  const [tab,setTab]=useState("overview"); const [busy,setBusy]=useState(false); const [error,setError]=useState("");
+  const [tab,setTab]=useState("dashboard"); const [busy,setBusy]=useState(false); const [error,setError]=useState("");
   const [inventory,setInventory]=useState([]),[lowStock,setLowStock]=useState([]),[items,setItems]=useState([]),[locations,setLocations]=useState([]),[suppliers,setSuppliers]=useState([]),[lots,setLots]=useState([]),[transactions,setTransactions]=useState([]);
   const [barcodeInitial,setBarcodeInitial]=useState(null);
   const [traceabilityInitialBatchId,setTraceabilityInitialBatchId]=useState("");
@@ -547,6 +598,7 @@ export default function AdminOperationsPage() {
   if(authState!=="ready") return <AdminLogin onSignedIn={(s)=>{setSession(s);window.location.reload();}}/>;
 
   const content = {
+    dashboard:<Overview inventory={inventory} lowStock={lowStock} setTab={setTab}/>,
     overview:<NfosTodayDashboard inventory={inventory} lowStock={lowStock} setTab={setTab} onRefresh={refresh}/>,
     markets:<NfosMarkets manager notify={(type,msg)=>type==="error"?setError(msg):null}/>,
     notifications:<NfosNotificationCenter manager onOpenRoute={setTab}/>,
@@ -569,10 +621,36 @@ export default function AdminOperationsPage() {
   }[tab];
 
   const currentTitle=TABS.find(x=>x[0]===tab)?.[1]||"Operations";
+  const pageDescription =
+    tab==="dashboard" ? "High-level operating snapshot. NFOS calculates this from the records created elsewhere." :
+    tab==="overview" ? "Your automated action queue: what actually needs attention today." :
+    tab==="calendar" ? "Production, purchasing, deliveries and release dates in one operating calendar." :
+    tab==="team" ? "Assign work, see workload and preserve who did what." :
+    tab==="inventory" ? "Current inventory state calculated from receiving, production, sales and adjustments." :
+    tab==="reports" ? "Management reporting calculated from the NFOS ledger." :
+    tab==="traceability" ? "Follow source lots, batches and finished inventory without re-entering data." :
+    "NectarFusions operational data is stored once and reused everywhere.";
+
   return <div className="nfos-shell"><header className="nfos-topbar"><div className="nfos-topbar-inner"><div className="nfos-brand"><div className="nfos-mark">NF</div><div><div className="nfos-brand-title">NECTARFUSIONS OPERATIONS</div><div className="nfos-brand-sub">NFOS • Inventory + Production</div></div></div><div className="nfos-inline-actions top-actions"><span className="nfos-muted nfos-small">{session?.user?.email}</span><a className="nfos-btn ghost" href="/">Website</a><button className="nfos-btn ghost" onClick={logout}>Sign out</button></div></div></header>
     <div className="nfos-layout"><aside className="nfos-side">
-      <label className="nfos-mobile-nav"><span>Section</span><select aria-label="NFOS section" value={tab} onChange={(e)=>setTab(e.target.value)}>{TABS.map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label>
-      <nav className="nfos-nav">{TABS.map(([key,label])=><button key={key} className={tab===key?"active":""} onClick={()=>setTab(key)}>{label}</button>)}</nav>
+      <label className="nfos-mobile-nav"><span>Section</span><select aria-label="NFOS section" value={tab} onChange={(e)=>setTab(e.target.value)}>{NAV_GROUPS.map((group)=><optgroup key={group.label} label={group.label}>{group.tabs.map(([key,label])=><option key={key} value={key}>{label}</option>)}</optgroup>)}</select></label>
+      <nav className="nfos-nav" aria-label="NFOS sections">
+        {NAV_GROUPS.map((group)=><div className="nfos-nav-group" key={group.label}>
+          <div className="nfos-nav-group-label">{group.label}</div>
+          <div className="nfos-nav-group-tabs">
+            {group.tabs.map(([key,label,mode])=><button
+              key={key}
+              className={tab===key?"active":""}
+              onClick={()=>setTab(key)}
+              title={`${mode==="view"?"View / system-generated":"Action / editable"} · ${label}`}
+            ><NfosNavIcon mode={mode}/><span>{label}</span></button>)}
+          </div>
+        </div>)}
+      </nav>
+      <div className="nfos-nav-legend" aria-label="Navigation icon key">
+        <span><NfosNavIcon mode="view"/> View / system-generated</span>
+        <span><NfosNavIcon mode="edit"/> Action / editable</span>
+      </div>
     </aside>
-      <main className="nfos-main"><div className="nfos-page-head"><div><h1>{currentTitle}</h1><p>{tab==="overview"?"What needs attention now, without hunting through spreadsheets.":tab==="calendar"?"Production, purchasing, deliveries and release dates in one operating calendar.":tab==="team"?"Assign work, see workload and preserve who did what.":"NectarFusions operational data is stored once and reused everywhere."}</p></div><button className="nfos-btn secondary" onClick={refresh} disabled={busy}>{busy?"Refreshing…":"Refresh"}</button></div>{error&&<div className="nfos-error">{error}</div>}{content}</main></div></div>;
+      <main className="nfos-main"><div className="nfos-page-head"><div><h1>{currentTitle}</h1><p>{pageDescription}</p></div><button className="nfos-btn secondary" onClick={refresh} disabled={busy}>{busy?"Refreshing…":"Refresh"}</button></div>{error&&<div className="nfos-error">{error}</div>}{content}</main></div></div>;
 }
