@@ -6,6 +6,8 @@ import NfosReports from "./NfosReports";
 import NfosMarkets from "./NfosMarkets";
 import NfosNotificationCenter from "./NfosNotificationCenter";
 import NfosSuggestionsPanel from "./NfosSuggestionsPanel";
+import NfosMarketOrderLogger from "./NfosMarketOrderLogger";
+import NfosFlavorAvailability from "./NfosFlavorAvailability";
 import "../styles/nfos.css";
 
 const roleLabel = (value) => ({
@@ -14,6 +16,7 @@ const roleLabel = (value) => ({
   production_operator: "Production Operator",
   inventory_operator: "Inventory Operator",
   purchasing_operator: "Purchasing Operator",
+  market_manager: "Market Management",
   viewer: "Viewer",
 }[value] || value || "Team Member");
 const roleLabels = (roles, fallback) => {
@@ -658,6 +661,8 @@ export default function NfosEmployeePortal({ session, access, onSignOut, forcePa
     if(permissions.has("production.execute")) rows.push(["production","Production"]);
     if(permissions.has("inventory.manage")) rows.push(["inventory","Inventory"]);
     if(permissions.has("purchasing.manage")) rows.push(["purchasing","Purchasing"]);
+    if(permissions.has("market.order.log")) rows.push(["market_orders","Scan Orders"]);
+    if(permissions.has("products.view")) rows.push(["flavor_availability","Flavor Availability"]);
     if(permissions.has("market.manage")) rows.push(["markets","Markets"]);
     if(permissions.has("team.assign")) rows.push(["manager","Manage Work"]);
     if(permissions.has("reports.view")) rows.push(["reports","Reports"]);
@@ -728,6 +733,8 @@ export default function NfosEmployeePortal({ session, access, onSignOut, forcePa
         {tab==="production" && <ProductionPanel access={access} notify={notify}/>}
         {tab==="inventory" && <InventoryPanel notify={notify}/>}
         {tab==="purchasing" && <PurchasingPanel notify={notify}/>}
+        {tab==="market_orders" && <NfosMarketOrderLogger notify={notify}/>}
+        {tab==="flavor_availability" && <NfosFlavorAvailability/>}
         {tab==="markets" && <NfosMarkets manager={permissions.has("team.assign")} notify={notify}/>}
 
         {tab==="reports" && <NfosReports onOpenRoute={setTab}/>}

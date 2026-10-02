@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import * as nfos from "../lib/nfosApi";
+import NfosMarketOrderApprovals from "./NfosMarketOrderApprovals";
 
 const fmtDate=(value)=>{
   if(!value) return "—";
@@ -10,7 +11,7 @@ const money=(cents)=>new Intl.NumberFormat("en-US",{style:"currency",currency:"U
 const qty=(v)=>{const n=Number(v||0);return Number.isInteger(n)?String(n):n.toLocaleString(undefined,{maximumFractionDigits:4});};
 const pill=(v)=>String(v||"").replaceAll("_"," ");
 
-export default function NfosMarkets({ manager=false, notify }) {
+export default function NfosMarkets({ manager=false, adminApprovals=false, notify }) {
   const [data,setData]=useState({market_dates:[],sessions:[],finished_items:[],session_inventory:[],team:[],reconciliations:[],square_mappings:[]});
   const [selectedId,setSelectedId]=useState("");
   const [busy,setBusy]=useState(false);
@@ -174,6 +175,7 @@ export default function NfosMarkets({ manager=false, notify }) {
   };
 
   return <>
+    {adminApprovals&&<NfosMarketOrderApprovals notify={notify} onChanged={load}/>}
     {error&&<div className="nfos-error">{error}</div>}
     {message&&<div className="nfos-success">{message}</div>}
 

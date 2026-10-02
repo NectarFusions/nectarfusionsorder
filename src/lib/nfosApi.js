@@ -1440,6 +1440,101 @@ export async function squareMarketRequest(action, payload = {}) {
   return body;
 }
 
+
+// NFOS Product Master + Market Management
+export async function getProductsWorkspace() {
+  const { data, error } = await supabase.rpc("nfos_get_products_workspace");
+  if (error) throw error;
+  return data;
+}
+export async function updateProductMaster(input) {
+  const { data, error } = await supabase.rpc("nfos_update_product_master", {
+    p_flavor_id: input.flavorId,
+    p_product_status: input.productStatus,
+    p_category: input.category || null,
+    p_product_tier: input.productTier || null,
+    p_seasonality: input.seasonality || "year_round",
+    p_season_start_month: input.seasonStartMonth === "" ? null : Number(input.seasonStartMonth),
+    p_season_end_month: input.seasonEndMonth === "" ? null : Number(input.seasonEndMonth),
+    p_primary_recipe_id: input.primaryRecipeId || null,
+    p_short_description: input.shortDescription || null,
+    p_internal_notes: input.internalNotes || null,
+    p_variants: input.variants || [],
+  });
+  if (error) throw error;
+  return data;
+}
+export async function getProductAvailability() {
+  const { data, error } = await supabase.rpc("nfos_get_product_availability");
+  if (error) throw error;
+  return data;
+}
+export async function getRetailLocationDirectory() {
+  const { data, error } = await supabase.rpc("nfos_get_retail_location_directory");
+  if (error) throw error;
+  return data;
+}
+export async function setRetailItemAvailability(input) {
+  const { data, error } = await supabase.rpc("nfos_set_retail_item_availability", {
+    p_retail_location_id: input.retailLocationId,
+    p_item_id: input.itemId,
+    p_availability_status: input.availabilityStatus,
+    p_quantity_on_hand: input.quantityOnHand,
+    p_source: input.source || "manual",
+    p_source_reference: input.sourceReference || null,
+    p_notes: input.notes || null,
+  });
+  if (error) throw error;
+  return data;
+}
+export async function getMarketOrderWorkspace() {
+  const { data, error } = await supabase.rpc("nfos_market_get_order_workspace");
+  if (error) throw error;
+  return data;
+}
+export async function marketLookupSellableBarcode(barcode) {
+  const { data, error } = await supabase.rpc("nfos_market_lookup_sellable_barcode", { p_barcode: barcode });
+  if (error) throw error;
+  return data;
+}
+export async function marketLogOrder(sessionId, lines, notes = null) {
+  const { data, error } = await supabase.rpc("nfos_market_log_order", {
+    p_market_session_id: sessionId,
+    p_lines: lines,
+    p_notes: notes,
+  });
+  if (error) throw error;
+  return data;
+}
+export async function marketUpdateLoggedOrder(orderId, lines, notes = null) {
+  const { data, error } = await supabase.rpc("nfos_market_update_logged_order", {
+    p_order_id: orderId,
+    p_lines: lines,
+    p_notes: notes,
+  });
+  if (error) throw error;
+  return data;
+}
+export async function marketSubmitLoggedOrder(orderId) {
+  const { data, error } = await supabase.rpc("nfos_market_submit_logged_order", { p_order_id: orderId });
+  if (error) throw error;
+  return data;
+}
+export async function adminGetMarketOrderApprovals() {
+  const { data, error } = await supabase.rpc("nfos_admin_get_market_order_approvals");
+  if (error) throw error;
+  return data;
+}
+export async function adminReviewMarketOrder(orderId, action, adminNotes = null) {
+  const { data, error } = await supabase.rpc("nfos_admin_review_market_order", {
+    p_order_id: orderId,
+    p_action: action,
+    p_admin_notes: adminNotes,
+  });
+  if (error) throw error;
+  return data;
+}
+
 // NFOS Costing + Management Reporting — Phase 5
 export async function getReportingWorkspace() {
   const { data, error } = await supabase.rpc("nfos_get_reporting_workspace");

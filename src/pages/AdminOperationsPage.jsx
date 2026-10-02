@@ -15,6 +15,7 @@ import NfosItemEditor from "../components/NfosItemEditor";
 import NfosReceivingWorkspace from "../components/NfosReceivingWorkspace";
 import NfosSuppliersWorkspace from "../components/NfosSuppliersWorkspace";
 import NfosAlphaBand, { alphaRangeMatch } from "../components/NfosAlphaBand";
+import NfosProductsWorkspace from "../components/NfosProductsWorkspace";
 import useNfosResponsiveTables from "../lib/useNfosResponsiveTables";
 import "../styles/nfos.css";
 
@@ -47,6 +48,7 @@ const NAV_GROUPS = [
   {
     label: "PRODUCTS & RECIPES",
     tabs: [
+      ["products", "Products / Flavors", "edit"],
       ["recipes", "Recipes", "edit"],
       ["items", "Items", "edit"],
       ["suppliers", "Suppliers", "edit"],
@@ -600,7 +602,7 @@ export default function AdminOperationsPage() {
   const content = {
     dashboard:<Overview inventory={inventory} lowStock={lowStock} setTab={setTab}/>,
     overview:<NfosTodayDashboard inventory={inventory} lowStock={lowStock} setTab={setTab} onRefresh={refresh}/>,
-    markets:<NfosMarkets manager notify={(type,msg)=>type==="error"?setError(msg):null}/>,
+    markets:<NfosMarkets manager adminApprovals notify={(type,msg)=>type==="error"?setError(msg):null}/>,
     notifications:<NfosNotificationCenter manager onOpenRoute={setTab}/>,
     calendar:<NfosOperationsCalendar setTab={setTab}/>,
     team:<NfosTeamAccountability/>,
@@ -611,6 +613,7 @@ export default function AdminOperationsPage() {
     locations:<Locations locations={locations} onDone={refresh}/>,
     suppliers:<NfosSuppliersWorkspace suppliers={suppliers} onDone={refresh}/>,
     purchasing:<NfosPurchasing locations={locations} onInventoryChanged={refresh}/>,
+    products:<NfosProductsWorkspace/>,
     recipes:<RecipesModule items={items} onRefresh={refresh}/>,
     production:<ProductionModule items={items} locations={locations} lots={lots} onRefresh={refresh}/>,
     traceability:<TraceabilityModule items={items} lots={lots} initialBatchId={traceabilityInitialBatchId}/>,
@@ -627,6 +630,7 @@ export default function AdminOperationsPage() {
     tab==="calendar" ? "Production, purchasing, deliveries and release dates in one operating calendar." :
     tab==="team" ? "Assign work, see workload and preserve who did what." :
     tab==="inventory" ? "Current inventory state calculated from receiving, production, sales and adjustments." :
+    tab==="products" ? "Business-facing Product Master: status, seasonality, pricing, stock targets, retail availability, performance and recipe relationships." :
     tab==="reports" ? "Management reporting calculated from the NFOS ledger." :
     tab==="traceability" ? "Follow source lots, batches and finished inventory without re-entering data." :
     "NectarFusions operational data is stored once and reused everywhere.";

@@ -7,6 +7,7 @@ const ROLES = [
   ["production_operator", "Production Operator"],
   ["inventory_operator", "Inventory Operator"],
   ["purchasing_operator", "Purchasing Operator"],
+  ["market_manager", "Market Management"],
   ["viewer", "Viewer"],
 ];
 

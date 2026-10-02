@@ -3103,3 +3103,30 @@
   }
 }
 /* END NFOS NAVIGATION CLARITY */
+
+/* ============================================================
+   NFOS Product Master + Market Management
+   ============================================================ */
+.nfos-product-master-grid { align-items: start; }
+.nfos-product-list { max-height: 68vh; overflow: auto; }
+.nfos-product-variants { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--nfos-line); }
+.nfos-inline-number { width: 88px; max-width: 100%; padding: 7px 8px; border: 1px solid var(--nfos-line); border-radius: 8px; background: #fff; }
+.nfos-availability-detail { margin-top: 16px; align-items: start; }
+.nfos-availability-row { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid #edf1f2; }
+.nfos-availability-row span { display: flex; flex-direction: column; gap: 2px; }
+.nfos-retail-availability { padding: 11px 0; border-top: 1px solid #edf1f2; display: grid; gap: 5px; }
+.nfos-retail-admin-list { margin-top: 12px; }
+.nfos-scan-order-tools { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 14px 0; }
+.nfos-scan-order-manual { display: flex; gap: 6px; flex: 1 1 360px; }
+.nfos-scan-order-manual input { min-width: 0; flex: 1; padding: 10px 12px; border: 1px solid var(--nfos-line); border-radius: 9px; font: inherit; background: #fff; }
+.nfos-market-cart { margin-top: 12px; }
+.nfos-market-log-list, .nfos-market-approval-list { display: grid; gap: 12px; }
+.nfos-market-log-card, .nfos-market-approval-order { border: 1px solid var(--nfos-line); border-radius: 13px; padding: 14px; background: #fffdf8; }
+.nfos-market-log-lines { display: flex; flex-wrap: wrap; gap: 7px; margin: 10px 0; }
+.nfos-market-log-lines span { padding: 5px 8px; border-radius: 999px; background: #f4efe3; font-size: 12px; }
+.nfos-market-approval-card { margin-bottom: 16px; }
+@media(max-width:820px){
+  .nfos-scan-order-manual { flex-basis: 100%; }
+  .nfos-inline-number { width: 76px; }
+}
+/* END NFOS PRODUCT MASTER + MARKET MANAGEMENT */
