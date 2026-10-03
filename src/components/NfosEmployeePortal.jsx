@@ -656,8 +656,12 @@ function AccessPanel({ access, firstSetup = false }) {
 export default function NfosEmployeePortal({ session, access, onSignOut, forcePasswordSetup = false }) {
   useNfosResponsiveTables();
   const permissions=useMemo(()=>new Set(access?.permissions || []),[access]);
+  const marketFocused=permissions.has("market.order.log")
+    && !permissions.has("team.assign")
+    && !permissions.has("market.manage");
+
   const tabs=useMemo(()=>{
-    const rows=[["work","My Work"],["notifications","Notifications"],["suggestions","Suggest Edits"]];
+    let rows=[["work","My Work"],["notifications","Notifications"],["suggestions","Suggest Edits"]];
     if(permissions.has("production.execute")) rows.push(["production","Production"]);
     if(permissions.has("inventory.manage")) rows.push(["inventory","Inventory"]);
     if(permissions.has("purchasing.manage")) rows.push(["purchasing","Purchasing"]);
@@ -667,11 +671,20 @@ export default function NfosEmployeePortal({ session, access, onSignOut, forcePa
     if(permissions.has("team.assign")) rows.push(["manager","Manage Work"]);
     if(permissions.has("reports.view")) rows.push(["reports","Reports"]);
     if(permissions.has("reports.view")) rows.push(["health","System Health"]);
+
+    if(marketFocused){
+      const priority=["market_orders","flavor_availability"];
+      rows=[
+        ...priority.map((key)=>rows.find((row)=>row[0]===key)).filter(Boolean),
+        ...rows.filter((row)=>!priority.includes(row[0])),
+      ];
+    }
+
     rows.push(["access","Access"]);
     return rows;
-  },[permissions]);
+  },[permissions,marketFocused]);
 
-  const [tab,setTab]=useState(forcePasswordSetup ? "access" : "work");
+  const [tab,setTab]=useState(forcePasswordSetup ? "access" : marketFocused ? "market_orders" : "work");
   const [work,setWork]=useState([]);
   const [busy,setBusy]=useState(true);
   const [error,setError]=useState("");
