@@ -1558,3 +1558,79 @@ export async function releaseBatch(batchId, notes = null) {
   if (error) throw error;
   return data;
 }
+
+// ============================================================
+// NFOS Market Closeout Reconciliation — scan-first field workflow
+// ============================================================
+export async function marketStartSession(form = {}) {
+  const { data, error } = await supabase.rpc("nfos_market_start", {
+    p_market_date_id: form.marketDateId || null,
+    p_venue_name: form.venueName || null,
+    p_square_location_id: form.squareLocationId || null,
+    p_notes: form.notes || null,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function marketSetOpeningInventory(sessionId, lines) {
+  const { data, error } = await supabase.rpc("nfos_market_set_opening_inventory", {
+    p_session_id: sessionId,
+    p_lines: lines || [],
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function marketLogSale(sessionId, lines, notes = null, saleTotalCents = null) {
+  const { data, error } = await supabase.rpc("nfos_market_log_sale", {
+    p_market_session_id: sessionId,
+    p_lines: lines || [],
+    p_notes: notes || null,
+    p_payment_method: "unclassified",
+    p_sale_total_cents: saleTotalCents == null ? null : Number(saleTotalCents),
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function marketUpdateLoggedSale(orderId, lines, notes = null, saleTotalCents = null) {
+  const { data, error } = await supabase.rpc("nfos_market_update_logged_sale", {
+    p_order_id: orderId,
+    p_lines: lines || [],
+    p_notes: notes || null,
+    p_payment_method: "unclassified",
+    p_sale_total_cents: saleTotalCents == null ? null : Number(saleTotalCents),
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function marketSubmitCloseout(input) {
+  const { data, error } = await supabase.rpc("nfos_market_submit_closeout", {
+    p_session_id: input.sessionId,
+    p_return_lines: input.returnLines || [],
+    p_adjustments: input.adjustments || [],
+    p_reported_cash_cents: Number(input.reportedCashCents || 0),
+    p_notes: input.notes || null,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function adminGetMarketCloseoutApprovals() {
+  const { data, error } = await supabase.rpc("nfos_admin_get_market_closeout_approvals");
+  if (error) throw error;
+  return data || { pending: [], history: [] };
+}
+
+export async function adminReviewMarketCloseout(sessionId, action, adminNotes = null, acceptVariance = false) {
+  const { data, error } = await supabase.rpc("nfos_admin_review_market_closeout", {
+    p_session_id: sessionId,
+    p_action: action,
+    p_admin_notes: adminNotes || null,
+    p_accept_variance: Boolean(acceptVariance),
+  });
+  if (error) throw error;
+  return data;
+}
