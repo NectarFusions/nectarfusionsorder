@@ -186,7 +186,7 @@ export default function NfosMarkets({ adminApprovals = false, notify }) {
                 onFocus={() => { if (!squareLocations.length) loadSquareLocations(); }}
                 onChange={(event) => setSquareLocation(event.target.value)}
               >
-                <option value="">Not linked / cash-only market</option>
+                <option value="">Inventory only / no Square reconciliation</option>
                 {squareLocations.map((location) => <option key={location.id} value={location.id}>{location.name}</option>)}
               </select>
               <span className="nfos-muted nfos-small">This is normally selected by the Market Manager when starting the market. Admin can correct it here if needed.</span>
@@ -203,7 +203,7 @@ export default function NfosMarkets({ adminApprovals = false, notify }) {
           )}
 
           <div className="nfos-note" style={{ marginTop: 14 }}>
-            Square reconciliation is intentionally financial-only. It does not create a second inventory sale. Physical inventory is posted once, after the complete market closeout is approved.
+            Square reconciliation is optional and financial-only. Inventory-only markets never need Square. Physical inventory is posted once, after the complete market closeout is approved.
           </div>
         </div>
       )}

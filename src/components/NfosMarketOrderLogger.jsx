@@ -126,12 +126,8 @@ export default function NfosMarketOrderLogger({ notify }) {
     try {
       const result = await nfos.squareMarketRequest("locations");
       setSquareLocations(result.locations || []);
-      setStartForm((current) => ({
-        ...current,
-        squareLocationId: current.squareLocationId || result.default_location_id || result.locations?.[0]?.id || "",
-      }));
     } catch {
-      // The market can still be started as cash-only if Square is temporarily unavailable.
+      // Inventory-only markets do not depend on Square availability.
     }
   }, []);
 
@@ -349,7 +345,7 @@ export default function NfosMarketOrderLogger({ notify }) {
 
   const syncSquare = async () => {
     if (!selectedSession?.square_location_id) {
-      flash("error", "This market was started without a Square location. The closeout will be cash-only unless an admin links one.");
+      flash("error", "This market is running in Inventory Only mode. Square reconciliation is not enabled.");
       return null;
     }
 
@@ -461,17 +457,18 @@ export default function NfosMarketOrderLogger({ notify }) {
         synced_at: new Date().toISOString(),
       }
     : reconciliation;
-  const reportedCashCents = reportedCash === "" ? null : dollarsToCents(reportedCash);
+  const inventoryOnly = !selectedSession?.square_location_id;
+  const reportedCashCents = inventoryOnly ? 0 : (reportedCash === "" ? null : dollarsToCents(reportedCash));
   const squareNoncashCents = Number(activeReconciliation?.square_noncash_cents || 0);
-  const accountedPayments = reportedCashCents == null ? null : squareNoncashCents + reportedCashCents;
-  const paymentVariance = accountedPayments == null ? null : accountedPayments - loggedGross;
+  const accountedPayments = inventoryOnly || reportedCashCents == null ? null : squareNoncashCents + reportedCashCents;
+  const paymentVariance = inventoryOnly || accountedPayments == null ? null : accountedPayments - loggedGross;
 
   const submitCloseout = async () => {
     if (missingReturnCounts) {
       flash("error", "Enter the physical return count for every honey, including 0 when none came back.");
       return;
     }
-    if (reportedCashCents == null) {
+    if (!inventoryOnly && reportedCashCents == null) {
       flash("error", "Enter the cash actually collected at the market, including 0 if there was no cash.");
       return;
     }
@@ -494,7 +491,9 @@ export default function NfosMarketOrderLogger({ notify }) {
         reportedCashCents,
         notes: closeoutNotes,
       });
-      flash("success", `Market closeout submitted. Inventory variance: ${result.inventory_variance_units || 0} jar(s); payment variance: ${money(result.payment_variance_cents || 0)}.`);
+      flash("success", inventoryOnly
+        ? `Market closeout submitted. Inventory variance: ${result.inventory_variance_units || 0} jar(s). Payments were not reconciled.`
+        : `Market closeout submitted. Inventory variance: ${result.inventory_variance_units || 0} jar(s); payment variance: ${money(result.payment_variance_cents || 0)}.`);
       setCloseoutOpen(false);
       await load();
     } catch (err) {
@@ -538,11 +537,12 @@ export default function NfosMarketOrderLogger({ notify }) {
               </div>
             )}
             <div className="nfos-field full">
-              <label>Square location</label>
+              <label>Market tracking mode</label>
               <select value={startForm.squareLocationId} onChange={(e) => setStartForm({ ...startForm, squareLocationId: e.target.value })}>
-                <option value="">Cash-only / Square unavailable</option>
-                {squareLocations.map((location) => <option key={location.id} value={location.id}>{location.name}</option>)}
+                <option value="">Inventory Only — no Square reconciliation</option>
+                {squareLocations.map((location) => <option key={location.id} value={location.id}>Inventory + Square reconciliation · {location.name}</option>)}
               </select>
+              <span className="nfos-muted nfos-small">Inventory Only is the normal mode. Use your Square reader separately for payments; NFOS tracks the jars and inventory movement.</span>
             </div>
             <div className="nfos-field full"><button className="nfos-btn" disabled={busy}>Start Market</button></div>
           </form>
@@ -707,16 +707,16 @@ export default function NfosMarketOrderLogger({ notify }) {
             </div>
 
             <div className="nfos-card" style={{ marginTop: 14 }}>
-              <div className="nfos-split-head"><div><h3>3. Reconcile money</h3><p className="nfos-muted">Square is pulled directly. You only report the cash actually collected.</p></div>{selectedSession.square_location_id && <button className="nfos-btn secondary" onClick={syncSquare} disabled={busy}>Sync Square Now</button>}</div>
+              <div className="nfos-split-head"><div><h3>{inventoryOnly ? "3. Inventory tracking only" : "3. Reconcile money"}</h3><p className="nfos-muted">{inventoryOnly ? "Payments are handled separately. NFOS is only reconciling product movement for this market." : "Square is pulled directly. You only report the cash actually collected."}</p></div>{selectedSession.square_location_id && <button className="nfos-btn secondary" onClick={syncSquare} disabled={busy}>Sync Square Now</button>}</div>
               <div className="nfos-grid four" style={{ marginTop: 12 }}>
                 <div className="nfos-stat"><div className="nfos-stat-label">Logged sales</div><div className="nfos-stat-value">{money(loggedGross)}</div></div>
-                <div className="nfos-stat"><div className="nfos-stat-label">Square / non-cash</div><div className="nfos-stat-value">{activeReconciliation?.synced_at ? money(squareNoncashCents) : "—"}</div></div>
-                <div className="nfos-stat"><div className="nfos-stat-label">Reported cash</div><div className="nfos-stat-value">{reportedCashCents == null ? "—" : money(reportedCashCents)}</div></div>
-                <div className="nfos-stat"><div className="nfos-stat-label">Money variance</div><div className="nfos-stat-value">{paymentVariance == null ? "—" : money(paymentVariance)}</div></div>
+                <div className="nfos-stat"><div className="nfos-stat-label">Square / non-cash</div><div className="nfos-stat-value">{inventoryOnly ? "Not tracked" : activeReconciliation?.synced_at ? money(squareNoncashCents) : "—"}</div></div>
+                <div className="nfos-stat"><div className="nfos-stat-label">Reported cash</div><div className="nfos-stat-value">{inventoryOnly ? "Not tracked" : reportedCashCents == null ? "—" : money(reportedCashCents)}</div></div>
+                <div className="nfos-stat"><div className="nfos-stat-label">Money variance</div><div className="nfos-stat-value">{inventoryOnly ? "Not tracked" : paymentVariance == null ? "—" : money(paymentVariance)}</div></div>
               </div>
               <div className="nfos-form" style={{ marginTop: 14 }}>
-                <div className="nfos-field"><label>Cash physically collected ($)</label><input type="number" min="0" step="0.01" inputMode="decimal" placeholder="0.00" value={reportedCash} onChange={(e) => setReportedCash(e.target.value)} /></div>
-                <div className="nfos-field"><label>Square completed orders</label><input disabled value={activeReconciliation?.square_transaction_count ?? "Not synced"} /></div>
+                <div className="nfos-field"><label>{inventoryOnly ? "Cash tracking" : "Cash physically collected ($)"}</label><input disabled={inventoryOnly} type="number" min="0" step="0.01" inputMode="decimal" placeholder={inventoryOnly ? "Not tracked" : "0.00"} value={inventoryOnly ? "" : reportedCash} onChange={(e) => setReportedCash(e.target.value)} /></div>
+                <div className="nfos-field"><label>Square completed orders</label><input disabled value={inventoryOnly ? "Not tracked" : (activeReconciliation?.square_transaction_count ?? "Not synced")} /></div>
               </div>
               {Number(activeReconciliation?.square_cash_cents || 0) > 0 && reportedCashCents != null && <div className="nfos-note">Square also shows {money(activeReconciliation.square_cash_cents)} in cash tenders. Your physical cash differs by {money(reportedCashCents - Number(activeReconciliation.square_cash_cents || 0))}.</div>}
             </div>
@@ -727,11 +727,11 @@ export default function NfosMarketOrderLogger({ notify }) {
                 <div className="nfos-stat"><div className="nfos-stat-label">Opening</div><div className="nfos-stat-value">{openingRows.reduce((sum, row) => sum + Number(row.quantity || 0), 0)}</div></div>
                 <div className="nfos-stat"><div className="nfos-stat-label">Sold</div><div className="nfos-stat-value">{loggedUnits}</div></div>
                 <div className="nfos-stat"><div className="nfos-stat-label">Inventory variance</div><div className="nfos-stat-value">{missingReturnCounts ? "—" : inventoryVarianceUnits}</div></div>
-                <div className="nfos-stat"><div className="nfos-stat-label">Payment variance</div><div className="nfos-stat-value">{paymentVariance == null ? "—" : money(paymentVariance)}</div></div>
+                <div className="nfos-stat"><div className="nfos-stat-label">{inventoryOnly ? "Payment tracking" : "Payment variance"}</div><div className="nfos-stat-value">{inventoryOnly ? "Not tracked" : paymentVariance == null ? "—" : money(paymentVariance)}</div></div>
               </div>
               <div className="nfos-field" style={{ marginTop: 14 }}><label>Closeout note (optional)</label><textarea value={closeoutNotes} onChange={(e) => setCloseoutNotes(e.target.value)} placeholder="Explain anything the admin should know." /></div>
               {(inventoryVarianceUnits !== 0 || (paymentVariance != null && paymentVariance !== 0)) && <div className="nfos-error" style={{ marginTop: 12 }}>This market has a variance. Submit it anyway so the admin can review the exact discrepancy; inventory will not finalize until approval.</div>}
-              <button className="nfos-btn" style={{ marginTop: 14 }} onClick={submitCloseout} disabled={busy || missingReturnCounts || reportedCashCents == null || (Boolean(selectedSession.square_location_id) && !activeReconciliation?.synced_at)}>Submit Market Closeout for Approval</button>
+              <button className="nfos-btn" style={{ marginTop: 14 }} onClick={submitCloseout} disabled={busy || missingReturnCounts || (!inventoryOnly && reportedCashCents == null) || (Boolean(selectedSession.square_location_id) && !activeReconciliation?.synced_at)}>Submit Market Closeout for Approval</button>
             </div>
           </div>}
         </>

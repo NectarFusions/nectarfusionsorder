@@ -66,7 +66,7 @@ export default function NfosMarketCloseoutApprovals({ notify, onChanged }) {
       <div className="nfos-page-head" style={{ marginBottom: 12 }}>
         <div>
           <h2>Market Closeouts Awaiting Approval</h2>
-          <p>One approval reconciles the full market: physical inventory, logged customer sales, Square and reported cash.</p>
+          <p>One approval reconciles the full market. Inventory-only markets reconcile physical inventory and logged sales; payment comparison appears only when Square reconciliation was enabled.</p>
         </div>
         <div className="nfos-inline-actions">
           <span className="nfos-pill">{data.pending?.length || 0} pending</span>
