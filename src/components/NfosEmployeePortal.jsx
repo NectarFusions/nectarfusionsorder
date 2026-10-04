@@ -483,9 +483,9 @@ function InventoryPanel({ notify, receiveOnly = false }) {
 
   return <div className="nfos-card">
     <div className="nfos-page-head"><div><h2>{receiveOnly ? "Receiving" : "Inventory operations"}</h2><p>{receiveOnly ? "Receive honey, ingredients, packaging, and other tracked inventory needed for production." : "Receive, count-adjust, or transfer NFOS inventory."}</p></div><button className="nfos-btn secondary" onClick={load} disabled={busy}>Refresh</button></div>
-    {!receiveOnly && {!receiveOnly && <div className="nfos-inline-actions" style={{marginBottom:16}}>
+    {!receiveOnly && <div className="nfos-inline-actions" style={{marginBottom:16}}>
       {["receive","adjust","transfer"].map((m)=><button key={m} className={`nfos-btn ${mode===m ? "" : "secondary"}`} onClick={()=>setMode(m)}>{m[0].toUpperCase()+m.slice(1)}</button>)}
-    </div>}}
+    </div>}
     <form className="nfos-form" onSubmit={submit}>
       <div className="nfos-field full"><label>Item</label><select required value={form.itemId} onChange={(e)=>setForm({...form,itemId:e.target.value,lotId:""})}><option value="">Choose item…</option>{(data.inventory || []).map((x)=><option key={x.item_id} value={x.item_id}>{x.sku} — {x.name} — {qty(x.planning_on_hand)} {x.stocking_unit}</option>)}</select></div>
       <div className="nfos-field"><label>Quantity</label><input required type="number" step="any" min="0.0001" value={form.quantity} onChange={(e)=>setForm({...form,quantity:e.target.value})}/></div>
