@@ -468,6 +468,48 @@ function BatchWorkspace({ batch, items, locations, lots, onChanged, onDelete }) 
     return amount > 0 ? { quantity: amount, unit: baseItem.stocking_unit } : null;
   }, [baseEntry, baseItem, baseRequirement]);
 
+  // Excel-style workbook view helpers
+  const nonBaseRequirements = requirements.filter((row) => !row.is_base);
+  const selectedBaseLotId = baseRequirement
+    ? (inputDrafts[baseRequirement.recipe_input_id] || {}).lotId || ""
+    : "";
+  const selectedBaseLotCode = selectedBaseLotId
+    ? lotMap[selectedBaseLotId]?.lot_code || selectedBaseLotId
+    : "";
+  const hasActualInfusion = nonBaseRequirements.some((row) => {
+    const value = (inputDrafts[row.recipe_input_id] || {}).quantity;
+    return value !== "" && value != null && Number(value) > 0;
+  });
+  const actualInfusionOz = hasActualInfusion
+    ? nonBaseRequirements.reduce((sum, row) => sum + Number((inputDrafts[row.recipe_input_id] || {}).quantity || 0), 0)
+    : null;
+  const suggestedInfusionOz = formulaPreview.length
+    ? nonBaseRequirements.reduce((sum, row) => sum + Number(previewMap[row.recipe_input_id]?.expected_quantity || 0), 0)
+    : null;
+  const totalHoneyOz = baseRequest
+    ? baseRequest.unit === "oz"
+      ? Number(baseRequest.quantity)
+      : baseRequest.unit === "lb"
+        ? Number(baseRequest.quantity) * 16
+        : null
+    : null;
+  const fourOzYield = totalHoneyOz && totalHoneyOz > 0 ? Math.floor(totalHoneyOz / 4) : null;
+  const operatorName = batch.assigned_member_name || batch.operator_name || batch.started_by_member_name || "—";
+  const workbookDate = (() => {
+    const raw = batch.started_at || batch.created_at;
+    if (!raw) return "—";
+    const date = new Date(raw);
+    return Number.isNaN(date.getTime()) ? String(raw).slice(0, 10) : date.toLocaleDateString();
+  })();
+  const workbookLabelCode = batch.suggested_label_code || batch.label_code || batch.batch_code || "—";
+  const singleInfusionRequirement = nonBaseRequirements.length === 1 ? nonBaseRequirements[0] : null;
+  const totalFinishedJars = finishedItems.reduce((sum, item) => sum + Number(outputs[item.id] || 0), 0);
+  const awCheck = qualityChecks.find((row) => /(^|\b)aw(\b|$)|water\s*activity/i.test(`${row.check_key || ""} ${row.label || ""}`)) || null;
+  const phCheck = qualityChecks.find((row) => /(^|\b)ph(\b|$)/i.test(`${row.check_key || ""} ${row.label || ""}`)) || null;
+  const resultCheck = qualityChecks.find((row) => row.result_type === "boolean" && row.id !== awCheck?.id && row.id !== phCheck?.id) || null;
+  const representedQualityIds = new Set([awCheck?.id, phCheck?.id, resultCheck?.id].filter(Boolean));
+  const extraQualityChecks = qualityChecks.filter((row) => !representedQualityIds.has(row.id));
+
   const expectedSeedOz = useMemo(() => {
     if (batch.texture !== "spun" || !baseRequest) return null;
     const baseOz = baseRequest.unit === "oz"
@@ -761,11 +803,120 @@ function BatchWorkspace({ batch, items, locations, lots, onChanged, onDelete }) 
   };
 
   return <>
-    <div className="nfos-card">
-      <div className="nfos-split-head"><div><h2 style={{ marginBottom: 4 }}>{batch.batch_code}</h2><div className="nfos-muted">{batch.flavor_name || batch.recipe_name} • Recipe v{batch.recipe_version} • <strong>{batch.texture === "spun" ? "Spun" : "Regular"}</strong> • {locationMap[batch.production_location_id]?.name || batch.production_location_name}</div></div><div className="nfos-inline-actions"><StatusPill value={batch.status} /><StatusPill value={batch.quality_status} />{["draft","in_progress"].includes(batch.status) && <button className="nfos-btn danger" type="button" onClick={onDelete}>Delete batch</button>}</div></div>
-      <div style={{ maxWidth: 420, marginTop: 16 }}><NfosBarcode value={batch.barcode_value} title={batch.batch_code} subtitle={`${batch.flavor_name || batch.recipe_name} • Batch`} /></div>
+    <Notice type="error">{error}</Notice>
+    <Notice>{message}</Notice>
+
+    <div className="nfos-workbook-sheet nfos-batch-workbook">
+      <div className="nfos-workbook-titlebar">
+        <div>
+          <h2>PRODUCTION</h2>
+          <p>One row per batch. White cells are operator input. Cream cells are calculated or controlled by NFOS.</p>
+        </div>
+        <div className="nfos-inline-actions">
+          <StatusPill value={batch.status} />
+          <StatusPill value={batch.quality_status} />
+          {batch.status === "completed" && <StatusPill value={batch.release_status} />}
+          {["draft", "in_progress"].includes(batch.status) && <button className="nfos-btn danger" type="button" onClick={onDelete}>Delete batch</button>}
+        </div>
+      </div>
+      <div className="nfos-workbook-legend">
+        <span><i className="is-input" /> White = you type</span>
+        <span><i className="is-auto" /> Cream = NFOS auto-calculates</span>
+        <span><i className="is-set" /> Yellow = controlled setup / reference</span>
+      </div>
+
+      <div className="nfos-workbook-scroll">
+        <table className="nfos-workbook-table nfos-production-entry-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Batch Code</th>
+              <th>Flavor</th>
+              <th>Honey Used (lbs)</th>
+              <th>Extra Honey (oz)</th>
+              <th>Total Honey (oz)</th>
+              <th>Honey Lot #</th>
+              <th>Infusion Used (oz)</th>
+              <th>Suggested Infusion (oz)</th>
+              <th>4oz Yield</th>
+              <th>Operator</th>
+              <th>Status</th>
+              <th>Suggested Label Code</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td className="is-auto">{workbookDate}</td>
+              <td className="is-auto nfos-mono"><strong>{batch.batch_code}</strong></td>
+              <td className="is-auto"><strong>{batch.flavor_name || batch.recipe_name}</strong><small>{batch.texture === "spun" ? "Spun" : "Regular"}</small></td>
+              <td className="is-input">
+                {baseItem?.stocking_unit === "lb" ? (
+                  <input className="nfos-workbook-input" type="number" min="0" step="1" value={baseEntry.pounds} onChange={(e) => setBaseEntry({ ...baseEntry, pounds: e.target.value })} placeholder="0" />
+                ) : (
+                  <input className="nfos-workbook-input" type="number" min="0" step="any" value={baseEntry.quantity} onChange={(e) => setBaseEntry({ ...baseEntry, quantity: e.target.value })} placeholder={baseItem?.stocking_unit || "amount"} />
+                )}
+              </td>
+              <td className="is-input">
+                {baseItem?.stocking_unit === "lb" ? <input className="nfos-workbook-input" type="number" min="0" max="15.9999" step="any" value={baseEntry.ounces} onChange={(e) => setBaseEntry({ ...baseEntry, ounces: e.target.value })} placeholder="0" /> : <span className="nfos-muted">—</span>}
+              </td>
+              <td className="is-auto"><strong>{totalHoneyOz == null ? "—" : qty(totalHoneyOz)}</strong></td>
+              <td className="is-input nfos-workbook-lot-cell">
+                {baseRequirement && baseItem ? <select className="nfos-workbook-input" value={selectedBaseLotId} onChange={(e) => setInputDrafts({ ...inputDrafts, [baseRequirement.recipe_input_id]: { ...(inputDrafts[baseRequirement.recipe_input_id] || {}), lotId: e.target.value } })}>
+                  <option value="">Choose lot…</option>
+                  {availableLots(baseRequirement.item_id).map((lb) => <option key={`${lb.lot_id}-${lb.location_id}`} value={lb.lot_id}>{lotMap[lb.lot_id]?.lot_code || lb.lot_id} • {qty(lb.on_hand)} {baseItem.stocking_unit}</option>)}
+                </select> : <span className="nfos-muted">No base ingredient</span>}
+              </td>
+              <td className={singleInfusionRequirement ? "is-input" : "is-auto"}>
+                {singleInfusionRequirement ? (() => {
+                  const draft = inputDrafts[singleInfusionRequirement.recipe_input_id] || {};
+                  return <input className="nfos-workbook-input" type="number" min="0.0001" step="any" value={draft.quantity || ""} onChange={(e) => setInputDrafts({ ...inputDrafts, [singleInfusionRequirement.recipe_input_id]: { ...draft, quantity: e.target.value } })} placeholder="0" />;
+                })() : <><strong>{actualInfusionOz == null ? "—" : qty(actualInfusionOz)}</strong>{nonBaseRequirements.length > 1 && <small>Enter ingredients below</small>}</>}
+              </td>
+              <td className="is-auto"><strong>{suggestedInfusionOz == null ? "—" : qty(suggestedInfusionOz)}</strong></td>
+              <td className="is-auto"><strong>{fourOzYield == null ? "—" : qty(fourOzYield)}</strong></td>
+              <td className="is-auto">{operatorName}</td>
+              <td className="is-auto"><StatusPill value={batch.status} /></td>
+              <td className="is-auto nfos-mono">{workbookLabelCode}</td>
+              <td className="is-input"><textarea className="nfos-workbook-input nfos-workbook-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Batch notes" /></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {batch.status !== "completed" && baseRequirement && baseItem && <div className="nfos-workbook-tools">
+        <div>
+          <strong>Honey lot:</strong> {selectedBaseLotCode || "No lot selected"}
+          {baseRequest && <span className="nfos-muted"> • NFOS will consume {baseItem.stocking_unit === "lb" ? `${qty(baseRequest.quantity)} oz (${qty(Number(baseRequest.quantity) / 16)} lb)` : `${qty(baseRequest.quantity)} ${baseRequest.unit}`}</span>}
+        </div>
+        <div className="nfos-inline-actions">
+          <button type="button" className="nfos-btn secondary" disabled={busy} onClick={() => {
+            if (quickLotOpen) {
+              setQuickLotOpen(false);
+              return;
+            }
+            const suggestedQuantity = baseRequest
+              ? (baseItem.stocking_unit === "lb" && baseRequest.unit === "oz" ? Number(baseRequest.quantity) / 16 : Number(baseRequest.quantity))
+              : null;
+            setQuickLotForm((current) => ({ ...current, quantity: suggestedQuantity && suggestedQuantity > 0 ? String(Number(suggestedQuantity.toFixed(4))) : current.quantity }));
+            setQuickLotOpen(true);
+          }}>{quickLotOpen ? "Cancel new lot" : "+ Add new honey lot"}</button>
+          {selectedBaseLotId && <button type="button" className="nfos-btn ghost" disabled={busy} onClick={deleteBaseLot}>Delete selected lot</button>}
+        </div>
+      </div>}
+
+      {batch.status !== "completed" && quickLotOpen && baseItem && <div className="nfos-quick-lot nfos-workbook-quick-lot">
+        <div><strong>Add honey lot without leaving Production</strong><div className="nfos-small nfos-muted">The lot number is saved exactly as entered and received into inventory so this batch can consume it.</div></div>
+        <div className="nfos-quick-lot-grid">
+          <div className="nfos-field"><label>Honey lot number</label><input autoFocus value={quickLotForm.lotCode} onChange={(e) => setQuickLotForm({ ...quickLotForm, lotCode: e.target.value })} placeholder="Enter exact lot number" /></div>
+          <div className="nfos-field"><label>Quantity added to inventory ({baseItem.stocking_unit})</label><input type="number" min="0.0001" step="any" value={quickLotForm.quantity} onChange={(e) => setQuickLotForm({ ...quickLotForm, quantity: e.target.value })} /></div>
+          <div className="nfos-field"><label>Supplier, optional</label><select value={quickLotForm.supplierId} onChange={(e) => setQuickLotForm({ ...quickLotForm, supplierId: e.target.value })}><option value="">No supplier selected</option>{suppliers.map((supplier) => <option key={supplier.id} value={supplier.id}>{supplier.name}</option>)}</select></div>
+          <div className="nfos-field"><label>Brand / source, optional</label><input value={quickLotForm.sourceNote} onChange={(e) => setQuickLotForm({ ...quickLotForm, sourceNote: e.target.value })} placeholder="Brand or source name" /></div>
+        </div>
+        <div className="nfos-inline-actions"><button type="button" className="nfos-btn" disabled={busy || !quickLotForm.lotCode.trim() || !Number(quickLotForm.quantity || 0)} onClick={addBaseLot}>Save lot + select it</button><button type="button" className="nfos-btn ghost" disabled={busy} onClick={() => setQuickLotOpen(false)}>Cancel</button></div>
+      </div>}
     </div>
-    <Notice type="error">{error}</Notice><Notice>{message}</Notice>
+
     {batch.status === "completed" ? <>
       <div className="nfos-card nfos-release-card">
         <div className="nfos-split-head">
@@ -783,43 +934,230 @@ function BatchWorkspace({ batch, items, locations, lots, onChanged, onDelete }) 
         {["eligible", "ready"].includes(batch.release_status) && !batch.released_at && <div className="nfos-inline-actions" style={{ marginTop: 14 }}><button className="nfos-btn" disabled={busy} onClick={releaseBatch}>Release to sellable inventory</button></div>}
         {batch.release_status === "released" && <div className="nfos-success" style={{ marginTop: 12 }}>Released {fmtDate(batch.released_at)}. Finished jars are now available through sellable inventory locations.</div>}
       </div>
-      <div className="nfos-note">This batch is complete and its production inventory transactions are locked in the ledger. Use Traceability to inspect the source lots, actual usage, QC results and finished lots.</div>
+      <div className="nfos-note">This batch is complete and its production inventory transactions are locked in the ledger. Use Traceability to inspect source lots, actual usage, QC results and finished lots.</div>
     </> : <>
-      <div className="nfos-card">
-        <h3>1. Actual ingredients used</h3>
-        <p className="nfos-muted">Enter the actual base amount first. NFOS calculates the expected formula from that amount, then you record what was actually used.</p>
-        {baseRequirement && baseItem ? <div className="nfos-base-entry">
-          <div><strong>{baseRequirement.item_name}</strong><div className="nfos-small nfos-muted">Variable base ingredient • Company on hand {qty(baseRequirement.company_on_hand)} {baseItem.stocking_unit}</div></div>
-          {baseItem.stocking_unit === "lb" ? <div className="nfos-base-pair"><div className="nfos-field"><label>Actual pounds</label><input type="number" min="0" step="1" value={baseEntry.pounds} onChange={(e) => setBaseEntry({ ...baseEntry, pounds: e.target.value })} /></div><div className="nfos-field"><label>Additional ounces</label><input type="number" min="0" max="15.9999" step="any" value={baseEntry.ounces} onChange={(e) => setBaseEntry({ ...baseEntry, ounces: e.target.value })} /></div></div> : <div className="nfos-field"><label>Actual amount ({baseItem.stocking_unit})</label><input type="number" min="0.0001" step="any" value={baseEntry.quantity} onChange={(e) => setBaseEntry({ ...baseEntry, quantity: e.target.value })} /></div>}
-          <div className="nfos-field"><label>Base lot</label><select value={(inputDrafts[baseRequirement.recipe_input_id] || {}).lotId || ""} onChange={(e) => setInputDrafts({ ...inputDrafts, [baseRequirement.recipe_input_id]: { ...(inputDrafts[baseRequirement.recipe_input_id] || {}), lotId: e.target.value } })}><option value="">Choose lot…</option>{availableLots(baseRequirement.item_id).map((lb) => <option key={`${lb.lot_id}-${lb.location_id}`} value={lb.lot_id}>{lotMap[lb.lot_id]?.lot_code || lb.lot_id} • {qty(lb.on_hand)} {baseItem.stocking_unit}</option>)}</select><button type="button" className="nfos-btn secondary nfos-quick-lot-toggle" disabled={busy} onClick={() => {
-            if (quickLotOpen) {
-              setQuickLotOpen(false);
-              return;
-            }
-            const suggestedQuantity = baseRequest
-              ? (baseItem.stocking_unit === "lb" && baseRequest.unit === "oz"
-                ? Number(baseRequest.quantity) / 16
-                : Number(baseRequest.quantity))
-              : null;
-            setQuickLotForm((current) => ({
-              ...current,
-              quantity: suggestedQuantity && suggestedQuantity > 0
-                ? String(Number(suggestedQuantity.toFixed(4)))
-                : current.quantity,
-            }));
-            setQuickLotOpen(true);
-          }}>{quickLotOpen ? "Cancel new lot" : "+ Add new honey lot"}</button>{(inputDrafts[baseRequirement.recipe_input_id] || {}).lotId ? <button type="button" className="nfos-btn ghost nfos-quick-lot-toggle" disabled={busy} onClick={deleteBaseLot}>Delete selected lot</button> : null}</div>
-          {quickLotOpen && <div className="nfos-quick-lot"><div><strong>Add honey lot without leaving Production</strong><div className="nfos-small nfos-muted">The lot number is entered manually and saved exactly as entered. This also creates a Receiving inventory entry so NFOS can consume the lot.</div></div><div className="nfos-quick-lot-grid"><div className="nfos-field"><label>Honey lot number</label><input autoFocus value={quickLotForm.lotCode} onChange={(e) => setQuickLotForm({ ...quickLotForm, lotCode: e.target.value })} placeholder="Enter exact lot number" /></div><div className="nfos-field"><label>Quantity added to inventory ({baseItem.stocking_unit})</label><input type="number" min="0.0001" step="any" value={quickLotForm.quantity} onChange={(e) => setQuickLotForm({ ...quickLotForm, quantity: e.target.value })} /></div><div className="nfos-field"><label>Supplier, optional</label><select value={quickLotForm.supplierId} onChange={(e) => setQuickLotForm({ ...quickLotForm, supplierId: e.target.value })}><option value="">No supplier selected</option>{suppliers.map((supplier) => <option key={supplier.id} value={supplier.id}>{supplier.name}</option>)}</select></div><div className="nfos-field"><label>Brand / source, optional</label><input value={quickLotForm.sourceNote} onChange={(e) => setQuickLotForm({ ...quickLotForm, sourceNote: e.target.value })} placeholder="Brand or source name" /></div></div><div className="nfos-note">Enter the total amount from this lot that is being added to inventory at this location, not merely the amount you plan to use in this batch.</div><div className="nfos-inline-actions"><button type="button" className="nfos-btn" disabled={busy || !quickLotForm.lotCode.trim() || !Number(quickLotForm.quantity || 0)} onClick={addBaseLot}>Save lot + select it</button><button type="button" className="nfos-btn ghost" disabled={busy} onClick={() => setQuickLotOpen(false)}>Cancel</button></div></div>}
-          {baseRequest && <div className="nfos-note">NFOS will consume {baseItem.stocking_unit === "lb" ? `${qty(baseRequest.quantity)} oz (${qty(Number(baseRequest.quantity) / 16)} lb)` : `${qty(baseRequest.quantity)} ${baseRequest.unit}`} from the selected base lot.</div>}
-        </div> : <div className="nfos-error">This recipe does not define a base ingredient.</div>}
-        {requirements.filter((row) => !row.is_base).length ? <div className="nfos-table-wrap" style={{ marginTop: 16 }}><table className="nfos-table"><thead><tr><th>Input</th><th>Expected</th><th>Actual used</th><th>Variance</th><th>Lot</th></tr></thead><tbody>{requirements.filter((row) => !row.is_base).map((row) => { const item = itemMap[row.item_id]; const draft = inputDrafts[row.recipe_input_id] || {}; const expected = previewMap[row.recipe_input_id]?.expected_quantity; const actual = Number(draft.quantity || 0); const variance = expected == null || !draft.quantity ? null : actual - Number(expected); const itemLots = availableLots(row.item_id); return <tr key={row.recipe_input_id}><td><strong>{row.item_name}</strong><div className="nfos-mono nfos-muted">{row.sku}</div><div className="nfos-small nfos-muted">{row.calculation_method === "percent_of_base_weight" ? `${qty(row.rate_percent)}% of actual base weight` : "Fixed formula amount"}</div></td><td>{expected == null ? <span className="nfos-muted">Enter base amount</span> : <strong>{qty(expected)} {item?.stocking_unit}</strong>}</td><td><input className="nfos-table-input" type="number" min="0.0001" step="any" value={draft.quantity || ""} onChange={(e) => setInputDrafts({ ...inputDrafts, [row.recipe_input_id]: { ...draft, quantity: e.target.value } })} /></td><td>{variance == null ? "—" : <span className={Math.abs(variance) < 0.0001 ? "nfos-muted" : ""}>{variance > 0 ? "+" : ""}{qty(variance)} {item?.stocking_unit}</span>}</td><td>{item?.track_lots ? <select className="nfos-table-input" value={draft.lotId || ""} onChange={(e) => setInputDrafts({ ...inputDrafts, [row.recipe_input_id]: { ...draft, lotId: e.target.value } })}><option value="">Choose lot…</option>{itemLots.map((lb) => <option key={`${lb.lot_id}-${lb.location_id}`} value={lb.lot_id}>{lotMap[lb.lot_id]?.lot_code || lb.lot_id} • {qty(lb.on_hand)} {item.stocking_unit}</option>)}</select> : "Not lot tracked"}</td></tr>; })}</tbody></table></div> : null}
+      <div className="nfos-workbook-sheet">
+        <div className="nfos-workbook-titlebar">
+          <div><h2>INGREDIENT USAGE</h2><p>Batch + ingredient usage laid out in the same order as the workbook. Actual usage and source lots still post through NFOS traceability.</p></div>
+        </div>
+        {nonBaseRequirements.length ? <div className="nfos-workbook-scroll">
+          <table className="nfos-workbook-table nfos-ingredient-usage-table">
+            <thead><tr><th>Date</th><th>Batch Code</th><th>Ingredient</th><th># Ingredients in Batch</th><th>Ingredient ID</th><th>Batch Infusion (oz)</th><th>Usage (oz)</th><th>Lot Number</th><th>Cost / Oz</th><th>Ingredient Cost</th><th>Waste (oz)</th><th>Operator</th><th>Notes</th><th>Actual Usage (oz)</th></tr></thead>
+            <tbody>{nonBaseRequirements.map((row) => {
+              const item = itemMap[row.item_id];
+              const draft = inputDrafts[row.recipe_input_id] || {};
+              const expected = previewMap[row.recipe_input_id]?.expected_quantity;
+              const actual = draft.quantity === "" || draft.quantity == null ? null : Number(draft.quantity);
+              const usage = actual != null && actual > 0 ? actual : expected;
+              const itemLots = availableLots(row.item_id);
+              return <tr key={row.recipe_input_id}>
+                <td className="is-auto">{workbookDate}</td>
+                <td className="is-auto nfos-mono">{batch.batch_code}</td>
+                <td className="is-auto"><strong>{row.item_name}</strong></td>
+                <td className="is-auto">{nonBaseRequirements.length}</td>
+                <td className="is-auto nfos-mono">{row.sku || item?.sku || "—"}</td>
+                <td className="is-auto">{actualInfusionOz != null ? qty(actualInfusionOz) : suggestedInfusionOz != null ? qty(suggestedInfusionOz) : "—"}</td>
+                <td className="is-auto">{usage == null ? "—" : qty(usage)}</td>
+                <td className={item?.track_lots ? "is-input" : "is-auto"}>{item?.track_lots ? <select className="nfos-workbook-input" value={draft.lotId || ""} onChange={(e) => setInputDrafts({ ...inputDrafts, [row.recipe_input_id]: { ...draft, lotId: e.target.value } })}><option value="">Choose lot…</option>{itemLots.map((lb) => <option key={`${lb.lot_id}-${lb.location_id}`} value={lb.lot_id}>{lotMap[lb.lot_id]?.lot_code || lb.lot_id} • {qty(lb.on_hand)} {item.stocking_unit}</option>)}</select> : "Not lot tracked"}</td>
+                <td className="is-auto">—</td>
+                <td className="is-auto">Auto</td>
+                <td className="is-auto">—</td>
+                <td className="is-auto">{operatorName}</td>
+                <td className="is-auto">—</td>
+                <td className="is-input"><input className="nfos-workbook-input" type="number" min="0.0001" step="any" value={draft.quantity || ""} onChange={(e) => setInputDrafts({ ...inputDrafts, [row.recipe_input_id]: { ...draft, quantity: e.target.value } })} placeholder={expected == null ? "0" : qty(expected)} /></td>
+              </tr>;
+            })}</tbody>
+          </table>
+        </div> : <div className="nfos-empty">No infusion ingredients are configured for this recipe.</div>}
       </div>
-      {batch.texture === "spun" && <div className="nfos-card nfos-spun-card"><h3>2. Spun honey seed</h3><p className="nfos-muted">Seed must come from a prior NectarFusions spun batch made with natural honey. NFOS calculates the target at 10% of the original honey weight.</p><div className="nfos-grid two"><div className="nfos-field"><label>Expected seed</label><input disabled value={expectedSeedOz == null ? "Enter actual honey weight first" : `${qty(expectedSeedOz)} oz`} /></div><div className="nfos-field"><label>Actual seed used (oz)</label><input type="number" min="0.0001" step="any" value={seedForm.actualQuantity} onChange={(e) => setSeedForm({ ...seedForm, actualQuantity: e.target.value })} /></div><div className="nfos-field"><label>Source natural spun batch code</label><input value={seedForm.sourceBatchCode} onChange={(e) => setSeedForm({ ...seedForm, sourceBatchCode: e.target.value })} placeholder="Enter prior NFOS batch code" /></div><div className="nfos-field"><label>Seed notes, optional</label><input value={seedForm.notes} onChange={(e) => setSeedForm({ ...seedForm, notes: e.target.value })} placeholder="Source / handling note" /></div></div><div className="nfos-inline-actions" style={{ marginTop: 12 }}><button className="nfos-btn secondary" disabled={busy || !seedForm.sourceBatchCode.trim() || !Number(seedForm.actualQuantity || 0)} onClick={saveSpunDetails}>Save seed details</button></div>{expectedSeedOz != null && seedForm.actualQuantity && <div className="nfos-note" style={{ marginTop: 12 }}>Expected {qty(expectedSeedOz)} oz • Actual {qty(seedForm.actualQuantity)} oz • Variance {Number(seedForm.actualQuantity) - Number(expectedSeedOz) > 0 ? "+" : ""}{qty(Number(seedForm.actualQuantity) - Number(expectedSeedOz))} oz</div>}</div>}
-      <div className="nfos-card"><h3>{batch.texture === "spun" ? "3" : "2"}. Production SOP</h3><p className="nfos-muted">Only the steps that apply to this batch’s {batch.texture === "spun" ? "Spun" : "Regular"} process are shown. Required confirmations must be complete before NFOS will close the batch.</p>{sopSteps.length ? <div className="nfos-sop-list">{sopSteps.map((step) => <div key={step.recipe_step_id} className={`nfos-sop-step ${step.completed_at ? "done" : ""}`}><div className="nfos-sop-step-head"><div><strong>{step.step_no}. {step.title}</strong>{step.critical_control && <span className="nfos-pill low" style={{ marginLeft: 8 }}>critical</span>}</div>{step.requires_confirmation ? <label className="nfos-sop-check"><input type="checkbox" checked={Boolean(step.completed_at)} disabled={busy} onChange={() => toggleSopStep(step)} /> Confirmed</label> : <span className="nfos-muted nfos-small">Reference</span>}</div><div className="nfos-sop-instruction">{step.instruction}</div>{step.expected_minutes != null && <div className="nfos-muted nfos-small">Expected time: {qty(step.expected_minutes)} minutes</div>}{step.notes && <div className="nfos-muted nfos-small">{step.notes}</div>}</div>)}</div> : <Empty>No SOP steps apply to this batch.</Empty>}</div>
-      <div className="nfos-card"><h3>{batch.texture === "spun" ? "4" : "3"}. Quality control</h3>{qualityChecks.length ? <div className="nfos-table-wrap"><table className="nfos-table"><thead><tr><th>Check</th><th>Result</th><th>Status</th><th></th></tr></thead><tbody>{qualityChecks.map((row) => { const draft = qcDrafts[row.check_key] || {}; return <tr key={row.id}><td><strong>{row.label}</strong><div className="nfos-muted nfos-small">{row.unit || row.result_type}</div></td><td>{row.result_type === "boolean" ? <select className="nfos-table-input" value={draft.value || ""} onChange={(e) => setQcDrafts({ ...qcDrafts, [row.check_key]: { ...draft, value: e.target.value } })}><option value="">Choose…</option><option value="true">Pass / Yes</option><option value="false">Fail / No</option></select> : <input className="nfos-table-input" type={row.result_type === "number" ? "number" : "text"} step="any" value={draft.value || ""} onChange={(e) => setQcDrafts({ ...qcDrafts, [row.check_key]: { ...draft, value: e.target.value } })} />}</td><td><StatusPill value={row.status} /></td><td><button className="nfos-btn ghost" disabled={busy} onClick={() => saveQc(row)}>Save check</button></td></tr>; })}</tbody></table></div> : <div className="nfos-note">This recipe has no required QC checks. NFOS will allow the batch to complete without a QC gate.</div>}</div>
-      <div className="nfos-card"><h3>{batch.texture === "spun" ? "5" : "4"}. Finished outputs</h3><p className="nfos-muted">Only {batch.texture === "spun" ? "Spun" : "Regular"} finished SKUs are available for this batch. Enter exactly how many finished jars were produced by size. NFOS will create finished lots using the batch code. Recipes with a required release hold stay in non-sellable inventory until an authorized release.</p>{finishedItems.length ? <div className="nfos-table-wrap"><table className="nfos-table"><thead><tr><th>Finished SKU</th><th>Quantity produced</th><th>Lot</th></tr></thead><tbody>{finishedItems.map((item) => <tr key={item.id}><td><strong>{item.name}</strong><div className="nfos-mono nfos-muted">{item.sku}</div></td><td><input className="nfos-table-input" type="number" min="0" step="1" value={outputs[item.id] || ""} onChange={(e) => setOutputs({ ...outputs, [item.id]: e.target.value })} /></td><td className="nfos-mono">{batch.batch_code}</td></tr>)}</tbody></table></div> : <Empty>No finished SKUs are linked to this recipe’s flavor.</Empty>}<div className="nfos-form" style={{ marginTop: 14 }}><div className="nfos-field"><label>Actual bulk yield, optional</label><input type="number" min="0" step="any" value={actualYield} onChange={(e) => setActualYield(e.target.value)} /></div><div className="nfos-field"><label>Yield unit</label><input disabled value={batch.planned_unit} /></div><div className="nfos-field full"><label>Completion notes</label><textarea value={notes} onChange={(e) => setNotes(e.target.value)} /></div><div className="nfos-field full"><button className="nfos-btn" disabled={busy || batch.quality_status === "failed" || batch.quality_status === "hold"} onClick={complete}>Complete batch + update inventory</button></div></div></div>
+
+      {batch.texture === "spun" && <div className="nfos-workbook-sheet nfos-spun-card">
+        <div className="nfos-workbook-titlebar"><div><h2>SPUN HONEY SEED</h2><p>NFOS control required for Spun batches. Target is 10% of the original honey weight.</p></div></div>
+        <div className="nfos-grid two nfos-workbook-form-grid">
+          <div className="nfos-field"><label>Expected seed</label><input disabled value={expectedSeedOz == null ? "Enter actual honey weight first" : `${qty(expectedSeedOz)} oz`} /></div>
+          <div className="nfos-field"><label>Actual seed used (oz)</label><input type="number" min="0.0001" step="any" value={seedForm.actualQuantity} onChange={(e) => setSeedForm({ ...seedForm, actualQuantity: e.target.value })} /></div>
+          <div className="nfos-field"><label>Source natural spun batch code</label><input value={seedForm.sourceBatchCode} onChange={(e) => setSeedForm({ ...seedForm, sourceBatchCode: e.target.value })} placeholder="Enter prior NFOS batch code" /></div>
+          <div className="nfos-field"><label>Seed notes, optional</label><input value={seedForm.notes} onChange={(e) => setSeedForm({ ...seedForm, notes: e.target.value })} placeholder="Source / handling note" /></div>
+        </div>
+        <div className="nfos-inline-actions nfos-workbook-actions"><button className="nfos-btn secondary" disabled={busy || !seedForm.sourceBatchCode.trim() || !Number(seedForm.actualQuantity || 0)} onClick={saveSpunDetails}>Save seed details</button></div>
+      </div>}
+
+      <div className="nfos-workbook-sheet">
+        <div className="nfos-workbook-titlebar"><div><h2>QUALITY CONTROL</h2><p>Workbook-style batch QC row. AW and pH connect to the recipe's configured NFOS checks when present.</p></div></div>
+        <div className="nfos-workbook-scroll">
+          <table className="nfos-workbook-table nfos-qc-workbook-table">
+            <thead><tr><th>Date</th><th>Batch Code</th><th>Flavor</th><th>Check Stage</th><th>Result</th><th>Units Affected</th><th>Issue Type</th><th>Corrective Action</th><th>Operator</th><th>Notes</th><th>AW</th><th>Ph</th></tr></thead>
+            <tbody><tr>
+              <td className="is-auto">{workbookDate}</td>
+              <td className="is-auto nfos-mono">{batch.batch_code}</td>
+              <td className="is-auto">{batch.flavor_name || batch.recipe_name}</td>
+              <td className="is-auto">Final</td>
+              <td className={resultCheck ? "is-input" : "is-auto"}>{resultCheck ? <select className="nfos-workbook-input" value={(qcDrafts[resultCheck.check_key] || {}).value || ""} onChange={(e) => setQcDrafts({ ...qcDrafts, [resultCheck.check_key]: { ...(qcDrafts[resultCheck.check_key] || {}), value: e.target.value } })}><option value="">Choose…</option><option value="true">Pass</option><option value="false">Fail</option></select> : <StatusPill value={batch.quality_status} />}</td>
+              <td className="is-auto">{totalFinishedJars || fourOzYield || "—"}</td>
+              <td className="is-auto">—</td>
+              <td className="is-auto">—</td>
+              <td className="is-auto">{operatorName}</td>
+              <td className="is-auto">—</td>
+              <td className={awCheck ? "is-input" : "is-auto"}>{awCheck ? <input className="nfos-workbook-input" type="number" step="any" value={(qcDrafts[awCheck.check_key] || {}).value || ""} onChange={(e) => setQcDrafts({ ...qcDrafts, [awCheck.check_key]: { ...(qcDrafts[awCheck.check_key] || {}), value: e.target.value } })} placeholder="AW" /> : "—"}</td>
+              <td className={phCheck ? "is-input" : "is-auto"}>{phCheck ? <input className="nfos-workbook-input" type="number" step="any" value={(qcDrafts[phCheck.check_key] || {}).value || ""} onChange={(e) => setQcDrafts({ ...qcDrafts, [phCheck.check_key]: { ...(qcDrafts[phCheck.check_key] || {}), value: e.target.value } })} placeholder="pH" /> : "—"}</td>
+            </tr></tbody>
+          </table>
+        </div>
+        <div className="nfos-inline-actions nfos-workbook-actions">
+          {resultCheck && <button className="nfos-btn secondary" disabled={busy} onClick={() => saveQc(resultCheck)}>Save result</button>}
+          {awCheck && <button className="nfos-btn secondary" disabled={busy} onClick={() => saveQc(awCheck)}>Save AW</button>}
+          {phCheck && <button className="nfos-btn secondary" disabled={busy} onClick={() => saveQc(phCheck)}>Save pH</button>}
+        </div>
+        {extraQualityChecks.length ? <div className="nfos-workbook-supplement">
+          <strong>Additional NFOS recipe checks</strong>
+          <div className="nfos-table-wrap"><table className="nfos-table"><thead><tr><th>Check</th><th>Result</th><th>Status</th><th></th></tr></thead><tbody>{extraQualityChecks.map((row) => { const draft = qcDrafts[row.check_key] || {}; return <tr key={row.id}><td><strong>{row.label}</strong><div className="nfos-muted nfos-small">{row.unit || row.result_type}</div></td><td>{row.result_type === "boolean" ? <select className="nfos-table-input" value={draft.value || ""} onChange={(e) => setQcDrafts({ ...qcDrafts, [row.check_key]: { ...draft, value: e.target.value } })}><option value="">Choose…</option><option value="true">Pass / Yes</option><option value="false">Fail / No</option></select> : <input className="nfos-table-input" type={row.result_type === "number" ? "number" : "text"} step="any" value={draft.value || ""} onChange={(e) => setQcDrafts({ ...qcDrafts, [row.check_key]: { ...draft, value: e.target.value } })} />}</td><td><StatusPill value={row.status} /></td><td><button className="nfos-btn ghost" disabled={busy} onClick={() => saveQc(row)}>Save check</button></td></tr>; })}</tbody></table></div>
+        </div> : null}
+      </div>
+
+      <div className="nfos-workbook-sheet">
+        <div className="nfos-workbook-titlebar"><div><h2>PACKAGING USAGE</h2><p>Jar production is entered in workbook order. Existing NFOS packaging BOM automation remains responsible for inventory consumption and costing.</p></div></div>
+        {finishedItems.length ? <div className="nfos-workbook-scroll">
+          <table className="nfos-workbook-table nfos-packaging-usage-table">
+            <thead><tr><th>Date</th><th>Batch Code</th><th>Jar Size</th><th>Jars Pulled</th><th>Jars Produced</th><th>Waste / Damaged</th><th>Net Sellable Jars</th><th>Labels Used</th><th>Jar Unit Cost</th><th>Packaging Cost</th><th>Operator</th><th>FLAVOR</th><th>Notes</th><th>Bands Used</th></tr></thead>
+            <tbody>{finishedItems.map((item) => {
+              const produced = Number(outputs[item.id] || 0);
+              const size = item.legacy_size_id || (String(item.name || "").match(/\b(?:2|4|7|16)\s*oz\b/i)?.[0] || item.name);
+              return <tr key={item.id}>
+                <td className="is-auto">{workbookDate}</td>
+                <td className="is-auto nfos-mono">{batch.batch_code}</td>
+                <td className="is-auto"><strong>{size}</strong><small>{item.sku}</small></td>
+                <td className="is-auto">—</td>
+                <td className="is-input"><input className="nfos-workbook-input" type="number" min="0" step="1" value={outputs[item.id] || ""} onChange={(e) => setOutputs({ ...outputs, [item.id]: e.target.value })} placeholder="0" /></td>
+                <td className="is-auto">—</td>
+                <td className="is-auto"><strong>{produced || "—"}</strong></td>
+                <td className="is-auto">Auto</td>
+                <td className="is-auto">Auto</td>
+                <td className="is-auto">Auto</td>
+                <td className="is-auto">{operatorName}</td>
+                <td className="is-auto">{batch.flavor_name || batch.recipe_name}</td>
+                <td className="is-auto">—</td>
+                <td className="is-auto">Auto</td>
+              </tr>;
+            })}</tbody>
+          </table>
+        </div> : <Empty>No finished SKUs are linked to this recipe’s flavor.</Empty>}
+        <div className="nfos-workbook-footnote"><strong>Current NFOS behavior:</strong> jars produced are stored directly; jar/label/band usage and packaging cost post from the SKU BOM when the batch is completed. Separate workbook fields for jars pulled and waste/damaged are not yet stored as their own database fields, so they are intentionally not fake editable cells here.</div>
+        <div className="nfos-form nfos-workbook-completion-form">
+          <div className="nfos-field"><label>Actual bulk yield, optional</label><input type="number" min="0" step="any" value={actualYield} onChange={(e) => setActualYield(e.target.value)} /></div>
+          <div className="nfos-field"><label>Yield unit</label><input disabled value={batch.planned_unit} /></div>
+          <div className="nfos-field full"><label>Completion notes</label><textarea value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
+          <div className="nfos-field full"><button className="nfos-btn" disabled={busy || batch.quality_status === "failed" || batch.quality_status === "hold"} onClick={complete}>Complete batch + update inventory</button></div>
+        </div>
+      </div>
     </>}
   </>;
+}
+
+
+function ProductionSopTab({ batches, selectedBatchId, onSelectBatch }) {
+  const [steps, setSteps] = useState([]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+
+  const selectedBatch = batches.find((batch) => batch.id === selectedBatchId) || null;
+
+  const loadSop = useCallback(async () => {
+    if (!selectedBatchId) {
+      setSteps([]);
+      return;
+    }
+    setBusy(true);
+    setError("");
+    try {
+      setSteps((await nfos.listBatchSop(selectedBatchId)) || []);
+    } catch (err) {
+      setError(err?.message || "Could not load the production SOP.");
+    } finally {
+      setBusy(false);
+    }
+  }, [selectedBatchId]);
+
+  useEffect(() => {
+    loadSop();
+  }, [loadSop]);
+
+  const toggleStep = async (step) => {
+    if (!selectedBatch || selectedBatch.status === "completed") return;
+    setBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      await nfos.setBatchStepCompletion({
+        batchId: selectedBatch.id,
+        recipeStepId: step.recipe_step_id,
+        completed: !step.completed_at,
+      });
+      setMessage("Optional SOP checkoff updated.");
+      await loadSop();
+    } catch (err) {
+      setError(err?.message || "Could not update the SOP checkoff.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return <div className="nfos-production-sop-tab">
+    <div className="nfos-workbook-sheet">
+      <div className="nfos-workbook-titlebar">
+        <div>
+          <h2>PRODUCTION SOP</h2>
+          <p>Reference instructions for the selected production batch. SOP checkoffs are optional and do not block batch completion.</p>
+        </div>
+        <span className="nfos-pill">Optional reference</span>
+      </div>
+
+      <div className="nfos-workbook-tools">
+        <div className="nfos-field" style={{ minWidth: 320, margin: 0 }}>
+          <label>Batch</label>
+          <select value={selectedBatchId || ""} onChange={(event) => onSelectBatch?.(event.target.value)}>
+            <option value="">Choose batch…</option>
+            {batches.map((batch) => <option key={batch.id} value={batch.id}>
+              {batch.batch_code} — {batch.flavor_name || batch.recipe_name} — {batch.texture === "spun" ? "Spun" : "Regular"} — {batch.status}
+            </option>)}
+          </select>
+        </div>
+        {selectedBatch && <div className="nfos-inline-actions">
+          <StatusPill value={selectedBatch.status} />
+          <StatusPill value={selectedBatch.quality_status} />
+        </div>}
+      </div>
+
+      <Notice type="error">{error}</Notice>
+      <Notice>{message}</Notice>
+
+      {!selectedBatch ? <div className="nfos-empty">Choose a batch to view its production SOP.</div> : busy && !steps.length ? <div className="nfos-empty">Loading production SOP…</div> : steps.length ? <div className="nfos-sop-list nfos-production-sop-list">
+        {steps.map((step) => <div key={step.recipe_step_id} className={`nfos-sop-step ${step.completed_at ? "done" : ""}`}>
+          <div className="nfos-sop-step-head">
+            <div>
+              <strong>{step.step_no}. {step.title}</strong>
+              {step.critical_control && <span className="nfos-pill low" style={{ marginLeft: 8 }}>critical</span>}
+            </div>
+            {step.requires_confirmation ? <label className="nfos-sop-check" title="Optional checkoff only">
+              <input
+                type="checkbox"
+                checked={Boolean(step.completed_at)}
+                disabled={busy || selectedBatch.status === "completed"}
+                onChange={() => toggleStep(step)}
+              /> Optional checkoff
+            </label> : <span className="nfos-muted nfos-small">Reference</span>}
+          </div>
+          <div className="nfos-sop-instruction">{step.instruction}</div>
+          {step.expected_minutes != null && <div className="nfos-muted nfos-small">Expected time: {qty(step.expected_minutes)} minutes</div>}
+          {step.notes && <div className="nfos-muted nfos-small">{step.notes}</div>}
+        </div>)}
+      </div> : <div className="nfos-empty">No SOP steps apply to this batch.</div>}
+
+      <div className="nfos-workbook-footnote">
+        <strong>Reference only:</strong> Production SOP checkoffs are available for convenience and documentation. They are not required to complete a batch or update inventory.
+      </div>
+    </div>
+  </div>;
 }
 
 export function ProductionModule({ items, locations, lots, onRefresh }) {
@@ -896,7 +1234,7 @@ export function ProductionModule({ items, locations, lots, onRefresh }) {
     setBusy(true); setError(""); setMessage("");
     try {
       const result = await nfos.startBatch({ productionOrderId: startOrderId, locationId: startLocationId, texture: startTexture });
-      setMessage(`Batch ${result.batch_code} started.`); await load(); setSelectedBatchId(result.id); await onRefresh?.();
+      setMessage(`Batch ${result.batch_code} started.`); await load(); setSelectedBatchId(result.id); setProductionView("batch"); await onRefresh?.();
     } catch (err) { setError(err?.message || "Could not start batch."); }
     finally { setBusy(false); }
   };
@@ -942,7 +1280,9 @@ export function ProductionModule({ items, locations, lots, onRefresh }) {
 
   const productionNav = <div className="nfos-workbook-view-switch">
     <button className={`nfos-btn ${productionView==="log"?"":"secondary"}`} onClick={()=>setProductionView("log")}>Production Log</button>
-    <button className={`nfos-btn ${productionView==="operations"?"":"secondary"}`} onClick={()=>setProductionView("operations")}>Queue + Batch Work</button>
+    <button className={`nfos-btn ${productionView==="queue"?"":"secondary"}`} onClick={()=>setProductionView("queue")}>Production Queue</button>
+    <button className={`nfos-btn ${productionView==="batch"?"":"secondary"}`} onClick={()=>setProductionView("batch")}>Batch Work</button>
+    <button className={`nfos-btn ${productionView==="sop"?"":"secondary"}`} onClick={()=>setProductionView("sop")}>Production SOP</button>
   </div>;
 
   if (productionView === "log") return <>
@@ -952,62 +1292,133 @@ export function ProductionModule({ items, locations, lots, onRefresh }) {
       batches={batches}
       busy={busy}
       onRefresh={load}
-      onOpenBatch={(batchId)=>{setSelectedBatchId(batchId);setProductionView("operations");}}
+      onOpenBatch={(batchId)=>{setSelectedBatchId(batchId);setProductionView("batch");}}
     />
+  </>;
+
+  if (productionView === "sop") return <>
+    <Notice type="error">{error}</Notice><Notice>{message}</Notice>
+    {productionNav}
+    <ProductionSopTab batches={batches} selectedBatchId={selectedBatchId} onSelectBatch={setSelectedBatchId} />
   </>;
 
   return <>
     <Notice type="error">{error}</Notice><Notice>{message}</Notice>
     {productionNav}
+    {productionView === "queue" && <>
     <NfosAdminProductionSuggestions onChanged={changed} />
-    <div className="nfos-grid two">
-      <div className="nfos-card">
-        <h2>Production queue</h2>
-        <p className="nfos-muted">Assignment does not start production. A planned order stays editable and deletable until the assigned operator presses Start production and NFOS creates the batch.</p>
-        {queue.length ? (
-          <div className="nfos-table-wrap">
-            <table className="nfos-table">
-              <thead><tr><th>Order</th><th>Recipe</th><th>Planned</th><th>Texture</th><th>Jar plan</th><th>Due</th><th>Assigned to</th><th>Status</th><th>Actions</th></tr></thead>
-              <tbody>{queue.map((row) => {
-                const editable = row.status === "planned" && Number(row.batch_count || 0) === 0;
-                return <tr key={row.id}>
-                  <td className="nfos-mono">{row.order_no}</td>
-                  <td><strong>{row.flavor_name || row.recipe_name}</strong><div className="nfos-muted nfos-small">{row.recipe_name}</div></td>
-                  <td>{qty(row.planned_quantity)} {row.planned_unit}</td>
-                  <td>{row.planned_texture === "spun" ? "Spun" : "Regular"}</td>
-                  <td>{row.packaging_plan_complete ? <><strong>{qty(row.planned_finished_units)} jars</strong><div className="nfos-muted nfos-small">{row.planned_output_sku_count} SKU{Number(row.planned_output_sku_count) === 1 ? "" : "s"}</div></> : <span className="nfos-pill low">Packaging plan incomplete</span>}</td>
-                  <td>{row.due_date || "—"}</td>
-                  <td>{row.assigned_member_name ? <><strong>{row.assigned_member_name}</strong>{editable && <div className="nfos-muted nfos-small nfos-start-ready">Awaiting start</div>}</> : <span className="nfos-muted">Unassigned</span>}</td>
-                  <td><StatusPill value={row.status} /></td>
-                  <td className="nfos-queue-actions">
-                    {editable ? <div className="nfos-inline-actions">
-                      <button className="nfos-btn ghost" type="button" disabled={busy} onClick={() => setEditOrder(row)}>Edit</button>
-                      <button className="nfos-btn danger" type="button" disabled={busy} onClick={() => deleteOrder(row)}>Delete</button>
-                    </div> : <span className="nfos-muted nfos-small">Locked after batch start</span>}
-                  </td>
-                </tr>;
-              })}</tbody>
-            </table>
-          </div>
-        ) : <Empty>No production orders yet.</Empty>}
-      </div>
 
-      <div className="nfos-card"><h2>Create production order</h2><form className="nfos-form" onSubmit={createOrder}><div className="nfos-field full"><label>Active recipe</label><select required value={orderForm.recipeId} onChange={(e) => setOrderForm({ ...orderForm, recipeId: e.target.value, texture: "regular", outputs: {} })}><option value="">Choose recipe…</option>{activeRecipes.map((x) => <option key={x.id} value={x.id}>{x.flavor_name || x.name} — {x.name} v{x.version}</option>)}</select></div><div className="nfos-field"><label>Planned batch quantity</label><input required type="number" min="0.0001" step="any" value={orderForm.plannedQuantity} onChange={(e) => setOrderForm({ ...orderForm, plannedQuantity: e.target.value })} /></div><div className="nfos-field"><label>Recipe basis unit</label><input disabled value={selectedOrderRecipe?.basis_unit || "—"} /></div><div className="nfos-field"><label>Texture</label><select value={orderForm.texture} disabled={!selectedOrderRecipe} onChange={(e) => setOrderForm({ ...orderForm, texture: e.target.value, outputs: {} })}><option value="regular">Regular</option><option value="spun" disabled={selectedOrderRecipe && !selectedOrderRecipe.spun_eligible}>Spun</option></select>{selectedOrderRecipe && !selectedOrderRecipe.spun_eligible && <div className="nfos-muted nfos-small">This SOP is Regular only.</div>}</div><div className="nfos-field"><label>Due date</label><input type="date" value={orderForm.dueDate} onChange={(e) => setOrderForm({ ...orderForm, dueDate: e.target.value })} /></div><div className="nfos-field"><label>Priority</label><select value={orderForm.priority} onChange={(e) => setOrderForm({ ...orderForm, priority: e.target.value })}><option value="low">Low</option><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option></select></div><div className="nfos-field full"><label>Planned finished jars</label>{plannedFinishedItems.length ? <div className="nfos-plan-output-grid">{plannedFinishedItems.map((item) => <div className="nfos-plan-output" key={item.id}><div><strong>{item.name}</strong><div className="nfos-mono nfos-muted nfos-small">{item.sku}</div></div><input type="number" min="0" step="1" value={orderForm.outputs?.[item.id] || ""} onChange={(e) => setOrderForm({ ...orderForm, outputs: { ...(orderForm.outputs || {}), [item.id]: e.target.value } })} placeholder="0" /></div>)}</div> : <div className="nfos-note">Choose a recipe and texture to plan finished jar quantities.</div>}<div className="nfos-muted nfos-small" style={{ marginTop: 8 }}>{plannedOutputUnits > 0 ? `${qty(plannedOutputUnits)} total finished jars planned. NFOS will forecast their packaging automatically.` : "Jar quantities are optional at first. Ingredient demand will still be forecast, but packaging demand stays incomplete until jars are planned."}</div></div>{orderForm.texture === "spun" && orderForm.plannedQuantity && <div className="nfos-field full"><div className="nfos-note"><strong>Spun seed planning:</strong> this order will require approximately {qty(Number(orderForm.plannedQuantity || 0) * 16 * 0.10)} oz of prior NectarFusions natural spun honey seed. Seed remains a controlled production input, not a supplier purchase item.</div></div>}<div className="nfos-field full"><label>Notes</label><textarea value={orderForm.notes} onChange={(e) => setOrderForm({ ...orderForm, notes: e.target.value })} /></div><div className="nfos-field full"><button className="nfos-btn" disabled={busy || !activeRecipes.length}>Add to production queue</button></div></form></div>
-    </div>
-    <div className="nfos-card"><h2>Start a batch</h2><div className="nfos-form"><div className="nfos-field"><label>Production order</label><select value={startOrderId} onChange={(e) => setStartOrderId(e.target.value)}><option value="">Choose queued order…</option>{queue.filter((x) => x.status === "planned" && Number(x.batch_count || 0) === 0).map((x) => <option key={x.id} value={x.id}>{x.order_no} — {x.flavor_name || x.recipe_name} — {x.planned_texture === "spun" ? "Spun" : "Regular"} — {qty(x.planned_quantity)} {x.planned_unit}</option>)}</select></div><div className="nfos-field"><label>Production location</label><select value={startLocationId} onChange={(e) => setStartLocationId(e.target.value)}><option value="">Choose location…</option>{locations.filter((x) => x.active).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></div><div className="nfos-field"><label>Planned texture</label><input disabled value={selectedStartOrder ? (selectedStartOrder.planned_texture === "spun" ? "Spun" : "Regular") : "—"} />{selectedStartOrder?.planned_texture === "spun" && <div className="nfos-muted nfos-small">10% seed + 14-day cure controls will apply automatically.</div>}</div><div className="nfos-field full"><button className="nfos-btn" disabled={busy || !startOrderId || !startLocationId} onClick={start}>Start {startTexture === "spun" ? "Spun" : "Regular"} batch</button></div></div></div>
-    <div className="nfos-card">
-      <div className="nfos-split-head">
-        <div><h2>Batches</h2><p className="nfos-muted">Accidental unposted batches can be deleted right here.</p></div>
+    <div className="nfos-workbook-sheet nfos-production-operations-workbook">
+      <div className="nfos-workbook-titlebar">
+        <div>
+          <h2>PRODUCTION QUEUE</h2>
+          <p>Planning stays editable until a batch starts. This is the workbook-style staging area before actual production entry.</p>
+        </div>
       </div>
-      {batches.length ? <div className="nfos-batch-list">{batches.map((b) => <div className="nfos-batch-manage-row" key={b.id}>
-        <button className={`nfos-batch-select ${selectedBatchId === b.id ? "active" : ""}`} onClick={() => setSelectedBatchId(b.id)}>
-          <span><strong>{b.batch_code}</strong><small>{b.flavor_name || b.recipe_name} • {b.texture === "spun" ? "Spun" : "Regular"} • {fmtDate(b.started_at)}</small></span>
-          <span className="nfos-inline-actions"><StatusPill value={b.status} /><StatusPill value={b.quality_status} />{b.status === "completed" && <StatusPill value={b.release_status} />}</span>
-        </button>
-        {["draft","in_progress"].includes(b.status) ? <button className="nfos-btn danger nfos-batch-row-delete" type="button" onClick={() => setDeleteBatchTarget(b)}>Delete</button> : <span className="nfos-muted nfos-small nfos-batch-row-delete">Locked</span>}
-      </div>)}</div> : <Empty>No production batches yet.</Empty>}
+      <div className="nfos-workbook-scroll">
+        <table className="nfos-workbook-table nfos-queue-workbook-table">
+          <thead><tr><th>Order</th><th>Recipe / Flavor</th><th>Planned Batch</th><th>Texture</th><th>Jar Plan</th><th>Due Date</th><th>Assigned To</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody>{queue.length ? queue.map((row) => {
+            const editable = row.status === "planned" && Number(row.batch_count || 0) === 0;
+            return <tr key={row.id}>
+              <td className="is-auto nfos-mono"><strong>{row.order_no}</strong></td>
+              <td className="is-auto"><strong>{row.flavor_name || row.recipe_name}</strong><small>{row.recipe_name}</small></td>
+              <td className="is-auto">{qty(row.planned_quantity)} {row.planned_unit}</td>
+              <td className="is-auto">{row.planned_texture === "spun" ? "Spun" : "Regular"}</td>
+              <td className="is-auto">{row.packaging_plan_complete ? <><strong>{qty(row.planned_finished_units)} jars</strong><small>{row.planned_output_sku_count} SKU{Number(row.planned_output_sku_count) === 1 ? "" : "s"}</small></> : <span className="nfos-pill low">Incomplete</span>}</td>
+              <td className="is-auto">{row.due_date || "—"}</td>
+              <td className="is-auto">{row.assigned_member_name || "Unassigned"}</td>
+              <td className="is-auto"><StatusPill value={row.status} /></td>
+              <td className="is-input">{editable ? <div className="nfos-inline-actions nfos-workbook-cell-actions"><button className="nfos-btn ghost" type="button" disabled={busy} onClick={() => setEditOrder(row)}>Edit</button><button className="nfos-btn danger" type="button" disabled={busy} onClick={() => deleteOrder(row)}>Delete</button></div> : <span className="nfos-muted nfos-small">Locked after start</span>}</td>
+            </tr>;
+          }) : <tr><td colSpan="9" className="is-auto nfos-workbook-empty-row">No production orders yet. Create the first plan directly below.</td></tr>}</tbody>
+        </table>
+      </div>
     </div>
+
+    <div className="nfos-workbook-sheet nfos-plan-workbook">
+      <div className="nfos-workbook-titlebar">
+        <div>
+          <h2>PLAN NEW PRODUCTION</h2>
+          <p>Enter the production plan left to right like a spreadsheet. NFOS uses it to forecast ingredients and packaging.</p>
+        </div>
+      </div>
+      <form onSubmit={createOrder}>
+        <div className="nfos-workbook-scroll">
+          <table className="nfos-workbook-table nfos-plan-entry-table">
+            <thead><tr><th>Active Recipe</th><th>Planned Batch Quantity</th><th>Unit</th><th>Texture</th><th>Due Date</th><th>Priority</th><th>Notes</th><th>Action</th></tr></thead>
+            <tbody><tr>
+              <td className="is-input"><select className="nfos-workbook-input" required value={orderForm.recipeId} onChange={(e) => setOrderForm({ ...orderForm, recipeId: e.target.value, texture: "regular", outputs: {} })}><option value="">Choose recipe…</option>{activeRecipes.map((x) => <option key={x.id} value={x.id}>{x.flavor_name || x.name} — {x.name} v{x.version}</option>)}</select></td>
+              <td className="is-input"><input className="nfos-workbook-input" required type="number" min="0.0001" step="any" value={orderForm.plannedQuantity} onChange={(e) => setOrderForm({ ...orderForm, plannedQuantity: e.target.value })} placeholder="0" /></td>
+              <td className="is-auto"><strong>{selectedOrderRecipe?.basis_unit || "—"}</strong></td>
+              <td className="is-input"><select className="nfos-workbook-input" value={orderForm.texture} disabled={!selectedOrderRecipe} onChange={(e) => setOrderForm({ ...orderForm, texture: e.target.value, outputs: {} })}><option value="regular">Regular</option><option value="spun" disabled={selectedOrderRecipe && !selectedOrderRecipe.spun_eligible}>Spun</option></select></td>
+              <td className="is-input"><input className="nfos-workbook-input" type="date" value={orderForm.dueDate} onChange={(e) => setOrderForm({ ...orderForm, dueDate: e.target.value })} /></td>
+              <td className="is-input"><select className="nfos-workbook-input" value={orderForm.priority} onChange={(e) => setOrderForm({ ...orderForm, priority: e.target.value })}><option value="low">Low</option><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option></select></td>
+              <td className="is-input"><textarea className="nfos-workbook-input nfos-workbook-notes" value={orderForm.notes} onChange={(e) => setOrderForm({ ...orderForm, notes: e.target.value })} placeholder="Optional production notes" /></td>
+              <td className="is-input"><button className="nfos-btn nfos-workbook-primary-action" disabled={busy || !activeRecipes.length}>Add to production queue</button></td>
+            </tr></tbody>
+          </table>
+        </div>
+
+        <div className="nfos-workbook-subsection">
+          <div className="nfos-workbook-subhead"><strong>PLANNED FINISHED JARS</strong><span>{plannedOutputUnits > 0 ? `${qty(plannedOutputUnits)} total jars planned` : "Optional until jar mix is known"}</span></div>
+          {plannedFinishedItems.length ? <div className="nfos-workbook-scroll"><table className="nfos-workbook-table nfos-jar-plan-table"><thead><tr>{plannedFinishedItems.map((item) => <th key={item.id}>{item.name}<small>{item.sku}</small></th>)}</tr></thead><tbody><tr>{plannedFinishedItems.map((item) => <td className="is-input" key={item.id}><input className="nfos-workbook-input" type="number" min="0" step="1" value={orderForm.outputs?.[item.id] || ""} onChange={(e) => setOrderForm({ ...orderForm, outputs: { ...(orderForm.outputs || {}), [item.id]: e.target.value } })} placeholder="0" /></td>)}</tr></tbody></table></div> : <div className="nfos-workbook-footnote">Choose a recipe and texture above to plan jar quantities. Ingredient demand can still be forecast before the jar mix is known.</div>}
+          {orderForm.texture === "spun" && orderForm.plannedQuantity && <div className="nfos-workbook-footnote"><strong>Spun seed planning:</strong> approximately {qty(Number(orderForm.plannedQuantity || 0) * 16 * 0.10)} oz of prior NectarFusions natural spun honey seed will be required.</div>}
+        </div>
+      </form>
+    </div>
+
+    <div className="nfos-workbook-sheet nfos-start-workbook">
+      <div className="nfos-workbook-titlebar"><div><h2>START A BATCH</h2><p>Starting converts a planned order into an actual production batch and unlocks the Excel-style production entry row.</p></div></div>
+      <div className="nfos-workbook-scroll">
+        <table className="nfos-workbook-table nfos-start-entry-table">
+          <thead><tr><th>Production Order</th><th>Production Location</th><th>Planned Texture</th><th>Action</th></tr></thead>
+          <tbody><tr>
+            <td className="is-input"><select className="nfos-workbook-input" value={startOrderId} onChange={(e) => setStartOrderId(e.target.value)}><option value="">Choose queued order…</option>{queue.filter((x) => x.status === "planned" && Number(x.batch_count || 0) === 0).map((x) => <option key={x.id} value={x.id}>{x.order_no} — {x.flavor_name || x.recipe_name} — {x.planned_texture === "spun" ? "Spun" : "Regular"} — {qty(x.planned_quantity)} {x.planned_unit}</option>)}</select></td>
+            <td className="is-input"><select className="nfos-workbook-input" value={startLocationId} onChange={(e) => setStartLocationId(e.target.value)}><option value="">Choose location…</option>{locations.filter((x) => x.active).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></td>
+            <td className="is-auto"><strong>{selectedStartOrder ? (selectedStartOrder.planned_texture === "spun" ? "Spun" : "Regular") : "—"}</strong>{selectedStartOrder?.planned_texture === "spun" && <small>10% seed + 14-day cure controls apply automatically</small>}</td>
+            <td className="is-input"><button className="nfos-btn nfos-workbook-primary-action" disabled={busy || !startOrderId || !startLocationId} onClick={start} type="button">Start {startTexture === "spun" ? "Spun" : "Regular"} batch</button></td>
+          </tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    </>}
+
+    {productionView === "batch" && <>
+    <div className="nfos-workbook-sheet nfos-batches-workbook">
+      <div className="nfos-workbook-titlebar"><div><h2>BATCHES</h2><p>Select an in-progress batch to work directly in the Production / Ingredient Usage / QC / Packaging sheets below.</p></div></div>
+      <div className="nfos-workbook-scroll">
+        <table className="nfos-workbook-table nfos-batches-workbook-table">
+          <thead><tr><th>Batch Code</th><th>Flavor / Recipe</th><th>Texture</th><th>Started</th><th>Status</th><th>QC</th><th>Release</th><th>Open / Delete</th></tr></thead>
+          <tbody>{batches.length ? batches.map((b) => <tr key={b.id} className={selectedBatchId === b.id ? "is-selected-workbook-row" : ""}>
+            <td className="is-auto nfos-mono"><strong>{b.batch_code}</strong></td>
+            <td className="is-auto"><strong>{b.flavor_name || b.recipe_name}</strong></td>
+            <td className="is-auto">{b.texture === "spun" ? "Spun" : "Regular"}</td>
+            <td className="is-auto">{fmtDate(b.started_at)}</td>
+            <td className="is-auto"><StatusPill value={b.status} /></td>
+            <td className="is-auto"><StatusPill value={b.quality_status} /></td>
+            <td className="is-auto">{b.status === "completed" ? <StatusPill value={b.release_status} /> : "—"}</td>
+            <td className="is-input"><div className="nfos-inline-actions nfos-workbook-cell-actions"><button className="nfos-btn ghost" type="button" onClick={() => setSelectedBatchId(b.id)}>Open</button>{["draft","in_progress"].includes(b.status) ? <button className="nfos-btn danger" type="button" onClick={() => setDeleteBatchTarget(b)}>Delete</button> : <span className="nfos-muted nfos-small">Locked</span>}</div></td>
+          </tr>) : <tr><td colSpan="8" className="is-auto nfos-workbook-empty-row">No production batches yet. Start a queued order above to create one.</td></tr>}</tbody>
+        </table>
+      </div>
+    </div>
+
+    {!selectedBatch && <div className="nfos-workbook-sheet nfos-empty-production-preview">
+      <div className="nfos-workbook-titlebar"><div><h2>PRODUCTION</h2><p>This is the exact batch-entry sheet that unlocks as soon as a batch is started.</p></div></div>
+      <div className="nfos-workbook-legend"><span><i className="is-input" /> White = you type</span><span><i className="is-auto" /> Cream = NFOS calculates</span></div>
+      <div className="nfos-workbook-scroll">
+        <table className="nfos-workbook-table nfos-production-entry-table nfos-production-preview-table">
+          <thead><tr><th>Date</th><th>Batch Code</th><th>Flavor</th><th>Honey Used (lbs)</th><th>Extra Honey (oz)</th><th>Total Honey (oz)</th><th>Honey Lot #</th><th>Infusion Used (oz)</th><th>Suggested Infusion (oz)</th><th>4oz Yield</th><th>Operator</th><th>Status</th><th>Suggested Label Code</th><th>Notes</th></tr></thead>
+          <tbody><tr><td className="is-auto">AUTO</td><td className="is-auto">AUTO</td><td className="is-auto">AUTO</td><td className="is-input">START BATCH</td><td className="is-input">START BATCH</td><td className="is-auto">AUTO</td><td className="is-input">START BATCH</td><td className="is-input">START BATCH</td><td className="is-auto">AUTO</td><td className="is-auto">AUTO</td><td className="is-auto">AUTO</td><td className="is-auto">AUTO</td><td className="is-auto">AUTO</td><td className="is-input">START BATCH</td></tr></tbody>
+        </table>
+      </div>
+      <div className="nfos-workbook-footnote"><strong>Nothing is missing.</strong> There is no batch yet, so these cells are intentionally locked. Start a production order above and this preview becomes the live editable batch row.</div>
+    </div>}
+
     {selectedBatch && <BatchWorkspace batch={selectedBatch} items={items} locations={locations} lots={lots} onChanged={changed} onDelete={() => setDeleteBatchTarget(selectedBatch)} />}
+    </>}
     {deleteBatchTarget && <NfosBatchDeleteDialog batch={deleteBatchTarget} onClose={() => setDeleteBatchTarget(null)} onDeleted={batchDeleted} />}
     {editOrder && <NfosProductionOrderEditor
       order={editOrder}
@@ -1066,4 +1477,3 @@ export function TraceabilityModule({ items, lots, initialBatchId = "" }) {
     <div className="nfos-grid two nfos-trace-layout"><div className="nfos-card"><h2>Find batch</h2><form className="nfos-scan" onSubmit={scan}><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search batch, flavor or scan batch barcode…" /><button className="nfos-btn">Scan / search</button></form><div className="nfos-select-list" style={{ marginTop: 14 }}>{filtered.slice(0, 100).map((b) => <button key={b.id} className={selectedId === b.id ? "active" : ""} onClick={() => setSelectedId(b.id)}><span><strong>{b.batch_code}</strong><small>{b.flavor_name || b.recipe_name} • {fmtDate(b.started_at)}</small></span><StatusPill value={b.status} /></button>)}</div></div><div>{selected ? <><div className="nfos-card"><div className="nfos-split-head"><div><h2>{selected.batch_code}</h2><p className="nfos-muted">{selected.flavor_name || selected.recipe_name} • Recipe v{selected.recipe_version}</p></div><div className="nfos-inline-actions"><StatusPill value={selected.status} /><StatusPill value={selected.quality_status} /></div></div><NfosBarcode value={selected.barcode_value} title={selected.batch_code} subtitle="Production batch" /></div><div className="nfos-card"><h3>Inputs / source lots</h3>{inputs.length ? <div className="nfos-table-wrap"><table className="nfos-table"><thead><tr><th>Material</th><th>Actual</th><th>Expected</th><th>Variance</th><th>Lot</th></tr></thead><tbody>{inputs.map((x) => <tr key={x.id}><td><strong>{itemMap[x.item_id]?.name || x.item_id}</strong><div className="nfos-mono nfos-muted">{itemMap[x.item_id]?.sku}</div></td><td>{x.entered_quantity != null ? `${qty(x.entered_quantity)} ${x.entered_unit || x.unit}` : `${qty(x.quantity)} ${x.unit}`}</td><td>{x.expected_quantity == null ? "—" : `${qty(x.expected_quantity)} ${x.unit}`}</td><td>{x.variance_quantity == null ? "—" : `${Number(x.variance_quantity) > 0 ? "+" : ""}${qty(x.variance_quantity)} ${x.unit}`}</td><td>{lotMap[x.lot_id]?.lot_code || (x.lot_id ? x.lot_id : "Not lot tracked")}</td></tr>)}</tbody></table></div> : <Empty>No batch inputs recorded yet.</Empty>}</div><div className="nfos-card"><h3>Finished lots</h3>{outputs.length ? <div className="nfos-table-wrap"><table className="nfos-table"><thead><tr><th>Finished SKU</th><th>Qty</th><th>Finished lot</th></tr></thead><tbody>{outputs.map((x) => <tr key={x.id}><td><strong>{itemMap[x.item_id]?.name || x.item_id}</strong><div className="nfos-mono nfos-muted">{itemMap[x.item_id]?.sku}</div></td><td>{qty(x.quantity)} {x.unit}</td><td>{lotMap[x.lot_id]?.lot_code || x.lot_id}</td></tr>)}</tbody></table></div> : <Empty>No finished outputs recorded yet.</Empty>}</div><div className="nfos-card"><h3>Quality record</h3>{quality.length ? <div className="nfos-table-wrap"><table className="nfos-table"><thead><tr><th>Check</th><th>Value</th><th>Status</th><th>Checked</th></tr></thead><tbody>{quality.map((q) => <tr key={q.id}><td>{q.label}</td><td>{q.numeric_value ?? q.text_value ?? (q.boolean_value == null ? "—" : q.boolean_value ? "Yes" : "No")} {q.unit || ""}</td><td><StatusPill value={q.status} /></td><td>{fmtDate(q.checked_at)}</td></tr>)}</tbody></table></div> : <Empty>No QC record for this batch.</Empty>}</div><div className="nfos-note">Release 2 traceability covers source material lots → production batch → finished lots. Assigning each customer/retailer sale to a finished lot is the next traceability layer.</div></> : <div className="nfos-card"><Empty>Select a batch.</Empty></div>}</div></div>
   </>;
 }
-

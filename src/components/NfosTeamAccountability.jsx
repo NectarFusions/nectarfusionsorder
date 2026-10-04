@@ -4,7 +4,7 @@ import * as nfos from "../lib/nfosApi";
 const ROLES = [
   ["owner", "Owner"],
   ["operations_manager", "Operations Manager"],
-  ["production_operator", "Production Operator"],
+  ["production_operator", "Production Manager"],
   ["inventory_operator", "Inventory Operator"],
   ["purchasing_operator", "Purchasing Operator"],
   ["market_manager", "Market Management"],

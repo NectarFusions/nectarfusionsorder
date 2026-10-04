@@ -13,7 +13,7 @@ import "../styles/nfos.css";
 const roleLabel = (value) => ({
   owner: "Owner",
   operations_manager: "Operations Manager",
-  production_operator: "Production Operator",
+  production_operator: "Production Manager",
   inventory_operator: "Inventory Operator",
   purchasing_operator: "Purchasing Operator",
   market_manager: "Market Management",
@@ -76,9 +76,9 @@ function MyWork({ work, onRefresh, busy, onTaskStatus, onOpenArea }) {
   </div>;
 }
 
-function ProductionPanel({ access, notify }) {
+function ProductionPanel({ access, notify, view = "assigned", initialBatchId = "", onBatchSelected, onStarted }) {
   const [workspace,setWorkspace]=useState({orders:[],batches:[]});
-  const [selectedBatchId,setSelectedBatchId]=useState("");
+  const [selectedBatchId,setSelectedBatchId]=useState(initialBatchId || "");
   const [batchData,setBatchData]=useState(null);
   const [busy,setBusy]=useState(false);
   const [qcDraft,setQcDraft]=useState({});
@@ -147,20 +147,31 @@ function ProductionPanel({ access, notify }) {
   },[notify]);
 
   useEffect(()=>{ load(); },[load]);
-  useEffect(()=>{ if(selectedBatchId) loadBatch(selectedBatchId); },[selectedBatchId,loadBatch]);
+  useEffect(()=>{ if(selectedBatchId) loadBatch(selectedBatchId); else setBatchData(null); },[selectedBatchId,loadBatch]);
+  useEffect(()=>{
+    if(initialBatchId && initialBatchId!==selectedBatchId) setSelectedBatchId(initialBatchId);
+  },[initialBatchId,selectedBatchId]);
+
+  const chooseBatch=(id)=>{
+    setSelectedBatchId(id);
+    onBatchSelected?.(id);
+  };
 
   const startBatch=async(order)=>{
     const confirmed=window.confirm(
-      `Start ${order.order_no} now?\n\nStarting creates the traceable production batch and locks admin Edit/Delete for this order.`
+      `Start ${order.order_no} now?
+
+Starting creates the traceable production batch and locks admin Edit/Delete for this order.`
     );
     if(!confirmed)return;
 
     setBusy(true);
     try{
-      const result=await nfos.employeeStartAssignedBatch(order.id,null,null,"Started by assigned operator from employee portal.");
-      notify("success",`${result.batch_code} started. Admin Edit/Delete is now locked for this production order.`);
+      const result=await nfos.employeeStartAssignedBatch(order.id,null,null,"Started by assigned Production Manager.");
+      notify("success",`${result.batch_code} started.`);
       await load();
-      setSelectedBatchId(result.id);
+      chooseBatch(result.id);
+      onStarted?.(result.id);
     }catch(err){notify("error",err?.message || "Could not start production.");}
     finally{setBusy(false);}
   };
@@ -182,7 +193,7 @@ function ProductionPanel({ access, notify }) {
         numericValue:row.result_type==="number" ? Number(value) : null,
         textValue:row.result_type==="text" ? value : null,
         booleanValue:row.result_type==="boolean" ? value==="true" : null,
-        notes:"Employee portal QC",
+        notes:"Production Manager QC",
       });
       await loadBatch(batchData.batch.id);
       notify("success",`${row.label} saved.`);
@@ -223,14 +234,17 @@ function ProductionPanel({ access, notify }) {
       };
     }).filter((x)=>Number(x.quantity)>0);
 
-    if(!inputs.length || !outputs.length){ notify("error","Enter actual ingredient usage and at least one finished output."); return; }
+    if(!inputs.length || !outputs.length){
+      notify("error","Enter actual ingredient usage and at least one finished output.");
+      return;
+    }
 
     setBusy(true);
     try{
       await nfos.employeeCompleteBatch(
         batchData.batch.id,inputs,outputs,
         Number(yieldValue || batchData.batch.planned_quantity),
-        batchData.batch.planned_unit,true,"Completed from employee portal."
+        batchData.batch.planned_unit,true,"Completed by assigned Production Manager."
       );
       notify("success",`${batchData.batch.batch_code} completed.`);
       await load();
@@ -242,7 +256,7 @@ function ProductionPanel({ access, notify }) {
   const confirmCure=async()=>{
     setBusy(true);
     try{
-      await nfos.employeeConfirmSpunCure(batchData.batch.id,"Cure confirmed from employee portal.");
+      await nfos.employeeConfirmSpunCure(batchData.batch.id,"Cure confirmed by Production Manager.");
       await loadBatch(batchData.batch.id);
       notify("success","Spun cure confirmed.");
     }catch(err){notify("error",err?.message || "Could not confirm cure.");}
@@ -262,46 +276,100 @@ function ProductionPanel({ access, notify }) {
 
   const lotsFor=(itemId)=>(batchData?.available_lots || []).filter((l)=>l.item_id===itemId && Number(l.on_hand)>0);
 
-  return <>
-    <div className="nfos-card">
+  if(view==="assigned"){
+    return <div className="nfos-card">
       <div className="nfos-page-head" style={{marginBottom:12}}>
-        <div><h2>Assigned production</h2><p>When you are ready to begin, press Start production. Until you start it, the admin can still edit or delete the planned order.</p></div>
+        <div>
+          <h2>Assigned Tasks</h2>
+          <p>Only production assigned to you appears here. Start the order when you are ready to begin the actual batch.</p>
+        </div>
         <button className="nfos-btn secondary" disabled={busy} onClick={load}>Refresh</button>
       </div>
-      {!workspace.orders?.length ? <div className="nfos-empty">No open production orders are assigned to you.</div> :
-        <div className="nfos-table-wrap"><table className="nfos-table"><thead><tr><th>Order</th><th>Recipe</th><th>Plan</th><th>Due</th><th>Status</th><th></th></tr></thead>
-        <tbody>{workspace.orders.map((o)=><tr key={o.id}><td className="nfos-mono">{o.order_no}</td><td><strong>{o.recipe_name}</strong><div className="nfos-muted nfos-small">{o.flavor_name || ""}</div></td><td>{qty(o.planned_quantity)} {o.planned_unit} · {o.planned_texture}</td><td>{fmtDate(o.due_date)}</td><td><StatusPill value={o.status}/></td><td>{o.status === "planned" && !o.has_open_batch ? <button className="nfos-btn" disabled={busy} onClick={()=>startBatch(o)}>Start production</button> : <span className="nfos-pill ok nfos-started-label">Started</span>}</td></tr>)}</tbody>
+      {!workspace.orders?.length ? <div className="nfos-empty">No production is assigned to you right now.</div> :
+        <div className="nfos-table-wrap"><table className="nfos-table">
+          <thead><tr><th>Order</th><th>Recipe</th><th>Plan</th><th>Due</th><th>Status</th><th></th></tr></thead>
+          <tbody>{workspace.orders.map((o)=><tr key={o.id}>
+            <td className="nfos-mono">{o.order_no}</td>
+            <td><strong>{o.recipe_name}</strong><div className="nfos-muted nfos-small">{o.flavor_name || ""}</div></td>
+            <td>{qty(o.planned_quantity)} {o.planned_unit} · {o.planned_texture}</td>
+            <td>{fmtDate(o.due_date)}</td>
+            <td><StatusPill value={o.status}/></td>
+            <td>{o.status==="planned" && !o.has_open_batch
+              ? <button className="nfos-btn" disabled={busy} onClick={()=>startBatch(o)}>Start production</button>
+              : <span className="nfos-pill ok nfos-started-label">Started</span>}</td>
+          </tr>)}</tbody>
         </table></div>}
-    </div>
+    </div>;
+  }
 
-    <div className="nfos-card">
-      <h2>Production batches</h2>
-      <div className="nfos-field"><label>Open batch workspace</label>
-        <select value={selectedBatchId} onChange={(e)=>setSelectedBatchId(e.target.value)}>
-          <option value="">Choose batch…</option>
-          {(workspace.batches || []).map((b)=><option value={b.id} key={b.id}>{b.batch_code} — {b.recipe_name} — {b.status}</option>)}
-        </select>
+  const batchPicker=<div className="nfos-card">
+    <div className="nfos-page-head" style={{marginBottom:10}}>
+      <div>
+        <h2>{view==="sop" ? "Production SOP" : "Batch Work"}</h2>
+        <p>{view==="sop" ? "Reference the SOP for an assigned batch. Checkoffs are optional and do not block completion." : "Open an assigned batch and record the actual production work."}</p>
       </div>
+      <button className="nfos-btn secondary" disabled={busy} onClick={load}>Refresh</button>
     </div>
+    <div className="nfos-field">
+      <label>Assigned batch</label>
+      <select value={selectedBatchId} onChange={(e)=>chooseBatch(e.target.value)}>
+        <option value="">Choose batch…</option>
+        {(workspace.batches || []).map((b)=><option value={b.id} key={b.id}>{b.batch_code} — {b.recipe_name} — {b.status}</option>)}
+      </select>
+    </div>
+  </div>;
 
-    {batchData?.batch && <div className="nfos-card nfos-batch-workspace">
-      <div className="nfos-page-head"><div><h2>{batchData.batch.batch_code}</h2><p>{batchData.batch.recipe_name} · {batchData.batch.texture} · {batchData.batch.production_location_name}</p></div><StatusPill value={batchData.batch.status}/></div>
+  if(view==="sop"){
+    return <>
+      {batchPicker}
+      {batchData?.batch && <div className="nfos-card nfos-workbook-sheet">
+        <div className="nfos-workbook-titlebar">
+          <div>
+            <h3>PRODUCTION SOP</h3>
+            <p>{batchData.batch.batch_code} · {batchData.batch.recipe_name} · {batchData.batch.texture}</p>
+          </div>
+          <StatusPill value={batchData.batch.status}/>
+        </div>
+        <div className="nfos-note" style={{marginBottom:14}}>
+          SOP checkoffs are optional reference tracking. They do not prevent the batch from being completed.
+        </div>
+        <div className="nfos-sop-list">{(batchData.sop || []).map((s)=><div className="nfos-sop-row" key={s.recipe_step_id}>
+          <div className="nfos-sop-main">
+            <strong>{s.step_no}. {s.title}</strong>
+            <div className="nfos-muted nfos-small">{s.instructions}</div>
+            {s.critical_control && <span className="nfos-pill low">Critical control</span>}
+          </div>
+          <div>{s.requires_confirmation
+            ? <label className="nfos-check"><input type="checkbox" checked={Boolean(s.completed_at)} disabled={busy || batchData.batch.status==="completed"} onChange={(e)=>toggleStep(s,e.target.checked)}/> Optional checkoff</label>
+            : <span className="nfos-muted">Reference</span>}</div>
+        </div>)}</div>
+      </div>}
+    </>;
+  }
 
-      <h3>SOP</h3>
-      <div className="nfos-sop-list">{(batchData.sop || []).map((s)=><div className="nfos-sop-row" key={s.recipe_step_id}>
-        <div className="nfos-sop-main"><strong>{s.step_no}. {s.title}</strong><div className="nfos-muted nfos-small">{s.instructions}</div>{s.critical_control && <span className="nfos-pill low">Critical control</span>}</div>
-        <div>{s.requires_confirmation ? <label className="nfos-check"><input type="checkbox" checked={Boolean(s.completed_at)} disabled={busy || batchData.batch.status==="completed"} onChange={(e)=>toggleStep(s,e.target.checked)}/> {s.completed_at ? "Complete" : "Confirm"}</label> : <span className="nfos-muted">Instruction</span>}</div>
-      </div>)}</div>
+  return <>
+    {batchPicker}
+    {batchData?.batch && <div className="nfos-card nfos-workbook-sheet nfos-batch-workspace">
+      <div className="nfos-workbook-titlebar">
+        <div>
+          <h3>BATCH WORK</h3>
+          <p>{batchData.batch.batch_code} · {batchData.batch.recipe_name} · {batchData.batch.texture} · {batchData.batch.production_location_name}</p>
+        </div>
+        <StatusPill value={batchData.batch.status}/>
+      </div>
 
-      <h3 style={{marginTop:22}}>Quality control</h3>
-      <div className="nfos-table-wrap"><table className="nfos-table"><thead><tr><th>Check</th><th>Result</th><th>Status</th><th></th></tr></thead><tbody>{(batchData.qc || []).map((q)=><tr key={q.check_key}>
-        <td><strong>{q.label}</strong><div className="nfos-muted nfos-small">{q.unit || ""}</div></td>
-        <td>{q.result_type==="number" ? <input type="number" step="any" value={qcDraft[q.check_key] ?? ""} onChange={(e)=>setQcDraft({...qcDraft,[q.check_key]:e.target.value})}/> :
-          q.result_type==="boolean" ? <select value={qcDraft[q.check_key] ?? ""} onChange={(e)=>setQcDraft({...qcDraft,[q.check_key]:e.target.value})}><option value="">Choose…</option><option value="true">Pass / Yes</option><option value="false">Fail / No</option></select> :
-          <input value={qcDraft[q.check_key] ?? ""} onChange={(e)=>setQcDraft({...qcDraft,[q.check_key]:e.target.value})}/>}</td>
-        <td><StatusPill value={q.status}/></td>
-        <td>{batchData.batch.status!=="completed" && <button className="nfos-btn ghost" onClick={()=>saveQc(q)}>Save</button>}</td>
-      </tr>)}</tbody></table></div>
+      <h3 style={{marginTop:18}}>Quality control</h3>
+      <div className="nfos-table-wrap"><table className="nfos-table nfos-workbook-table">
+        <thead><tr><th>Check</th><th>Result</th><th>Status</th><th></th></tr></thead>
+        <tbody>{(batchData.qc || []).map((q)=><tr key={q.check_key}>
+          <td><strong>{q.label}</strong><div className="nfos-muted nfos-small">{q.unit || ""}</div></td>
+          <td>{q.result_type==="number" ? <input type="number" step="any" value={qcDraft[q.check_key] ?? ""} onChange={(e)=>setQcDraft({...qcDraft,[q.check_key]:e.target.value})}/> :
+            q.result_type==="boolean" ? <select value={qcDraft[q.check_key] ?? ""} onChange={(e)=>setQcDraft({...qcDraft,[q.check_key]:e.target.value})}><option value="">Choose…</option><option value="true">Pass / Yes</option><option value="false">Fail / No</option></select> :
+            <input value={qcDraft[q.check_key] ?? ""} onChange={(e)=>setQcDraft({...qcDraft,[q.check_key]:e.target.value})}/>}</td>
+          <td><StatusPill value={q.status}/></td>
+          <td>{batchData.batch.status!=="completed" && <button className="nfos-btn ghost" onClick={()=>saveQc(q)}>Save</button>}</td>
+        </tr>)}</tbody>
+      </table></div>
 
       {batchData.batch.texture==="spun" && batchData.batch.status!=="completed" && <div className="nfos-spun-card">
         <h3>Spun seed</h3>
@@ -315,23 +383,41 @@ function ProductionPanel({ access, notify }) {
       </div>}
 
       {batchData.batch.status!=="completed" && <>
-        <h3 style={{marginTop:22}}>Actual ingredient usage</h3>
-        <div className="nfos-table-wrap"><table className="nfos-table"><thead><tr><th>Ingredient</th><th>Actual quantity</th><th>Unit</th><th>Lot</th></tr></thead><tbody>{(batchData.recipe_inputs || []).map((row)=>{
-          const d=inputDraft[row.recipe_input_id] || {};
-          return <tr key={row.recipe_input_id}><td><strong>{row.name}</strong><div className="nfos-muted nfos-small">{row.is_base ? "Base honey" : row.calculation_method==="percent_of_base_weight" ? `${row.rate_percent}% of base` : row.calculation_method}</div></td><td><input type="number" step="any" min="0" value={d.quantity ?? ""} onChange={(e)=>setInputDraft({...inputDraft,[row.recipe_input_id]:{...d,quantity:e.target.value}})}/></td><td>{row.stocking_unit}</td><td>{row.track_lots ? <select value={d.lotId || ""} onChange={(e)=>setInputDraft({...inputDraft,[row.recipe_input_id]:{...d,lotId:e.target.value}})}><option value="">Choose lot…</option>{lotsFor(row.item_id).map((l)=><option key={l.lot_id} value={l.lot_id}>{l.lot_code} · {qty(l.on_hand)} {l.stocking_unit}</option>)}</select> : "Not lot tracked"}</td></tr>;
-        })}</tbody></table></div>
+        <h3 style={{marginTop:22}}>Ingredient Usage</h3>
+        <div className="nfos-table-wrap"><table className="nfos-table nfos-workbook-table">
+          <thead><tr><th>Ingredient</th><th>Actual Quantity</th><th>Unit</th><th>Ingredient Lot</th></tr></thead>
+          <tbody>{(batchData.recipe_inputs || []).map((row)=>{
+            const d=inputDraft[row.recipe_input_id] || {};
+            return <tr key={row.recipe_input_id}>
+              <td><strong>{row.name}</strong><div className="nfos-muted nfos-small">{row.is_base ? "Base honey" : row.calculation_method==="percent_of_base_weight" ? `${row.rate_percent}% of base` : row.calculation_method}</div></td>
+              <td><input type="number" step="any" min="0" value={d.quantity ?? ""} onChange={(e)=>setInputDraft({...inputDraft,[row.recipe_input_id]:{...d,quantity:e.target.value}})}/></td>
+              <td>{row.stocking_unit}</td>
+              <td>{row.track_lots ? <select value={d.lotId || ""} onChange={(e)=>setInputDraft({...inputDraft,[row.recipe_input_id]:{...d,lotId:e.target.value}})}><option value="">Choose lot…</option>{lotsFor(row.item_id).map((l)=><option key={l.lot_id} value={l.lot_id}>{l.lot_code} · {qty(l.on_hand)} {l.stocking_unit}</option>)}</select> : "Not lot tracked"}</td>
+            </tr>;
+          })}</tbody>
+        </table></div>
 
-        <h3 style={{marginTop:22}}>Finished output</h3>
-        <div className="nfos-table-wrap"><table className="nfos-table"><thead><tr><th>SKU</th><th>Quantity made</th><th>Finished lot</th></tr></thead><tbody>{(batchData.eligible_outputs || []).map((row)=>{
-          const d=outputDraft[row.item_id] || {};
-          return <tr key={row.item_id}><td><strong>{row.name}</strong><div className="nfos-muted nfos-small">{row.sku}</div></td><td><input type="number" step="any" min="0" value={d.quantity ?? ""} onChange={(e)=>setOutputDraft({...outputDraft,[row.item_id]:{...d,quantity:e.target.value}})}/></td><td><input value={d.lotCode || ""} onChange={(e)=>setOutputDraft({...outputDraft,[row.item_id]:{...d,lotCode:e.target.value}})}/></td></tr>;
-        })}</tbody></table></div>
+        <h3 style={{marginTop:22}}>Packaging / Finished Output</h3>
+        <div className="nfos-table-wrap"><table className="nfos-table nfos-workbook-table">
+          <thead><tr><th>Finished SKU</th><th>Quantity Produced</th><th>Finished Lot</th></tr></thead>
+          <tbody>{(batchData.eligible_outputs || []).map((row)=>{
+            const d=outputDraft[row.item_id] || {};
+            return <tr key={row.item_id}>
+              <td><strong>{row.name}</strong><div className="nfos-muted nfos-small">{row.sku}</div></td>
+              <td><input type="number" step="any" min="0" value={d.quantity ?? ""} onChange={(e)=>setOutputDraft({...outputDraft,[row.item_id]:{...d,quantity:e.target.value}})}/></td>
+              <td><input value={d.lotCode || ""} onChange={(e)=>setOutputDraft({...outputDraft,[row.item_id]:{...d,lotCode:e.target.value}})}/></td>
+            </tr>;
+          })}</tbody>
+        </table></div>
+
         <div className="nfos-form" style={{marginTop:14}}>
           <div className="nfos-field"><label>Actual bulk yield</label><input type="number" step="any" min="0" value={yieldValue} onChange={(e)=>setYieldValue(e.target.value)}/></div>
           <div className="nfos-field"><label>Unit</label><input disabled value={batchData.batch.planned_unit || ""}/></div>
-          <div className="nfos-field full"><button className="nfos-btn" disabled={busy} onClick={completeBatch}>Complete batch</button></div>
+          <div className="nfos-field full"><button className="nfos-btn nfos-workbook-primary-action" disabled={busy} onClick={completeBatch}>Complete batch + update inventory</button></div>
         </div>
       </>}
+
+      {batchData.batch.status==="completed" && <div className="nfos-success" style={{marginTop:16}}>This batch is complete and its inventory transactions have been posted.</div>}
 
       {batchData.batch.status==="completed" && batchData.batch.texture==="spun" && !batchData.batch.spun_cure_confirmed_at && batchData.batch.release_not_before && new Date() >= new Date(batchData.batch.release_not_before) &&
         <button className="nfos-btn" onClick={confirmCure}>Confirm completed 14-day cure</button>}
@@ -342,7 +428,7 @@ function ProductionPanel({ access, notify }) {
   </>;
 }
 
-function InventoryPanel({ notify }) {
+function InventoryPanel({ notify, receiveOnly = false }) {
   const [data,setData]=useState({inventory:[],locations:[],lots:[],suppliers:[]});
   const [mode,setMode]=useState("receive");
   const [busy,setBusy]=useState(false);
@@ -396,10 +482,10 @@ function InventoryPanel({ notify }) {
   };
 
   return <div className="nfos-card">
-    <div className="nfos-page-head"><div><h2>Inventory operations</h2><p>Receive, count-adjust, or transfer NFOS inventory.</p></div><button className="nfos-btn secondary" onClick={load} disabled={busy}>Refresh</button></div>
-    <div className="nfos-inline-actions" style={{marginBottom:16}}>
+    <div className="nfos-page-head"><div><h2>{receiveOnly ? "Receiving" : "Inventory operations"}</h2><p>{receiveOnly ? "Receive honey, ingredients, packaging, and other tracked inventory needed for production." : "Receive, count-adjust, or transfer NFOS inventory."}</p></div><button className="nfos-btn secondary" onClick={load} disabled={busy}>Refresh</button></div>
+    {!receiveOnly && {!receiveOnly && <div className="nfos-inline-actions" style={{marginBottom:16}}>
       {["receive","adjust","transfer"].map((m)=><button key={m} className={`nfos-btn ${mode===m ? "" : "secondary"}`} onClick={()=>setMode(m)}>{m[0].toUpperCase()+m.slice(1)}</button>)}
-    </div>
+    </div>}}
     <form className="nfos-form" onSubmit={submit}>
       <div className="nfos-field full"><label>Item</label><select required value={form.itemId} onChange={(e)=>setForm({...form,itemId:e.target.value,lotId:""})}><option value="">Choose item…</option>{(data.inventory || []).map((x)=><option key={x.item_id} value={x.item_id}>{x.sku} — {x.name} — {qty(x.planning_on_hand)} {x.stocking_unit}</option>)}</select></div>
       <div className="nfos-field"><label>Quantity</label><input required type="number" step="any" min="0.0001" value={form.quantity} onChange={(e)=>setForm({...form,quantity:e.target.value})}/></div>
@@ -427,7 +513,7 @@ function InventoryPanel({ notify }) {
       </>}
 
       <div className="nfos-field full"><label>Notes</label><textarea value={form.notes} onChange={(e)=>setForm({...form,notes:e.target.value})}/></div>
-      <div className="nfos-field full"><button className="nfos-btn" disabled={busy}>Save {mode}</button></div>
+      <div className="nfos-field full"><button className="nfos-btn" disabled={busy}>{receiveOnly ? "Receive inventory" : `Save ${mode}`}</button></div>
     </form>
   </div>;
 }
@@ -656,11 +742,25 @@ function AccessPanel({ access, firstSetup = false }) {
 export default function NfosEmployeePortal({ session, access, onSignOut, forcePasswordSetup = false }) {
   useNfosResponsiveTables();
   const permissions=useMemo(()=>new Set(access?.permissions || []),[access]);
+  const memberRoles=useMemo(()=>Array.isArray(access?.roles) && access.roles.length ? access.roles : [access?.role].filter(Boolean),[access]);
+  const productionManagerFocused=memberRoles.includes("production_operator")
+    && !memberRoles.includes("owner")
+    && !memberRoles.includes("operations_manager");
   const marketFocused=permissions.has("market.order.log")
     && !permissions.has("team.assign")
-    && !permissions.has("market.manage");
+    && !permissions.has("market.manage")
+    && !productionManagerFocused;
 
   const tabs=useMemo(()=>{
+    if(productionManagerFocused){
+      return [
+        ["receiving","Receiving"],
+        ["assigned_tasks","Assigned Tasks"],
+        ["batch_work","Batch Work"],
+        ["production_sop","Production SOP"],
+        ["access","Access"],
+      ];
+    }
     let rows=[["work","My Work"],["notifications","Notifications"],["suggestions","Suggest Edits"]];
     if(permissions.has("production.execute")) rows.push(["production","Production"]);
     if(permissions.has("inventory.manage")) rows.push(["inventory","Inventory"]);
@@ -682,9 +782,10 @@ export default function NfosEmployeePortal({ session, access, onSignOut, forcePa
 
     rows.push(["access","Access"]);
     return rows;
-  },[permissions,marketFocused]);
+  },[permissions,marketFocused,productionManagerFocused]);
 
-  const [tab,setTab]=useState(forcePasswordSetup ? "access" : marketFocused ? "market_orders" : "work");
+  const [tab,setTab]=useState(forcePasswordSetup ? "access" : productionManagerFocused ? "assigned_tasks" : marketFocused ? "market_orders" : "work");
+  const [productionManagerBatchId,setProductionManagerBatchId]=useState("");
   const [work,setWork]=useState([]);
   const [busy,setBusy]=useState(true);
   const [error,setError]=useState("");
@@ -729,9 +830,33 @@ export default function NfosEmployeePortal({ session, access, onSignOut, forcePa
         <nav className="nfos-nav">{tabs.map(([key,label])=><button key={key} className={tab===key ? "active" : ""} onClick={()=>setTab(key)}>{label}{key==="work" && work.length ? ` (${work.length})` : ""}</button>)}</nav>
       </aside>
       <main className="nfos-main">
-        <div className="nfos-page-head"><div><h1>{tabs.find((x)=>x[0]===tab)?.[1] || "My Work"}</h1><p>Hi, {access?.display_name || "Team Member"} · {roleLabels(access?.roles, access?.role)}</p></div></div>
+        <div className="nfos-page-head"><div><h1>{productionManagerFocused && tab!=="access" ? `Daily Work · ${tabs.find((x)=>x[0]===tab)?.[1] || "Assigned Tasks"}` : tabs.find((x)=>x[0]===tab)?.[1] || "My Work"}</h1><p>Hi, {access?.display_name || "Team Member"} · {roleLabels(access?.roles, access?.role)}</p></div></div>
         {error&&<div className="nfos-error">{error}</div>}
         {message&&<div className="nfos-success">{message}</div>}
+
+        {tab==="receiving" && productionManagerFocused && <InventoryPanel notify={notify} receiveOnly/>}
+        {tab==="assigned_tasks" && productionManagerFocused && <ProductionPanel
+          access={access}
+          notify={notify}
+          view="assigned"
+          initialBatchId={productionManagerBatchId}
+          onBatchSelected={setProductionManagerBatchId}
+          onStarted={(batchId)=>{setProductionManagerBatchId(batchId);setTab("batch_work");}}
+        />}
+        {tab==="batch_work" && productionManagerFocused && <ProductionPanel
+          access={access}
+          notify={notify}
+          view="batch"
+          initialBatchId={productionManagerBatchId}
+          onBatchSelected={setProductionManagerBatchId}
+        />}
+        {tab==="production_sop" && productionManagerFocused && <ProductionPanel
+          access={access}
+          notify={notify}
+          view="sop"
+          initialBatchId={productionManagerBatchId}
+          onBatchSelected={setProductionManagerBatchId}
+        />}
 
         {tab==="work" && <>
           <div className="nfos-grid four" style={{marginBottom:16}}>
@@ -758,4 +883,3 @@ export default function NfosEmployeePortal({ session, access, onSignOut, forcePa
     </div>
   </div>;
 }
-

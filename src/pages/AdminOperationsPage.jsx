@@ -21,14 +21,14 @@ import "../styles/nfos.css";
 
 const NAV_GROUPS = [
   {
-    label: "START",
+    label: "Start",
     tabs: [
       ["dashboard", "Dashboard", "view"],
       ["overview", "Today", "view"],
     ],
   },
   {
-    label: "DAILY WORK",
+    label: "Daily Work",
     tabs: [
       ["receive", "Receiving", "edit"],
       ["production", "Production", "edit"],
@@ -37,7 +37,7 @@ const NAV_GROUPS = [
     ],
   },
   {
-    label: "INVENTORY & PURCHASING",
+    label: "Inventory & Purchasing",
     tabs: [
       ["inventory", "Inventory", "view"],
       ["purchasing", "Purchasing", "edit"],
@@ -46,7 +46,7 @@ const NAV_GROUPS = [
     ],
   },
   {
-    label: "PRODUCTS & RECIPES",
+    label: "Products & Recipes",
     tabs: [
       ["products", "Products / Flavors", "edit"],
       ["recipes", "Recipes", "edit"],
@@ -55,7 +55,7 @@ const NAV_GROUPS = [
     ],
   },
   {
-    label: "REPORTING",
+    label: "Reporting",
     tabs: [
       ["traceability", "Traceability", "view"],
       ["reports", "Reports", "view"],
@@ -63,7 +63,7 @@ const NAV_GROUPS = [
     ],
   },
   {
-    label: "MANAGEMENT",
+    label: "Management",
     tabs: [
       ["calendar", "Calendar", "view"],
       ["team", "Team", "edit"],
@@ -577,7 +577,9 @@ export default function AdminOperationsPage() {
   useNfosResponsiveTables();
   const [authState,setAuthState]=useState("loading"); const [session,setSession]=useState(null);
   const [employeeAccess,setEmployeeAccess]=useState(null);
-  const [tab,setTab]=useState("dashboard"); const [busy,setBusy]=useState(false); const [error,setError]=useState("");
+  const [tab,setTab]=useState("dashboard");
+  const [expandedNavGroup,setExpandedNavGroup]=useState("Start");
+  const [busy,setBusy]=useState(false); const [error,setError]=useState("");
   const [inventory,setInventory]=useState([]),[lowStock,setLowStock]=useState([]),[items,setItems]=useState([]),[locations,setLocations]=useState([]),[suppliers,setSuppliers]=useState([]),[lots,setLots]=useState([]),[transactions,setTransactions]=useState([]);
   const [barcodeInitial,setBarcodeInitial]=useState(null);
   const [traceabilityInitialBatchId,setTraceabilityInitialBatchId]=useState("");
@@ -587,6 +589,10 @@ export default function AdminOperationsPage() {
 
   useEffect(()=>{let alive=true;(async()=>{try{const s=await nfos.getSession();if(!alive)return;if(!s){setAuthState("signed_out");return;}const admin=await nfos.isAdmin();if(!alive)return;setSession(s);if(admin){setEmployeeAccess(null);setAuthState("ready");return;}try{const access=await nfos.getEmployeeAccess();if(!alive)return;if(access?.permissions?.includes("ops.view")){setEmployeeAccess(access);setAuthState("employee");return;}}catch{}setAuthState("signed_out");}catch{if(alive)setAuthState("signed_out");}})();return()=>{alive=false};},[]);
   useEffect(()=>{if(authState==="ready") refresh();},[authState,refresh]);
+  useEffect(()=>{
+    const owner=NAV_GROUPS.find((group)=>group.tabs.some(([key])=>key===tab));
+    if(owner) setExpandedNavGroup(owner.label);
+  },[tab]);
 
   const chooseBarcode=(row)=>{setBarcodeInitial(row);setTab("barcodes");};
   const handleScannedEntity=(found)=>{if(found?.entity_type==="batch"){setTraceabilityInitialBatchId(found.entity_id);setTab("traceability");}};
@@ -638,18 +644,38 @@ export default function AdminOperationsPage() {
   return <div className="nfos-shell"><header className="nfos-topbar"><div className="nfos-topbar-inner"><div className="nfos-brand"><div className="nfos-mark">NF</div><div><div className="nfos-brand-title">NECTARFUSIONS OPERATIONS</div><div className="nfos-brand-sub">NFOS • Inventory + Production</div></div></div><div className="nfos-inline-actions top-actions"><span className="nfos-muted nfos-small">{session?.user?.email}</span><a className="nfos-btn ghost" href="/">Website</a><button className="nfos-btn ghost" onClick={logout}>Sign out</button></div></div></header>
     <div className="nfos-layout"><aside className="nfos-side">
       <label className="nfos-mobile-nav"><span>Section</span><select aria-label="NFOS section" value={tab} onChange={(e)=>setTab(e.target.value)}>{NAV_GROUPS.map((group)=><optgroup key={group.label} label={group.label}>{group.tabs.map(([key,label])=><option key={key} value={key}>{label}</option>)}</optgroup>)}</select></label>
-      <nav className="nfos-nav" aria-label="NFOS sections">
-        {NAV_GROUPS.map((group)=><div className="nfos-nav-group" key={group.label}>
-          <div className="nfos-nav-group-label">{group.label}</div>
-          <div className="nfos-nav-group-tabs">
+      <nav className="nfos-nav nfos-nav-accordion" aria-label="NFOS sections">
+        <div className="nfos-nav-main-row">
+          {NAV_GROUPS.map((group)=>{
+            const open=expandedNavGroup===group.label;
+            const containsCurrent=group.tabs.some(([key])=>key===tab);
+            return <button
+              type="button"
+              key={group.label}
+              className={`nfos-nav-main-button ${open?"active":""} ${containsCurrent?"contains-current":""}`}
+              aria-expanded={open}
+              onClick={()=>{
+                setExpandedNavGroup(group.label);
+                if(!containsCurrent) setTab(group.tabs[0][0]);
+              }}
+            >
+              <span>{group.label}</span>
+              <span className="nfos-nav-main-caret" aria-hidden="true">{open?"⌃":"⌄"}</span>
+            </button>;
+          })}
+        </div>
+
+        {NAV_GROUPS.map((group)=>expandedNavGroup===group.label ? (
+          <div className="nfos-nav-sub-row" key={`${group.label}-options`}>
             {group.tabs.map(([key,label,mode])=><button
+              type="button"
               key={key}
-              className={tab===key?"active":""}
+              className={`nfos-nav-sub-button ${tab===key?"active":""}`}
               onClick={()=>setTab(key)}
               title={`${mode==="view"?"View / system-generated":"Action / editable"} · ${label}`}
             ><NfosNavIcon mode={mode}/><span>{label}</span></button>)}
           </div>
-        </div>)}
+        ) : null)}
       </nav>
       <div className="nfos-nav-legend" aria-label="Navigation icon key">
         <span><NfosNavIcon mode="view"/> View / system-generated</span>

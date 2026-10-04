@@ -3248,3 +3248,702 @@
   }
 }
 /* END NFOS MARKET SCAN-FIRST */
+
+/* NFOS Excel-style batch workspace */
+.nfos-workbook-sheet {
+  background: #fff;
+  border: 1px solid #cdbfae;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(68, 52, 37, 0.06);
+  overflow: hidden;
+  margin-bottom: 18px;
+}
+
+.nfos-workbook-titlebar {
+  background: #6b4423;
+  color: #fff;
+  min-height: 56px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.nfos-workbook-titlebar h2,
+.nfos-workbook-titlebar h3 {
+  color: #fff;
+  margin: 0;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  font-weight: 800;
+}
+
+.nfos-workbook-titlebar p {
+  color: #ead9b0;
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.nfos-workbook-titlebar .nfos-pill {
+  border-color: rgba(255,255,255,.25);
+}
+
+.nfos-workbook-legend {
+  background: #fbf8f1;
+  color: #6b4423;
+  padding: 8px 14px;
+  border-bottom: 1px solid #ded2c2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 11px;
+}
+
+.nfos-workbook-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nfos-workbook-legend i {
+  width: 13px;
+  height: 13px;
+  border: 1px solid #c6baa9;
+  display: inline-block;
+}
+
+.nfos-workbook-legend i.is-input { background: #fff; }
+.nfos-workbook-legend i.is-auto { background: #f5f0e6; }
+.nfos-workbook-legend i.is-set { background: #ead9b0; }
+
+.nfos-workbook-scroll {
+  overflow-x: auto;
+  width: 100%;
+  overscroll-behavior-inline: contain;
+}
+
+.nfos-workbook-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 1500px;
+  width: 100%;
+  table-layout: fixed;
+  font-size: 12px;
+}
+
+.nfos-workbook-table th {
+  background: #6b4423;
+  color: #fff;
+  border-right: 1px solid #8b6848;
+  border-bottom: 1px solid #8b6848;
+  padding: 9px 8px;
+  text-align: center;
+  vertical-align: middle;
+  font-size: 11px;
+  line-height: 1.2;
+  font-weight: 800;
+  white-space: normal;
+}
+
+.nfos-workbook-table th:last-child { border-right: 0; }
+
+.nfos-workbook-table td {
+  background: #fff;
+  color: #222;
+  border-right: 1px solid #d7cbbb;
+  border-bottom: 1px solid #d7cbbb;
+  min-height: 42px;
+  padding: 6px 7px;
+  text-align: center;
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+}
+
+.nfos-workbook-table tr:last-child td { border-bottom: 0; }
+.nfos-workbook-table td:last-child { border-right: 0; }
+.nfos-workbook-table td.is-auto { background: #f5f0e6; color: #444; }
+.nfos-workbook-table td.is-set { background: #ead9b0; }
+.nfos-workbook-table td.is-input { background: #fff; }
+
+.nfos-workbook-table td small {
+  display: block;
+  margin-top: 3px;
+  color: #776a5d;
+  font-size: 9px;
+  line-height: 1.15;
+}
+
+.nfos-workbook-input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #222;
+  padding: 6px 7px;
+  border-radius: 4px;
+  font: inherit;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+select.nfos-workbook-input { cursor: pointer; }
+
+.nfos-workbook-input:focus {
+  outline: 2px solid #d9a441;
+  outline-offset: 0;
+  border-color: #d9a441;
+  background: #fffdf8;
+}
+
+.nfos-workbook-notes {
+  min-height: 56px;
+  resize: vertical;
+  text-align: left;
+}
+
+.nfos-production-entry-table { min-width: 1720px; }
+.nfos-production-entry-table th:nth-child(1) { width: 105px; }
+.nfos-production-entry-table th:nth-child(2) { width: 118px; }
+.nfos-production-entry-table th:nth-child(3) { width: 155px; }
+.nfos-production-entry-table th:nth-child(4),
+.nfos-production-entry-table th:nth-child(5),
+.nfos-production-entry-table th:nth-child(6),
+.nfos-production-entry-table th:nth-child(8),
+.nfos-production-entry-table th:nth-child(9),
+.nfos-production-entry-table th:nth-child(10) { width: 118px; }
+.nfos-production-entry-table th:nth-child(7) { width: 185px; }
+.nfos-production-entry-table th:nth-child(11) { width: 125px; }
+.nfos-production-entry-table th:nth-child(12) { width: 110px; }
+.nfos-production-entry-table th:nth-child(13) { width: 170px; }
+.nfos-production-entry-table th:nth-child(14) { width: 240px; }
+
+.nfos-ingredient-usage-table,
+.nfos-packaging-usage-table { min-width: 1860px; }
+.nfos-qc-workbook-table { min-width: 1550px; }
+
+.nfos-workbook-tools {
+  background: #fbf8f1;
+  border-top: 1px solid #ded2c2;
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 12px;
+}
+
+.nfos-workbook-quick-lot {
+  margin: 0;
+  border-radius: 0;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.nfos-workbook-form-grid,
+.nfos-workbook-completion-form {
+  padding: 16px;
+}
+
+.nfos-workbook-actions {
+  padding: 0 16px 16px;
+}
+
+.nfos-workbook-supplement {
+  border-top: 1px solid #ded2c2;
+  padding: 14px 16px 16px;
+  background: #fbf8f1;
+}
+
+.nfos-workbook-supplement > strong {
+  display: block;
+  color: #6b4423;
+  margin-bottom: 10px;
+}
+
+.nfos-workbook-control-card {
+  border-color: #d9cdbd;
+}
+
+.nfos-workbook-footnote {
+  padding: 10px 14px;
+  background: #fbf8f1;
+  border-top: 1px solid #ded2c2;
+  color: #66594d;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+@media (max-width: 760px) {
+  .nfos-workbook-titlebar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .nfos-workbook-tools {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .nfos-workbook-table {
+    font-size: 11px;
+  }
+}
+
+/* NFOS workbook-first production operations */
+.nfos-production-operations-workbook .nfos-workbook-titlebar,
+.nfos-plan-workbook .nfos-workbook-titlebar,
+.nfos-start-workbook .nfos-workbook-titlebar,
+.nfos-batches-workbook .nfos-workbook-titlebar,
+.nfos-empty-production-preview .nfos-workbook-titlebar {
+  min-height: 48px;
+}
+
+.nfos-queue-workbook-table { min-width: 1180px; }
+.nfos-plan-entry-table { min-width: 1320px; }
+.nfos-start-entry-table { min-width: 980px; }
+.nfos-batches-workbook-table { min-width: 1120px; }
+
+.nfos-plan-entry-table th:nth-child(1) { width: 300px; }
+.nfos-plan-entry-table th:nth-child(2) { width: 160px; }
+.nfos-plan-entry-table th:nth-child(3) { width: 90px; }
+.nfos-plan-entry-table th:nth-child(4) { width: 130px; }
+.nfos-plan-entry-table th:nth-child(5) { width: 150px; }
+.nfos-plan-entry-table th:nth-child(6) { width: 120px; }
+.nfos-plan-entry-table th:nth-child(7) { width: 260px; }
+.nfos-plan-entry-table th:nth-child(8) { width: 190px; }
+
+.nfos-start-entry-table th:nth-child(1) { width: 420px; }
+.nfos-start-entry-table th:nth-child(2) { width: 260px; }
+.nfos-start-entry-table th:nth-child(3) { width: 170px; }
+.nfos-start-entry-table th:nth-child(4) { width: 200px; }
+
+.nfos-workbook-subsection {
+  border-top: 1px solid #ded2c2;
+  background: #fbf8f1;
+}
+
+.nfos-workbook-subhead {
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #6b4423;
+  font-size: 11px;
+}
+
+.nfos-workbook-subhead strong {
+  letter-spacing: .04em;
+}
+
+.nfos-workbook-subhead span {
+  color: #776a5d;
+}
+
+.nfos-jar-plan-table {
+  min-width: 720px;
+  width: max-content;
+}
+
+.nfos-jar-plan-table th,
+.nfos-jar-plan-table td {
+  width: 180px;
+}
+
+.nfos-jar-plan-table th small {
+  display: block;
+  color: #ead9b0;
+  margin-top: 3px;
+  font-size: 9px;
+}
+
+.nfos-workbook-cell-actions {
+  justify-content: center;
+  flex-wrap: nowrap;
+}
+
+.nfos-workbook-primary-action {
+  width: 100%;
+  min-height: 36px;
+}
+
+.nfos-workbook-empty-row {
+  text-align: left !important;
+  padding: 18px !important;
+  color: #74695f !important;
+}
+
+.nfos-batches-workbook-table tr.is-selected-workbook-row td {
+  box-shadow: inset 0 2px 0 #d9a441, inset 0 -2px 0 #d9a441;
+}
+
+.nfos-batches-workbook-table tr.is-selected-workbook-row td:first-child {
+  box-shadow: inset 2px 0 0 #d9a441, inset 0 2px 0 #d9a441, inset 0 -2px 0 #d9a441;
+}
+
+.nfos-batches-workbook-table tr.is-selected-workbook-row td:last-child {
+  box-shadow: inset -2px 0 0 #d9a441, inset 0 2px 0 #d9a441, inset 0 -2px 0 #d9a441;
+}
+
+.nfos-production-preview-table td {
+  height: 56px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .03em;
+  color: #9a8d80;
+}
+
+.nfos-production-preview-table td.is-input {
+  background: #fff;
+  color: #b7aa9d;
+}
+
+@media (max-width: 760px) {
+  .nfos-workbook-subhead {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+
+/* NFOS optional standalone Production SOP tab */
+.nfos-production-sop-tab .nfos-workbook-titlebar {
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.nfos-production-sop-tab .nfos-workbook-tools {
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.nfos-production-sop-list {
+  padding: 14px;
+}
+
+@media (max-width: 760px) {
+  .nfos-production-sop-tab .nfos-workbook-titlebar,
+  .nfos-production-sop-tab .nfos-workbook-tools {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+/* NFOS workbook NectarFusions brand palette */
+:root {
+  --nfos-brand-blue: #4FA5E4;
+  --nfos-brand-blue-deep: #2F7FB8;
+  --nfos-brand-blue-pale: #EAF5FC;
+  --nfos-brand-yellow: #F2CA4C;
+  --nfos-brand-yellow-pale: #FFF4C7;
+  --nfos-brand-orange: #E8713B;
+  --nfos-brand-red: #E85038;
+  --nfos-brand-ink: #17232C;
+  --nfos-brand-border: #C9DBE7;
+}
+
+/* Workbook containers */
+.nfos-workbook-sheet {
+  border-color: var(--nfos-brand-border) !important;
+  box-shadow: 0 2px 12px rgba(34, 82, 115, 0.08) !important;
+}
+
+/* Main section headers */
+.nfos-workbook-titlebar,
+.nfos-workbook-table th {
+  background: var(--nfos-brand-blue-deep) !important;
+  color: #FFFFFF !important;
+}
+
+.nfos-workbook-titlebar h2,
+.nfos-workbook-titlebar h3,
+.nfos-workbook-table th {
+  color: #FFFFFF !important;
+}
+
+.nfos-workbook-titlebar p {
+  color: #EAF5FC !important;
+}
+
+.nfos-workbook-titlebar .nfos-pill {
+  color: #FFFFFF !important;
+  background: rgba(255, 255, 255, 0.13) !important;
+  border-color: rgba(255, 255, 255, 0.28) !important;
+}
+
+.nfos-workbook-table th {
+  border-right-color: #276D9E !important;
+  border-bottom-color: #276D9E !important;
+}
+
+.nfos-jar-plan-table th small {
+  color: #DCEFFA !important;
+}
+
+/* Workbook body colors */
+.nfos-workbook-table td {
+  border-right-color: #D5E2EA !important;
+  border-bottom-color: #D5E2EA !important;
+  color: var(--nfos-brand-ink) !important;
+}
+
+.nfos-workbook-table td.is-input {
+  background: #FFFFFF !important;
+}
+
+.nfos-workbook-table td.is-auto {
+  background: var(--nfos-brand-blue-pale) !important;
+  color: #29485D !important;
+}
+
+.nfos-workbook-table td.is-set {
+  background: var(--nfos-brand-yellow-pale) !important;
+  color: #493D13 !important;
+}
+
+/* Legend + supporting bands */
+.nfos-workbook-legend,
+.nfos-workbook-tools,
+.nfos-workbook-supplement,
+.nfos-workbook-footnote,
+.nfos-workbook-subsection {
+  background: #F7FBFE !important;
+  border-color: #D7E5EE !important;
+}
+
+.nfos-workbook-legend,
+.nfos-workbook-subhead,
+.nfos-workbook-supplement > strong {
+  color: #2B668F !important;
+}
+
+.nfos-workbook-subhead span,
+.nfos-workbook-footnote,
+.nfos-workbook-table td small {
+  color: #617786 !important;
+}
+
+.nfos-workbook-legend i {
+  border-color: #AFC7D7 !important;
+}
+
+.nfos-workbook-legend i.is-input {
+  background: #FFFFFF !important;
+}
+
+.nfos-workbook-legend i.is-auto {
+  background: var(--nfos-brand-blue-pale) !important;
+}
+
+.nfos-workbook-legend i.is-set {
+  background: var(--nfos-brand-yellow-pale) !important;
+}
+
+/* Inputs */
+.nfos-workbook-input {
+  color: var(--nfos-brand-ink) !important;
+}
+
+.nfos-workbook-input:focus {
+  outline-color: var(--nfos-brand-blue) !important;
+  border-color: var(--nfos-brand-blue) !important;
+  background: #F8FCFF !important;
+}
+
+/* Production sub-navigation */
+.nfos-workbook-view-switch .nfos-btn:not(.secondary) {
+  background: var(--nfos-brand-yellow) !important;
+  color: #1D1D1D !important;
+  border-color: #D4AB24 !important;
+}
+
+.nfos-workbook-view-switch .nfos-btn.secondary {
+  background: #FFFFFF !important;
+  color: #245E86 !important;
+  border-color: #9FC6DE !important;
+}
+
+.nfos-workbook-view-switch .nfos-btn.secondary:hover {
+  background: var(--nfos-brand-blue-pale) !important;
+  border-color: var(--nfos-brand-blue) !important;
+}
+
+/* Primary workbook actions */
+.nfos-workbook-primary-action {
+  background: var(--nfos-brand-yellow) !important;
+  color: #1A1A1A !important;
+  border-color: #D4AB24 !important;
+}
+
+.nfos-workbook-primary-action:hover:not(:disabled) {
+  background: #E8BD38 !important;
+}
+
+/* Brand-aligned destructive actions inside workbook areas */
+.nfos-workbook-sheet .nfos-btn.danger {
+  background: var(--nfos-brand-red) !important;
+  color: #FFFFFF !important;
+  border-color: #C9412D !important;
+}
+
+/* Selected batch gets a honey-yellow brand cue */
+.nfos-batches-workbook-table tr.is-selected-workbook-row td {
+  box-shadow: inset 0 2px 0 var(--nfos-brand-yellow),
+              inset 0 -2px 0 var(--nfos-brand-yellow) !important;
+}
+
+.nfos-batches-workbook-table tr.is-selected-workbook-row td:first-child {
+  box-shadow: inset 2px 0 0 var(--nfos-brand-yellow),
+              inset 0 2px 0 var(--nfos-brand-yellow),
+              inset 0 -2px 0 var(--nfos-brand-yellow) !important;
+}
+
+.nfos-batches-workbook-table tr.is-selected-workbook-row td:last-child {
+  box-shadow: inset -2px 0 0 var(--nfos-brand-yellow),
+              inset 0 2px 0 var(--nfos-brand-yellow),
+              inset 0 -2px 0 var(--nfos-brand-yellow) !important;
+}
+/* END NFOS workbook NectarFusions brand palette */
+
+/* NFOS six-section expandable navigation */
+.nfos-nav-accordion {
+  display: block !important;
+  width: 100% !important;
+  overflow: visible !important;
+  padding: 0 !important;
+}
+
+.nfos-nav-main-row {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+}
+
+.nfos-nav-main-button {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 42px !important;
+  padding: 9px 12px !important;
+  border: 1px solid #B8D4E6 !important;
+  border-radius: 10px !important;
+  background: #FFFFFF !important;
+  color: #245E86 !important;
+  font-weight: 760 !important;
+  text-align: left !important;
+  box-shadow: 0 1px 2px rgba(23, 57, 79, .04);
+}
+
+.nfos-nav-main-button:hover {
+  background: var(--nfos-brand-blue-pale, #EAF5FC) !important;
+  border-color: var(--nfos-brand-blue, #4FA5E4) !important;
+}
+
+.nfos-nav-main-button.active {
+  background: var(--nfos-brand-blue-deep, #2F7FB8) !important;
+  color: #FFFFFF !important;
+  border-color: var(--nfos-brand-blue-deep, #2F7FB8) !important;
+  box-shadow: 0 3px 9px rgba(47, 127, 184, .18) !important;
+}
+
+.nfos-nav-main-caret {
+  flex: 0 0 auto;
+  font-size: 14px;
+  line-height: 1;
+  opacity: .85;
+}
+
+.nfos-nav-sub-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px;
+  border: 1px solid #D8E7F0;
+  border-radius: 10px;
+  background: #F7FBFE;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.nfos-nav-sub-button {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: max-content !important;
+  min-height: 34px !important;
+  padding: 7px 11px !important;
+  border: 1px solid transparent !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: #35576D !important;
+  font-size: 12px !important;
+  font-weight: 650 !important;
+}
+
+.nfos-nav-sub-button:hover {
+  background: #FFFFFF !important;
+  border-color: #BFD7E6 !important;
+}
+
+.nfos-nav-sub-button .nfos-nav-icon {
+  color: #5D8198 !important;
+}
+
+.nfos-nav-sub-button.active {
+  background: var(--nfos-brand-yellow, #F2CA4C) !important;
+  color: #1D2730 !important;
+  border-color: #D6AD27 !important;
+  font-weight: 800 !important;
+}
+
+.nfos-nav-sub-button.active .nfos-nav-icon {
+  color: #1D2730 !important;
+}
+
+@media (min-width: 901px) and (pointer: fine) {
+  .nfos-shell .nfos-nav-accordion {
+    display: block !important;
+    overflow: visible !important;
+  }
+
+  .nfos-shell .nfos-nav-main-button {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .nfos-shell .nfos-nav-sub-button {
+    width: auto !important;
+    min-width: max-content !important;
+  }
+}
+
+@media (max-width: 1180px) {
+  .nfos-nav-main-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px), (pointer: coarse) and (max-width: 1180px) {
+  .nfos-nav-accordion {
+    display: none !important;
+  }
+}
+
+@media (max-width: 620px) {
+  .nfos-nav-main-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+/* END NFOS six-section expandable navigation */
