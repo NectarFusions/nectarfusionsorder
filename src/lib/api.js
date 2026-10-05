@@ -2484,6 +2484,57 @@ export async function requestSubscriptionCancellation(token) {
 
 /* ---------- Square (via Netlify functions) ---------- */
 
+export async function checkoutFeeQuote(baseCents) {
+  const response = await fetch("/.netlify/functions/checkout-fee-quote", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      baseCents: Math.max(
+        0,
+        Math.round(Number(baseCents) || 0)
+      ),
+    }),
+  });
+
+  const text = await response.text();
+  let payload = {};
+
+  try {
+    payload = text ? JSON.parse(text) : {};
+  } catch {
+    payload = {};
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      payload.error ||
+      "The final secure checkout total could not be calculated."
+    );
+  }
+
+  const base = Number(payload.base_cents);
+  const serviceFee = Number(payload.service_fee_cents);
+  const total = Number(payload.total_cents);
+
+  if (
+    !Number.isFinite(base) ||
+    !Number.isFinite(serviceFee) ||
+    !Number.isFinite(total)
+  ) {
+    throw new Error(
+      "The final secure checkout total returned an invalid amount."
+    );
+  }
+
+  return {
+    base_cents: base,
+    service_fee_cents: serviceFee,
+    total_cents: total,
+  };
+}
+
 export async function payLink(token) {
   const response = await fetch("/.netlify/functions/pay-link", {
     method: "POST",

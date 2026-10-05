@@ -12047,6 +12047,9 @@ export default function App() {
   const [receipt, setReceipt] = useState(null);
   const [ctaOff, setCtaOff] = useState(false);
   const [tick, setTick] = useState(0);
+  const [checkoutQuote, setCheckoutQuote] = useState(null);
+  const [checkoutQuoteError, setCheckoutQuoteError] = useState("");
+  const [checkoutQuoteRefresh, setCheckoutQuoteRefresh] = useState(0);
 
   const [plan, setPlan] = useState(null);
   const [cadence, setCadence] = useState("2mo");
@@ -12648,6 +12651,65 @@ export default function App() {
   const fee = method === "delivery" && zone ? (price.sub >= zone.freeOver ? 0 : zone.fee) : 0;
   const belowMin = method === "delivery" && zone && price.sub < zone.minimum;
   const total = price.sub + fee;
+
+  const checkoutBaseCents = Math.max(
+    0,
+    Math.round(total * 100)
+  );
+  const checkoutQuoteMatches =
+    Number(checkoutQuote?.base_cents) === checkoutBaseCents;
+  const checkoutServiceFeeCents =
+    checkoutQuoteMatches
+      ? Number(checkoutQuote.service_fee_cents || 0)
+      : null;
+  const checkoutServiceFee =
+    checkoutServiceFeeCents === null
+      ? null
+      : checkoutServiceFeeCents / 100;
+  const checkoutTotal =
+    checkoutQuoteMatches
+      ? Number(checkoutQuote.total_cents) / 100
+      : total;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (cart.length === 0 || checkoutBaseCents <= 0) {
+      setCheckoutQuote(null);
+      setCheckoutQuoteError("");
+      return undefined;
+    }
+
+    setCheckoutQuote((current) =>
+      Number(current?.base_cents) === checkoutBaseCents
+        ? current
+        : null
+    );
+    setCheckoutQuoteError("");
+
+    api.checkoutFeeQuote(checkoutBaseCents)
+      .then((quote) => {
+        if (cancelled) return;
+        setCheckoutQuote(quote);
+      })
+      .catch((quoteError) => {
+        if (cancelled) return;
+        setCheckoutQuote(null);
+        setCheckoutQuoteError(
+          quoteError?.message ||
+          "The final secure checkout total could not be calculated."
+        );
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    checkoutBaseCents,
+    cart.length,
+    checkoutQuoteRefresh,
+  ]);
+
   const delivery =
     zone && cat
       ? deliveryAvailability(zone, cat.blockedDates ?? [])
@@ -12821,8 +12883,13 @@ export default function App() {
     return !flavorAvailableForType(flavor, item.size_id, item.type) ||
       (limit !== null && limit < item.qty);
   });
+  const checkoutQuoteReady =
+    checkoutQuoteMatches && !checkoutQuoteError;
   const canSubmitOrder =
-    canPlace && unresolvedTypeItems.length === 0 && unavailableTypeItems.length === 0;
+    canPlace &&
+    unresolvedTypeItems.length === 0 &&
+    unavailableTypeItems.length === 0 &&
+    checkoutQuoteReady;
 
   async function submit() {
     if (!canSubmitOrder) {
@@ -16066,9 +16133,15 @@ export default function App() {
               <section className="nf-final-review-card nf-final-review-total-card">
                 <div className="nf-final-review-label">Order total</div>
                 <div className="nf-final-review-price-row">
-                  <span>Merchandise</span>
-                  <strong>{money(price.sub)}</strong>
+                  <span>Merchandise subtotal</span>
+                  <strong>{money(price.sub + price.saved)}</strong>
                 </div>
+                {price.saved > 0 && (
+                  <div className="nf-final-review-price-row">
+                    <span>Bundle discount</span>
+                    <strong>−{money(price.saved)}</strong>
+                  </div>
+                )}
                 {method === "delivery" && (
                   <div className="nf-final-review-price-row">
                     <span>Delivery</span>
@@ -16081,10 +16154,47 @@ export default function App() {
                     <strong>Free</strong>
                   </div>
                 )}
-                <div className="nf-final-review-grand-total">
-                  <span>Total</span>
-                  <strong>{money(total)}</strong>
+                <div className="nf-final-review-price-row">
+                  <span>Online checkout service fee</span>
+                  <strong>
+                    {checkoutQuoteMatches
+                      ? money(checkoutServiceFee)
+                      : checkoutQuoteError
+                        ? "Unavailable"
+                        : "Calculating…"}
+                  </strong>
                 </div>
+                <div className="nf-final-review-grand-total">
+                  <span>Total due at Square</span>
+                  <strong>
+                    {checkoutQuoteMatches
+                      ? money(checkoutTotal)
+                      : "—"}
+                  </strong>
+                </div>
+                <div style={{
+                  marginTop: 9,
+                  color: c.brown,
+                  fontSize: 12.5,
+                  lineHeight: 1.5,
+                }}>
+                  This is the total you&rsquo;ll see before entering payment details in Square.
+                </div>
+                {checkoutQuoteError && (
+                  <div className="err" style={{ marginTop: 10 }}>
+                    {checkoutQuoteError}
+                    <button
+                      type="button"
+                      className="btn ghost"
+                      style={{ marginTop: 8, padding: "8px 12px" }}
+                      onClick={() =>
+                        setCheckoutQuoteRefresh((value) => value + 1)
+                      }
+                    >
+                      Try again
+                    </button>
+                  </div>
+                )}
               </section>
             </div>
 
@@ -16105,7 +16215,11 @@ export default function App() {
                 disabled={busy || !canSubmitOrder}
                 onClick={submit}
               >
-                {busy ? "Placing order…" : "Place order"}
+                {busy
+                  ? "Opening secure checkout…"
+                  : checkoutQuoteMatches
+                    ? `Continue to Square · ${money(checkoutTotal)}`
+                    : "Calculating final total…"}
               </button>
             </div>
           </div>
@@ -16205,9 +16319,33 @@ export default function App() {
                   </div>
                 )}
 
+                <div className="nf-cart-totals-row">
+                  <span>Online checkout service fee</span>
+                  <strong>
+                    {checkoutQuoteMatches
+                      ? money(checkoutServiceFee)
+                      : checkoutQuoteError
+                        ? "Unavailable"
+                        : "Calculating…"}
+                  </strong>
+                </div>
+
                 <div className="nf-cart-grand-total">
-                  <span>Order total</span>
-                  <strong>{money(price.sub)}</strong>
+                  <span>Current total</span>
+                  <strong>
+                    {checkoutQuoteMatches
+                      ? money(checkoutTotal)
+                      : "—"}
+                  </strong>
+                </div>
+
+                <div style={{
+                  marginTop: 2,
+                  color: "rgba(255,255,255,.86)",
+                  fontSize: 12,
+                  lineHeight: 1.45,
+                }}>
+                  Fulfillment is added before final review. You&rsquo;ll see the exact total before Square.
                 </div>
               </div>
 

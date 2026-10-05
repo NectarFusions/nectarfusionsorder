@@ -12,32 +12,9 @@
    ============================================================ */
 
 import { square, db, site, ok, bad } from "./_square.mjs";
+import { onlineCheckoutServiceFee } from "./_checkout-fee.mjs";
 
 const typeName = (t) => (t === "spun" ? "Spun" : "Regular");
-
-const squareOnlineRate = () => {
-  const value = Number(process.env.SQUARE_ONLINE_PROCESSING_RATE ?? "0.033");
-  return Number.isFinite(value) && value >= 0 && value < 1 ? value : 0.033;
-};
-
-const squareOnlineFixedCents = () => {
-  const value = Number.parseInt(
-    process.env.SQUARE_ONLINE_PROCESSING_FIXED_CENTS ?? "30",
-    10
-  );
-  return Number.isFinite(value) && value >= 0 ? value : 30;
-};
-
-const onlineCheckoutServiceFee = (baseCents) => {
-  const amount = Number(baseCents);
-  if (!Number.isFinite(amount) || amount <= 0) return 0;
-
-  const rate = squareOnlineRate();
-  const fixed = squareOnlineFixedCents();
-  const grossCents = Math.ceil((amount + fixed) / (1 - rate));
-
-  return Math.max(0, grossCents - amount);
-};
 
 export default async (req) => {
   if (req.method !== "POST") return bad("POST only", 405);
