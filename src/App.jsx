@@ -11174,6 +11174,33 @@ html {
   box-shadow:none !important;
 }
 
+/* TOP PICKS — REUSE THE EXACT PICK YOUR FLAVORS CONTROLS */
+.nf-top-card {
+  cursor:default !important;
+}
+
+.nf-top-pick-add,
+.nf-top-pick-controls {
+  position:static !important;
+  order:80 !important;
+  width:calc(100% - 28px) !important;
+  margin:auto 14px 14px !important;
+  flex:0 0 auto !important;
+  box-sizing:border-box;
+}
+
+.nf-top-pick-add {
+  min-height:46px !important;
+}
+
+@media (max-width:680px) {
+  .nf-top-pick-add,
+  .nf-top-pick-controls {
+    width:calc(100% - 20px) !important;
+    margin:auto 10px 11px !important;
+  }
+}
+
 .nf-top-card:disabled .nf-top-add-cart {
   transform:none !important;
 }
@@ -12110,12 +12137,37 @@ export default function App() {
   }, []);
 
   useLayoutEffect(() => {
-    const restoreY = shopScrollRestoreRef.current;
-    if (restoreY === null || typeof window === "undefined") return;
+    const restore = shopScrollRestoreRef.current;
+    if (restore === null || typeof window === "undefined") return;
 
     shopScrollRestoreRef.current = null;
-    window.scrollTo({ top: restoreY, left: 0, behavior: "auto" });
-  }, [cart]);
+
+    if (
+      restore.anchor &&
+      restore.top !== null &&
+      typeof document !== "undefined" &&
+      document.contains(restore.anchor)
+    ) {
+      const nextTop =
+        restore.anchor.getBoundingClientRect().top;
+      const delta = nextTop - restore.top;
+
+      if (Math.abs(delta) > 0.5) {
+        window.scrollBy({
+          top: delta,
+          left: 0,
+          behavior: "auto",
+        });
+      }
+      return;
+    }
+
+    window.scrollTo({
+      top: restore.y,
+      left: 0,
+      behavior: "auto",
+    });
+  }, [cart, pickSize, pickType]);
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
@@ -12544,8 +12596,30 @@ export default function App() {
 
   const preserveShopScroll = () => {
     if (typeof window === "undefined") return;
-    if (!window.matchMedia("(max-width: 760px)").matches) return;
-    shopScrollRestoreRef.current = window.scrollY;
+
+    const active =
+      typeof document !== "undefined"
+        ? document.activeElement
+        : null;
+
+    const anchor =
+      active instanceof Element
+        ? active.closest(
+            ".nf-top-card, " +
+            ".nf-pick-card, " +
+            ".nf-bundle-builder, " +
+            ".nf-sticky-size-switcher, " +
+            ".nf-type-selector-section, " +
+            ".nf-cart-tray, " +
+            ".nf-order-panel"
+          )
+        : null;
+
+    shopScrollRestoreRef.current = {
+      y: window.scrollY,
+      anchor,
+      top: anchor?.getBoundingClientRect().top ?? null,
+    };
   };
 
   const addJar = (
@@ -12617,19 +12691,22 @@ export default function App() {
     );
   };
 
-  const bump = (i, d) => setCart((cc) => {
-    const item = cc[i];
-    if (!item) return cc;
+  const bump = (i, d) => {
+    preserveShopScroll();
+    setCart((cc) => {
+      const item = cc[i];
+      if (!item) return cc;
 
-    const limit = inventoryLimit(item.flavor_id, item.size_id, item.type);
-    const nextQty = item.qty + d;
+      const limit = inventoryLimit(item.flavor_id, item.size_id, item.type);
+      const nextQty = item.qty + d;
 
-    if (d > 0 && limit !== null && nextQty > limit) return cc;
+      if (d > 0 && limit !== null && nextQty > limit) return cc;
 
-    return cc
-      .map((x, j) => j === i ? { ...x, qty: nextQty } : x)
-      .filter((x) => x.qty > 0);
-  });
+      return cc
+        .map((x, j) => j === i ? { ...x, qty: nextQty } : x)
+        .filter((x) => x.qty > 0);
+    });
+  };
 
   /* Preview only. place_order recomputes this server-side and its answer wins. */
   const price = useMemo(() => {
@@ -13506,7 +13583,18 @@ export default function App() {
                 )}
               </div>
 
-
+              <a
+                className="nf-text-us-fab"
+                href={`sms:${CONTACT.phone.replace(/\D/g, "")}`}
+                aria-label={`Text NectarFusions at ${CONTACT.phone}`}
+                title="Text us"
+              >
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M5 5.5h14v10H9l-4 3v-13Z" />
+                  <path d="M8 9h8M8 12h5" />
+                </svg>
+                <span>Text us</span>
+              </a>
             </div>
           </nav>
         )}
@@ -15001,6 +15089,7 @@ export default function App() {
                           return;
                         }
 
+                        preserveShopScroll();
                         setPickType(t.id);
                         setTypeNotice(
                           t.id === "undecided"
@@ -15130,7 +15219,10 @@ export default function App() {
                 <button
                   key={s.id}
                   className={`btn ${pickSize === s.id ? "on" : ""}`}
-                  onClick={() => setPickSize(s.id)}
+                  onClick={() => {
+                    preserveShopScroll();
+                    setPickSize(s.id);
+                  }}
                   style={{
                     textAlign: "left", display: "grid", gridTemplateColumns: "1fr auto",
                     alignItems: "center", gap: 10, padding: "14px 15px",
@@ -15223,7 +15315,10 @@ export default function App() {
                     pickSize === s.id ? "selected" : ""
                   }`}
                   aria-pressed={pickSize === s.id}
-                  onClick={() => setPickSize(s.id)}
+                  onClick={() => {
+                    preserveShopScroll();
+                    setPickSize(s.id);
+                  }}
                 >
                   <strong>{s.label}</strong>
                   <span>{money(s.price)}</span>
@@ -15281,6 +15376,16 @@ export default function App() {
                 !selectedInventory?.available;
               const selectedSizeCartLimitReached =
                 selectedInventory?.cartLimitReached === true;
+              const topPickQuantityInCart =
+                selectedInventory?.quantityInCart ?? 0;
+              const topPickCartIndex = cart.findIndex(
+                (item) =>
+                  item.flavor_id === flavor.id &&
+                  item.size_id === pickSize &&
+                  item.type === pickType
+              );
+              const topPickCanAdd =
+                selectedInventory?.available === true;
               const anySizeCartLimitReached =
                 sizeInventory.some(
                   (size) =>
@@ -15298,9 +15403,8 @@ export default function App() {
                   .join(" · ");
 
               return (
-                <button
+                <article
                   key={flavor.id}
-                  type="button"
                   className={`nf-top-card ${
                     pick.limited === true
                       ? "nf-top-card-limited"
@@ -15314,18 +15418,7 @@ export default function App() {
                       ? "nf-top-card-all-sold-out"
                       : ""
                   }`}
-                  disabled={allSizesSoldOut}
-                  aria-label={
-                    allSizesSoldOut
-                      ? `${flavor.name} is sold out in every size.`
-                      : `${flavor.name}. Add this flavor to your cart.`
-                  }
-                  onClick={() =>
-                    openTopPickFlavor(
-                      flavor,
-                      sizeInventory
-                    )
-                  }
+                  aria-label={`${flavor.name} Top Pick`}
                 >
                   {pick.limited === true && (
                     <span className="nf-top-limited-badge">
@@ -15498,23 +15591,62 @@ export default function App() {
                             } · ${selectedCount} available`}
                   </div>
 
-                  <span
-                    className={`nf-top-add-cart ${
-                      allSizesSoldOut
-                        ? "sold-out"
+                  {topPickQuantityInCart > 0 &&
+                  topPickCartIndex > -1 ? (
+                    <div className="nf-pick-controls nf-top-pick-controls">
+                      <button
+                        type="button"
+                        className="nf-pick-qty-btn"
+                        aria-label={`Remove one ${flavor.name}`}
+                        onClick={() => {
+                          preserveShopScroll();
+                          setCartOpen(false);
+                          bump(topPickCartIndex, -1);
+                        }}
+                      >
+                        −
+                      </button>
+
+                      <div className="nf-pick-qty">
+                        {topPickQuantityInCart}
+                      </div>
+
+                      <button
+                        type="button"
+                        className="nf-pick-qty-btn"
+                        aria-label={`Add another ${flavor.name}`}
+                        disabled={!topPickCanAdd}
+                        onClick={() => {
+                          preserveShopScroll();
+                          setCartOpen(false);
+                          if (topPickCanAdd) {
+                            bump(topPickCartIndex, 1);
+                          }
+                        }}
+                      >
+                        +
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="nf-pick-add nf-top-pick-add"
+                      disabled={allSizesSoldOut}
+                      onClick={() =>
+                        openTopPickFlavor(
+                          flavor,
+                          sizeInventory
+                        )
+                      }
+                    >
+                      {allSizesSoldOut
+                        ? "Unavailable"
                         : selectedSizeSoldOut
-                          ? "choose-size"
-                          : ""
-                    }`}
-                    aria-hidden="true"
-                  >
-                    {allSizesSoldOut
-                      ? "Sold Out"
-                      : selectedSizeSoldOut
-                        ? "Choose Available Size"
-                        : "Add to Cart +"}
-                  </span>
-                </button>
+                          ? "Choose Available Size"
+                          : "Add +"}
+                    </button>
+                  )}
+                </article>
               );
             })}
           </div>
