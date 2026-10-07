@@ -3372,3 +3372,67 @@ export async function listAdminPartnerStoreOrders(partnerId) {
   if (error) throw new Error(error.message);
   return data ?? [];
 }
+
+/* ---------- admin shipping labels (real carrier-issued PDFs only) ---------- */
+const SHIPPING_LABEL_BUCKET = "shipping-labels";
+
+export const listShippingLabels = () =>
+  supabase.from("shipping_labels").select("*")
+    .order("created_at", { ascending: false }).limit(500).then(throwIf);
+
+export async function saveShippingLabel({ orderId, carrier, service, trackingNumber, file }) {
+  if (!orderId || !["USPS", "UPS"].includes(carrier)) throw new Error("Select a shipping order and carrier.");
+  if (!file || file.size < 1 || file.size > 10 * 1024 * 1024 ||
+      !(file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf"))) {
+    throw new Error("Select a valid PDF label no larger than 10 MB.");
+  }
+
+  // Do not accept a renamed image/text file as an official PDF label.
+  const headerBytes = new Uint8Array(await file.slice(0, 5).arrayBuffer());
+  const pdfHeader = String.fromCharCode(...headerBytes);
+  if (pdfHeader !== "%PDF-") throw new Error("The selected file is not a PDF shipping label.");
+
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData?.user) throw new Error("Sign in to the Admin Back Room first.");
+  const { data: order, error: orderError } = await supabase.from("orders")
+    .select("id,method,status,requires_prepay,paid").eq("id", orderId).single();
+  if (orderError) throw new Error(orderError.message);
+  if (order.method !== "ship" || order.status === "cancelled") throw new Error("Labels are available for shipping orders only.");
+  if (order.requires_prepay && !order.paid && order.status === "open") throw new Error("Wait until payment is confirmed before attaching postage.");
+
+  const path = `${orderId}/${crypto.randomUUID()}.pdf`;
+  const { error: uploadError } = await supabase.storage.from(SHIPPING_LABEL_BUCKET)
+    .upload(path, file, { contentType: "application/pdf", upsert: false, cacheControl: "0" });
+  if (uploadError) throw new Error(uploadError.message);
+
+  try {
+    const { data, error } = await supabase.from("shipping_labels").insert({
+      order_id: orderId,
+      carrier,
+      service: String(service || "").trim().slice(0, 100) || null,
+      tracking_number: String(trackingNumber || "").trim().slice(0, 100) || null,
+      label_path: path,
+      file_name: String(file.name || "shipping-label.pdf").slice(0, 255),
+    }).select("*").single();
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    await supabase.storage.from(SHIPPING_LABEL_BUCKET).remove([path]);
+    throw new Error(error.message || "Failed to save label record.");
+  }
+}
+
+export async function getShippingLabelPreviewUrl(labelPath) {
+  const { data, error } = await supabase.storage.from(SHIPPING_LABEL_BUCKET)
+    .createSignedUrl(labelPath, 10 * 60);
+  if (error || !data?.signedUrl) throw new Error(error?.message || "Unable to open private label.");
+  return data.signedUrl;
+}
+
+export async function removeShippingLabel(label) {
+  if (!label?.id || !label?.label_path) throw new Error("Missing label details.");
+  const { error: recordError } = await supabase.from("shipping_labels").delete().eq("id", label.id);
+  if (recordError) throw new Error(recordError.message);
+  const { error: fileError } = await supabase.storage.from(SHIPPING_LABEL_BUCKET).remove([label.label_path]);
+  if (fileError) throw new Error(`Label record removed, but private file cleanup failed: ${fileError.message}`);
+}

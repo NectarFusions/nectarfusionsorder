@@ -14,6 +14,7 @@ import MarketConfirmationPage from "./pages/MarketConfirmationPage";
 import ReviewsPage, { HONEY_HIVE_URL, ReviewHomeCard } from "./pages/ReviewsPage";
 import AdminReviewsPanel from "./pages/AdminReviewsPanel";
 import AdminFlavorRequestsPanel from "./pages/AdminFlavorRequestsPanel";
+import AdminShippingLabels from "./pages/AdminShippingLabels";
 import SpecialEventOrderPage from "./pages/SpecialEventOrderPage";
 
 /* ============================================================
@@ -18617,6 +18618,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
     ["reviews", "Reviews"],
     ["flavorRequests", "Flavor Requests"],
     ["orders", `Orders (${standardActiveOrders.length + standardPendingPaymentOrders.length})`],
+    ["shippingLabels", "Shipping Labels"],
     ["partnerCommerce", "Partner Commerce", newPartnerApplicationCount],
     ["partnerEvents", "Partner Events"],
     ["partnerResources", "Partner Resources"],
@@ -19155,6 +19157,8 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
             </div>
           </>
         )}
+
+        {adminTab === "shippingLabels" && <AdminShippingLabels orders={orders} />}
 
         {adminTab === "orders" && (
           <>
