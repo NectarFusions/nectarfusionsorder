@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import * as api from "../lib/api";
+import AdminUspsConnection from "./AdminUspsConnection";
 
 const formatDate = (value) => value
   ? new Date(value).toLocaleString(undefined, { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })
@@ -138,6 +139,8 @@ export default function AdminShippingLabels({ orders = [] }) {
           These links go directly to the carriers, with no third-party label service. Purchase postage there, download the official PDF, then attach it to the correct order. A homemade address label without paid postage is not a valid shipping label.
         </p>
       </div>
+
+      <AdminUspsConnection />
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 8, marginBottom: 13 }}>
         {[["all", `All (${shippingOrders.length})`], ["needs-label", `Needs label (${shippingOrders.filter(o => !pendingPayment(o) && !(byOrder.get(o.id) || []).length).length})`], ["labeled", `Saved (${shippingOrders.filter(o => (byOrder.get(o.id) || []).length).length})`]].map(([id, title]) => (
