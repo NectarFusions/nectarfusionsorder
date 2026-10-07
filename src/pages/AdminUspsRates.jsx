@@ -71,17 +71,79 @@ export default function AdminUspsRates({ order, disabled = false }) {
                 {result.caveat}
               </p>
               {!result.quotes?.length && <p style={{ fontSize: 13 }}>No comparable standard-box prices returned. Adjust package details or check USPS API permissions.</p>}
-              {(result.quotes || []).map((quote, index) => (
-                <label key={quote.mailClass} style={{ display: 'flex', cursor: 'pointer', alignItems: 'start', gap: 10, padding: 11, marginBottom: 8, border: '1px solid #E2D6C4', borderRadius: 10, background: index === 0 ? '#FFF8E5' : '#FFF' }}>
-                  <input type="radio" name={`usps-quote-${order.id}`} value={quote.mailClass} checked={choice === quote.mailClass} onChange={() => setChoice(quote.mailClass)} style={{ marginTop: 4 }} />
-                  <span style={{ flex: 1, minWidth: 0, fontSize: 13 }}>
-                    <strong>{quote.service}</strong> {index === 0 && <span style={{ color: '#6C5A16' }}>· Lowest returned price</span>}
-                    <span style={{ display: 'block', marginTop: 3, color: '#74644D', fontSize: 11 }}>{quote.priceType.replaceAll('_', ' ')}{quote.description ? ` · ${quote.description}` : ''}</span>
-                    {quote.warnings?.length > 0 && <span style={{ display: 'block', marginTop: 3, color: '#9B5D15', fontSize: 11 }}>{quote.warnings.join('; ')}</span>}
-                  </span>
-                  <strong style={{ fontSize: 17, whiteSpace: 'nowrap' }}>{money(quote.price)}</strong>
-                </label>
-              ))}
+              <div role="radiogroup" aria-label="USPS shipping service prices" style={{ display: 'grid', gap: 10 }}>
+                {(result.quotes || []).map((quote, index) => (
+                  <label
+                    key={quote.mailClass}
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '20px minmax(0, 1fr) auto',
+                      alignItems: 'center',
+                      columnGap: 14,
+                      width: '100%',
+                      minWidth: 0,
+                      boxSizing: 'border-box',
+                      padding: '15px 16px',
+                      cursor: 'pointer',
+                      border: choice === quote.mailClass ? '2px solid #BD850F' : '1px solid #E2D6C4',
+                      borderRadius: 12,
+                      background: index === 0 ? '#FFF8E5' : '#FFF',
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name={`usps-quote-${order.id}`}
+                      value={quote.mailClass}
+                      checked={choice === quote.mailClass}
+                      onChange={() => setChoice(quote.mailClass)}
+                      aria-label={`Select ${quote.service} for ${money(quote.price)}`}
+                      style={{
+                        appearance: 'auto',
+                        WebkitAppearance: 'radio',
+                        display: 'block',
+                        width: 20,
+                        minWidth: 20,
+                        maxWidth: 20,
+                        height: 20,
+                        minHeight: 20,
+                        maxHeight: 20,
+                        padding: 0,
+                        margin: 0,
+                        background: 'transparent',
+                        boxShadow: 'none',
+                        borderRadius: '50%',
+                        accentColor: '#A36E00',
+                      }}
+                    />
+                    <span style={{ display: 'block', minWidth: 0, maxWidth: '100%' }}>
+                      <strong style={{ display: 'block', fontSize: 15, lineHeight: 1.45, overflowWrap: 'break-word' }}>
+                        {quote.service}
+                      </strong>
+                      {index === 0 && (
+                        <span style={{ display: 'inline-block', marginTop: 5, color: '#6C5014', fontSize: 12, fontWeight: 700 }}>
+                          Lowest returned price
+                        </span>
+                      )}
+                      <span style={{ display: 'block', marginTop: 5, color: '#74644D', fontSize: 12, lineHeight: 1.45, overflowWrap: 'break-word' }}>
+                        {quote.priceType.replaceAll('_', ' ')}{quote.description ? ` · ${quote.description}` : ''}
+                      </span>
+                      {quote.warnings?.length > 0 && (
+                        <span style={{ display: 'block', marginTop: 4, color: '#9B5D15', fontSize: 12, lineHeight: 1.45, overflowWrap: 'break-word' }}>
+                          {quote.warnings.join('; ')}
+                        </span>
+                      )}
+                    </span>
+                    <span style={{ display: 'block', minWidth: 80, textAlign: 'right', alignSelf: 'center' }}>
+                      <strong style={{ display: 'block', fontSize: 20, lineHeight: 1.25, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>
+                        {money(quote.price)}
+                      </strong>
+                      <span style={{ display: 'block', marginTop: 5, fontSize: 11, lineHeight: 1.3, color: '#74644D' }}>
+                        {result.environment === 'test' ? 'Test price' : 'USPS quote'}
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
               {result.unavailable?.length > 0 && <p style={{ fontSize: 12, color: '#74644D' }}>No eligible quote returned for: {result.unavailable.join(', ')}.</p>}
               {result.notices?.length > 0 && <p style={{ fontSize: 12, color: '#74644D' }}>USPS did not price some services: {result.notices.join(' · ')}.</p>}
               {choice && <p style={{ fontSize: 12, color: '#66523A' }}>Selected: {result.quotes.find(q => q.mailClass === choice)?.service}. Selection is only a preview; buying postage is not yet enabled.</p>}
