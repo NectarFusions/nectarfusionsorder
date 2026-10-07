@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import * as api from "../lib/api";
 import AdminUspsConnection from "./AdminUspsConnection";
+import AdminUspsRates from "./AdminUspsRates";
 
 const formatDate = (value) => value
   ? new Date(value).toLocaleString(undefined, { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })
@@ -170,6 +171,8 @@ export default function AdminShippingLabels({ orders = [] }) {
               </div>
               <button type="button" className="btn" disabled={busy || paymentHold} style={{ fontSize: 12 }} onClick={() => beginUpload(order.id)}>{editingOrder === order.id ? "Cancel" : "Attach PDF label"}</button>
             </div>
+
+            <AdminUspsRates order={order} disabled={paymentHold} />
 
             {stored.map((label) => (
               <div key={label.id} style={{ marginTop: 11, padding: 10, background: "#FFF9E9", border: "1px solid #E2D6C4", borderRadius: 10 }}>
