@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import * as api from "../lib/api";
 import AdminUspsConnection from "./AdminUspsConnection";
 import AdminUspsRates from "./AdminUspsRates";
+import AdminOrderDeliveryButton from "./AdminOrderDeliveryButton";
 
 const formatDate = (value) => value
   ? new Date(value).toLocaleString(undefined, { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })
@@ -173,6 +174,7 @@ export default function AdminShippingLabels({ orders = [] }) {
             </div>
 
             <AdminUspsRates order={order} disabled={paymentHold} />
+            <AdminOrderDeliveryButton order={order} />
 
             {stored.map((label) => (
               <div key={label.id} style={{ marginTop: 11, padding: 10, background: "#FFF9E9", border: "1px solid #E2D6C4", borderRadius: 10 }}>

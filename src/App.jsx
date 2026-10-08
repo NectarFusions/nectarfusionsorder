@@ -15,6 +15,7 @@ import ReviewsPage, { HONEY_HIVE_URL, ReviewHomeCard } from "./pages/ReviewsPage
 import AdminReviewsPanel from "./pages/AdminReviewsPanel";
 import AdminFlavorRequestsPanel from "./pages/AdminFlavorRequestsPanel";
 import AdminShippingLabels from "./pages/AdminShippingLabels";
+import AdminOrderDeliveryButton from "./pages/AdminOrderDeliveryButton";
 import SpecialEventOrderPage from "./pages/SpecialEventOrderPage";
 
 /* ============================================================
@@ -19298,6 +19299,10 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                       </div>
                     )}
                     {o.notes && <div style={{ fontSize: 12.5, marginTop: 6, padding: "7px 9px", background: "#FBF7F1", borderRadius: 5 }}>{o.notes}</div>}
+
+                    {(o.method === "delivery" || o.method === "ship") && !cx && (
+                      <AdminOrderDeliveryButton order={o} />
+                    )}
 
                     {paymentPending && (
                       <div style={{

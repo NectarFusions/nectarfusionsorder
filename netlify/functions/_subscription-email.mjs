@@ -33,6 +33,7 @@ function customerEmail(subscription, event, siteUrl) {
   const customer = relationRow(subscription.customers) || {};
   const plan = relationRow(subscription.plans) || {};
   const setup = event === "started";
+  const market = event === "market_activated";
   const actionUrl = setup
     ? subscription.square_checkout_url
     : `${siteUrl}/club/${subscription.token}`;
@@ -45,7 +46,7 @@ function customerEmail(subscription, event, siteUrl) {
   <div style="max-width:540px;margin:0 auto;background:#fff;border:1px solid #E7DCC9;border-radius:12px;overflow:hidden">
     <div style="padding:26px 24px 20px;text-align:center;border-bottom:1px solid #E7DCC9">
       <div style="font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#E69B00">
-        ${setup ? "Honey Club setup started" : "Honey Club activated"}
+        ${setup ? "Honey Club setup started" : market ? "Honey Club market pickup confirmed" : "Honey Club activated"}
       </div>
       <div style="font-size:48px;font-weight:800;margin-top:5px">#${esc(subscription.sub_no)}</div>
       <div style="font-size:16px;color:#7B5821;margin-top:8px">
@@ -65,7 +66,7 @@ function customerEmail(subscription, event, siteUrl) {
       <div style="margin-top:20px;padding:14px;border-radius:8px;background:#FBF7F1;color:#174A68;line-height:1.65">
         ${setup
           ? "Nothing should be prepared until Square confirms the membership is active. Use the secure button below to finish setup."
-          : "Square has confirmed your membership. NectarFusions will prepare each box according to your selected cadence and fulfillment method."}
+          : market ? "Your Honey Club market pickup membership is active. There is no automatic Square subscription charge for market pickup; payment is handled separately at pickup." : "Square has confirmed your membership. NectarFusions will prepare each box according to your selected cadence and fulfillment method."}
       </div>
 
       ${actionUrl ? `<a href="${esc(actionUrl)}" style="display:block;margin-top:18px;padding:14px;border-radius:7px;background:#24A0ED;color:#fff;text-align:center;text-decoration:none;font-weight:800">${actionLabel}</a>` : ""}
@@ -83,13 +84,14 @@ function ownerEmail(subscription, event, siteUrl) {
   const customer = relationRow(subscription.customers) || {};
   const plan = relationRow(subscription.plans) || {};
   const setup = event === "started";
+  const market = event === "market_activated";
 
   return `
 <div style="background:#F5EFE7;padding:22px 14px;font-family:Helvetica,Arial,sans-serif;color:#1B1005">
   <div style="max-width:540px;margin:0 auto;background:#fff;border:2px solid ${setup ? "#E69B00" : "#4F6B3C"};border-radius:12px;overflow:hidden">
     <div style="padding:19px 22px;border-bottom:1px solid #E7DCC9">
       <div style="font-size:11px;font-weight:800;letter-spacing:.14em;color:${setup ? "#E69B00" : "#4F6B3C"}">
-        ${setup ? "HONEY CLUB SETUP STARTED" : "HONEY CLUB ACTIVATED"}
+        ${setup ? "HONEY CLUB SETUP STARTED" : market ? "HONEY CLUB MARKET PICKUP" : "HONEY CLUB ACTIVATED"}
       </div>
       <div style="font-size:38px;font-weight:800">#${esc(subscription.sub_no)}</div>
       <div style="font-size:15px;font-weight:700;margin-top:4px">${esc(customer.name || "New member")}</div>
@@ -104,7 +106,7 @@ function ownerEmail(subscription, event, siteUrl) {
       <div style="margin-top:15px;padding:12px;border-radius:8px;background:${setup ? "#FFF9DE" : "#EDF7EA"};font-weight:800;color:${setup ? "#6A4300" : "#2F5B2D"}">
         ${setup
           ? "PENDING SQUARE SETUP — Do not prepare a box yet."
-          : "SQUARE CONFIRMED — Membership is active."}
+          : market ? "MARKET PICKUP CONFIRMED — Member is active; no recurring Square card subscription." : "SQUARE CONFIRMED — Membership is active."}
       </div>
 
       <a href="${siteUrl}/club/${subscription.token}" style="display:block;margin-top:16px;padding:12px;border-radius:7px;background:#174A68;color:#fff;text-align:center;text-decoration:none;font-weight:800">Open membership</a>
@@ -114,7 +116,7 @@ function ownerEmail(subscription, event, siteUrl) {
 }
 
 export async function sendSubscriptionEmails(subscription, event) {
-  if (!["started", "activated"].includes(event)) {
+  if (!["started", "activated", "market_activated"].includes(event)) {
     throw new Error("Unsupported subscription email event.");
   }
 
@@ -131,11 +133,13 @@ export async function sendSubscriptionEmails(subscription, event) {
   const keyBase =
     `subscription/${safeKeyPart(subscription.id)}/${safeKeyPart(event)}/${safeKeyPart(version)}`;
   const resend = new Resend(resendKey);
-  const ownerLabel = event === "started" ? "setup started" : "activated";
+  const ownerLabel = event === "started" ? "setup started" : event === "market_activated" ? "market pickup activated" : "activated";
   const customerSubject =
     event === "started"
       ? `Honey Club #${subscription.sub_no} — complete your secure setup`
-      : `Welcome to the Honey Club — #${subscription.sub_no}`;
+      : event === "market_activated"
+        ? `Honey Club market pickup membership #${subscription.sub_no} confirmed`
+        : `Welcome to the Honey Club — #${subscription.sub_no}`;
 
   const jobs = [
     resend.emails.send(

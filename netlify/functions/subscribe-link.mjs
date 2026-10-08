@@ -74,6 +74,15 @@ export default async (req) => {
 
       if (updateError) throw new Error(updateError.message);
 
+      try {
+        await sendSubscriptionEmails(
+          {...s, status: 'active', billing_mode: 'market_manual'},
+          'market_activated'
+        );
+      } catch (emailError) {
+        console.error('Honey Club market confirmation email failed:', emailError.message);
+      }
+
       return ok({
         url: absolute(`/club/${s.token}`),
         market_manual: true,
