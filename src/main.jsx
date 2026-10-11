@@ -131,6 +131,11 @@ function isOperationsRoute() {
   return path === "/admin/operations";
 }
 
+function isStoriesRoute() {
+  const path = window.location.pathname.replace(/\/+$/, "") || "/";
+  return path === "/stories" || /^\/stories\/[a-z0-9-]+$/i.test(path);
+}
+
 function isSearchLandingRoute() {
   const path = window.location.pathname.replace(/\/+$/, "") || "/";
 
@@ -186,6 +191,23 @@ if (!rootElement) {
             title="Honey Club settings could not start"
             error={error}
           />
+        );
+      });
+  } else if (isStoriesRoute()) {
+    import("./pages/BeyondTheHivePage.jsx")
+      .then(({ default: BeyondTheHivePage }) => {
+        root.render(
+          <React.StrictMode>
+            <ErrorBoundary>
+              <BeyondTheHivePage />
+            </ErrorBoundary>
+          </React.StrictMode>
+        );
+      })
+      .catch((error) => {
+        console.error("Beyond the Hive startup error:", error);
+        root.render(
+          <ErrorScreen title="Beyond the Hive could not start" error={error} />
         );
       });
   } else if (isSearchLandingRoute()) {

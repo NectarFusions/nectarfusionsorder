@@ -13723,6 +13723,7 @@ export default function App() {
   const nav = (
     <>
       <a className="btn ghost" href="/about" onClick={(event) => handlePublicLink(event, "about")}>About</a>
+      <a className="btn ghost" href="/stories">Stories</a>
       <a className="btn ghost" href="/find-us" onClick={(event) => handlePublicLink(event, "find")}>Find Us</a>
       <a className="btn ghost" href="/honey-club" onClick={(event) => handlePublicLink(event, "subscribe")}>Honey Club</a>
       <button className="btn ghost" onClick={() => { pushMyNectarFusionsUrl(); setView("myNectarFusions"); }}>My NectarFusions</button>
@@ -14818,6 +14819,17 @@ export default function App() {
   return (
     <div className="nf"><style>{CSS}</style>
       <Header big right={nav} />
+      {/* Beyond the Hive gives visitors a way to read and subscribe without shopping. */}
+      <section className="nf-wrap" aria-label="Beyond the Hive stories" style={{paddingTop:20,paddingBottom:20}}>
+        <a href="/stories" style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:16,flexWrap:"wrap",padding:"20px 24px",background:"#FFF9EF",color:"#4A3313",border:"1px solid #E8D6B5",borderRadius:16,textDecoration:"none"}}>
+          <span style={{display:"grid",gap:6}}>
+            <span style={{fontSize:11,fontWeight:800,letterSpacing:1.2,textTransform:"uppercase",color:"#90641D"}}>From the hive, and beyond it</span>
+            <span style={{fontFamily:"Georgia,serif",fontSize:"clamp(20px,3vw,28px)",lineHeight:1.2}}>Beyond the Hive: stories about bees and life</span>
+            <span style={{fontSize:13,lineHeight:1.6}}>Come for the honey. Stay for the stories, and maybe a laugh or two. 🐝</span>
+          </span>
+          <span style={{fontSize:13,fontWeight:800,whiteSpace:"nowrap"}}>Explore the stories →</span>
+        </a>
+      </section>
 
       {typeInfo && (
         <div
