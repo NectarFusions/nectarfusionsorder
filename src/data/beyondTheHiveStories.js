@@ -17,7 +17,7 @@ export const beyondTheHiveStories = [
       "I was walking down the street, completely in my head, when out of nowhere this single bee came flying at me full speed and smacked right into my forehead.",
       "Not once. Twice.",
       "Then it fell to the ground.",
-      "Naturally, I stopped to see what on earth this little guy was doing. And somewhere between wondering why there was a random bee flying around downtown and whether it was okay, I caught myself thinking about my initial reaction.",
+      "Naturally, I stopped to see what on earth this little lady was doing. And somewhere between wondering why there was a random bee flying around downtown and whether it was okay, I caught myself thinking about my initial reaction.",
       "I was afraid it was going to sting me.",
       "Now, here's the funny part.",
       "I'm a beekeeper. I willingly put myself in situations where I'm surrounded by thousands of bees. I can stand in the middle of a buzzing hive, completely calm, and genuinely enjoy every second of it.",
