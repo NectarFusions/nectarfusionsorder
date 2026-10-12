@@ -13556,7 +13556,7 @@ export default function App() {
           </section>
         )}
 
-        {view !== "admin" && view !== "login" && !receipt && (
+        {view !== "admin" && view !== "login" && view !== "partnerPortal" && !receipt && (
           <nav
             className={`nf-universal-dock ${dockHasEntered ? "settled" : "entering"} ${view === "shop" ? "home-dock" : ""}`}
             aria-label="NectarFusions website navigation"

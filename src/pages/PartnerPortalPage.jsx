@@ -1340,6 +1340,7 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
 
       <main className="nf-partner-portal-main">
         <section className="nf-partner-portal-shell">
+          {access.kind !== "partner" && (
           <div className="nf-partner-portal-banner">
             <div
               className="nf-modern-kicker"
@@ -1348,9 +1349,10 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
               NectarFusions Partner Portal
             </div>
             <h2>
-              Your Partner Tools, <span>One Secure Place</span>
+              Order Honey, <span>Restock with Ease</span>
             </h2>
           </div>
+          )}
 
           <div className="nf-partner-portal-body">
             {access.kind === "loading" && (
@@ -1375,7 +1377,7 @@ export default function PartnerPortalPage({ Header, styles, onBack }) {
                   </div>
                   <h3>Sign In to Your Account</h3>
                   <p>
-                    Use the approved email connected to your NectarFusions partner account. We can email you a secure sign-in link, or you can use your password if you already have one.
+                    Use the email connected to your NectarFusions business account. Sign in with your password or request a secure email link.
                   </p>
                   <p>
                     Need help accessing your account? Contact{" "}

@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import * as api from "../lib/api";
 import PartnerCartDrawer from "./PartnerCartDrawer";
+import { resolvePartnerReminderOrder, suggestedPartnerRestocks } from "../lib/partnerCommerceCore.mjs";
 import {
   getPartnerStoreFulfillment,
   setPartnerStoreCart,
@@ -10,7 +11,7 @@ import {
 
 const PROGRAM_LABELS = {
   retail: "Retail",
-  foodservice: "Foodservice",
+  foodservice: "Wholesale",
   business_gifting: "Business Gifting",
   hive_partners: "Hive Partners",
 };
@@ -110,12 +111,216 @@ const CSS = `
 .nf-commerce-note{border-left:4px solid #9ed8f4;padding:10px 12px;background:#f4fafc;color:#546e7b;font-size:13px;line-height:1.5}
 @media(max-width:880px){.nf-commerce-grid,.nf-commerce-dashboard-grid,.nf-commerce-account-grid{grid-template-columns:1fr}.nf-commerce-order{grid-template-columns:1fr 1fr}.nf-commerce-order .order-actions{grid-column:1/-1}.nf-commerce-choice-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.nf-commerce-top{flex-direction:column}.nf-commerce-actions{justify-content:flex-start}}
 @media(max-width:560px){.nf-commerce-panel{padding:15px}.nf-commerce-field-grid{grid-template-columns:1fr}.nf-commerce-field.full{grid-column:auto}.nf-commerce-order{grid-template-columns:1fr}.nf-commerce-builder-total{align-items:flex-start;flex-direction:column}.nf-commerce-choice-grid{grid-template-columns:1fr 1fr}}
+
+/* PARTNER PORTAL REORDER-FIRST V1 — focused, responsive partner experience */
+.nf-commerce{gap:18px;color:#292b28}
+.nf-commerce-top{background:#fbfaf7;border-color:#e7e2da;border-radius:16px;padding:clamp(16px,3vw,26px)}
+.nf-commerce-kicker{color:#81703f;font-weight:800;letter-spacing:.1em}
+.nf-commerce-top h2,.nf-commerce-panel-head h3,.nf-commerce-card h4,.nf-commerce-order-summary h4,.nf-commerce-package-card h4,.nf-commerce-stat strong{color:#272a27}
+.nf-commerce-top p,.nf-commerce-panel-head p,.nf-commerce-card p,.nf-commerce-order-summary p{color:#62655f}
+.nf-commerce-btn{color:#34352e;border-color:#d4cec0;border-radius:9px;font-weight:750}
+.nf-commerce-btn.primary{background:#2e352d;border-color:#2e352d;color:white}
+.nf-commerce-nav{background:#fbfaf7;border-color:#e7e2da;flex-wrap:wrap;overflow:visible;padding:6px;gap:4px}
+.nf-commerce-nav button{color:#565951;border-radius:9px;font-weight:750;flex:1 1 auto;white-space:nowrap}
+.nf-commerce-nav button[aria-current="page"]{background:#2e352d;color:white}
+.nf-commerce-panel,.nf-commerce-order-summary,.nf-commerce-card,.nf-commerce-order,.nf-commerce-package-card{border-color:#e7e2da}
+.nf-commerce-order-summary{background:#fffdf8}
+.nf-commerce-card.soft{background:#faf9f5}
+.nf-commerce-package-card .foot{background:#fbfaf8;border-top-color:#ebe6dd}
+.nf-commerce-package-card .meta span,.nf-commerce-card .meta span{color:#655a3d;background:#f7f1e3}
+.nf-commerce-quick-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin-top:18px}
+.nf-commerce-quick-card{appearance:none;text-align:left;border:1px solid #e5dfd3;border-radius:14px;padding:17px;background:white;font:inherit;display:flex;flex-direction:column;align-items:flex-start;gap:10px;cursor:pointer;min-width:0;transition:border-color .16s,transform .16s}
+.nf-commerce-quick-card:hover,.nf-commerce-quick-card:focus-visible{border-color:#bea65e;transform:translateY(-2px)}
+.nf-commerce-quick-card span{font-size:11px;font-weight:900;color:#96824a}
+.nf-commerce-quick-card strong{font-size:16px;color:#252925}
+.nf-commerce-quick-card small{font-size:12px;line-height:1.55;color:#62655f}
+.nf-commerce-quick-card em{margin-top:auto;font-size:12px;font-style:normal;font-weight:800;color:#675830}
+.nf-commerce-restock>p{font-size:13px;line-height:1.6;margin:0;color:#606158}
+.nf-commerce-restock-meta{display:flex;gap:8px 20px;flex-wrap:wrap;font-size:12px;color:#656960}
+.nf-commerce-restock-meta strong{color:#30322c}
+.nf-commerce-next{gap:8px}
+.nf-commerce-next-divider{height:1px;background:#e4ded4;margin:4px 0}
+.nf-commerce-text-btn{appearance:none;border:0;background:transparent;padding:3px 0;color:#675830;font:inherit;font-size:12px;font-weight:800;cursor:pointer;text-align:left}
+.nf-commerce-account-action{margin-top:8px}
+@media(max-width:900px){.nf-commerce-quick-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.nf-commerce-quick-grid{grid-template-columns:1fr 1fr;gap:8px}.nf-commerce-quick-card{padding:13px;gap:7px}.nf-commerce-quick-card strong{font-size:14px}.nf-commerce-nav button{flex:1 1 40%;font-size:12px;padding:10px 7px}.nf-commerce-top h2{line-height:1.13}.nf-commerce-restock-meta{flex-direction:column;gap:4px}}
+
+
+/* NF RETAIL PACKAGE CLARITY V2 */
+.nf-commerce-choice[aria-pressed="true"]{background:#2e352d;border-color:#2e352d;color:#fff}
+.nf-commerce-retail-progress{margin-top:11px;color:#675830;font-weight:750;font-size:13px;line-height:1.45}
+.nf-commerce-retail-progress[data-complete="true"]{color:#286545}
+.nf-commerce-package-starting{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 9px;margin:1px 0 3px;color:#655a3d;font-size:12px}
+.nf-commerce-package-starting strong{font-size:18px;color:#2e352d}
+.nf-commerce-package-starting small{font-size:11px;color:#77736a;width:100%}
+.nf-commerce-price-pending{font-size:14px !important;color:#655a3d !important;line-height:1.4}
+.nf-commerce-btn.primary:disabled{opacity:.55;cursor:not-allowed}
+.nf-commerce-builder-total>div{display:grid;gap:5px;min-width:0}
+@media(max-width:700px){.nf-commerce-builder-total{align-items:stretch;flex-direction:column}.nf-commerce-builder-total .nf-commerce-btn{width:100%}}
+
+
+/* NF PARTNER BUYING FLOW V3 */
+.nf-commerce-top{padding:13px 18px;align-items:center;background:#fff;border-color:#e7e2da;border-radius:14px}
+.nf-commerce-top .nf-commerce-kicker{font-size:10px}
+.nf-commerce-top h2{font-family:inherit;font-size:clamp(17px,2vw,21px);font-weight:750;line-height:1.3;margin:3px 0 0}
+.nf-commerce-top p{display:none}
+.nf-commerce-package-starting{min-height:26px}
+.nf-commerce-price-awaiting{margin:5px 0 2px;color:#6d6c65;font-size:12px;line-height:1.4}
+.nf-commerce-sponsor-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.nf-commerce-portal-top-actions{display:flex;justify-content:flex-end}
+@media(max-width:600px){.nf-commerce-top{gap:10px;align-items:flex-start}.nf-commerce-top .nf-commerce-actions{width:100%}.nf-commerce-top .nf-commerce-actions button{flex:1 1 auto}}
+
+
+/* NF MY ORDERS PAYMENT-AWARE V5 */
+.nf-order-history-list { display:grid; gap:14px; }
+.nf-order-history-card { border:1px solid #e4dfd6; border-radius:16px; padding:18px; background:#fff; display:grid; gap:13px; }
+.nf-order-history-header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+.nf-order-history-eyebrow { color:#8b7443; font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+.nf-order-history-header h4 { margin:3px 0 4px; font-size:19px; color:#282d28; overflow-wrap:anywhere; }
+.nf-order-history-muted { color:#747c79; font-size:13px; }
+.nf-order-history-amount { text-align:right; flex-shrink:0; }
+.nf-order-history-amount strong { display:block; font-size:21px; color:#282d28; }
+.nf-order-history-status { display:inline-block; margin-top:6px; padding:5px 10px; border:1px solid #dae5dd; border-radius:999px; background:#f3f8f4; color:#356249; font-size:12px; font-weight:800; }
+.nf-order-history-status[data-payment="pending"] { background:#fff7e9; color:#87632b; border-color:#f0dfbc; }
+.nf-order-history-status[data-payment="cancelled"] { background:#f5f5f5; color:#6b6b6b; border-color:#e4e4e4; }
+.nf-order-history-meta { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.nf-order-history-meta div { display:grid; gap:3px; min-width:0; }
+.nf-order-history-meta span { font-size:11px; color:#76817c; text-transform:uppercase; letter-spacing:.04em; font-weight:800; }
+.nf-order-history-meta strong { font-size:13px; color:#293d3a; overflow-wrap:anywhere; }
+.nf-order-history-alert { padding:12px 14px; border:1px solid #e8d8bc; border-radius:12px; background:#fffaf0; color:#594824; display:grid; gap:4px; font-size:13px; line-height:1.5; }
+.nf-order-history-alert strong { font-size:14px; }
+.nf-order-history-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.nf-order-history-actions a.nf-commerce-btn { display:inline-flex; align-items:center; justify-content:center; text-decoration:none; box-sizing:border-box; }
+.nf-order-history-detail { border-top:1px solid #eee8df; padding-top:12px; }
+.nf-order-history-detail summary { font-size:13px; font-weight:800; cursor:pointer; color:#365e68; }
+.nf-order-history-detail p { font-size:13px; line-height:1.5; color:#6f7571; margin:10px 0 0; }
+.nf-order-history-item { display:flex; align-items:start; justify-content:space-between; gap:12px; padding:9px 0; border-bottom:1px solid #f0ede8; font-size:13px; }
+.nf-order-history-item:last-child { border-bottom:none; }
+.nf-order-history-item span { color:#39494a; }
+.nf-order-history-item strong { white-space:nowrap; color:#283c45; }
+@media(max-width:620px) {
+  .nf-order-history-card { padding:14px; }
+  .nf-order-history-meta { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .nf-order-history-header h4 { font-size:16px; }
+  .nf-order-history-amount strong { font-size:18px; }
+  .nf-order-history-actions > * { flex:1 1 100%; }
+}
+
+
+/* NF PARTNER REMINDER DEEP LINK V7 */
+.nf-partner-reminder-entry { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; padding:15px 18px; border:1px solid #d8e5db; border-radius:14px; background:#f4f8f2; }
+.nf-partner-reminder-entry h3 { margin:0 0 4px; font-size:17px; color:#2c3831; }
+.nf-partner-reminder-entry p { margin:0; max-width:700px; font-size:13px; line-height:1.55; color:#526458; }
+.nf-partner-reminder-entry-actions { display:flex; flex-wrap:wrap; gap:8px; }
+@media(max-width:620px){ .nf-partner-reminder-entry-actions { width:100%; } .nf-partner-reminder-entry-actions button { flex:1 1 auto; } }
+
+/* NF PARTNER SCHEDULE V6 */
+.nf-partner-schedule { display:grid; gap:18px; }
+.nf-schedule-intro { margin:0; color:#6b7674; line-height:1.6; max-width:760px; }
+.nf-schedule-alert { background:#fff9ef; border:1px solid #ead9ba; border-radius:13px; padding:15px 17px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:14px; }
+.nf-schedule-alert strong { display:block; margin-bottom:3px; color:#594c32; font-size:14px; }
+.nf-schedule-alert p { margin:0; color:#725e3c; font-size:13px; line-height:1.5; }
+.nf-schedule-columns { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+.nf-schedule-block { border:1px solid #e6e0d6; border-radius:16px; padding:19px; background:#fff; min-width:0; display:grid; gap:15px; align-content:start; }
+.nf-schedule-block-header { display:grid; gap:5px; }
+.nf-schedule-block-header h4 { margin:0; color:#2b302b; font-size:19px; }
+.nf-schedule-block-header p { margin:0; color:#738079; font-size:13px; line-height:1.5; }
+.nf-schedule-item { display:grid; gap:8px; padding:14px; border:1px solid #e8e1d5; border-radius:12px; background:#fcfbf8; }
+.nf-schedule-item-header { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+.nf-schedule-item-header strong { color:#2b302b; font-size:15px; }
+.nf-schedule-item-header span { color:#8b7443; font-size:11px; font-weight:850; }
+.nf-schedule-chip { display:inline-flex; width:max-content; max-width:100%; padding:5px 9px; border:1px solid #d8e3dc; border-radius:999px; background:#f3f7f3; font-size:12px; font-weight:800; color:#355c4c; }
+.nf-schedule-chip[data-due="past"] { border-color:#edd5ae; background:#fff7e9; color:#8e652c; }
+.nf-schedule-meta { color:#69766f; font-size:12px; line-height:1.5; }
+.nf-schedule-actions { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.nf-schedule-actions .nf-commerce-btn { text-decoration:none; display:inline-flex; justify-content:center; align-items:center; min-height:41px; box-sizing:border-box; }
+.nf-schedule-empty { background:#fafaf8; padding:20px; border:1px dashed #e0e3dd; border-radius:12px; color:#6e7974; line-height:1.55; font-size:13px; }
+.nf-schedule-empty p { margin:0 0 12px; }
+.nf-schedule-footer { color:#687771; font-size:12px; line-height:1.6; border-top:1px solid #ece7de; padding-top:14px; }
+.nf-schedule-setup { display:flex; gap:9px; flex-wrap:wrap; }
+@media(max-width:760px) { .nf-schedule-columns { grid-template-columns:1fr; } .nf-schedule-block { padding:15px; } .nf-schedule-actions > .nf-commerce-btn { flex:1 1 auto; } }
+
 `;
 
 const programName = (row) =>
-  row?.program?.label || PROGRAM_LABELS[row?.program_key] || row?.program_key;
+  PROGRAM_LABELS[row?.program_key] || row?.program?.label || row?.program_key;
 
 const packageBuilder = (pkg) => pkg?.configuration_schema?.builder || "";
+
+// NF PARTNER BUYING FLOW V3: show a safe, package-specific price preview
+// using currently loaded partner prices. Final totals still come from checkout.
+function partnerPackagePreviewCents(pkg, retailCatalog, giftPricing) {
+  if (!pkg) return null;
+  const builder = packageBuilder(pkg);
+  if (builder === "retail_shelf") return retailPackageStartingCents(pkg, retailCatalog);
+  const defaultQty = Number(pkg.default_quantity || pkg.minimum_quantity || 0);
+  if (builder === "signature_six") {
+    const tiers = pkg.configuration_schema?.price_tiers;
+    const matching = Array.isArray(tiers) && tiers.find((tier) =>
+      defaultQty >= Number(tier?.min || 0) &&
+      (tier.max == null || defaultQty <= Number(tier.max)) &&
+      Number(tier.unit_price_cents) > 0
+    );
+    const unit = Number(matching?.unit_price_cents || pkg.base_price_cents || 0);
+    return defaultQty > 0 && unit > 0 ? defaultQty * unit : null;
+  }
+  if (builder === "business_gifting") {
+    // No hardcoded gift pricing fallback in the preview.
+    const known = [giftPricing?.bear_price_cents, giftPricing?.hex_price_cents]
+      .map(Number).filter((amount) => Number.isFinite(amount) && amount > 0);
+    return defaultQty > 0 && known.length ? Math.min(...known) * defaultQty : null;
+  }
+  if (pkg.price_mode === "fixed" && Number(pkg.base_price_cents) > 0) {
+    return Number(pkg.base_price_cents);
+  }
+  if (builder === "foodservice") {
+    // Show an advance subtotal only when each required line has an explicit
+    // configured price. Otherwise, don't invent a quote from fallback rates.
+    const lines = (pkg.items || []).filter((item) => item.category === "bulk");
+    if (!lines.length || lines.some((item) => !(Number(item.unit_price_cents) > 0))) return null;
+    return lines.reduce((sum, item) => sum + Number(item.unit_price_cents) * Number(item.quantity || 1), 0);
+  }
+  return null;
+}
+
+
+// NF RETAIL PACKAGE CLARITY V2: calculate a true catalog-based "from" price.
+// Price is a preview only; checkout still validates actual rules on the server.
+function retailPackageStartingCents(pkg, catalog) {
+  if (packageBuilder(pkg) !== "retail_shelf") return null;
+  const schema = pkg?.configuration_schema || {};
+  const count = Number(schema.flavor_selection_count || pkg.flavor_selection_count || 0);
+  const perFlavor = Number(schema.quantity_per_flavor || 6);
+  const fixed = Array.isArray(schema.fixed_flavors) ? schema.fixed_flavors : [];
+  if (!Number.isInteger(count) || count < 1 || !Number.isInteger(perFlavor) || perFlavor < 1) return null;
+  if (fixed.length && fixed.length !== count) return null;
+  const groups = new Map();
+  for (const row of catalog || []) {
+    if (pkg.allowed_size_ids?.length && !pkg.allowed_size_ids.includes(row.size_id)) continue;
+    if (pkg.allowed_textures?.length && !pkg.allowed_textures.includes(row.texture)) continue;
+    if (pkg.allowed_flavor_names?.length && !pkg.allowed_flavor_names.includes(row.flavor_name)) continue;
+    const price = Number(row.unit_price_cents);
+    if (!Number.isFinite(price) || price <= 0) continue;
+    const key = JSON.stringify([row.size_id, row.texture]);
+    if (!groups.has(key)) groups.set(key, new Map());
+    const flavors = groups.get(key);
+    const flavorKey = String(row.flavor_name || row.flavor_id || "");
+    if (!flavorKey) continue;
+    const current = flavors.get(flavorKey);
+    if (current == null || price < current) flavors.set(flavorKey, price);
+  }
+  let minimum = Number.POSITIVE_INFINITY;
+  for (const flavors of groups.values()) {
+    const prices = fixed.length
+      ? fixed.map((name) => flavors.get(String(name)))
+      : [...flavors.values()].sort((a, b) => a - b).slice(0, count);
+    if (prices.length !== count || prices.some((price) => !Number.isFinite(price) || price <= 0)) continue;
+    const total = prices.reduce((sum, price) => sum + price * perFlavor, 0);
+    minimum = Math.min(minimum, total);
+  }
+  return Number.isFinite(minimum) ? minimum : null;
+}
+
 
 const FOODSERVICE_SIZE_LABELS = {
   half_gallon: "1/2 Gallon",
@@ -133,9 +338,35 @@ const itemRule = (item, key, fallback = null) =>
     ? item.rules[key]
     : fallback;
 
+
+// NF MY ORDERS PAYMENT-AWARE V5
+// Never open an arbitrary URL from stored order data. Square link may expire;
+// do not create a new payment link or order in this client-side helper.
+function existingSquarePaymentUrl(value) {
+  try {
+    const url = new URL(String(value || ""));
+    const allowed = ["square.link", "square.site", "squareup.com"];
+    if (url.protocol !== "https:" || url.username || url.password) return "";
+    const host = url.hostname.toLowerCase();
+    return allowed.some((domain) => host === domain || host.endsWith(`.${domain}`))
+      ? url.href
+      : "";
+  } catch {
+    return "";
+  }
+}
+
 export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBusy, onManagePassword }) {
   /* PARTNER PASSWORD SETUP V11.1 */
   const [section, setSection] = useState("dashboard");
+  // NF PARTNER REMINDER DEEP LINK V7
+  // Read the reminder identifier only after the partner has signed in; it is
+  // not a permission grant and never creates an order automatically.
+  const [reminderOrderId, setReminderOrderId] = useState(() => {
+    const raw = new URLSearchParams(window.location.search).get("reorder") || "";
+    return /^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(raw) && raw.length <= 80 ? raw : "";
+  });
+
   const [programs, setPrograms] = useState([]);
   const [packages, setPackages] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -218,7 +449,7 @@ export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBu
       const preferredProgram =
         approved.find((row) => row.program_key === "retail")?.program_key ||
         approved.find((row) => row.program_key === "business_gifting")?.program_key ||
-        approved[0]?.program_key ||
+        approved.find((row) => row.program_key === "foodservice")?.program_key ||
         "";
       const nextProgram = approvedKeys.has(activeProgram) ? activeProgram : preferredProgram;
       if (nextProgram !== activeProgram) setActiveProgram(nextProgram);
@@ -289,9 +520,39 @@ export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBu
     [packages, activeProgram]
   );
 
-  const lastOrder = orders[0] || null;
+  const lastOrder = orders.find((order) => order.paid === true && order.status === "fulfilled") || null;
+
+  // NF PARTNER SCHEDULE V6
+  // Payment must be confirmed and fulfillment completed before suggesting
+  // another order. Prevent duplicate suggestions when a replacement exists.
+  const unpaidPartnerOrders = orders.filter((order) =>
+    order.paid !== true && order.status !== "cancelled"
+  );
+  // NF PARTNER REMINDER DEEP LINK V7
+  const suggestedRestocks = suggestedPartnerRestocks(orders);
+  const reminderResult = resolvePartnerReminderOrder(orders, reminderOrderId);
+  const dismissReminderLink = () => {
+    setReminderOrderId("");
+    const url = new URL(window.location.href);
+    url.searchParams.delete("reorder");
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+  };
+  const michiganDayKey = (() => {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Detroit", year: "numeric", month: "2-digit", day: "2-digit"
+    }).formatToParts(new Date());
+    const value = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+    return `${value.year}-${value.month}-${value.day}`;
+  })();
+  const repeatPurchasePrograms = approvedPrograms.filter((program) =>
+    ["foodservice", "business_gifting"].includes(program.program_key)
+  );
+
   const lastFulfilled = orders.find((order) => order.status === "fulfilled") || null;
   const openOrder = orders.find((order) => !["fulfilled", "cancelled"].includes(order.status)) || null;
+  const nextScheduledOrder = [...recurring]
+    .filter((item) => item.next_order_on && !["paused", "cancelled"].includes(item.status))
+    .sort((a, b) => String(a.next_order_on).localeCompare(String(b.next_order_on)))[0] || null;
 
   const selectPackage = (pkg) => {
     setSelectedPackage(pkg);
@@ -301,14 +562,22 @@ export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBu
     if (packageBuilder(pkg) === "retail_shelf") {
       const schema = pkg.configuration_schema || {};
       const fixedNames = Array.isArray(schema.fixed_flavors) ? schema.fixed_flavors : [];
-      const fixedIds = fixedNames
-        .map((name) => retailCatalog.find((row) => row.flavor_name === name)?.flavor_id)
-        .filter(Boolean);
-      const first = retailCatalog[0];
+      const eligible = retailCatalog.filter((row) =>
+        (!pkg.allowed_size_ids?.length || pkg.allowed_size_ids.includes(row.size_id)) &&
+        (!pkg.allowed_textures?.length || pkg.allowed_textures.includes(row.texture)) &&
+        (!pkg.allowed_flavor_names?.length || pkg.allowed_flavor_names.includes(row.flavor_name))
+      );
+      const first = eligible[0];
+      const sizeId = first?.size_id || pkg.allowed_size_ids?.[0] || "";
+      const texture = eligible.find((row) => row.size_id === sizeId && row.texture === "regular")?.texture ||
+        eligible.find((row) => row.size_id === sizeId)?.texture || "regular";
+      const availableFixedIds = fixedNames.map((name) => eligible.find(
+        (row) => row.flavor_name === name && row.size_id === sizeId && row.texture === texture
+      )?.flavor_id).filter(Boolean);
       setRetailConfig({
-        sizeId: pkg.allowed_size_ids?.includes(first?.size_id) ? first.size_id : pkg.allowed_size_ids?.[0] || first?.size_id || "",
-        texture: "regular",
-        flavorIds: fixedIds,
+        sizeId,
+        texture,
+        flavorIds: fixedNames.length ? availableFixedIds : [],
       });
     }
 
@@ -395,7 +664,10 @@ export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBu
     );
   }, [selectedPackage, retailCatalog]);
 
-  const retailFlavors = uniqueBy(retailOptions, "flavor_id");
+  const retailEligibleOptions = retailOptions.filter((row) =>
+    row.size_id === retailConfig.sizeId && row.texture === retailConfig.texture
+  );
+  const retailFlavors = uniqueBy(retailEligibleOptions, "flavor_id");
   const retailSizes = uniqueBy(retailOptions, "size_id");
   const retailTextures = uniqueBy(retailOptions.filter((row) => row.size_id === retailConfig.sizeId), "texture");
 
@@ -407,12 +679,16 @@ export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBu
   const retailQtyPerFlavor = Number(selectedPackage?.configuration_schema?.quantity_per_flavor || 6);
   const retailFixed = (selectedPackage?.configuration_schema?.fixed_flavors || []).length > 0;
 
-  const retailPrice = retailConfig.flavorIds.reduce((sum, flavorId) => {
-    const row = retailOptions.find(
-      (item) => item.flavor_id === flavorId && item.size_id === retailConfig.sizeId && item.texture === retailConfig.texture
-    );
-    return sum + Number(row?.unit_price_cents || 0) * retailQtyPerFlavor;
-  }, 0);
+  const retailSelectedRows = retailConfig.flavorIds.map((flavorId) =>
+    retailEligibleOptions.find((item) => item.flavor_id === flavorId) || null
+  );
+  const retailComplete = retailRequiredFlavors > 0 &&
+    retailSelectedRows.length === retailRequiredFlavors &&
+    retailSelectedRows.every((row) => row && Number(row.unit_price_cents) > 0);
+  const retailPrice = retailComplete
+    ? retailSelectedRows.reduce((sum, row) => sum + Number(row.unit_price_cents) * retailQtyPerFlavor, 0)
+    : null;
+  const retailMissing = Math.max(0, retailRequiredFlavors - retailConfig.flavorIds.length);
 
   const toggleRetailFlavor = (flavorId) => {
     if (retailFixed) return;
@@ -437,8 +713,8 @@ export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBu
         (row) => row.flavor_id === flavorId && row.size_id === retailConfig.sizeId && row.texture === retailConfig.texture
       )
     );
-    if (rows.some((row) => !row)) {
-      setError("One of the selected package combinations is no longer available.");
+    if (rows.some((row) => !row || !(Number(row.unit_price_cents) > 0))) {
+      setError("One of the selected flavors or prices is unavailable for this jar size. Choose a different combination.");
       return;
     }
 
@@ -1122,13 +1398,35 @@ export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBu
       <div className="nf-commerce-field-grid">
         <div className="nf-commerce-field">
           <label>Jar size</label>
-          <select value={retailConfig.sizeId} onChange={(event) => setRetailConfig((current) => ({ ...current, sizeId: event.target.value }))}>
+          <select value={retailConfig.sizeId} onChange={(event) => setRetailConfig((current) => {
+            const sizeId = event.target.value;
+            const available = retailOptions.filter((row) => row.size_id === sizeId);
+            const texture = available.some((row) => row.texture === current.texture)
+              ? current.texture : available[0]?.texture || "regular";
+            const fixedNames = selectedPackage?.configuration_schema?.fixed_flavors || [];
+            const flavorIds = retailFixed
+              ? fixedNames.map((name) => available.find((row) =>
+                  row.texture === texture && row.flavor_name === name)?.flavor_id).filter(Boolean)
+              : current.flavorIds.filter((id) => available.some((row) =>
+                  row.texture === texture && row.flavor_id === id));
+            return { ...current, sizeId, texture, flavorIds };
+          })}>
             {retailSizes.map((row) => <option key={row.size_id} value={row.size_id}>{row.size_label}</option>)}
           </select>
         </div>
         <div className="nf-commerce-field">
           <label>Texture</label>
-          <select value={retailConfig.texture} onChange={(event) => setRetailConfig((current) => ({ ...current, texture: event.target.value }))}>
+          <select value={retailConfig.texture} onChange={(event) => setRetailConfig((current) => ({
+            ...current,
+            texture: event.target.value,
+            flavorIds: retailFixed
+              ? (selectedPackage?.configuration_schema?.fixed_flavors || []).map((name) =>
+                  retailOptions.find((row) => row.size_id === current.sizeId &&
+                    row.texture === event.target.value && row.flavor_name === name)?.flavor_id
+                ).filter(Boolean)
+              : current.flavorIds.filter((id) => retailOptions.some((row) =>
+                  row.size_id === current.sizeId && row.texture === event.target.value && row.flavor_id === id)),
+          }))}>
             {retailTextures.length ? retailTextures.map((row) => <option key={row.texture} value={row.texture}>{row.texture === "spun" ? "Spun" : "Regular"}</option>) : <option value="regular">Regular</option>}
           </select>
         </div>
@@ -1152,14 +1450,25 @@ export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBu
             </button>
           ))}
         </div>
+        <div className="nf-commerce-retail-progress" data-complete={retailComplete} role="status" aria-live="polite">
+          {retailComplete
+            ? `${retailRequiredFlavors} of ${retailRequiredFlavors} flavors selected. Ready to review your order.`
+            : retailFixed
+              ? "One or more included flavors or prices are unavailable for this jar size. Please contact NectarFusions."
+              : retailMissing > 0
+              ? `${retailConfig.flavorIds.length} of ${retailRequiredFlavors} flavors selected. Choose ${retailMissing} more to continue.`
+              : "A selected flavor is not available for this size or texture. Please adjust your selection."}
+        </div>
       </div>
 
       <div className="nf-commerce-builder-total">
         <div>
-          <span>{selectedPackage.default_quantity} jars · current partner pricing</span>
-          <strong>{money(retailPrice)}</strong>
+          <span>{selectedPackage.default_quantity} jars · {retailComplete ? "current partner pricing" : "choose your flavors to calculate the total"}</span>
+          {retailComplete
+            ? <strong>{money(retailPrice)}</strong>
+            : <strong className="nf-commerce-price-pending">Total available after selection</strong>}
         </div>
-        <button className="nf-commerce-btn primary" type="button" onClick={addRetailPackage}>Continue to Fulfillment & Payment</button>
+        <button className="nf-commerce-btn primary" type="button" disabled={!retailComplete} onClick={addRetailPackage}>Continue to Fulfillment & Payment</button>
       </div>
     </div>
   );
@@ -1468,16 +1777,8 @@ export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBu
       <style>{CSS}</style>
       <div className="nf-commerce-top">
         <div>
-          <div className="nf-commerce-kicker">NectarFusions Partner Portal</div>
-          <h2>Welcome, {account?.public_name || account?.business_name || "Partner"}</h2>
-          <p>One account for every approved NectarFusions business program, package, paid order, fulfillment status, and reorder.</p>
-          <div className="nf-commerce-program-chips">
-            {programs.length ? programs.map((row) => (
-              <span className="nf-commerce-chip" data-status={row.status} key={row.program_key}>
-                {programName(row)} · {row.status}
-              </span>
-            )) : <span className="nf-commerce-chip" data-status="pending">No programs enabled yet</span>}
-          </div>
+          <div className="nf-commerce-kicker">Business ordering</div>
+          <h2>{account?.business_name || account?.public_name || "NectarFusions Partner"}</h2>
         </div>
         <div className="nf-commerce-actions">
           <button className="nf-commerce-btn" type="button" onClick={() => window.dispatchEvent(new Event("nf-open-partner-cart"))}>Open Cart</button>
@@ -1488,15 +1789,43 @@ export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBu
       <nav className="nf-commerce-nav" aria-label="Partner commerce sections">
         {[
           ["dashboard", "Dashboard"],
-          ["packages", "Packages"],
-          ["orders", "Orders"],
-          ["recurring", "Recurring Orders"],
-          ["delivery", "Delivery & Pickup"],
-          ["account", "Account"],
+          ["packages", "Place Order"],
+          ["orders", "My Orders"],
+          ["recurring", "Schedule"],
+          ["account", "My Business"],
         ].map(([id, label]) => (
-          <button key={id} type="button" aria-current={section === id ? "page" : undefined} onClick={() => { setSection(id); setError(""); setNotice(""); }}>{label}</button>
+          <button key={id} type="button" aria-current={(section === id || (id === "account" && section === "delivery")) ? "page" : undefined} onClick={() => { if (id === "packages" && activeProgram === "hive_partners") { setSelectedPackage(null); setActiveProgram(approvedPrograms.find((row) => row.program_key !== "hive_partners")?.program_key || ""); } setSection(id); setError(""); setNotice(""); }}>{label}</button>
         ))}
       </nav>
+
+      {/* NF PARTNER REMINDER DEEP LINK V7 */}
+      {reminderOrderId && !loading && (
+        <aside className="nf-partner-reminder-entry" aria-label="Your NectarFusions restock reminder">
+          <div>
+            <h3>{reminderResult.state === "ready" ? "Ready to restock?" : "Review your previous order"}</h3>
+            <p>{reminderResult.state === "ready"
+              ? `Your ${reminderResult.order.package_snapshot?.name || "previous honey order"} is ready for review. Check your selections and current pricing before placing a new order.`
+              : reminderResult.state === "already_reordered"
+                ? "A newer order is already linked to this purchase. Check its status before ordering again."
+                : reminderResult.state === "unpaid"
+                  ? "The previous order still needs payment confirmation. Review the existing order rather than making a duplicate."
+                  : reminderResult.state === "in_progress"
+                    ? "The previous order is still in progress. Review its fulfillment status before restocking."
+                    : "This reminder cannot be reordered directly. Review your order history to see what is available."}</p>
+          </div>
+          <div className="nf-partner-reminder-entry-actions">
+            <button className="nf-commerce-btn primary" type="button" onClick={() => {
+              if (reminderResult.state === "ready") {
+                reorder(reminderResult.order);
+              } else {
+                setSection("orders");
+              }
+              dismissReminderLink();
+            }}>{reminderResult.state === "ready" ? "Review Reorder" : "View My Orders"}</button>
+            <button className="nf-commerce-btn" type="button" onClick={dismissReminderLink} aria-label="Dismiss reminder">Dismiss</button>
+          </div>
+        </aside>
+      )}
 
       {error && <div className="nf-commerce-message error" role="alert">{error}</div>}
       {notice && <div className="nf-commerce-message success" role="status">{notice}</div>}
@@ -1505,65 +1834,93 @@ export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBu
         <div className="nf-commerce-panel">
           <div className="nf-commerce-panel-head">
             <div>
-              <div className="nf-commerce-kicker">Command center</div>
-              <h3>Your Partner Dashboard</h3>
-              <p>See your current programs, latest order, open fulfillment, and fastest path to reorder.</p>
+              <div className="nf-commerce-kicker">Your business, made simpler</div>
+              <h3>Ready for your next order?</h3>
+              <p>Restock a previous order, shop a new collection, or check what is coming up.</p>
             </div>
           </div>
           <div className="nf-commerce-dashboard-grid">
-            <div className="nf-commerce-order-summary">
+            <div className="nf-commerce-order-summary nf-commerce-restock">
               <div className="nf-commerce-order-summary-head">
                 <div>
-                  <small>Last order</small>
-                  <h4>{lastOrder?.order_no || "No paid partner orders yet"}</h4>
+                  <small>{lastOrder ? "Quick reorder" : openOrder ? "Order in progress" : "Get started"}</small>
+                  <h4>{lastOrder?.package_snapshot?.name || (openOrder ? "Review your open order" : "Place your first partner order")}</h4>
                 </div>
                 {lastOrder && <span className="nf-commerce-status" data-status={lastOrder.status}>{cleanStatus(lastOrder.status)}</span>}
               </div>
-              {lastOrder ? (
-                <>
-                  <div className="nf-commerce-grid">
-                    <div className="nf-commerce-stat"><span>Package</span><strong>{lastOrder.package_snapshot?.name || "Partner order"}</strong></div>
-                    <div className="nf-commerce-stat"><span>Total</span><strong>{money(lastOrder.total_cents)}</strong></div>
-                    <div className="nf-commerce-stat"><span>Date</span><strong>{dateLabel(lastOrder.created_at)}</strong></div>
-                  </div>
-                  <div className="nf-commerce-actions" style={{ justifyContent: "flex-start" }}>
-                    <button className="nf-commerce-btn primary" type="button" onClick={() => reorder(lastOrder)}>REORDER LAST ORDER</button>
-                    <button className="nf-commerce-btn" type="button" onClick={() => setSection("packages")}>SHOP PACKAGES</button>
-                  </div>
-                </>
-              ) : (
-                <button className="nf-commerce-btn primary" type="button" onClick={() => setSection("packages")}>SHOP PACKAGES</button>
+              <p>{lastOrder
+                ? "Bring back your previous selection in one step. Review the cart and current prices before checkout."
+                : openOrder ? "You already have an order in progress. Review its status in My Orders before placing it again." : "Choose a collection for your business. Your available programs and prices will be shown as you shop."}</p>
+              {lastOrder && (
+                <div className="nf-commerce-restock-meta">
+                  <span>Last ordered: <strong>{dateLabel(lastOrder.created_at)}</strong></span>
+                  <span>Previous total: <strong>{money(lastOrder.total_cents)}</strong></span>
+                </div>
               )}
+              <div className="nf-commerce-actions" style={{ justifyContent: "flex-start" }}>
+                {lastOrder && lastOrder.items?.length ? (
+                  <button className="nf-commerce-btn primary" type="button" onClick={() => reorder(lastOrder)}>Reorder these items</button>
+                ) : null}
+                <button className="nf-commerce-btn" type="button" onClick={() => setSection(!lastOrder && openOrder ? "orders" : "packages")}>{lastOrder ? "Shop other collections" : openOrder ? "View open order" : "Place an order"}</button>
+              </div>
             </div>
-            <div className="nf-commerce-card soft">
-              <div className="nf-commerce-stat"><span>Open order</span><strong>{openOrder?.order_no || "None"}</strong></div>
-              <p>{openOrder ? cleanStatus(openOrder.status) : "Nothing is waiting on fulfillment right now."}</p>
-              <div className="nf-commerce-stat"><span>Next expected reorder</span><strong>{lastFulfilled?.reorder_due_on ? dateLabel(lastFulfilled.reorder_due_on) : "Not scheduled"}</strong></div>
+            <div className="nf-commerce-card soft nf-commerce-next">
+              <div className="nf-commerce-stat"><span>Order in progress</span><strong>{openOrder?.order_no || "No open orders"}</strong></div>
+              <p>{openOrder ? cleanStatus(openOrder.status) : "When you place an order, you can track its progress here."}</p>
+              {openOrder && <button className="nf-commerce-text-btn" type="button" onClick={() => setSection("orders")}>View order details →</button>}
+              <div className="nf-commerce-next-divider" />
+              <div className="nf-commerce-stat">
+                <span>{nextScheduledOrder ? "Next scheduled order" : "Next suggested restock"}</span>
+                <strong>{nextScheduledOrder?.next_order_on ? dateLabel(nextScheduledOrder.next_order_on) : lastFulfilled?.reorder_due_on ? dateLabel(lastFulfilled.reorder_due_on) : "Not scheduled"}</strong>
+              </div>
+              <p>{nextScheduledOrder ? "View your current recurring arrangements in Schedule." : lastFulfilled?.reorder_due_on ? "A suggested date from your order record, not an automatic charge." : "Replenishment information will appear as your order history grows."}</p>
+              <button className="nf-commerce-text-btn" type="button" onClick={() => setSection("recurring")}>View schedule →</button>
             </div>
+          </div>
+          <div className="nf-commerce-quick-grid" aria-label="Quick partner actions">
+            <button className="nf-commerce-quick-card" type="button" onClick={() => setSection("packages")}>
+              <span aria-hidden="true">01</span><strong>Place Order</strong><small>Choose from your available honey and gift collections.</small><em>Shop collections →</em>
+            </button>
+            <button className="nf-commerce-quick-card" type="button" onClick={() => setSection("orders")}>
+              <span aria-hidden="true">02</span><strong>My Orders</strong><small>Track fulfillment, view previous purchases and reorder.</small><em>View orders →</em>
+            </button>
+            <button className="nf-commerce-quick-card" type="button" onClick={() => setSection("recurring")}>
+              <span aria-hidden="true">03</span><strong>Schedule</strong><small>Review eligible recurring orders and renewal dates.</small><em>View schedule →</em>
+            </button>
+            <button className="nf-commerce-quick-card" type="button" onClick={() => setSection("account")}>
+              <span aria-hidden="true">04</span><strong>My Business</strong><small>Keep business details and delivery preferences up to date.</small><em>Manage account →</em>
+            </button>
           </div>
         </div>
       )}
 
-      {section === "packages" && (
+      {(section === "packages" || section === "sponsorship") && (
         <div className="nf-commerce-panel">
           <div className="nf-commerce-panel-head">
             <div>
-              <div className="nf-commerce-kicker">Packages, not products</div>
-              <h3>Choose Your Program Package</h3>
-              <p>Only programs approved for this business appear here. Package rules come from the database, not hardcoded storefront pages.</p>
+              <div className="nf-commerce-kicker">{section === "sponsorship" ? "Supporting our apiaries" : "Business ordering"}</div>
+              <h3>{section === "sponsorship" ? "Hive Partnerships" : "Choose a Honey Collection"}</h3>
+              <p>{section === "sponsorship"
+                ? "Explore sponsorship opportunities separately from honey restocking and business gifting."
+                : "Choose Retail, Wholesale or Business Gifting, then review quantities, flavors and your order total."}</p>
             </div>
           </div>
 
-          {approvedPrograms.length ? (
+          {section === "sponsorship" && (
+            <button className="nf-commerce-btn" type="button" onClick={() => { setSelectedPackage(null); setActiveProgram(approvedPrograms.find((row) => row.program_key !== "hive_partners")?.program_key || ""); setSection("packages"); }}>
+              ← Back to Honey Ordering
+            </button>
+          )}
+          {section === "packages" && approvedPrograms.some((row) => row.program_key !== "hive_partners") ? (
             <div className="nf-commerce-program-tabs" role="tablist">
-              {approvedPrograms.map((row) => (
+              {approvedPrograms.filter((row) => row.program_key !== "hive_partners").map((row) => (
                 <button key={row.program_key} type="button" role="tab" aria-selected={activeProgram === row.program_key} onClick={() => { setActiveProgram(row.program_key); setSelectedPackage(null); }}>{programName(row)}</button>
               ))}
             </div>
           ) : null}
 
           {!approvedPrograms.length ? (
-            <div className="nf-commerce-empty">No programs are approved for this account yet. NectarFusions can enable Retail, Foodservice, Business Gifting, and Hive Partners independently on this same account.</div>
+            <div className="nf-commerce-empty">No ordering programs are available for this account yet. Contact NectarFusions to connect the right options for your business.</div>
           ) : packageRows.length ? (
             <div className="nf-commerce-grid">
               {packageRows.map((pkg) => (
@@ -1572,24 +1929,32 @@ export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBu
                     <div className="nf-commerce-kicker">{PROGRAM_LABELS[pkg.program_key] || pkg.program_key}</div>
                     <h4>{pkg.name}</h4>
                     <p>{pkg.description}</p>
+                    {partnerPackagePreviewCents(pkg, retailCatalog, giftPricing) != null ? (
+                      <div className="nf-commerce-package-starting">
+                        Starting at <strong>{money(partnerPackagePreviewCents(pkg, retailCatalog, giftPricing))}</strong>
+                        <small>Estimated package subtotal · final total confirmed at checkout</small>
+                      </div>
+                    ) : (
+                      <div className="nf-commerce-price-awaiting">Price shown after choosing package options</div>
+                    )}
                     <div className="meta">
                       {pkg.default_quantity ? <span>{pkg.default_quantity} {pkg.program_key === "retail" ? "jars" : packageBuilder(pkg) === "signature_six" ? "gift boxes" : pkg.program_key === "business_gifting" ? "individual gifts" : pkg.program_key === "foodservice" ? "package units" : pkg.program_key === "hive_partners" ? "annual partnership" : "units"}</span> : null}
                       {pkg.base_price_cents != null && pkg.price_mode === "fixed" ? <span>{money(pkg.base_price_cents)}</span> : null}
                       {pkg.flavor_selection_count ? <span>{pkg.flavor_selection_count} flavor{pkg.flavor_selection_count === 1 ? "" : "s"}</span> : null}
-                      {pkg.program_key === "hive_partners" ? <span>Annual renewal</span> : pkg.default_reorder_interval_days ? <span>Reorder in {pkg.default_reorder_interval_days} days</span> : null}
+                      {pkg.program_key === "hive_partners" ? <span>Annual renewal</span> : pkg.default_reorder_interval_days ? <span>Suggested restock: {pkg.default_reorder_interval_days} days</span> : null}
                       {pkg.program_key === "hive_partners" ? <span>No physical fulfillment</span> : pkg.recurring_allowed ? <span>Recurring eligible</span> : null}
                     </div>
                   </div>
                   <div className="foot">
                     <button className="nf-commerce-btn primary" type="button" disabled={!packageBuilder(pkg)} onClick={() => selectPackage(pkg)}>
-                      Choose Package
+                      Customize & Continue
                     </button>
                   </div>
                 </article>
               ))}
             </div>
           ) : (
-            <div className="nf-commerce-empty">There are no active packages in this program yet. The program stays on this account and packages can be activated by NectarFusions without another application.</div>
+            <div className="nf-commerce-empty">No collections are currently available in this category. Your other business programs remain accessible above.</div>
           )}
 
           {selectedPackage && packageBuilder(selectedPackage) === "retail_shelf" ? renderRetailBuilder() : null}
@@ -1604,61 +1969,192 @@ export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBu
         <div className="nf-commerce-panel">
           <div className="nf-commerce-panel-head">
             <div>
-              <div className="nf-commerce-kicker">Order history</div>
-              <h3>Orders</h3>
-              <p>Paid partner commerce lives here. Reorder clones the previous configuration, then checkout validates current availability and current pricing.</p>
+              <div className="nf-commerce-kicker">Track purchases and restock</div>
+              <h3>My Orders</h3>
+              <p>View payment and fulfillment status. Once an order is fulfilled, reorder its items with current pricing verified at checkout.</p>
             </div>
           </div>
           {orders.length ? (
-            <div className="nf-commerce-orders">
-              {orders.map((order) => (
-                <article className="nf-commerce-order" key={order.id}>
-                  <div><span>Order</span><strong>{order.order_no}</strong></div>
-                  <div><span>Date</span><strong>{dateLabel(order.created_at)}</strong></div>
-                  <div><span>Package</span><strong>{order.package_snapshot?.name || "Partner order"}</strong></div>
-                  <div><span>Total</span><strong>{money(order.total_cents)}</strong></div>
-                  <div><span>Payment</span><strong>{order.paid ? "Paid" : "Awaiting payment"}</strong></div>
-                  <div><span>Fulfillment</span><strong>{order.fulfillment_method === "not_required" ? "Not required" : order.fulfillment_method === "delivery" ? "Local Delivery" : "Coleman Pickup"}</strong></div>
-                  <div><span>Status</span><strong>{cleanStatus(order.status)}</strong></div>
-                  <div className="order-actions" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    <button className="nf-commerce-btn primary" type="button" disabled={order.status === "cancelled"} onClick={() => reorder(order)}>Reorder exactly</button>
-                    <button className="nf-commerce-btn" type="button" disabled={!order.package_id} onClick={() => modifyOrder(order)}>Modify package</button>
-                  </div>
-                </article>
-              ))}
+            <div className="nf-order-history-list">
+              {orders.map((order) => {
+                const paid = order.paid === true;
+                const cancelled = order.status === "cancelled";
+                const paymentPending = !paid && !cancelled;
+                const fulfilled = paid && order.status === "fulfilled";
+                const existingPaymentLink = paymentPending
+                  ? existingSquarePaymentUrl(order.square_link_url)
+                  : "";
+                const lines = Array.isArray(order.items) ? order.items : [];
+                return (
+                  <article className="nf-order-history-card" key={order.id}>
+                    <div className="nf-order-history-header">
+                      <div>
+                        <span className="nf-order-history-eyebrow">Order {order.order_no}</span>
+                        <h4>{order.package_snapshot?.name || "Partner order"}</h4>
+                        <div className="nf-order-history-muted">Placed {dateLabel(order.created_at)}</div>
+                      </div>
+                      <div className="nf-order-history-amount">
+                        <strong>{money(order.total_cents)}</strong>
+                        <span className="nf-order-history-status" data-payment={cancelled ? "cancelled" : paid ? "paid" : "pending"}>
+                          {cancelled ? "Cancelled" : paid ? "Payment confirmed" : "Awaiting payment"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="nf-order-history-meta">
+                      <div><span>Fulfillment</span><strong>{order.fulfillment_method === "not_required" ? "Not required" : order.fulfillment_method === "delivery" ? "Local Delivery" : "Coleman Pickup"}</strong></div>
+                      <div><span>Order progress</span><strong>{paymentPending ? "Waiting for payment" : cancelled ? "Cancelled" : cleanStatus(order.status)}</strong></div>
+                      <div><span>Items</span><strong>{lines.reduce((total, item) => total + Number(item.quantity || 0), 0)} total</strong></div>
+                    </div>
+                    {paymentPending && (
+                      <div className="nf-order-history-alert">
+                        <strong>Payment has not been confirmed.</strong>
+                        <span>This order already exists. Avoid placing it again. {existingPaymentLink ? "You can open the existing Square payment link below." : "Contact NectarFusions for help with the original payment link."} If you have already paid, please confirm with NectarFusions before making another payment.</span>
+                      </div>
+                    )}
+                    <div className="nf-order-history-actions">
+                      {paymentPending && existingPaymentLink && (
+                        <a className="nf-commerce-btn primary" href={existingPaymentLink} target="_blank" rel="noopener noreferrer">Open existing Square payment link ↗</a>
+                      )}
+                      {fulfilled && lines.length > 0 && (
+                        <button className="nf-commerce-btn primary" type="button" onClick={() => reorder(order)}>Reorder these items</button>
+                      )}
+                      {fulfilled && order.package_id && (
+                        <button className="nf-commerce-btn" type="button" onClick={() => modifyOrder(order)}>Customize a new order</button>
+                      )}
+                      {paymentPending && (
+                        <a className="nf-commerce-btn" href={`mailto:info@nectar-fusions.com?subject=${encodeURIComponent(`Partner payment question: ${order.order_no}`)}`}>Ask about payment</a>
+                      )}
+                    </div>
+                    <details className="nf-order-history-detail">
+                      <summary>View order details</summary>
+                      {lines.length ? lines.map((item, index) => (
+                        <div className="nf-order-history-item" key={item.id || index}>
+                          <span>{Number(item.quantity || 0)} × {item.flavor_name || item.size_label || item.product_key || "Order item"}{item.size_label && item.flavor_name ? ` · ${item.size_label}` : ""}</span>
+                          <strong>{money(item.line_total_cents ?? (Number(item.quantity || 0) * Number(item.unit_price_cents || 0)))}</strong>
+                        </div>
+                      )) : <p>Line items are not available for this order.</p>}
+                      <p>Previous order totals are historical. New orders are quoted with current pricing and availability before checkout.</p>
+                    </details>
+                  </article>
+                );
+              })}
             </div>
-          ) : <div className="nf-commerce-empty">No partner orders yet.</div>}
+          ) : <div className="nf-commerce-empty">You haven't placed a partner order yet. Choose a collection in Place Order to get started.</div>}
         </div>
       )}
 
       {section === "recurring" && (
-        <div className="nf-commerce-panel">
+        <div className="nf-commerce-panel nf-partner-schedule">
           <div className="nf-commerce-panel-head">
-            <div><div className="nf-commerce-kicker">Repeat business</div><h3>Recurring & Renewals</h3><p>Foodservice and Business Gifting schedules appear here alongside annual Hive Partner renewal anniversaries.</p></div>
-          </div>
-          {recurring.length ? (
-            <div className="nf-commerce-orders">
-              {recurring.map((item) => (
-                <article className="nf-commerce-order" key={item.id}>
-                  <div><span>Package</span><strong>{item.package?.name || item.program?.label || "Recurring partner order"}</strong></div>
-                  <div><span>Cadence</span><strong>{item.program_key === "hive_partners" ? "Annual sponsorship" : `Every ${item.cadence_value} ${item.cadence_unit}${item.cadence_value === 1 ? "" : "s"}`}</strong></div>
-                  <div><span>{item.program_key === "hive_partners" ? "Renewal anniversary" : "Next order"}</span><strong>{dateLabel(item.next_order_on)}</strong></div>
-                  <div><span>Status</span><strong>{cleanStatus(item.status)}</strong></div>
-                  <div className="order-actions" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    <button className="nf-commerce-btn" type="button" onClick={() => editRecurring(item)}>Edit</button>
-                    <button className="nf-commerce-btn" type="button" disabled={!item.next_order_on || Boolean(busy)} onClick={() => manageRecurring(item, "skip")}>{item.program_key === "hive_partners" ? "Skip this renewal" : "Skip"}</button>
-                    <button className="nf-commerce-btn" type="button" disabled={Boolean(busy)} onClick={() => manageRecurring(item, item.status === "paused" ? "resume" : "pause")}>{item.status === "paused" ? "Resume" : "Pause"}</button>
-                  </div>
-                </article>
-              ))}
+            <div>
+              <div className="nf-commerce-kicker">Plan ahead</div>
+              <h3>Schedule & Restocking</h3>
+              <p className="nf-schedule-intro">See when to restock, manage existing recurring arrangements, and review your next purchase. Suggested dates and reminder emails never authorize automatic payment.</p>
             </div>
-          ) : <div className="nf-commerce-empty">No recurring partner orders are active yet. Eligible Business Gifting, Foodservice, and annual Hive Partner renewals can use this area.</div>}
+          </div>
+
+          {unpaidPartnerOrders.length > 0 && (
+            <div className="nf-schedule-alert" role="status">
+              <div>
+                <strong>{unpaidPartnerOrders.length} order{unpaidPartnerOrders.length === 1 ? " is" : "s are"} awaiting payment</strong>
+                <p>These orders already exist. Review them before placing another order for the same products.</p>
+              </div>
+              <button className="nf-commerce-btn" type="button" onClick={() => setSection("orders")}>Review My Orders</button>
+            </div>
+          )}
+
+          <div className="nf-schedule-columns">
+            <section className="nf-schedule-block" aria-labelledby="nf-restock-heading">
+              <div className="nf-schedule-block-header">
+                <div className="nf-commerce-kicker">Repeat purchases</div>
+                <h4 id="nf-restock-heading">Suggested Restocks</h4>
+                <p>Dates from fulfilled orders, not automatic orders or guaranteed reminders.</p>
+              </div>
+              {suggestedRestocks.length ? suggestedRestocks.map((order) => {
+                const dueOn = String(order.reorder_due_on).slice(0, 10);
+                const dueType = dueOn < michiganDayKey ? "past" : dueOn === michiganDayKey ? "today" : "future";
+                return (
+                  <article className="nf-schedule-item" key={order.id}>
+                    <div className="nf-schedule-item-header">
+                      <strong>{order.package_snapshot?.name || "Previously purchased honey"}</strong>
+                      <span>{order.order_no}</span>
+                    </div>
+                    <span className="nf-schedule-chip" data-due={dueType}>
+                      {dueType === "past" ? "Past suggested date" : dueType === "today" ? "Suggested today" : "Upcoming restock"}
+                    </span>
+                    <div className="nf-schedule-meta">Suggested date: <strong>{dateLabel(dueOn)}</strong> · {order.items.reduce((count, item) => count + Number(item.quantity || 0), 0)} items in the previous order</div>
+                    <div className="nf-schedule-actions">
+                      <button className="nf-commerce-btn primary" type="button" onClick={() => reorder(order)}>Review Reorder</button>
+                      <button className="nf-commerce-btn" type="button" onClick={() => setSection("orders")}>Order History</button>
+                    </div>
+                  </article>
+                );
+              }) : (
+                <div className="nf-schedule-empty">
+                  <p>No restock dates are available yet. Once a paid order is fulfilled and has a suggested restock date, it can appear here.</p>
+                  <button className="nf-commerce-btn" type="button" onClick={() => setSection(unpaidPartnerOrders.length ? "orders" : "packages")}>{unpaidPartnerOrders.length ? "Review existing orders" : "Browse honey collections"}</button>
+                </div>
+              )}
+            </section>
+
+            <section className="nf-schedule-block" aria-labelledby="nf-recurring-heading">
+              <div className="nf-schedule-block-header">
+                <div className="nf-commerce-kicker">Planned purchases</div>
+                <h4 id="nf-recurring-heading">Recurring Arrangements</h4>
+                <p>Manage reminder cycles linked to eligible paid orders. Sending a reminder may advance the next review date; it does not create a purchase or charge a card.</p>
+              </div>
+              {recurring.length ? recurring.map((item) => {
+                const cancelled = item.status === "cancelled";
+                const paused = item.status === "paused";
+                const isHive = item.program_key === "hive_partners";
+                return (
+                  <article className="nf-schedule-item" key={item.id}>
+                    <div className="nf-schedule-item-header">
+                      <strong>{item.package?.name || item.program?.label || "Recurring partner arrangement"}</strong>
+                      <span>{cleanStatus(item.status)}</span>
+                    </div>
+                    <div className="nf-schedule-meta">{isHive ? "Annual Hive Partnership" : `Every ${item.cadence_value} ${item.cadence_unit}${Number(item.cadence_value) === 1 ? "" : "s"}`}</div>
+                    <div className="nf-schedule-meta">{isHive ? "Next renewal reminder" : "Next review cycle"}: <strong>{dateLabel(item.next_order_on)}</strong></div>
+                    {!cancelled && (
+                      <div className="nf-schedule-actions">
+                        {item.status === "active" && Boolean(item.next_order_on) && (
+                          <button className="nf-commerce-btn" type="button" disabled={Boolean(busy)} onClick={() => manageRecurring(item, "skip")}>Skip Next</button>
+                        )}
+                        <button className="nf-commerce-btn" type="button" disabled={Boolean(busy)} onClick={() => manageRecurring(item, paused ? "resume" : "pause")}>{paused ? "Resume Schedule" : "Pause Schedule"}</button>
+                        <a className="nf-commerce-btn" href={`mailto:info@nectar-fusions.com?subject=${encodeURIComponent(`Partner schedule change: ${item.package?.name || item.program_key}`)}`}>Request Date Change</a>
+                      </div>
+                    )}
+                  </article>
+                );
+              }) : (
+                <div className="nf-schedule-empty">
+                  <p>No recurring arrangements are saved yet. Eligible Wholesale and Business Gifting collections can offer recurring-order options at checkout. A schedule is created only after an eligible order is confirmed.</p>
+                  {repeatPurchasePrograms.length ? (
+                    <div className="nf-schedule-setup">
+                      {repeatPurchasePrograms.map((program) => (
+                        <button className="nf-commerce-btn" key={program.program_key} type="button" onClick={() => { setActiveProgram(program.program_key); setSelectedPackage(null); setSection("packages"); }}>
+                          Explore {program.program_key === "foodservice" ? "Wholesale" : "Business Gifting"}
+                        </button>
+                      ))}
+                    </div>
+                  ) : <p className="nf-schedule-meta">Retail partners can always reorder fulfilled purchases from My Orders.</p>}
+                </div>
+              )}
+            </section>
+          </div>
+
+          <div className="nf-schedule-footer">
+            Restock dates are recommendations only. Email reminders depend on the active NectarFusions automation rules and are not guaranteed by the dates shown here. A recurring reminder cycle is not a recurring purchase or automatic charge. The reminder date can advance without a new order. To change your arrangement, use Request Date Change.
+          </div>
         </div>
       )}
 
       {section === "delivery" && (
         <div className="nf-commerce-panel">
-          <div className="nf-commerce-panel-head"><div><div className="nf-commerce-kicker">Saved fulfillment profile</div><h3>Delivery & Pickup</h3><p>Your selection persists into package checkout. Local delivery fees remain ZIP based.</p></div></div>
+          <div className="nf-commerce-panel-head">
+            <div><div className="nf-commerce-kicker">My Business / Fulfillment</div><h3>Delivery & Pickup</h3><p>Save your business location and preferences for future orders. Delivery eligibility and fees are confirmed at checkout.</p></div>
+            <button className="nf-commerce-btn" type="button" onClick={() => setSection("account")}>Back to My Business</button>
+          </div>
           <div className="nf-commerce-field-grid">
             <div className="nf-commerce-field"><label>Preferred fulfillment</label><select value={profile.preferredFulfillment} onChange={(event) => setProfile((current) => ({ ...current, preferredFulfillment: event.target.value }))}><option value="pickup">Coleman Pickup</option><option value="delivery">Local Delivery</option></select></div>
             <div className="nf-commerce-field"><label>Preferred contact</label><select value={profile.preferredContactMethod} onChange={(event) => setProfile((current) => ({ ...current, preferredContactMethod: event.target.value }))}><option value="text">Text</option><option value="call">Call</option><option value="email">Email</option></select></div>
@@ -1679,7 +2175,7 @@ export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBu
 
       {section === "account" && (
         <div className="nf-commerce-panel">
-          <div className="nf-commerce-panel-head"><div><div className="nf-commerce-kicker">One business account</div><h3>Account</h3><p>A business can participate in several NectarFusions programs without creating duplicate accounts.</p></div></div>
+          <div className="nf-commerce-panel-head"><div><div className="nf-commerce-kicker">One business account</div><h3>My Business</h3><p>Manage your company, buying programs, security and fulfillment preferences from one place.</p></div></div>
           <div className="nf-commerce-account-grid">
             <div className="nf-commerce-card soft">
               <h4>Business information</h4>
@@ -1688,6 +2184,7 @@ export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBu
               <p>{account?.email}</p>
               <p>{account?.phone || "No phone saved"}</p>
               <p>Relationship: {cleanStatus(account?.relationship_status)}</p>
+              <button className="nf-commerce-btn nf-commerce-account-action" type="button" onClick={() => setSection("delivery")}>Edit Delivery & Pickup Preferences</button>
             </div>
             <div className="nf-commerce-card soft">
               <h4>Programs</h4>
@@ -1695,6 +2192,15 @@ export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBu
                 <div className="nf-commerce-program-row" key={row.program_key}><strong>{programName(row)}</strong><span>{row.status}</span></div>
               )) : <p>No programs have been assigned yet.</p>}
             </div>
+            {approvedPrograms.some((row) => row.program_key === "hive_partners") && (
+              <div className="nf-commerce-card soft">
+                <h4>Hive Partnerships</h4>
+                <p>Manage or renew your apiary sponsorship separately from product purchases.</p>
+                <button className="nf-commerce-btn" type="button" onClick={() => { setSelectedPackage(null); setActiveProgram("hive_partners"); setSection("sponsorship"); }}>
+                  View Hive Partnerships →
+                </button>
+              </div>
+            )}
             <div className="nf-commerce-card soft">
               <h4>Sign-in & security</h4>
               <p>Use your approved email and password to sign in. Secure email links remain available as a backup.</p>
@@ -1707,7 +2213,7 @@ export default function PartnerCommerceWorkspace({ account, onSignOut, signOutBu
               </button>
             </div>
           </div>
-          <div className="nf-commerce-note" style={{ marginTop: 14 }}>Program access is approved independently by NectarFusions. Retail, Foodservice, Business Gifting, and Hive Partners can all live on this same account.</div>
+          <div className="nf-commerce-note" style={{ marginTop: 14 }}>You can use multiple business programs with one account. Your available programs appear above; contact NectarFusions if you need another purchasing option.</div>
         </div>
       )}
 

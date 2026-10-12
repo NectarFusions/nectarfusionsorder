@@ -278,6 +278,23 @@ const CSS = `
     font-size:16px;
   }
 }
+/* NF PARTNER CHECKOUT CLARITY V4 */
+.nf-partner-cart-optional{
+  grid-column:1/-1;padding:12px 14px;border:1px solid #dce7ec;
+  border-radius:10px;background:#fafcfd;
+}
+.nf-partner-cart-optional summary{
+  cursor:pointer;color:#173c52;font-size:14px;font-weight:800;
+}
+.nf-partner-cart-optional p{margin:9px 0;color:#647986;font-size:13px;line-height:1.5}
+.nf-partner-cart-optional .nf-partner-cart-field{margin-top:12px}
+.nf-partner-cart-quote-helper{margin:0;color:#59717e;font-size:13px;line-height:1.5}
+.nf-partner-cart-actions-progressive{display:flex;flex-direction:column}
+.nf-partner-cart-actions-progressive .pay{order:0}
+.nf-partner-cart-actions-progressive .review.secondary{
+  order:1;background:#fff;border:1px solid #c8dce5;color:#173c52;
+  min-height:38px;font-size:13px;
+}
 /* NF PARTNER UX POLISH END */
 `;
 
@@ -497,7 +514,7 @@ export default function PartnerCartDrawer({ account }) {
         <div className="nf-partner-cart-head">
           <div>
             <h2>Partner Checkout</h2>
-            <p>Your package, fulfillment, payment, and reorder snapshot stay together.</p>
+            <p>Review your honey, choose pickup or delivery, and confirm your total before placing an order.</p>
           </div>
           <button
             type="button"
@@ -691,7 +708,7 @@ export default function PartnerCartDrawer({ account }) {
 
             <div className="nf-partner-cart-grid">
               {!sponsorshipOnly ? <div className="nf-partner-cart-field">
-                <label>Needed by</label>
+                <label>Needed by (optional)</label>
                 <input
                   type="date"
                   value={checkout.neededBy}
@@ -705,6 +722,9 @@ export default function PartnerCartDrawer({ account }) {
                 />
               </div> : null}
 
+              <details className="nf-partner-cart-optional">
+                <summary>Additional order details (optional)</summary>
+                <p>Include inventory or special instructions only when needed.</p>
               {retailJars > 0 ? (
                 <div className="nf-partner-cart-field full">
                   <label>Current inventory notes</label>
@@ -734,6 +754,7 @@ export default function PartnerCartDrawer({ account }) {
                   }}
                 />
               </div>
+              </details>
             </div>
 
             <div className="nf-partner-cart-total">
@@ -741,12 +762,18 @@ export default function PartnerCartDrawer({ account }) {
                 <span>Merchandise</span>
                 <strong>{money(quote?.subtotalCents ?? subtotal)}</strong>
               </div>
-              <div>
-                <span>Local delivery (ZIP-based)</span>
-                <strong>
-                  {quote ? money(quote.deliveryFeeCents) : "Calculated by ZIP"}
-                </strong>
-              </div>
+              {!sponsorshipOnly && (
+                <div>
+                  <span>{checkout.fulfillmentMethod === "pickup" ? "Coleman Pickup" : "Local Delivery"}</span>
+                  <strong>
+                    {quote
+                      ? money(quote.deliveryFeeCents)
+                      : checkout.fulfillmentMethod === "pickup"
+                        ? "$0.00"
+                        : "Calculated at review"}
+                  </strong>
+                </div>
+              )}
               <div>
                 <span>Processing fee (4%)</span>
                 <strong>
@@ -758,7 +785,7 @@ export default function PartnerCartDrawer({ account }) {
               <div className="grand">
                 <span>Final total</span>
                 <strong>
-                  {quote ? money(quote.totalCents) : "Review total"}
+                  {quote ? money(quote.totalCents) : "Not yet reviewed"}
                 </strong>
               </div>
             </div>
@@ -770,32 +797,41 @@ export default function PartnerCartDrawer({ account }) {
               <div className="nf-partner-cart-success">{success}</div>
             ) : null}
 
-            <div className="nf-partner-cart-actions">
-              <button
-                type="button"
-                className="review"
-                disabled={Boolean(busy) || !cart.length}
-                onClick={review}
-              >
-                {busy === "review" ? "Calculating…" : "Review Final Total"}
-              </button>
-              <button
-                type="button"
-                className="pay"
-                disabled={
-                  Boolean(busy) ||
-                  !cart.length ||
-                  !quote ||
-                  (retailJars > 0 && retailJars < 12)
-                }
-                onClick={submit}
-              >
-                {busy === "checkout"
-                  ? "Saving Order…"
-                  : quote
-                    ? "Submit Order & Continue to Square"
-                    : "Review Order to Continue"}
-              </button>
+            <p className="nf-partner-cart-quote-helper" role="status">
+              {quote
+                ? "Final total verified. Submitting will create an order and continue to Square when a payment link is available."
+                : "First verify the final total. Reviewing does not place an order or charge a card."}
+            </p>
+            <div className="nf-partner-cart-actions nf-partner-cart-actions-progressive">
+              {!quote ? (
+                <button
+                  type="button"
+                  className="review"
+                  disabled={Boolean(busy) || !cart.length || (retailJars > 0 && retailJars < 12)}
+                  onClick={review}
+                >
+                  {busy === "review" ? "Calculating…" : "Review Final Total"}
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="pay"
+                    disabled={Boolean(busy) || !cart.length || (retailJars > 0 && retailJars < 12)}
+                    onClick={submit}
+                  >
+                    {busy === "checkout" ? "Saving Order…" : "Submit Order & Continue to Square"}
+                  </button>
+                  <button
+                    type="button"
+                    className="review secondary"
+                    disabled={Boolean(busy)}
+                    onClick={review}
+                  >
+                    Recheck Total
+                  </button>
+                </>
+              )}
             </div>
           </section>
         </div>
