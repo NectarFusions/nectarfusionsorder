@@ -38,7 +38,7 @@ export default async (req) => {
   if (o.square_link_url) return ok({ url: o.square_link_url });
 
   const lineItems = o.order_items.map((i) => ({
-    name: `${i.size_label} ${typeName(i.type)} — ${i.flavor_name}`,
+    name: i.item_kind === "hive_sponsorship" ? `Annual Hive Sponsorship — ${i.flavor_name}` : `${i.size_label} ${typeName(i.type)} — ${i.flavor_name}`,
     quantity: String(i.qty),
     base_price_money: { amount: i.unit_cents, currency: "USD" },
   }));

@@ -170,7 +170,7 @@ async function loadContext(admin, account, email, linkedCustomerIds) {
     .select(
       "id,order_no,token,status,method,subtotal_cents,fee_cents,total_cents,delivery_day," +
       "name,phone,email,address,city,zip,notes,placed_at,updated_at,paid,paid_at,requires_prepay," +
-      "picked_up_at,fulfilled_at,reorder_due_on,items:order_items(id,flavor_id,flavor_name,size_id,size_label,type,qty,unit_cents)"
+      "picked_up_at,fulfilled_at,reorder_due_on,items:order_items(id,flavor_id,flavor_name,size_id,size_label,type,qty,unit_cents,item_kind)"
     )
     .eq("email_normalized", email)
     .order("placed_at", { ascending: false })
