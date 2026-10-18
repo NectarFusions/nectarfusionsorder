@@ -43,12 +43,13 @@ function itemRows(items) {
   return items.map((i) => `
     <tr>
       <td style="padding:7px 0;border-bottom:1px solid #E7DCC9;font:15px Helvetica,Arial,sans-serif;color:#111">
-        <strong>${i.qty}×</strong> ${esc(i.size_label)} ${typeName(i.type)} — ${esc(i.flavor_name)}
+        <strong>${i.qty}×</strong> ${i.item_kind === "hive_sponsorship" ? "Annual Hive Sponsorship — " + esc(i.flavor_name) : esc(i.size_label) + " " + typeName(i.type) + " — " + esc(i.flavor_name)}
       </td>
     </tr>`).join("");
 }
 
 function whenLine(o) {
+  if (o.order_items?.length && o.order_items.every(i => i.item_kind === "hive_sponsorship")) return "No shipping required";
   if (o.method === "market") {
     const m = o.market_dates;
     if (!m) return "Market pickup";
@@ -96,7 +97,7 @@ function customerEmail(o, siteUrl, event) {
 
     <div style="padding:22px 24px">
       <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:${G.brown};margin-bottom:6px">
-        ${market ? "Pickup" : o.method === "ship" ? "Shipping" : "Delivery"}
+        ${o.order_items?.length && o.order_items.every(i => i.item_kind === "hive_sponsorship") ? "Hive Sponsorship" : market ? "Pickup" : o.method === "ship" ? "Shipping" : "Delivery"}
       </div>
       <div style="font-size:16px;font-weight:600;color:#111">${whenLine(o)}</div>
       ${o.address ? `<div style="font-size:14px;color:${G.brown};margin-top:3px">${esc(o.address)}</div>` : ""}
@@ -117,7 +118,7 @@ function customerEmail(o, siteUrl, event) {
           : paymentPending ? "Complete payment securely through Square using the button below. We will not prepare the order until payment is confirmed."
           : paymentReceived ? "Payment received. Your order is confirmed and we’ll begin preparing it."
           : market ? "Pay at the market table — cash, card, or tap."
-          : o.method === "ship" ? "We'll send tracking once it's packed."
+          : o.order_items?.length && o.order_items.every(i => i.item_kind === "hive_sponsorship") ? "Thank you for supporting the bees. No shipment is required." : o.method === "ship" ? "We'll send tracking once it's packed."
           : "We'll text you to confirm your delivery window."}
       </div>
 
@@ -126,7 +127,7 @@ function customerEmail(o, siteUrl, event) {
         ${actionLabel}
       </a>
       <div style="font-size:12.5px;color:${G.brown};margin-top:9px;line-height:1.55;text-align:center">
-        For 30 minutes, you may replace a flavor with another available flavor of the same size, texture, quantity, and price. For quantities, sizes, refunds, or another type of change, contact NectarFusions directly.
+        ${o.order_items?.length && o.order_items.every(i => i.item_kind === "hive_sponsorship") ? "For questions about your sponsorship, contact NectarFusions directly." : "For 30 minutes, you may replace a flavor with another available flavor of the same size, texture, quantity, and price. For quantities, sizes, refunds, or another type of change, contact NectarFusions directly."}
       </div>
     </div>
 
@@ -187,7 +188,7 @@ function ownerEmail(o, siteUrl, event) {
 
     <div style="padding:18px 22px">
       <div style="font-size:14px;color:${G.dark};line-height:1.7">
-        <strong>${o.method === "market" ? "Pickup" : o.method === "ship" ? "Shipping" : "Delivery"}</strong> — ${whenLine(o)}<br>
+        <strong>${o.order_items?.length && o.order_items.every(i => i.item_kind === "hive_sponsorship") ? "Hive Sponsorship" : o.method === "market" ? "Pickup" : o.method === "ship" ? "Shipping" : "Delivery"}</strong> — ${whenLine(o)}<br>
         ${esc(o.phone)} · ${esc(o.email)}<br>
         ${o.address ? esc(o.address) + "<br>" : ""}
       </div>

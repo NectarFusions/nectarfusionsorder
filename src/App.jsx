@@ -14164,6 +14164,7 @@ export default function App() {
 
   /* ================= RECEIPT ================= */
   if (receipt) {
+    const sponsorOnlyReceipt = receipt.items?.length > 0 && receipt.items.every(it => !it.flavor_id);
     const cancelled = receipt.status === "cancelled";
     const paymentPending =
       !cancelled && receipt.requires_prepay && !receipt.paid;
@@ -14251,11 +14252,11 @@ export default function App() {
             <>
               <div className="card" style={{ padding: 18 }}>
                 <div className="eyebrow" style={{ marginBottom: 10 }}>
-                  {receipt.method === "market" ? "Pickup" : receipt.method === "ship" ? "Shipping" : "Delivery"}
+                  {sponsorOnlyReceipt ? "Hive Sponsorship · No shipping" : receipt.method === "market" ? "Pickup" : receipt.method === "ship" ? "Shipping" : "Delivery"}
                 </div>
                 {receipt.items?.map((it, i) => (
                   <div key={i} style={{ fontSize: 14.5, padding: "3px 0" }}>
-                    {it.qty}× {it.size} {typeName(it.type)} — {it.flavor}
+                    {it.flavor_id ? <>{it.qty}× {it.size} {typeName(it.type)} — {it.flavor}</> : <>{it.qty}× Annual Hive Sponsorship — {it.flavor}</>}
                   </div>
                 ))}
                 <div style={{ borderTop: "1px solid #E2D6C4", marginTop: 14, paddingTop: 13,
@@ -14271,7 +14272,7 @@ export default function App() {
                   <p style={{ fontSize: 14, lineHeight: 1.6, margin: "0 0 12px" }}>
                     {receipt.method === "market"
                       ? <>This order needs to be paid before we pack it. Once it&rsquo;s paid, your jars are set aside and waiting at the table.</>
-                      : <>Pay now and we&rsquo;ll start packing. Nothing leaves our hands until it&rsquo;s paid.</>}
+                      : sponsorOnlyReceipt ? <>Pay securely to confirm your annual Hive Sponsorship. No shipment is required.</> : <>Pay now and we&rsquo;ll start packing. Nothing leaves our hands until it&rsquo;s paid.</>}
                   </p>
                   <button className="btn solid" style={{ width: "100%", padding: 14, fontSize: 15 }}
                     disabled={busy} onClick={pay}>
@@ -14288,7 +14289,7 @@ export default function App() {
                   background: "#FCFDFA", textAlign: "center" }}>
                   <div style={{ fontSize: 15, fontWeight: 700, color: "#4F6B3C" }}>✓ Paid</div>
                   <div style={{ fontSize: 13, color: c.brown, marginTop: 3 }}>
-                    Thank you. We&rsquo;re packing your jars.
+                    {sponsorOnlyReceipt ? "Thank you for supporting the bees. No shipping is required." : "Thank you. We’re packing your jars."}
                   </div>
                 </div>
               )}
@@ -14330,7 +14331,7 @@ export default function App() {
               ) : (
                 <div className="card" style={{ padding: 14, marginTop: 22, textAlign: "center", background: "#FBF7F1",
                   fontSize: 13.5, color: c.brown, lineHeight: 1.55 }}>
-                  The cancellation window has closed — your jars are being packed. Need a change? Call or text.
+                  {sponsorOnlyReceipt ? "The order cancellation window has closed. Need assistance? Call or text." : "The cancellation window has closed — your jars are being packed. Need a change? Call or text."}
                 </div>
               )}
             </>
@@ -18149,7 +18150,8 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
   const openShippingOrders = activeOrders.filter(
     (order) =>
       fulfillmentOrderReady(order) &&
-      order.method === "ship"
+      order.method === "ship" &&
+      !(order.order_items?.length > 0 && order.order_items.every(item => item.item_kind === "hive_sponsorship"))
   );
 
   const fulfillmentQueue = [
@@ -18166,7 +18168,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
     (sum, order) =>
       sum +
       (order.order_items || []).reduce(
-        (itemSum, item) => itemSum + Number(item.qty || 0),
+        (itemSum, item) => itemSum + (item.item_kind === "hive_sponsorship" ? 0 : Number(item.qty || 0)),
         0
       ),
     0
@@ -18324,9 +18326,9 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
               .map(
                 (item) =>
                   `<li>${escapeFulfillmentHtml(
-                    `${item.qty}x ${item.size_label} ${
-                      item.type === "spun" ? "Spun" : "Regular"
-                    } - ${item.flavor_name}`
+                    (item.item_kind === "hive_sponsorship"
+                      ? `${item.qty}x Annual Hive Sponsorship - ${item.flavor_name}`
+                      : `${item.qty}x ${item.size_label} ${item.type === "spun" ? "Spun" : "Regular"} - ${item.flavor_name}`)
                   )}</li>`
               )
               .join("");
@@ -19092,13 +19094,8 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                               <strong>
                                 {item.qty}×
                               </strong>{" "}
-                              {item.size_label}{" "}
-                              <strong>
-                                {item.type === "spun"
-                                  ? "Spun"
-                                  : "Regular"}
-                              </strong>{" "}
-                              — {item.flavor_name}
+                              {item.item_kind === "hive_sponsorship" ? `Annual Hive Sponsorship — ${item.flavor_name}` : <>{item.size_label}{" "}
+                              <strong>{item.type === "spun" ? "Spun" : "Regular"}</strong>{" "}— {item.flavor_name}</>}
                             </div>
                           )
                         )}
@@ -19255,7 +19252,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                       <span className="num" style={{ fontSize: 19, color: c.brown }}>{money(o.total_cents / 100)}</span>
                     </div>
                     <div style={{ fontSize: 12.5, color: c.brown, marginTop: 4 }}>
-                      {o.method === "market" ? "Pickup" : o.method === "ship" ? "Shipping" : "Delivery"}
+                      {o.order_items?.length && o.order_items.every(item => item.item_kind === "hive_sponsorship") ? "Hive Sponsorship (no shipping)" : o.method === "market" ? "Pickup" : o.method === "ship" ? "Shipping" : "Delivery"}
                       {o.delivery_day && ` · ${fmt(parseDay(o.delivery_day))}`}
                     </div>
                     <div style={{ fontSize: 12.5, color: c.tan }}>{o.phone} · {o.email}</div>
@@ -19268,7 +19265,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                     )}
                     <div style={{ fontSize: 13, marginTop: 8, lineHeight: 1.55 }}>
                       {o.order_items?.map((it) => (
-                        <div key={it.id}>{it.qty}× {it.size_label} <strong>{it.type === "spun" ? "Spun" : "Regular"}</strong> — {it.flavor_name}</div>
+                        <div key={it.id}>{it.item_kind === "hive_sponsorship" ? `${it.qty}× Annual Hive Sponsorship — ${it.flavor_name}` : <>{it.qty}× {it.size_label} <strong>{it.type === "spun" ? "Spun" : "Regular"}</strong> — {it.flavor_name}</>}</div>
                       ))}
                     </div>
 
@@ -19464,7 +19461,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                     <div style={{ fontSize: 13, marginTop: 10, lineHeight: 1.55 }}>
                       {o.order_items?.map((item) => (
                         <div key={item.id}>
-                          {item.qty}× {item.size_label} <strong>{item.type === "spun" ? "Spun" : "Regular"}</strong> — {item.flavor_name}
+                          {item.item_kind === "hive_sponsorship" ? `${item.qty}× Annual Hive Sponsorship — ${item.flavor_name}` : <>{item.qty}× {item.size_label} <strong>{item.type === "spun" ? "Spun" : "Regular"}</strong> — {item.flavor_name}</>}
                         </div>
                       ))}
                     </div>
