@@ -14,7 +14,10 @@ export default async function handler(req){
     .select('order_no,email,paid,status,method,requires_prepay,market_date_id,total_cents,square_link_url,square_payment_id')
     .eq('app_checkout_request_id',id).maybeSingle();
   if(error)return reply(503,{error:'Could not check order status'});
-  if(!o||String(o.email||'').trim().toLowerCase()!==email)return reply(200,{state:'not_found',message:'No matching order found'});
+  // A confirmed absence is independent of email. Expose no order details when
+  // a request ID exists but the email differs; the app must retain its guard.
+  if(!o)return reply(200,{state:'not_found',absenceConfirmed:true,message:'No checkout order exists for this request'});
+  if(String(o.email||'').trim().toLowerCase()!==email)return reply(200,{state:'needs_review',message:'Checkout requires verification'});
   if(o.status==='cancelled')return reply(200,{state:'cancelled',orderNumber:o.order_no,message:'This order was cancelled'});
   if(o.method==='market' && !o.requires_prepay && o.market_date_id){
     const {data:m,error:mErr}=await db.from('market_dates')
