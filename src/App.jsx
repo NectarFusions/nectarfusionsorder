@@ -11980,6 +11980,86 @@ html {
 .nf-checkout-overlay .nf-fulfillment-section {
   margin:0 !important;
 }
+/* Public cart fulfillment: make Shipping easy to see and read, including on phones. */
+.nf-checkout-overlay .nf-shipping-method {
+  display:flex !important;
+  flex-direction:column !important;
+  justify-content:center !important;
+  align-items:flex-start !important;
+  width:100% !important;
+  min-height:112px !important;
+  margin-top:13px !important;
+  padding:20px 22px !important;
+  text-align:left !important;
+  background:#FFF0AD !important;
+  color:#2C210F !important;
+  border:3px solid #9B6900 !important;
+  border-radius:16px !important;
+  box-shadow:0 8px 22px rgba(74,51,19,.18) !important;
+  cursor:pointer;
+}
+.nf-checkout-overlay .nf-shipping-method.on {
+  background:#FFDA57 !important;
+  border-color:#6D4A00 !important;
+}
+.nf-checkout-overlay .nf-shipping-method:focus-visible,
+.nf-checkout-overlay .nf-shipping-switch:focus-visible {
+  outline:4px solid #125D87 !important;
+  outline-offset:3px;
+}
+.nf-checkout-overlay .nf-shipping-method-label {
+  font-size:clamp(25px, 4vw, 32px) !important;
+  font-weight:900 !important;
+  line-height:1.15 !important;
+  letter-spacing:.015em !important;
+  color:#281B0D !important;
+}
+.nf-checkout-overlay .nf-shipping-method-detail {
+  display:block;
+  margin-top:7px;
+  font-size:17px !important;
+  line-height:1.4 !important;
+  font-weight:750 !important;
+  color:#332511 !important;
+}
+.nf-checkout-overlay .nf-shipping-threshold-note {
+  margin-top:10px;
+  padding:14px 16px;
+  border:2px solid #AD7A0B;
+  border-radius:12px;
+  background:#FFF9E7;
+  color:#332511;
+  font-size:16px;
+  line-height:1.55;
+  font-weight:650;
+}
+.nf-checkout-overlay .nf-shipping-out-of-area {
+  margin-top:12px;
+  padding:17px;
+  border:2px solid #A8740B;
+  border-radius:14px;
+  background:#FFF8E6;
+  color:#2E2417;
+  font-size:16px;
+  line-height:1.5;
+}
+.nf-checkout-overlay .nf-shipping-switch {
+  width:100%;
+  min-height:52px;
+  margin-top:13px;
+  padding:13px 17px;
+  background:#FFE07B !important;
+  color:#28200F !important;
+  border:2px solid #95650C !important;
+  border-radius:12px;
+  font-size:19px !important;
+  font-weight:900 !important;
+}
+@media (max-width:760px) {
+  .nf-checkout-overlay .nf-shipping-method { min-height:118px !important; padding:20px 17px !important; }
+  .nf-checkout-overlay .nf-shipping-method-detail { font-size:16px !important; }
+}
+
 .nf-checkout-details-card {
   padding:22px 18px;
   border:2px solid #F7C41C;
@@ -12807,7 +12887,6 @@ export default function App() {
       ? `Same-day orders close at ${clockLabel(delivery.cutoffMinutes)} · ${leadTimeLabel(delivery.leadMinutes)} notice`
       : zone?.cutoff_label;
 
-  useEffect(() => { if (method === "ship" && !shipOK) { setMethod(null); setSlot(null); } }, [shipOK, method]);
   useEffect(() => { setSlot(method === "ship" ? { kind: "ship" } : null); }, [method, zone?.id]);
 
   useEffect(() => {
@@ -12954,7 +13033,7 @@ export default function App() {
       if (zip.length !== 5) missing.push("a ZIP code");
     }
   }
-  const canPlace = cart.length && slot && !missing.length && !belowMin && !busy;
+  const canPlace = cart.length && slot && !missing.length && !belowMin && !busy && (method !== "ship" || shipOK);
   const unresolvedTypeItems = cart.filter((item) => item.type === "undecided");
   const unavailableTypeItems = cart.filter((item) => {
     if (item.type === "undecided") return false;
@@ -13556,7 +13635,7 @@ export default function App() {
           </section>
         )}
 
-        {view !== "admin" && view !== "login" && view !== "partnerPortal" && !receipt && (
+        {view !== "admin" && view !== "login" && view !== "partnerPortal" && !receipt && !checkoutOpen && !reviewOpen && (
           <nav
             className={`nf-universal-dock ${dockHasEntered ? "settled" : "entering"} ${view === "shop" ? "home-dock" : ""}`}
             aria-label="NectarFusions website navigation"
@@ -15871,23 +15950,27 @@ export default function App() {
               </button>
             </div>
 
-            {shipOK ? (
-              <button className={`btn ${method === "ship" ? "on" : ""}`} onClick={() => setMethod("ship")}
-                style={{ width: "100%", padding: "15px 13px", textAlign: "left", marginTop: 8,
-                  borderColor: method === "ship" ? c.amber : c.sky }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                  <div className="display" style={{ fontSize: 22 }}>FREE SHIPPING</div>
-                  <span className="tag" style={{ background: c.sky }}>Unlocked</span>
-                </div>
-                <div style={{ fontSize: 12, fontWeight: 600, opacity: .75, marginTop: 2 }}>Anywhere in Michigan · 2–3 days</div>
-              </button>
-            ) : (
-              <div className="card" style={{ padding: "12px 14px", marginTop: 8, background: "#FBF7F1",
-                display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ width: 8, height: 8, borderRadius: "50%", background: c.sky, flexShrink: 0 }} />
-                <div style={{ fontSize: 13, lineHeight: 1.5, color: c.darkBrown }}>
-                  Add <strong style={{ color: c.amber }}>{money(toShip)}</strong> more and we&rsquo;ll ship it free, anywhere in Michigan.
-                </div>
+            <button
+              type="button"
+              id="nf-shipping-method"
+              className={`btn nf-shipping-method ${method === "ship" ? "on" : ""}`}
+              aria-pressed={method === "ship"}
+              onClick={() => setMethod("ship")}
+            >
+              <span className="display nf-shipping-method-label">SHIPPING</span>
+              <span className="nf-shipping-method-detail">
+                {shipOK
+                  ? "FREE Michigan shipping · ships in 2–3 business days"
+                  : `Free Michigan shipping on orders of ${money(cat.shipFreeOver)}+`}
+              </span>
+            </button>
+            {!shipOK && (
+              <div className="nf-shipping-threshold-note" role="status">
+                {method === "ship" ? (
+                  <>Shipping checkout currently requires an order of <strong>{money(cat.shipFreeOver)}</strong> or more. Add <strong>{money(toShip)}</strong> to your cart to unlock free shipping.</>
+                ) : (
+                  <>Add <strong>{money(toShip)}</strong> more to qualify for free Michigan shipping.</>
+                )}
               </div>
             )}
 
@@ -15919,9 +16002,23 @@ export default function App() {
                 <input className={zone ? "done" : "needs"} placeholder="Your ZIP code" value={zip}
                   maxLength={5} inputMode="numeric" onChange={(e) => setZip(e.target.value.replace(/\D/g, ""))} />
                 {outOfArea && (
-                  <div className="err" style={{ marginTop: 10 }}>
-                    We don&rsquo;t deliver to {zip}. Catch us at a market
-                    {shipOK ? " — or take the free shipping." : `, or add ${money(toShip)} more for free shipping.`}
+                  <div className="nf-shipping-out-of-area" role="status">
+                    <strong>Local delivery isn&rsquo;t available in your area yet.</strong>
+                    <div style={{ marginTop: 5 }}>
+                      {shipOK
+                        ? "Shipping is available for this order."
+                        : `Shipping is currently offered on orders of ${money(cat.shipFreeOver)} or more.`}
+                    </div>
+                    <button
+                      type="button"
+                      className="btn nf-shipping-switch"
+                      onClick={() => {
+                        setMethod("ship");
+                        document.getElementById("nf-shipping-method")?.scrollIntoView({ behavior: "smooth", block: "center" });
+                      }}
+                    >
+                      Choose Shipping →
+                    </button>
                   </div>
                 )}
                 {zone && (
@@ -15998,7 +16095,7 @@ export default function App() {
 
             </section>
 
-            {slot && (
+            {slot && (method !== "ship" || shipOK) && (
               <section className="nf-checkout-details-card">
                 {!ctaOff && method !== "market" && (
                   <div className="card" style={{ padding: 15, marginTop: 22, background: "#FFFBF0", borderColor: c.gold,
