@@ -1937,6 +1937,23 @@ export async function archiveOrder(id) {
   if (error) throw new Error(error.message);
 }
 
+// nf-backroom-recovery: ship-and-archive with payment and method safeguards.
+export async function markShippedAndArchive(id) {
+  const { data: order, error: lookupError } = await supabase
+    .from("orders")
+    .select("id, method, status, archived_at, paid, requires_prepay")
+    .eq("id", id)
+    .single();
+  if (lookupError) throw new Error(lookupError.message);
+  if (order.method !== "ship") throw new Error("Only shipping orders can use this action.");
+  if (order.status === "cancelled") throw new Error("Cancelled orders cannot be shipped.");
+  if (order.requires_prepay && !order.paid) throw new Error("Confirm payment before marking this order shipped.");
+  if (order.archived_at) return { archived: true, alreadyArchived: true };
+  if (order.status !== "done") await setOrderStatus(id, "done");
+  await archiveOrder(id);
+  return { shipped: true, archived: true };
+}
+
 export async function restoreOrder(id) {
   const { error } = await supabase.rpc("restore_order_admin", { p_order_id: id });
   if (error) throw new Error(error.message);
@@ -1967,6 +1984,21 @@ export async function subAction(subId, action) {   // 'pause' | 'resume' | 'canc
   const j = await r.json();
   if (!r.ok) throw new Error(j.error || "Square didn't accept that.");
   return j;
+}
+
+// nf-backroom-recovery: read-only, admin-authenticated Square evidence.
+export async function getHoneyClubSquareBillingReview(subId) {
+  const { data, error: sessionError } = await supabase.auth.getSession();
+  const token = data?.session?.access_token;
+  if (sessionError || !token) throw new Error('Sign in as a NectarFusions admin.');
+  const response = await fetch('/.netlify/functions/honey-club-square-review', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ subId }),
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result.error || 'Square review is unavailable. No billing changes were made.');
+  return result;
 }
 
 export async function syncSubscriptionSquare(subscriptionId) {
