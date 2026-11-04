@@ -2,6 +2,7 @@
 import { Fragment } from "react";
 import { useState, useMemo, useEffect, useLayoutEffect, useCallback, useRef } from "react";
 import * as api from "./lib/api";
+import { buildHoneyClubFulfillmentEntries, getUpcomingFulfillmentEntries } from "./lib/honeyClubFulfillment";
 import { getPartnerStoreCartCount } from "./lib/partnerStoreCart";
 import PartnerPage from "./pages/PartnerPage";
 import PartnerPortalPage from "./pages/PartnerPortalPage";
@@ -16,7 +17,12 @@ import AdminReviewsPanel from "./pages/AdminReviewsPanel";
 import AdminFlavorRequestsPanel from "./pages/AdminFlavorRequestsPanel";
 import AdminShippingLabels from "./pages/AdminShippingLabels";
 import AdminNewsletterStudio from "./pages/AdminNewsletterStudio";
+import AdminCustomerAccounts from "./pages/AdminCustomerAccounts"; // nf-my-accounts-v11
+import AdminPaymentNudge from "./pages/AdminPaymentNudge"; // nf-payment-nudge-v12
+import AdminHoneyClubBillingCalendar from "./pages/AdminHoneyClubBillingCalendar"; // nf-honey-club-billing-calendar-v13 nf-honey-club-billing-review-v13-1
 import AdminOrderDeliveryButton from "./pages/AdminOrderDeliveryButton";
+// nf-fulfillment-message-timeline-v9: persistent stage results; simulated in local preview.
+import AdminFulfillmentTimeline from "./components/AdminFulfillmentTimeline";
 import SpecialEventOrderPage from "./pages/SpecialEventOrderPage";
 
 /* ============================================================
@@ -17815,7 +17821,46 @@ function Login({ onDone, onBack, Header }) {
 /* ============================================================
    ADMIN
    ============================================================ */
+/* Five simple line icons for the Back Room's top-level navigation. */
+function BackRoomNavIcon({ id }) {
+  return (
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
+      strokeLinejoin="round" aria-hidden="true" focusable="false">
+      {id === "orders" && <>
+        <rect x="4" y="5" width="16" height="17" rx="2" />
+        <path d="M9 5.5V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1.5" />
+        <path d="M8 11h2m-2 5h2m3-5h3m-3 5h3" />
+      </>}
+      {id === "markets" && <>
+        <path d="M3 10 5 3h14l2 7v2a3 3 0 0 1-5 2 3 3 0 0 1-4 0 3 3 0 0 1-4 0 3 3 0 0 1-5-2v-2Z" />
+        <path d="M5 15v6h14v-6M9 21v-5h6v5" />
+      </>}
+      {id === "inventory" && <>
+        <path d="m12 3 9 5-9 5-9-5 9-5Z" />
+        <path d="M3 8v9l9 5 9-5V8M12 13v9M7.5 5.5l9 5" />
+      </>}
+      {id === "partners" && <>
+        {/* nf-partners-bee-icon-v6 */}
+        <path d="M11 10C7 3 3 5 4 8c1 3 4 4 7 4M13 10c4-7 8-5 7-2-1 3-4 4-7 4" />
+        <ellipse cx="12" cy="15.5" rx="5" ry="5.5" />
+        <path d="M7.5 14h9M8.1 17.3h7.8M10.4 10 9 7.7M13.6 10 15 7.7M12 21v1" />
+      </>}
+      {id === "website" && <>
+        <rect x="2.5" y="4" width="19" height="14" rx="2" />
+        <path d="M8 21h8m-4-3v3" />
+        <path d="m9 9-3 2.5L9 14m6-5 3 2.5-3 2.5" />
+      </>}
+    </svg>
+  );
+}
+
 function Admin({ cat, reload, Header, onExit, onSignOut }) {
+  // This is read-only while running Vite locally or when explicitly requested.
+  // The deployed release must preserve CURRENT-MAIN standard-order status actions;
+  // recovered Honey Club queue buttons only navigate to the existing review UI.
+  const fulfillmentPreviewReadOnly = import.meta.env.DEV ||
+    import.meta.env.VITE_READ_ONLY_PREVIEW === "true";
   const [orders, setOrders] = useState([]);
   const [subs, setSubs] = useState([]);
   const [dates, setDates] = useState([]);
@@ -17824,6 +17869,8 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
   const [partnerProgramApplications, setPartnerProgramApplications] = useState([]);
   const [requestView, setRequestView] = useState("open");
   const [adminTab, setAdminTab] = useState("fulfillment");
+  // nf-fulfillment-summary-drilldowns-v8: selected queue metric, never a write action.
+  const [fulfillmentFocus, setFulfillmentFocus] = useState(null);
   const [q, setQ] = useState("");
   const [orderView, setOrderView] = useState("active");
   const [subView, setSubView] = useState("active");
@@ -18174,11 +18221,13 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
   };
 
   const fulfillmentMethodLabel = (order) =>
-    order.method === "market"
-      ? "Market Pickup"
-      : order.method === "delivery"
-        ? "Local Delivery"
-        : "Shipping";
+    `${order.isHoneyClub ? "Honey Club · " : ""}${
+      order.method === "market"
+        ? "Market Pickup"
+        : order.method === "delivery"
+          ? "Local Delivery"
+          : "Shipping"
+    }`;
 
   const fulfillmentLocationForOrder = (order) => {
     if (order.method === "market") {
@@ -18251,25 +18300,99 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
       !(order.order_items?.length > 0 && order.order_items.every(item => item.item_kind === "hive_sponsorship"))
   );
 
+  // Subscription boxes are a read-only projection of the existing
+  // Honey Club subscriptions, NOT duplicate rows in the orders table.
+  const honeyClubFulfillmentEntries = buildHoneyClubFulfillmentEntries(
+    subs,
+    cat?.plans || [],
+    cat?.marketDates || [],
+    today
+  );
+  const actionableHoneyClubEntries = honeyClubFulfillmentEntries.filter(
+    (entry) => !entry.needsReview
+  );
+  const overdueHoneyClubEntries = actionableHoneyClubEntries.filter(
+    (entry) => entry.delivery_day && entry.delivery_day < today
+  );
+  const todayHoneyClubEntries = actionableHoneyClubEntries.filter(
+    (entry) => entry.delivery_day === today
+  );
+  const upcomingHoneyClubEntries = actionableHoneyClubEntries
+    .filter((entry) => entry.delivery_day && entry.delivery_day > today)
+    .sort((a, b) => a.delivery_day.localeCompare(b.delivery_day));
+  const reviewHoneyClubEntries = honeyClubFulfillmentEntries.filter(
+    (entry) => entry.needsReview
+  );
+  // One future schedule for BOTH customer orders and Honey Club boxes.
+  const allUpcomingFulfillmentEntries = getUpcomingFulfillmentEntries(
+    upcomingFulfillmentOrders,
+    upcomingHoneyClubEntries,
+    today
+  );
+
   const fulfillmentQueue = [
     ...overdueFulfillmentOrders,
+    ...overdueHoneyClubEntries,
     ...dueTodayOrders,
-    ...upcomingFulfillmentOrders,
+    ...todayHoneyClubEntries,
+    ...allUpcomingFulfillmentEntries,
     ...openShippingOrders,
+    ...reviewHoneyClubEntries,
   ].filter(
     (order, index, list) =>
       list.findIndex((candidate) => candidate.id === order.id) === index
   );
+  const dueTodayFulfillmentCount = dueTodayOrders.length + todayHoneyClubEntries.length;
+  const upcomingFulfillmentCount = allUpcomingFulfillmentEntries.length;
+  const overdueFulfillmentCount = overdueFulfillmentOrders.length + overdueHoneyClubEntries.length;
+  const fulfillmentReviewCount = reviewHoneyClubEntries.length;
 
   const fulfillmentJarCount = fulfillmentQueue.reduce(
     (sum, order) =>
-      sum +
-      (order.order_items || []).reduce(
-        (itemSum, item) => itemSum + (item.item_kind === "hive_sponsorship" ? 0 : Number(item.qty || 0)),
-        0
-      ),
+      sum + (order.isHoneyClub
+        ? (order.needsReview ? 0 : Number(order.jarCount || 0))
+        : (order.order_items || []).reduce(
+            (itemSum, item) => itemSum + (item.item_kind === "hive_sponsorship" ? 0 : Number(item.qty || 0)), 0
+          )),
     0
   );
+
+  // One detail set per counter, using the same source arrays as its count.
+  const jarsForFulfillmentEntry = (order) => order.isHoneyClub
+    ? (order.needsReview ? 0 : Number(order.jarCount || 0))
+    : (order.order_items || []).reduce(
+        (sum, item) => sum + (item.item_kind === "hive_sponsorship" ? 0 : Number(item.qty || 0)), 0
+      );
+  const fulfillmentFocusEntries = (() => {
+    if (fulfillmentFocus === "Honey Club")
+      return fulfillmentQueue.filter((entry) => entry.isHoneyClub);
+    if (fulfillmentFocus === "Needs Review")
+      return fulfillmentQueue.filter((entry) => entry.needsReview);
+    if (fulfillmentFocus === "Due Today") {
+      const dueIds = new Set([...dueTodayOrders, ...todayHoneyClubEntries].map((entry) => entry.id));
+      return fulfillmentQueue.filter((entry) => dueIds.has(entry.id));
+    }
+    if (fulfillmentFocus === "Upcoming") return allUpcomingFulfillmentEntries;
+    if (fulfillmentFocus === "Overdue") {
+      const overdueIds = new Set([...overdueFulfillmentOrders, ...overdueHoneyClubEntries].map((entry) => entry.id));
+      return fulfillmentQueue.filter((entry) => overdueIds.has(entry.id));
+    }
+    if (fulfillmentFocus === "Jars to Fill")
+      return fulfillmentQueue.filter((entry) => jarsForFulfillmentEntry(entry) > 0);
+    return fulfillmentQueue;
+  })();
+  // Every selection filters the original cards; Upcoming ALSO has its detailed schedule.
+  const visibleFulfillmentQueue = fulfillmentFocus
+    ? fulfillmentFocusEntries : fulfillmentQueue;
+  const fulfillmentFocusDescription = {
+    Queue: "Every order and subscription box awaiting fulfillment or review, including unscheduled shipping orders.",
+    "Honey Club": "Only Honey Club boxes. Review each member's plan, delivery date and preferences below.",
+    "Needs Review": "Subscriptions requiring payment, schedule or fulfillment confirmation before release.",
+    "Due Today": "Orders and Honey Club boxes scheduled for today. Open shipping orders are listed under Queue.",
+    Upcoming: "Every future dated order and Honey Club box, sorted by schedule.",
+    Overdue: "Orders and Honey Club boxes scheduled before today and still waiting to be fulfilled.",
+    "Jars to Fill": "Total jars across actionable orders and Honey Club boxes, with a breakdown by order below. Needs Review boxes are excluded until verified.",
+  };
 
   const fulfillmentDayLabel = new Date(
     `${today}T12:00:00`
@@ -18281,6 +18404,14 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
   });
 
   const fulfillmentStatusForOrder = (order) => {
+    if (order.isHoneyClub && order.needsReview) {
+      return {
+        label: "NEEDS REVIEW · HONEY CLUB",
+        background: "#FFF0DD",
+        border: "#D69D32",
+        color: "#784B00",
+      };
+    }
     if (order.method === "ship") {
       return {
         label: "SHIP ASAP",
@@ -18319,7 +18450,9 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
   };
 
   const fulfillmentItemsText = (order) =>
-    (order.order_items || [])
+    order.isHoneyClub
+      ? `${order.planName} · ${order.planContents}`
+      : (order.order_items || [])
       .map(
         (item) =>
           `${item.qty}x ${item.size_label} ${
@@ -18335,6 +18468,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
     const header = [
       "Priority",
       "Order",
+      "Category",
       "Customer",
       "Method",
       "Due Date",
@@ -18356,6 +18490,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
       return [
         fulfillmentStatusForOrder(order).label,
         `#${order.order_no}`,
+        order.isHoneyClub ? "Honey Club" : "Standard order",
         order.name,
         fulfillmentMethodLabel(order),
         dueDay,
@@ -18419,7 +18554,9 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
               fulfillmentLocationForOrder(order) ||
               "No location listed";
 
-            const itemLines = (order.order_items || [])
+            const itemLines = order.isHoneyClub
+              ? `<li>${escapeFulfillmentHtml(fulfillmentItemsText(order))}</li>`
+              : (order.order_items || [])
               .map(
                 (item) =>
                   `<li>${escapeFulfillmentHtml(
@@ -18529,7 +18666,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
             }
             .summary {
               display: grid;
-              grid-template-columns: repeat(5, 1fr);
+              grid-template-columns: repeat(6, 1fr);
               gap: 10px;
               margin: 18px 0;
             }
@@ -18650,19 +18787,23 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
             </div>
             <div>
               <span>Due today</span>
-              <strong>${dueTodayOrders.length}</strong>
+              <strong>${dueTodayFulfillmentCount}</strong>
             </div>
             <div>
               <span>Upcoming</span>
-              <strong>${upcomingFulfillmentOrders.length}</strong>
+              <strong>${upcomingFulfillmentCount}</strong>
             </div>
             <div>
               <span>Overdue</span>
-              <strong>${overdueFulfillmentOrders.length}</strong>
+              <strong>${overdueFulfillmentCount}</strong>
             </div>
             <div>
               <span>Total jars</span>
               <strong>${fulfillmentJarCount}</strong>
+            </div>
+            <div>
+              <span>Needs review</span>
+              <strong>${fulfillmentReviewCount}</strong>
             </div>
           </section>
 
@@ -18721,36 +18862,72 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
     );
   });
 
-  const tabs = [
-    ["fulfillment", `Fulfillment Queue (${fulfillmentQueue.length})`],
-    ["inventory", "Flavors & Inventory"],
-    ["subscriptions", `Honey Club (${activeSubs.length})`],
-    ["marketPickups", `Market Pickups (${marketOpenCount})`],
-    ["markets", "Market Schedule"],
-    ["requests", `Order Help (${newRequestCount})`],
-    ["reviews", "Reviews"],
-    ["flavorRequests", "Flavor Requests"],
-    ["orders", `Orders (${standardActiveOrders.length + standardPendingPaymentOrders.length})`],
-    ["shippingLabels", "Shipping Labels"],
-    ["newsletter", "Newsletter"],
-    ["partnerCommerce", "Partner Commerce", newPartnerApplicationCount],
-    ["partnerEvents", "Partner Events"],
-    ["partnerResources", "Partner Resources"],
-    ["retail", `Retail Locator (${retailLocations.filter((r) => r.active).length})`],
-    ["homepage", "Homepage Image"],
-    ["topPicks", "Top Picks"],
-  ].sort((a, b) =>
-    a[1]
-      .replace(/\s*\(\d+\)$/, "")
-      .localeCompare(b[1].replace(/\s*\(\d+\)$/, ""))
-  );
-
-  const adminTabsHalf = Math.ceil(tabs.length / 2);
-  const displayedAdminTabs = tabs
-    .slice(0, adminTabsHalf)
-    .flatMap((tab, index) =>
-      [tab, tabs[index + adminTabsHalf]].filter(Boolean)
-    );
+  // The 16 Back Room tools remain unchanged; only their navigation is grouped.
+  // Using adminTab as the single source of truth also keeps internal links
+  // (such as Review in Honey Club) in sync with the correct main category.
+  const adminNavigationGroups = [
+    {
+      id: "orders",
+      label: "Orders",
+      description: "Prepare, fulfill, ship, and support customer orders.",
+      items: [
+        ["fulfillment", `Fulfillment Queue (${fulfillmentQueue.length})`],
+        ["orders", "All Orders"],
+        ["subscriptions", `Honey Club (${activeSubs.length})`],
+        ["shippingLabels", "Shipping Labels"],
+        ["requests", newRequestCount ? `Order Help (${newRequestCount})` : "Order Help"],
+        ["customerAccounts", "Customer Accounts"],
+      ],
+    },
+    {
+      id: "markets",
+      label: "Markets",
+      description: "Pickup orders and upcoming market dates.",
+      items: [
+        ["marketPickups", marketOpenCount ? `Market Pickups (${marketOpenCount})` : "Market Pickups"],
+        ["markets", "Market Schedule"],
+      ],
+    },
+    {
+      id: "inventory",
+      label: "Inventory",
+      description: "Keep products, stock, and flavor requests organized.",
+      items: [
+        ["inventory", "Flavors & Inventory"],
+        ["flavorRequests", "Flavor Requests"],
+      ],
+    },
+    {
+      id: "partners",
+      label: "Partners",
+      description: "Manage retail relationships and business opportunities.",
+      items: [
+        ["partnerCommerce", newPartnerApplicationCount ? `Partner Commerce (${newPartnerApplicationCount})` : "Partner Commerce"],
+        ["partnerEvents", "Partner Events"],
+        ["partnerResources", "Partner Resources"],
+        ["retail", "Retail Locator"],
+      ],
+    },
+    {
+      id: "website",
+      label: "Website",
+      description: "Manage storefront highlights and customer reviews.",
+      items: [
+        ["homepage", "Homepage Image"],
+        ["topPicks", "Top Picks"],
+        ["reviews", "Reviews"],
+        ["newsletter", "Newsletter"],
+      ],
+    },
+  ];
+  const activeNavigationGroup =
+    adminNavigationGroups.find((group) =>
+      group.items.some(([tabId]) => tabId === adminTab)
+    ) || adminNavigationGroups[0];
+  const categoryAttentionCounts = {
+    orders: dueTodayFulfillmentCount + overdueFulfillmentCount + fulfillmentReviewCount + newRequestCount,
+    partners: newPartnerApplicationCount,
+  };
 
   return (
     <div className="nf"><style>{CSS}</style>
@@ -18763,50 +18940,221 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
         </>
       } />
 
-      <div className="nf-wrap" style={{ paddingTop: 22 }}>
+      <div className="nf-wrap nf-admin-workspace-shell" style={{ paddingTop: 22 }}>
+      <style>{`
+        /* V5: proposed five-across main navigation, no side panel. */
+        .nf-admin-workspace-shell {
+          padding-left: clamp(20px, 3vw, 30px) !important;
+          padding-right: clamp(20px, 3vw, 30px) !important;
+        }
+        .nf-admin-workspace {
+          display: flex;
+          flex-direction: column;
+          align-items: stretch;
+          gap: clamp(14px, 2vw, 22px);
+          min-width: 0;
+        }
+        .nf-admin-category-list {
+          display: grid;
+          grid-template-columns: repeat(5, minmax(0, 1fr));
+          gap: clamp(6px, 1vw, 12px);
+          min-width: 0;
+          margin: 0;
+          padding: 0;
+        }
+        .nf-admin-category-button {
+          position: relative;
+          appearance: none;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          min-width: 0;
+          min-height: 89px;
+          padding: 14px 7px;
+          border: 1px solid #E2D4BD;
+          border-radius: 13px;
+          background: #F7F3EC;
+          color: #4A3313;
+          font-family: inherit;
+          font-size: 13px;
+          font-weight: 850;
+          line-height: 1.2;
+          text-align: center;
+          cursor: pointer;
+          transition: background 120ms ease, border-color 120ms ease;
+        }
+        .nf-admin-category-button:hover { background: #FFF3D3; border-color: #C99536; }
+        .nf-admin-category-button[aria-current="page"] {
+          background: #F7C41C;
+          border-color: #C18B14;
+          box-shadow: inset 0 0 0 1px rgba(134,87,0,.10);
+        }
+        .nf-admin-category-button svg { width: 26px; height: 26px; flex: 0 0 auto; }
+        .nf-admin-category-label { max-width: 100%; overflow-wrap: anywhere; }
+        .nf-admin-attention {
+          position: absolute;
+          top: 5px;
+          right: 5px;
+          min-width: 18px;
+          height: 18px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0 4px;
+          border-radius: 999px;
+          background: #4A3313;
+          color: white;
+          font-size: 10px;
+          font-weight: 900;
+          line-height: 1;
+        }
+        .nf-admin-main-content { min-width: 0; width: 100%; }
+        .nf-admin-section-tools {
+          padding: clamp(14px, 2.1vw, 20px);
+          margin: 0 0 22px;
+          border: 1px solid #E6DCCB;
+          border-radius: 15px;
+          background: #FAF8F4;
+          min-width: 0;
+        }
+        .nf-admin-navigation-title {
+          margin: 0;
+          font-size: clamp(20px, 2.2vw, 25px);
+          line-height: 1.2;
+          color: #4A3313;
+          font-weight: 900;
+        }
+        .nf-admin-navigation-subtitle {
+          margin: 5px 0 13px;
+          color: #7B5821;
+          font-size: 12.5px;
+          line-height: 1.45;
+        }
+        .nf-admin-subtabs {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+          gap: 8px;
+          min-width: 0;
+        }
+        .nf-admin-subtab {
+          appearance: none;
+          min-width: 0;
+          min-height: 44px;
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+          gap: 7px;
+          padding: 10px 12px;
+          border: 1px solid #DDD0B9;
+          border-radius: 10px;
+          background: #FFF;
+          color: #4A3313;
+          font-family: inherit;
+          font-size: 12.5px;
+          font-weight: 750;
+          text-align: left;
+          line-height: 1.35;
+          cursor: pointer;
+        }
+        .nf-admin-subtab:hover { background: #FFF7E5; }
+        .nf-admin-subtab[aria-current="page"] {
+          background: #FFE8A3;
+          border-color: #D3A344;
+          font-weight: 900;
+        }
+        .nf-admin-subtab-chevron { flex: 0 0 auto; color: #886529; }
+        .nf-admin-category-button:focus-visible, .nf-admin-subtab:focus-visible {
+          outline: 3px solid #2172A1;
+          outline-offset: 2px;
+        }
+        @media (max-width: 600px) {
+          .nf-admin-workspace-shell {
+            padding-left: 22px !important;
+            padding-right: 22px !important;
+          }
+          .nf-admin-category-list { gap: 5px; }
+          .nf-admin-category-button {
+            min-height: 76px;
+            border-radius: 10px;
+            padding: 10px 2px;
+            gap: 6px;
+            font-size: 10px;
+            letter-spacing: -.2px;
+          }
+          .nf-admin-category-button svg { width: 22px; height: 22px; }
+          .nf-admin-section-tools { padding: 13px; }
+          .nf-admin-subtabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+          .nf-admin-subtab { padding: 10px 9px; font-size: 11.5px; }
+        }
+        @media (max-width: 360px) {
+          .nf-admin-category-button { font-size: 9px; }
+          .nf-admin-category-button svg { width: 20px; height: 20px; }
+          .nf-admin-subtabs { grid-template-columns: minmax(0, 1fr); }
+        }
+      `}</style>
         {err && <div className="err" style={{ marginBottom: 16 }}>{err}</div>}
+        {fulfillmentPreviewReadOnly && adminTab !== "fulfillment" && (
+          <div className="card" role="status" style={{
+            padding: "11px 13px", marginBottom: 16, background: "#FFF7DD",
+            borderColor: "#E2B62F", color: c.darkBrown, fontSize: 12.5,
+            lineHeight: 1.5,
+          }}>
+            <strong>RECOVERED BACKROOM · REVIEW MODE</strong>
+            <span>{" "}Other admin tools may still connect to live data. Use test accounts only; do not change
+              live records while validating this recovered interface.</span>
+          </div>
+        )}
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: 8, marginBottom: 22 }}>
-          {displayedAdminTabs.map(([id, label, badgeCount = 0]) => (
-            <button key={id} className={`btn ${adminTab === id ? "on" : ""}`}
-              style={{
-                padding: "11px 9px",
-                fontSize: 12.5,
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 7,
-              }}
-              onClick={() => { setAdminTab(id); setQ(""); }}>
-              <span>{label}</span>
-              {Number(badgeCount) > 0 && (
-                <span
-                  className="nf-admin-new-badge"
-                  aria-label={`${badgeCount} new submission${Number(badgeCount) === 1 ? "" : "s"}`}
-                  title={`${badgeCount} new partner submission${Number(badgeCount) === 1 ? "" : "s"}`}
-                  style={{
-                    minWidth: 22,
-                    height: 22,
-                    padding: "0 7px",
-                    borderRadius: 999,
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: "#FF3B30",
-                    color: "#fff",
-                    fontSize: 11,
-                    fontWeight: 900,
-                    lineHeight: 1,
-                    boxShadow: "0 0 0 2px rgba(255,255,255,.75)",
+        <div className="nf-admin-workspace nf-admin-top-nav-v5">
+          <nav className="nf-admin-category-list" aria-label="Back Room main navigation">
+            {adminNavigationGroups.map((group) => {
+              const selected = group.id === activeNavigationGroup.id;
+              const attention = categoryAttentionCounts[group.id] || 0;
+              return (
+                <button
+                  key={group.id}
+                  type="button"
+                  className="nf-admin-category-button"
+                  aria-current={selected ? "page" : undefined}
+                  onClick={() => {
+                    if (!selected) {
+                      setAdminTab(group.items[0][0]);
+                      setQ("");
+                    }
                   }}
                 >
-                  {badgeCount}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-
+                  <BackRoomNavIcon id={group.id} />
+                  <span className="nf-admin-category-label">{group.label}</span>
+                  {attention > 0 && (
+                    <span className="nf-admin-attention" aria-label={`${attention} items needing attention`}>
+                      {attention}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+          <main className="nf-admin-main-content" id="nf-admin-section-content">
+            <section className="nf-admin-section-tools" aria-label={`${activeNavigationGroup.label} tools`}>
+              <h2 className="nf-admin-navigation-title">{activeNavigationGroup.label}</h2>
+              <p className="nf-admin-navigation-subtitle">{activeNavigationGroup.description}</p>
+              <nav className="nf-admin-subtabs" aria-label={`${activeNavigationGroup.label} subtabs`}>
+                {activeNavigationGroup.items.map(([id, label]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    className="nf-admin-subtab"
+                    aria-current={adminTab === id ? "page" : undefined}
+                    onClick={() => { setAdminTab(id); setQ(""); }}
+                  >
+                    <span className="nf-admin-subtab-chevron" aria-hidden="true">›</span>
+                    <span>{label}</span>
+                  </button>
+                ))}
+              </nav>
+            </section>
         {adminTab === "reviews" && (
           <AdminReviewsPanel flavors={cat.flavors ?? []} />
         )}
@@ -18817,6 +19165,16 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
 
         {adminTab === "fulfillment" && (
           <>
+            {fulfillmentPreviewReadOnly && (
+              <div className="card" role="status" style={{ padding: 12, marginBottom: 12,
+                background: "#FFF7DD", borderColor: "#E2B62F", color: c.darkBrown }}>
+                <strong>LOCAL PREVIEW · READ ONLY</strong>
+                <div style={{ fontSize: 12, marginTop: 3 }}>
+                  This preview reads existing records, but queue completion buttons are disabled.
+                  Do not change customer or billing settings elsewhere while previewing.
+                </div>
+              </div>
+            )}
             <section
               style={{
                 marginBottom: 16,
@@ -18861,10 +19219,10 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                       lineHeight: 1.55,
                     }}
                   >
-                    New paid orders appear here as soon as they come in.
-                    Overdue work is first, then today, upcoming delivery and
-                    market orders, and open shipping orders. Payment-pending
-                    orders stay out until Square confirms payment.
+                    Paid orders and Honey Club boxes appear together.
+                    Overdue work is first, then today, upcoming deliveries,
+                    shipping, and memberships needing review. Unpaid pending
+                    subscriptions stay out until payment is verified.
                   </p>
                 </div>
 
@@ -18892,44 +19250,251 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
               >
                 {[
                   ["Queue", fulfillmentQueue.length],
-                  ["Due Today", dueTodayOrders.length],
-                  ["Upcoming", upcomingFulfillmentOrders.length],
-                  ["Overdue", overdueFulfillmentOrders.length],
+                  ["Honey Club", honeyClubFulfillmentEntries.length],
+                  ["Needs Review", fulfillmentReviewCount],
+                  ["Due Today", dueTodayFulfillmentCount],
+                  ["Upcoming", upcomingFulfillmentCount],
+                  ["Overdue", overdueFulfillmentCount],
                   ["Jars to Fill", fulfillmentJarCount],
-                ].map(([label, value]) => (
-                  <div
-                    key={label}
-                    className="card"
-                    style={{
-                      padding: "12px 10px",
-                      textAlign: "center",
-                      background: "#FFF",
-                    }}
-                  >
-                    <div
-                      className="num"
+                ].map(([label, value]) => {
+                  const selected = fulfillmentFocus === label;
+                  const isUpcoming = label === "Upcoming";
+                  return (
+                    <button
+                      key={label}
+                      type="button"
+                      className="card"
+                      onClick={() => setFulfillmentFocus((current) => current === label ? null : label)}
+                      aria-expanded={selected}
+                      aria-controls={isUpcoming ? "nf-upcoming-fulfillment-panel" : "nf-fulfillment-focus-panel"}
+                      aria-label={`${label}: ${value}. ${selected ? "Hide matching details" : "View matching details"}`}
                       style={{
-                        fontSize: 28,
-                        color: c.darkBrown,
+                        padding: "12px 10px",
+                        textAlign: "center",
+                        background: selected ? "#FFF0C5" : "#FFF",
+                        border: selected ? "2px solid #B88200" : "1px solid #E7DCC9",
+                        cursor: "pointer",
+                        width: "100%",
+                        minWidth: 0,
+                        fontFamily: "inherit",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        minHeight: 102,
                       }}
                     >
-                      {value}
-                    </div>
-                    <div
-                      style={{
-                        marginTop: 2,
-                        fontSize: 10.5,
-                        fontWeight: 900,
-                        letterSpacing: ".06em",
-                        textTransform: "uppercase",
-                        color: c.tan,
-                      }}
-                    >
-                      {label}
-                    </div>
-                  </div>
-                ))}
+                      <div className="num" style={{ fontSize: 28, color: c.darkBrown }}>
+                        {value}
+                      </div>
+                      <div style={{ marginTop: 2, fontSize: 10.5, fontWeight: 900,
+                        letterSpacing: ".06em", textTransform: "uppercase", color: c.brown }}>
+                        {label}
+                      </div>
+                      <div style={{ marginTop: 6, fontSize: 11, fontWeight: 750, color: c.darkBrown }}>
+                        {selected ? "Hide details ▲" : isUpcoming ? "View full list ▼" : "View details ▼"}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
+
+              {fulfillmentFocus && fulfillmentFocus !== "Upcoming" && (
+                <section
+                  id="nf-fulfillment-focus-panel"
+                  className="card"
+                  aria-label={`${fulfillmentFocus} fulfillment details`}
+                  style={{ padding: 16, marginTop: 14, background: "#FFFFFF",
+                    border: "2px solid #D8A522", scrollMarginTop: 24 }}
+                >
+                  <div style={{ display: "flex", alignItems: "flex-start",
+                    justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                    <div style={{ flex: "1 1 210px", minWidth: 0 }}>
+                      <h2 style={{ margin: 0, fontSize: 22, color: c.darkBrown }}>
+                        {fulfillmentFocus === "Jars to Fill"
+                          ? `${fulfillmentJarCount} jars to fill · ${fulfillmentFocusEntries.length} orders`
+                          : `${fulfillmentFocus} · ${fulfillmentFocusEntries.length} ${fulfillmentFocusEntries.length === 1 ? "order" : "orders"}`}
+                      </h2>
+                      <p style={{ margin: "7px 0 4px", fontSize: 13, lineHeight: 1.55, color: c.brown }}>
+                        {fulfillmentFocusDescription[fulfillmentFocus]}
+                      </p>
+                      <p style={{ margin: "0 0 4px", fontSize: 12.5, fontWeight: 750, color: c.darkBrown }}>
+                        {fulfillmentFocusEntries.length
+                          ? "Only matching order cards are shown below."
+                          : "Nothing currently matches this category."}
+                      </p>
+                    </div>
+                    <button type="button" className="btn" onClick={() => setFulfillmentFocus(null)}
+                      style={{ padding: "8px 12px", fontSize: 12 }}>Show all orders</button>
+                  </div>
+                  {fulfillmentFocus === "Jars to Fill" && fulfillmentFocusEntries.length > 0 && (
+                    <div style={{ display: "grid", gap: 9, marginTop: 12 }}>
+                      {fulfillmentFocusEntries.map((entry) => (
+                        <article key={`jar-breakdown:${entry.id}`}
+                          style={{ padding: 12, border: "1px solid #E7DCC9", borderRadius: 10,
+                            background: "#FFFCF6" }}>
+                          <div style={{ display: "flex", alignItems: "baseline",
+                            justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+                            <strong style={{ fontSize: 14, color: c.darkBrown }}>
+                              #{entry.order_no} · {entry.name}
+                            </strong>
+                            <strong style={{ fontSize: 14, color: c.darkBrown }}>
+                              {jarsForFulfillmentEntry(entry)} {jarsForFulfillmentEntry(entry) === 1 ? "jar" : "jars"}
+                            </strong>
+                          </div>
+                          <div style={{ marginTop: 5, fontSize: 12.5, lineHeight: 1.5,
+                            color: c.brown, overflowWrap: "anywhere" }}>
+                            {entry.isHoneyClub ? (
+                              <>
+                                <strong>{entry.planName}</strong> · {entry.planContents}
+                                <div>Check Honey Club for exact selected flavors and any unspecified sizes.</div>
+                              </>
+                            ) : (entry.order_items || []).map((item) => (
+                              <div key={item.id}>
+                                {item.qty} × {item.size_label || "Size not recorded"} · {item.type === "spun" ? "Spun" : "Regular"} · {item.flavor_name}
+                              </div>
+                            ))}
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  )}
+                </section>
+              )}
+
+              {fulfillmentFocus === "Upcoming" && (
+                <section
+                  id="nf-upcoming-fulfillment-panel"
+                  aria-label="All upcoming fulfillment orders"
+                  className="card"
+                  style={{ padding: 16, marginTop: 14, background: "#FFF",
+                    border: "2px solid #D8A522" }}
+                >
+                  <div style={{ display: "flex", alignItems: "flex-start",
+                    justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                    <div>
+                      <h2 style={{ margin: 0, fontSize: 23, color: c.darkBrown }}>
+                        All Upcoming Fulfillment ({upcomingFulfillmentCount})
+                      </h2>
+                      <p style={{ margin: "6px 0 14px", fontSize: 12.5,
+                        lineHeight: 1.55, color: c.brown }}>
+                        Every future scheduled customer order and Honey Club box, in delivery date order.
+                        Orders due today, overdue, or requiring payment review stay in their own queue sections.
+                      </p>
+                    </div>
+                    <button type="button" className="btn" onClick={() => setFulfillmentFocus(null)}
+                      style={{ padding: "7px 11px", fontSize: 12 }}>
+                      Close list
+                    </button>
+                  </div>
+
+                  {allUpcomingFulfillmentEntries.length === 0 ? (
+                    <p style={{ padding: 12, fontSize: 13, color: c.tan }}>
+                      No future scheduled orders or Honey Club boxes are awaiting fulfillment.
+                    </p>
+                  ) : (
+                    <div style={{ display: "grid", gap: 12 }}>
+                      {allUpcomingFulfillmentEntries.map((order) => {
+                        const scheduledFor = fulfillmentDateForOrder(order);
+                        const isMarket = order.method === "market";
+                        const location = fulfillmentLocationForOrder(order);
+                        const fullDate = scheduledFor
+                          ? parseDay(scheduledFor).toLocaleDateString("en-US", {
+                              weekday: "long", month: "long", day: "numeric", year: "numeric"
+                            })
+                          : "Date not scheduled";
+                        return (
+                          <article key={`upcoming:${order.id}`}
+                            style={{ border: "1px solid #DCCEB6", borderRadius: 12,
+                              padding: 14, background: "#FFFEFB" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between",
+                              alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+                              <div>
+                                <div style={{ fontSize: 10, letterSpacing: ".08em",
+                                  fontWeight: 900, color: c.brown, textTransform: "uppercase" }}>
+                                  {order.isHoneyClub ? "Honey Club subscription" : "Customer order"}
+                                </div>
+                                <div style={{ fontSize: 18, fontWeight: 900,
+                                  marginTop: 3, color: c.darkBrown }}>
+                                  #{order.order_no} · {order.name}
+                                </div>
+                              </div>
+                              <div style={{ background: "#FFF1C5", padding: "8px 11px",
+                                borderRadius: 8, color: c.darkBrown }}>
+                                <div style={{ fontSize: 10, fontWeight: 900,
+                                  textTransform: "uppercase" }}>
+                                  {isMarket ? "Pickup date" : "Delivery date"}
+                                </div>
+                                <strong style={{ display: "block", marginTop: 3,
+                                  fontSize: 14 }}>{fullDate}</strong>
+                              </div>
+                            </div>
+                            <div style={{ marginTop: 12, display: "grid",
+                              gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 12 }}>
+                              <div>
+                                <div className="eyebrow" style={{ fontSize: 10 }}>
+                                  {isMarket ? "Pickup location" : "Delivery address"}
+                                </div>
+                                <div style={{ fontSize: 13.5, color: c.darkBrown,
+                                  fontWeight: 650, lineHeight: 1.55, marginTop: 4,
+                                  whiteSpace: "pre-wrap" }}>
+                                  {location || "Address not recorded · review before fulfillment"}
+                                </div>
+                                <div style={{ fontSize: 12, color: c.brown,
+                                  marginTop: 5 }}>
+                                  {fulfillmentWindowForOrder(order)}
+                                </div>
+                              </div>
+                              <div>
+                                <div className="eyebrow" style={{ fontSize: 10 }}>
+                                  Items and jar sizes
+                                </div>
+                                <div style={{ marginTop: 4, fontSize: 13.5,
+                                  lineHeight: 1.6, color: c.darkBrown }}>
+                                  {order.isHoneyClub ? (
+                                    <>
+                                      <strong>{order.planName}</strong>
+                                      <div>{order.planContents}</div>
+                                      {String(order.planContents).toLowerCase().includes("mixed sizes") && (
+                                        <div style={{ fontSize: 12, color: c.brown }}>
+                                          Specific jar sizes are not recorded in the subscription plan.
+                                        </div>
+                                      )}
+                                    </>
+                                  ) : (order.order_items || []).length ? (
+                                    (order.order_items || []).map((item) => (
+                                      <div key={item.id}>
+                                        <strong>{item.qty} × {item.size_label || "Size not recorded"}</strong>
+                                        {" · "}{item.type === "spun" ? "Spun" : "Regular"}
+                                        {" · "}{item.flavor_name}
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <div>Item details not recorded · review this order</div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            {order.notes && (
+                              <div style={{ fontSize: 12, marginTop: 12, padding: 10,
+                                lineHeight: 1.6, background: "#F8F3E9",
+                                borderRadius: 7, color: c.brown }}>
+                                <strong>Preferences / delivery notes:</strong> {order.notes}
+                              </div>
+                            )}
+                          </article>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {openShippingOrders.length > 0 && (
+                    <p style={{ margin: "12px 0 0", color: c.brown, fontSize: 12 }}>
+                      {openShippingOrders.length} open shipping order(s) have no future delivery date.
+                      They remain visible in the main Fulfillment Queue as Ship ASAP.
+                    </p>
+                  )}
+                </section>
+              )}
 
               <div
                 style={{
@@ -18967,7 +19532,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
             </section>
 
             <div style={{ marginBottom: 32 }}>
-              {fulfillmentQueue.length === 0 && (
+              {visibleFulfillmentQueue.length === 0 && (
                 <div
                   className="card"
                   style={{
@@ -18984,15 +19549,18 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                       color: c.darkBrown,
                     }}
                   >
-                    YOU&apos;RE CAUGHT UP
+                    {fulfillmentFocus
+                      ? "NO MATCHING ORDERS" : "YOU'RE CAUGHT UP"}
                   </div>
                   <div style={{ marginTop: 6 }}>
-                    No paid orders need fulfillment right now.
+                    {fulfillmentFocus
+                      ? `No ${fulfillmentFocus.toLowerCase()} items are in this queue right now.`
+                      : "No orders or Honey Club boxes need fulfillment or review right now."}
                   </div>
                 </div>
               )}
 
-              {fulfillmentQueue.map((order) => {
+              {visibleFulfillmentQueue.map((order) => {
                 const status =
                   fulfillmentStatusForOrder(order);
                 const location =
@@ -19050,6 +19618,12 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                           {status.label}
                         </div>
 
+                        {order.isHoneyClub && (
+                          <div style={{ fontSize: 10, fontWeight: 900, marginTop: 6,
+                            letterSpacing: ".08em", color: c.brown }}>
+                            HONEY CLUB · {order.cadence === "2mo" ? "EVERY TWO MONTHS" : "MONTHLY"}
+                          </div>
+                        )}
                         <div
                           style={{
                             display: "flex",
@@ -19173,7 +19747,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                         className="eyebrow"
                         style={{ marginBottom: 6 }}
                       >
-                        Fill this order
+                        {order.isHoneyClub ? "Prepare Honey Club box" : "Fill this order"}
                       </div>
 
                       <div
@@ -19185,8 +19759,16 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                           color: c.darkBrown,
                         }}
                       >
-                        {(order.order_items || []).map(
-                          (item) => (
+                        {order.isHoneyClub ? (
+                          <div>
+                            <strong>{order.planName}</strong>
+                            <div>{order.planContents}</div>
+                            {order.jarCount === 0 && (
+                              <em>Verify jar quantity in Honey Club.</em>
+                            )}
+                          </div>
+                        ) : (
+                          (order.order_items || []).map((item) => (
                             <div key={item.id}>
                               <strong>
                                 {item.qty}×
@@ -19194,10 +19776,17 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                               {item.item_kind === "hive_sponsorship" ? `Annual Hive Sponsorship — ${item.flavor_name}` : <>{item.size_label}{" "}
                               <strong>{item.type === "spun" ? "Spun" : "Regular"}</strong>{" "}— {item.flavor_name}</>}
                             </div>
-                          )
+                          ))
                         )}
                       </div>
                     </div>
+
+                    {order.isHoneyClub && order.needsReview && (
+                      <div style={{ padding: 10, marginTop: 10, borderRadius: 8,
+                        background: "#FFF0DD", color: "#784B00", fontSize: 12.5 }}>
+                        <strong>Review required:</strong> {order.reviewReason}
+                      </div>
+                    )}
 
                     {order.notes && (
                       <div
@@ -19215,6 +19804,9 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                         {order.notes}
                       </div>
                     )}
+
+                    <AdminFulfillmentTimeline order={order}
+                      readOnlyPreview={fulfillmentPreviewReadOnly} onCompleted={pull} />
 
                     <div
                       style={{
@@ -19244,20 +19836,22 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                           padding: "9px 12px",
                           fontSize: 12.5,
                         }}
-                        onClick={() =>
-                          guard(() =>
-                            api.setOrderStatus(
-                              order.id,
-                              "done"
-                            )
-                          )
-                        }
+                        disabled={fulfillmentPreviewReadOnly || (!order.isHoneyClub && order.method !== "market")}
+                        onClick={() => {
+                          if (order.isHoneyClub) {
+                            setAdminTab("subscriptions");
+                            return;
+                          }
+                          // Existing market-pickup action; shipping and local delivery
+                          // remain editable in All Orders exactly as on current main.
+                          if (order.method === "market") guard(() => api.setOrderStatus(order.id, "done"));
+                        }}
                       >
-                        {order.method === "market"
-                          ? "Mark picked up"
-                          : order.method === "ship"
-                            ? "Mark shipped"
-                            : "Mark delivered"}
+                        {order.isHoneyClub
+                          ? "Review in Honey Club"
+                          : order.method === "market"
+                            ? "Mark picked up"
+                            : "Manage in All Orders"}
                       </button>
                     </div>
                   </article>
@@ -19269,6 +19863,8 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
 
         {adminTab === "shippingLabels" && <AdminShippingLabels orders={orders} />}
         {adminTab === "newsletter" && <AdminNewsletterStudio />}
+
+        {adminTab === "customerAccounts" && <AdminCustomerAccounts />}
 
         {adminTab === "orders" && (
           <>
@@ -19409,9 +20005,13 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                     )}
                     {o.notes && <div style={{ fontSize: 12.5, marginTop: 6, padding: "7px 9px", background: "#FBF7F1", borderRadius: 5 }}>{o.notes}</div>}
 
-                    {(o.method === "delivery" || o.method === "ship") && !cx && (
+                    {/* Preserve the proven existing notification workflow. The
+                        copy-only recovered timeline must not replace it. */}
+                    {(o.method === "delivery" || o.method === "ship") && !cx && !fulfillmentPreviewReadOnly && (
                       <AdminOrderDeliveryButton order={o} />
                     )}
+                    {!cx && <AdminFulfillmentTimeline order={o}
+                      readOnlyPreview={fulfillmentPreviewReadOnly} onCompleted={pull} />}
 
                     {paymentPending && (
                       <div style={{
@@ -19446,12 +20046,22 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                       </div>
                     )}
 
+                    {orderView === "pending" && paymentPending && <AdminPaymentNudge order={o} />}
+
                     {orderView === "active" ? (
                       <div style={{ marginTop: 10 }}>
                         {!cx && (
                           <div style={{ display: "flex", gap: 6 }}>
-                            <button className={`btn ${done ? "on" : ""}`} style={{ flex: 1, padding: 8, fontSize: 12.5 }}
-                              onClick={() => guard(() => api.setOrderStatus(o.id, done ? "open" : "done"))}>
+                            <button className={`btn ${done ? "on" : ""}`}
+                              disabled={fulfillmentPreviewReadOnly}
+                              title={fulfillmentPreviewReadOnly ? "Local preview is read only." : undefined}
+                              style={{ flex: 1, padding: 8, fontSize: 12.5 }}
+                              onClick={() => {
+                                if (fulfillmentPreviewReadOnly) return;
+                                // Maintain the current GitHub main order-status workflow.
+                                // Shipping does NOT automatically archive on this button.
+                                guard(() => api.setOrderStatus(o.id, done ? "open" : "done"));
+                              }}>
                               {done ? "Handed over ✓" : o.method === "market" ? "Mark picked up" : o.method === "ship" ? "Mark shipped" : "Mark delivered"}
                             </button>
                             {o.method === "market" && !done && !ns && (
@@ -19605,6 +20215,9 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                       </div>
                     )}
 
+                    <AdminFulfillmentTimeline order={o}
+                      readOnlyPreview={fulfillmentPreviewReadOnly} onCompleted={pull} />
+
                     {paymentPending && (
                       <div style={{
                         marginTop: 10,
@@ -19638,6 +20251,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                       </div>
                     )}
 
+                    {paymentPending && <AdminPaymentNudge order={o} />}
                     <div className={`nf-noshow-status ${missed >= 2 ? "final" : missed === 1 ? "warning" : ""}`}>
                       {missed === 0 && "No missed pickups"}
                       {missed === 1 && "First pickup missed · Order remains reserved"}
@@ -20170,6 +20784,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
         {adminTab === "subscriptions" && (
           <>
             <div className="eyebrow" style={{ marginBottom: 8 }}>Honey Club · {activeSubCount} active</div>
+            <AdminHoneyClubBillingCalendar subscriptions={subs} zones={cat?.zones || []} plans={cat?.plans || []} />
 
             <div
               className="card"
@@ -21574,6 +22189,8 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
             </button>
           </>
         )}
+          </main>
+        </div>
       </div>
     </div>
   );
