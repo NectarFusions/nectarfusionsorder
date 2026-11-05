@@ -12812,9 +12812,12 @@ export default function App() {
   const zone = cat?.zones?.find((z) => z.zips.includes(zip.trim()));
   const subZone = cat?.zones?.find((z) => z.zips.includes(subZip.trim()));
   const outOfArea = method === "delivery" && zip.trim().length === 5 && !zone;
-  const shipOK = !!cat && price.sub >= cat.shipFreeOver;
+  const shipsFree = !!cat && price.sub >= cat.shipFreeOver;
   const toShip = cat ? Math.max(0, cat.shipFreeOver - price.sub) : 0;
-  const fee = method === "delivery" && zone ? (price.sub >= zone.freeOver ? 0 : zone.fee) : 0;
+  const shippingZipValid = /^(48|49)\d{3}$/.test(zip.trim());
+  const shipFee = cat && !shipsFree ? cat.shipFlatFee : 0;
+  const fee = method === "ship" ? shipFee
+    : method === "delivery" && zone ? (price.sub >= zone.freeOver ? 0 : zone.fee) : 0;
   const belowMin = method === "delivery" && zone && price.sub < zone.minimum;
   const total = price.sub + fee;
 
@@ -13037,9 +13040,10 @@ export default function App() {
       if (!cust.address.trim()) missing.push("an address");
       if (!cust.city.trim()) missing.push("a city");
       if (zip.length !== 5) missing.push("a ZIP code");
+      else if (method === "ship" && !shippingZipValid) missing.push("a Michigan ZIP code");
     }
   }
-  const canPlace = cart.length && slot && !missing.length && !belowMin && !busy && (method !== "ship" || shipOK);
+  const canPlace = cart.length && slot && !missing.length && !belowMin && !busy;
   const unresolvedTypeItems = cart.filter((item) => item.type === "undecided");
   const unavailableTypeItems = cart.filter((item) => {
     if (item.type === "undecided") return false;
@@ -14899,7 +14903,7 @@ export default function App() {
   );
 
   /* ================= POLICY ================= */
-  if (view === "policy") return <Policy Header={Header} onBack={() => setView("shop")} shipOver={cat.shipFreeOver} minutes={cat.cancelMinutes} />;
+  if (view === "policy") return <Policy Header={Header} onBack={() => setView("shop")} shipOver={cat.shipFreeOver} shipFlatFee={cat.shipFlatFee} minutes={cat.cancelMinutes} />;
 
   /* ================= SHOP ================= */
   return (
@@ -15965,18 +15969,15 @@ export default function App() {
             >
               <span className="display nf-shipping-method-label">SHIPPING</span>
               <span className="nf-shipping-method-detail">
-                {shipOK
+                {shipsFree
                   ? "FREE Michigan shipping · ships in 2–3 business days"
-                  : `Free Michigan shipping on orders of ${money(cat.shipFreeOver)}+`}
+                  : `${money(cat.shipFlatFee)} flat-rate Michigan shipping · no minimum`}
               </span>
             </button>
-            {!shipOK && (
+            {!shipsFree && (
               <div className="nf-shipping-threshold-note" role="status">
-                {method === "ship" ? (
-                  <>Shipping checkout currently requires an order of <strong>{money(cat.shipFreeOver)}</strong> or more. Add <strong>{money(toShip)}</strong> to your cart to unlock free shipping.</>
-                ) : (
-                  <>Add <strong>{money(toShip)}</strong> more to qualify for free Michigan shipping.</>
-                )}
+                Shipping is <strong>{money(cat.shipFlatFee)} flat</strong> anywhere in Michigan.
+                Add <strong>{money(toShip)}</strong> more for free shipping at <strong>{money(cat.shipFreeOver)}</strong>.
               </div>
             )}
 
@@ -16011,9 +16012,9 @@ export default function App() {
                   <div className="nf-shipping-out-of-area" role="status">
                     <strong>Local delivery isn&rsquo;t available in your area yet.</strong>
                     <div style={{ marginTop: 5 }}>
-                      {shipOK
-                        ? "Shipping is available for this order."
-                        : `Shipping is currently offered on orders of ${money(cat.shipFreeOver)} or more.`}
+                      {shipsFree
+                        ? "Your order qualifies for free shipping to Michigan addresses."
+                        : `Choose Michigan shipping for ${money(cat.shipFlatFee)} flat; free at ${money(cat.shipFreeOver)}.`}
                     </div>
                     <button
                       type="button"
@@ -16101,7 +16102,7 @@ export default function App() {
 
             </section>
 
-            {slot && (method !== "ship" || shipOK) && (
+            {slot && (
               <section className="nf-checkout-details-card">
                 {!ctaOff && method !== "market" && (
                   <div className="card" style={{ padding: 15, marginTop: 22, background: "#FFFBF0", borderColor: c.gold,
@@ -16133,8 +16134,13 @@ export default function App() {
                       <Field placeholder="City" value={cust.city}
                         onChange={(e) => setCust({ ...cust, city: e.target.value })} />
                       {method === "ship" && (
-                        <Field placeholder="ZIP code" value={zip} maxLength={5} inputMode="numeric"
-                          onChange={(e) => setZip(e.target.value.replace(/\D/g, ""))} />
+                        <>
+                          <Field placeholder="Michigan ZIP code" value={zip} maxLength={5} inputMode="numeric"
+                            onChange={(e) => setZip(e.target.value.replace(/\D/g, ""))} />
+                          {zip.length === 5 && !shippingZipValid && (
+                            <div className="err" role="status">Shipping is currently available to Michigan addresses only.</div>
+                          )}
+                        </>
                       )}
                     </>
                   )}
@@ -16402,7 +16408,7 @@ export default function App() {
                 {method === "ship" && (
                   <div className="nf-final-review-price-row">
                     <span>Shipping</span>
-                    <strong>Free</strong>
+                    <strong>{shipFee > 0 ? money(shipFee) : "Free"}</strong>
                   </div>
                 )}
                 <div className="nf-final-review-price-row">
@@ -16570,6 +16576,12 @@ export default function App() {
                   </div>
                 )}
 
+                {method === "ship" && (
+                  <div className="nf-cart-totals-row">
+                    <span>Shipping</span>
+                    <strong>{shipFee > 0 ? money(shipFee) : "Free"}</strong>
+                  </div>
+                )}
                 <div className="nf-cart-totals-row">
                   <span>Online checkout service fee</span>
                   <strong>
@@ -22474,7 +22486,7 @@ function About({ Header, onBack, onSearch, onContact }) {
     </div>
   );
 }
-function Policy({ Header, onBack, shipOver, minutes }) {
+function Policy({ Header, onBack, shipOver, shipFlatFee, minutes }) {
   return (
     <div className="nf"><style>{CSS}
 </style>
@@ -22508,8 +22520,8 @@ function Policy({ Header, onBack, shipOver, minutes }) {
         </div>
 
         <div className="card" style={{ padding: 18, marginBottom: 12, borderColor: c.sky }}>
-          <h2>BULK &amp; WHOLESALE</h2>
-          <p><strong>Orders over {money(shipOver)} ship free</strong>, anywhere in Michigan. We don&rsquo;t sell paid shipping below that — mailing glass makes it a bad deal for you.</p>
+          <h2>SHIPPING IN MICHIGAN</h2>
+          <p><strong>{money(shipFlatFee)} flat-rate shipping</strong> anywhere in Michigan on orders under {money(shipOver)}. No minimum order. Orders of <strong>{money(shipOver)} or more ship free.</strong></p>
           <p>Wedding favors, corporate gifts, a case for your café — email us and we&rsquo;ll quote you directly.</p>
           <p><strong>Custom labels on orders:</strong> please contact <a href="mailto:info@nectar-fusions.com" style={{ color: c.sky, fontWeight: 700 }}>info@nectar-fusions.com</a>.</p>
         </div>

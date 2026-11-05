@@ -90,6 +90,7 @@ export async function getCatalog() {
       price: (cfg.bundle?.price_cents ?? 2000) / 100,
     },
     shipFreeOver: (cfg.shipping?.free_over_cents ?? 7500) / 100,
+    shipFlatFee: (cfg.shipping?.flat_fee_cents ?? 700) / 100,
     cancelMinutes: cfg.cancel_minutes ?? 60,
     spunAvailability: {
       enabled: cfg.spun_availability?.enabled !== false,
