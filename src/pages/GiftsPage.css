@@ -1,0 +1,88 @@
+.nf-gifts-page {background:#fffdf8;color:#251b13;min-height:100vh}
+.nf-gifts-main{padding-top:28px;padding-bottom:90px}
+.nf-gifts-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+.nf-gifts-tabs a{display:inline-flex;align-items:center;justify-content:center;min-height:43px;padding:11px 18px;border:1px solid #ddcdb9;border-radius:999px;background:#fff;color:#55402b;text-decoration:none;font-size:13px;font-weight:800;transition:background .15s,border-color .15s}
+.nf-gifts-tabs a:hover,.nf-gifts-tabs a:focus-visible{border-color:#a46d22;background:#fff8e8}
+.nf-gifts-tabs a.current{background:#2b211b;color:#fff;border-color:#2b211b}
+.nf-gifts-eyebrow{font-size:11px;font-weight:900;letter-spacing:.13em;text-transform:uppercase;color:#a46d22}
+.nf-gifts-hero{display:grid;grid-template-columns:1.1fr .9fr;min-height:420px;overflow:hidden;border-radius:26px;background:linear-gradient(135deg,#f5ead9,#fff8ec 70%);border:1px solid #e5d4bd}
+.nf-gifts-hero-business{background:linear-gradient(130deg,#183c4a,#276c77);color:#fff;border-color:#183c4a}
+.nf-gifts-hero-business .nf-gifts-eyebrow{color:#f2c96e}
+.nf-gifts-hero-copy{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:clamp(26px,5vw,60px)}
+.nf-gifts-hero h1,.nf-gifts-home-banner h2{font-family:Georgia,serif;font-weight:500;letter-spacing:-.045em;line-height:1.04;margin:13px 0 15px;font-size:clamp(36px,5.4vw,64px)}
+.nf-gifts-hero h1 em,.nf-gifts-home-banner h2 em{font-weight:400;color:#a46d22}
+.nf-gifts-hero-business h1 em{color:#f4cd74}
+.nf-gifts-hero p{font-size:16px;line-height:1.7;max-width:490px;margin:0 0 22px}
+.nf-gifts-hero-business p{color:#f1f5f4}
+.nf-gifts-hero > img{width:100%;height:100%;max-height:520px;object-fit:cover;display:block}
+.nf-gifts-hero-actions,.nf-gifts-home-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.nf-gifts-primary,.nf-gifts-quiet{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:12px 20px;border-radius:11px;text-decoration:none;font:inherit;font-size:13px;font-weight:900;cursor:pointer}
+.nf-gifts-primary{background:#1f403d;color:#fff;border:2px solid #1f403d}
+.nf-gifts-primary:hover,.nf-gifts-primary:focus-visible{background:#315c56;color:#fff;border-color:#315c56}
+.nf-gifts-quiet{background:transparent;color:inherit;border:2px solid #a7a092}
+.nf-gifts-quiet:hover,.nf-gifts-quiet:focus-visible{background:#fff7e7}
+.nf-gifts-section{margin-top:56px}
+.nf-gifts-section-title{max-width:690px;margin-bottom:24px}
+.nf-gifts-section-title h2,.nf-gifts-choice-card h2,.nf-gifts-business-teaser h2,.nf-gifts-business-banner h2{font-family:Georgia,serif;font-weight:500;font-size:clamp(29px,3.4vw,42px);line-height:1.12;letter-spacing:-.03em;margin:10px 0}
+.nf-gifts-section-title p{color:#695c4d;font-size:15px;line-height:1.65;margin:9px 0}
+.nf-gifts-product-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.nf-gifts-product-card{background:#fff;border:1px solid #eadccc;border-radius:19px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 10px 32px rgba(54,37,18,.05)}
+.nf-gifts-product-image{aspect-ratio:4/3;background:#efe4d3;overflow:hidden}
+.nf-gifts-product-image img{width:100%;height:100%;object-fit:cover;display:block}
+.nf-gifts-product-copy{padding:21px 18px 22px;display:flex;flex-direction:column;flex:1;align-items:flex-start}
+.nf-gifts-product-copy h3{font-family:Georgia,serif;font-size:22px;font-weight:500;line-height:1.13;margin:9px 0}
+.nf-gifts-product-copy p{font-size:14px;line-height:1.62;margin:0 0 18px;color:#5d554a;flex:1}
+.nf-gifts-card-cta{font:inherit;font-size:13px;font-weight:900;background:none;border:none;padding:0;color:#905a0e;text-decoration:underline;text-underline-offset:4px;cursor:pointer}
+.nf-gifts-card-cta:hover,.nf-gifts-card-cta:focus-visible{color:#633d08}
+.nf-gifts-photo-note{font-size:12px;color:#7a6c60;margin:12px 0 0;line-height:1.5}
+.nf-gifts-choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:38px}
+.nf-gifts-choice-card{padding:clamp(22px,3vw,38px);border:1px solid #e3d6c4;border-radius:20px;background:#f8f1e7}
+.nf-gifts-choice-card p{font-size:14px;line-height:1.7;color:#64574b;max-width:450px}
+.nf-gifts-events{background:#ecf5f2;border-color:#d1e3dc}
+.nf-gifts-business-teaser,.nf-gifts-business-banner{display:flex;align-items:center;justify-content:space-between;gap:26px;padding:clamp(26px,4vw,42px);margin-top:36px;border-radius:21px;background:#1e4144;color:#fff}
+.nf-gifts-business-teaser p,.nf-gifts-business-banner p{font-size:14px;line-height:1.7;max-width:610px;color:#e3eeea}
+.nf-gifts-business-teaser .nf-gifts-eyebrow,.nf-gifts-business-banner .nf-gifts-eyebrow{color:#f4d086}
+.nf-gifts-business-teaser .nf-gifts-primary,.nf-gifts-business-banner .nf-gifts-primary{background:#ffda87;border-color:#ffda87;color:#2b2418;flex:0 0 auto}
+.nf-gifts-business-teaser .nf-gifts-primary:hover,.nf-gifts-business-banner .nf-gifts-primary:hover{background:#ffe5ad;border-color:#ffe5ad}
+.nf-gifts-business-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+.nf-gifts-business-grid article{padding:26px;border:1px solid #dfe8e6;background:#fff;border-radius:17px}
+.nf-gifts-option-icon{font-size:32px;color:#99701f}
+.nf-gifts-business-grid h3{font-family:Georgia,serif;font-weight:500;font-size:26px;margin:16px 0 8px}
+.nf-gifts-business-grid p{font-size:14px;line-height:1.7;color:#5c5a51;min-height:82px}
+.nf-gifts-business-grid a{font-size:13px;font-weight:900;color:#8b550d;text-underline-offset:4px}
+.nf-gifts-footer{text-align:center;padding:35px 12px 0;margin-top:52px;border-top:1px solid #e3d9cd}
+.nf-gifts-footer p{color:#605344;line-height:1.65}
+.nf-gifts-footer a{color:#9e650e;font-weight:800}
+.nf-gifts-footer button{margin-top:15px;background:none;border:0;text-decoration:underline;color:#514437;font:inherit;font-size:13px;font-weight:800;cursor:pointer}
+.nf-gifts-home-banner{display:grid;grid-template-columns:1.15fr .85fr;align-items:stretch;overflow:hidden;border-radius:22px;background:linear-gradient(130deg,#f8eddf,#fff8ef);border:1px solid #e1d1bb;margin-top:20px;margin-bottom:22px;min-height:280px}
+.nf-gifts-home-copy{padding:clamp(25px,3.8vw,44px);display:flex;flex-direction:column;align-items:flex-start;justify-content:center}
+.nf-gifts-home-banner h2{font-size:clamp(32px,4.2vw,52px);margin:9px 0}
+.nf-gifts-home-banner p{font-size:15px;line-height:1.6;margin:0 0 20px;max-width:480px;color:#625243}
+.nf-gifts-home-banner > img{width:100%;height:100%;max-height:400px;object-fit:cover}
+.nf-gifts-nav-link{background:#f5c75e!important;color:#261d14!important;border-color:#f5c75e!important;font-weight:900!important}
+@media(max-width:1000px){.nf-gifts-product-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.nf-gifts-business-grid{grid-template-columns:1fr}}
+@media(max-width:680px){.nf-gifts-main{padding-top:18px}.nf-gifts-tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.nf-gifts-tabs a{white-space:nowrap;font-size:12px;padding:10px 12px}.nf-gifts-hero,.nf-gifts-home-banner{grid-template-columns:1fr}.nf-gifts-hero-copy{padding:26px 22px}.nf-gifts-hero > img{height:195px;max-height:none;object-fit:cover}.nf-gifts-home-copy{padding:25px 22px}.nf-gifts-home-banner > img{height:180px}.nf-gifts-product-grid,.nf-gifts-choice-grid{grid-template-columns:1fr}.nf-gifts-product-image{aspect-ratio:16/9}.nf-gifts-business-teaser,.nf-gifts-business-banner{flex-direction:column;align-items:flex-start}.nf-gifts-business-teaser .nf-gifts-primary,.nf-gifts-business-banner .nf-gifts-primary{width:100%}.nf-gifts-section{margin-top:38px}}
+@media(prefers-reduced-motion:reduce){.nf-gifts-page *{scroll-behavior:auto!important;transition:none!important}}
+
+/* Real-product holiday bear feature */
+.nf-gifts-featured-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.nf-gifts-featured-card{display:flex;flex-direction:column;overflow:hidden;background:#fff;border:1px solid #e8d7bf;border-radius:22px;box-shadow:0 15px 34px rgba(74,51,19,.08)}
+.nf-gifts-featured-image{height:clamp(280px,36vw,440px);display:flex;align-items:center;justify-content:center;background:#fffdf8;padding:12px}
+.nf-gifts-featured-image img{width:100%;height:100%;object-fit:contain;display:block}
+.nf-gifts-featured-copy{display:flex;flex:1;flex-direction:column;align-items:flex-start;padding:clamp(20px,3vw,30px)}
+.nf-gifts-featured-copy h3{font-family:Georgia,serif;font-weight:500;font-size:clamp(25px,3.2vw,36px);line-height:1.14;margin:9px 0 5px}
+.nf-gifts-price{font-size:25px;line-height:1.3;color:#65451a;margin:4px 0 12px}
+.nf-gifts-featured-copy p{flex:1;color:#5d554a;font-size:15px;line-height:1.68;margin:0 0 22px}
+.nf-gifts-featured-copy .nf-gifts-primary{min-height:50px}
+.nf-gifts-wrapped-inset{display:grid;grid-template-columns:minmax(160px,.38fr) 1fr;align-items:center;gap:clamp(20px,4vw,48px);padding:clamp(20px,3vw,34px);border-radius:20px;background:#f8f0e3;margin-top:26px}
+.nf-gifts-wrapped-inset img{width:100%;height:300px;object-fit:contain;border-radius:15px;background:white}
+.nf-gifts-wrapped-inset h3,.nf-gifts-ideas-heading h3{font-family:Georgia,serif;font-size:clamp(26px,3.2vw,38px);font-weight:500;margin:10px 0}
+.nf-gifts-wrapped-inset p,.nf-gifts-ideas-heading p{font-size:14px;color:#625448;line-height:1.75;margin:9px 0}
+.nf-gifts-wrapped-inset .nf-gifts-fineprint{font-size:12px;color:#7c6b59}
+.nf-gifts-ideas-heading{margin-top:52px;margin-bottom:20px;max-width:650px}
+.nf-gifts-product-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:680px){.nf-gifts-featured-grid,.nf-gifts-wrapped-inset{grid-template-columns:1fr}.nf-gifts-featured-image{height:315px}.nf-gifts-featured-copy .nf-gifts-primary{width:100%}.nf-gifts-wrapped-inset img{max-height:260px}.nf-gifts-ideas-heading{margin-top:34px}.nf-gifts-product-grid{grid-template-columns:1fr}}
+
+/* Purchasable gift bear cards */
+.nf-gifts-featured-copy .nf-gifts-primary:disabled{opacity:.62;cursor:not-allowed;background:#77736e;border-color:#77736e}
+.nf-gifts-stock-note{display:block;margin-top:9px;color:#6c5d4d;font-size:12px;line-height:1.5}
