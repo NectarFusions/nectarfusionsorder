@@ -20,3 +20,6 @@
 /my                     /index.html   200
 /order/*                /index.html   200
 /club/*                 /index.html   200
+/gifts                   /index.html   200
+/gifts/holiday           /index.html   200
+/gifts/business          /index.html   200

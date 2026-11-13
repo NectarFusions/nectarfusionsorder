@@ -24,6 +24,7 @@ import AdminOrderDeliveryButton from "./pages/AdminOrderDeliveryButton";
 // nf-fulfillment-message-timeline-v9: persistent stage results; simulated in local preview.
 import AdminFulfillmentTimeline from "./components/AdminFulfillmentTimeline";
 import SpecialEventOrderPage from "./pages/SpecialEventOrderPage";
+import GiftsPage, { GiftsHomepageFeature } from "./pages/GiftsPage";
 
 /* ============================================================
    NECTARFUSIONS — ORDER SYSTEM
@@ -48,6 +49,18 @@ const CADENCES = [
 ];
 
 const CONTACT = { email: "info@nectar-fusions.com", phone: "(989) 941-6385" };
+// Gift-bear SKU prices and inventory are always resolved by Supabase, not browser input.
+// Gift SKUs share the existing server-priced sizes but have flavor-specific stock.
+// Both 6 oz versions are $16; the 13 oz raw version is $24.
+const GIFT_VARIANTS = [
+  { key: "bear13", sizeId: "gift-bear-13oz", flavorName: "original" },
+  { key: "bear6", sizeId: "gift-bear-6oz", flavorName: "original" },
+  { key: "bear6cranberry", sizeId: "gift-bear-6oz", flavorName: "wild cranberry" },
+];
+const GIFT_SIZE_IDS = new Set(GIFT_VARIANTS.map((item) => item.sizeId));
+const isAllowedGiftFlavor = (sizeId, name) => GIFT_VARIANTS.some(
+  (variant) => variant.sizeId === sizeId && variant.flavorName === String(name ?? "").trim().toLowerCase()
+);
 /* Default homepage hero image used until an Admin replacement is saved. */
 const HERO_IMAGE = "/nf-hero-product.png";
 
@@ -484,6 +497,9 @@ const MY_NECTARFUSIONS_RE = /^\/my\/?$/i;
 
 const PUBLIC_VIEW_PATHS = Object.freeze({
   shop: "/",
+  gifts: "/gifts",
+  holidayGifts: "/gifts/holiday",
+  businessGifts: "/gifts/business",
   subscribe: "/honey-club",
   eventGateway: "/special-events",
   events: "/special-events/order",
@@ -514,6 +530,21 @@ const SEO_BY_VIEW = Object.freeze({
     description:
       "Shop Michigan raw unfiltered honey and small-batch infused honey from NectarFusions. Real ingredients, cold-infused flavors, gifts, Honey Club, and more.",
     image: "/nectarfusions-honey-hero.webp",
+  },
+  gifts: {
+    title: "Gifts & Honey Gift Sets | NectarFusions Michigan",
+    description: "Shop premium raw Michigan honey gifts, gently strained to retain naturally occurring pollen. Explore holiday honey bears, custom gifts, and business gifting.",
+    image: "/images/gifts/honey-bears-together.jpg",
+  },
+  holidayGifts: {
+    title: "Holiday Honey Gifts | NectarFusions Michigan",
+    description: "Shop 6 oz and 13 oz premium raw Michigan honey bear gifts for $16 and $24. Add to your cart and checkout securely with Square.",
+    image: "/images/gifts/honey-bear-gift-wrapped.jpg",
+  },
+  businessGifts: {
+    title: "Business Honey Gifts & Private Label | NectarFusions",
+    description: "Explore corporate honey gifting, custom labels, and private-label honey inquiries with NectarFusions Michigan.",
+    image: "/images/partner-gift-hexagonal.jpg",
   },
   subscribe: {
     title: "Honey Club | Michigan Honey Subscription | NectarFusions",
@@ -12507,6 +12538,8 @@ export default function App() {
   const B = cat?.bundle ?? { size: "4oz", count: 3, price: 20 };
   const sizeOf = (id) =>
     cat?.sizes?.find((s) => s.id === id) ?? { id, label: id, price: 0 };
+  // Keep bear-gift SKUs out of regular infused-honey size selectors.
+  const shopSizes = (cat?.sizes ?? []).filter((size) => !GIFT_SIZE_IDS.has(size.id));
   const typeName = (id) =>
     id === "undecided" ? "Decide in review" : TYPES.find((t) => t.id === id)?.name ?? "Regular";
 
@@ -12517,6 +12550,13 @@ export default function App() {
 
   const flavorAvailableForType = (flavor, sizeId, type) => {
     if (!flavor) return false;
+    if (GIFT_SIZE_IDS.has(sizeId)) {
+      if (type !== "regular" || !isAllowedGiftFlavor(sizeId, flavor.name)) return false;
+      const stockRow = flavor.stock?.[`${sizeId}:regular`];
+      // Explicit counted availability only; never treat a missing row as unlimited.
+      return stockRow?.in_stock === true &&
+        Number.isInteger(Number(stockRow.on_hand)) && Number(stockRow.on_hand) > 0;
+    }
     if (type === "undecided") {
       return api.inStock(flavor, sizeId, "regular") ||
         (spunEnabled && api.inStock(flavor, sizeId, "spun"));
@@ -12542,6 +12582,13 @@ export default function App() {
 
   const inventoryLimit = (flavorId, sizeId, type) => {
     const flavor = cat?.flavors?.find((f) => f.id === flavorId);
+    if (GIFT_SIZE_IDS.has(sizeId)) {
+      if (!isAllowedGiftFlavor(sizeId, flavor?.name)) return 0;
+      const row = flavor?.stock?.[`${sizeId}:${type}`];
+      const count = Number(row?.on_hand);
+      return type === "regular" && row?.in_stock === true && Number.isInteger(count)
+        ? Math.max(0, count) : 0;
+    }
     if (!flavor) return null;
     if (type === "undecided") return null;
     if (type === "spun" && !spunEnabled) return 0;
@@ -12555,7 +12602,7 @@ export default function App() {
 
   // HOMEPAGE — TOP PICKS USE CART-ADJUSTED INVENTORY
   const topPickInventoryFor = (flavor) =>
-    (cat?.sizes ?? []).map((size) => {
+    shopSizes.map((size) => {
       const limit = inventoryLimit(
         flavor.id,
         size.id,
@@ -12751,9 +12798,47 @@ export default function App() {
     });
   };
 
+  const giftInventory = (() => {
+    return Object.fromEntries(GIFT_VARIANTS.map(({ key, sizeId, flavorName }) => {
+      const size = cat?.sizes?.find((s) => s.id === sizeId);
+      const flavor = cat?.flavors?.find(
+        (f) => f.active !== false && String(f.name).trim().toLowerCase() === flavorName
+      );
+      const stock = flavor?.stock?.[`${sizeId}:regular`];
+      const remainingInCart = cart.find(
+        (item) => item.size_id === sizeId && item.flavor_id === flavor?.id && item.type === "regular"
+      )?.qty ?? 0;
+      // A numeric count is mandatory for gifts; NULL is never treated as unlimited.
+      const onHand = stock?.on_hand;
+      const counted = typeof onHand === "number" && Number.isInteger(onHand) && onHand >= 0;
+      const available = Boolean(size && flavor && stock?.in_stock === true && counted && onHand > remainingInCart);
+      return [key, {
+        available,
+        remaining: counted ? Math.max(0, onHand - remainingInCart) : 0,
+        price: size?.price ?? null,
+      }];
+    }));
+  })();
+
+  const addGiftToCart = (giftKey) => {
+    const gift = GIFT_VARIANTS.find((variant) => variant.key === giftKey);
+    if (!gift || !giftInventory[giftKey]?.available) return;
+    const flavor = cat?.flavors?.find(
+      (f) => f.active !== false && String(f.name).trim().toLowerCase() === gift.flavorName
+    );
+    if (!flavor) return;
+    addJar(flavor, gift.sizeId, "regular");
+    setErr(null);
+    pushHome();
+    setView("shop");
+    setCheckoutOpen(false);
+    window.setTimeout(() => setCartOpen(true), 80);
+  };
+
   const chooseCartItemType = (index, nextType) => {
     const item = cart[index];
     if (!item) return;
+    if (GIFT_SIZE_IDS.has(item.size_id)) return; // bears contain raw regular honey only
 
     if (nextType === "spun" && !spunEnabled) {
       setTypeNotice(spunUnavailableMessage);
@@ -13269,6 +13354,8 @@ export default function App() {
     }
 
     const routes = [
+      { terms: ["private label", "white label", "custom label", "custom branding", "corporate gifts", "business gifts"], view: "businessGifts" },
+      { terms: ["holiday gifts", "holiday honey", "christmas gift", "christmas gifts", "gift set", "gift sets", "gifting", "gift", "gifts", "present", "presents"], view: "gifts" },
       {
         terms: [
           "wholesale", "wholesaler", "partner", "partners", "partnership", "partnerships",
@@ -13771,7 +13858,7 @@ export default function App() {
     applyMyNectarFusionsProfileToCheckout(account);
     const flavor = cat?.flavors?.find((item) => String(item.id) === String(flavorId));
     if (flavor) {
-      const choice = (cat.sizes ?? [])
+      const choice = shopSizes
         .flatMap((size) => [
           { sizeId: size.id, typeId: "regular" },
           ...(spunEnabled ? [{ sizeId: size.id, typeId: "spun" }] : []),
@@ -13811,6 +13898,7 @@ export default function App() {
 
   const nav = (
     <>
+      <a className="btn ghost nf-gifts-nav-link" href="/gifts" onClick={(event) => handlePublicLink(event, "gifts")}>Gifts</a>
       <a className="btn ghost" href="/about" onClick={(event) => handlePublicLink(event, "about")}>About</a>
       <a className="btn ghost" href="/stories">Stories</a>
       <a className="btn ghost" href="/find-us" onClick={(event) => handlePublicLink(event, "find")}>Find Us</a>
@@ -13878,6 +13966,26 @@ export default function App() {
     );
   }
 
+  /* ================= GIFTS ================= */
+  if (view === "gifts" || view === "holidayGifts" || view === "businessGifts") {
+    return (
+      <GiftsPage
+        mode={view === "holidayGifts" ? "holiday" : view === "businessGifts" ? "business" : "overview"}
+        Header={Header}
+        styles={CSS}
+        onShop={() => setView("shop")}
+        onAddGift={addGiftToCart}
+        giftInventory={giftInventory}
+        onEvents={() => setView("eventGateway")}
+        onBusinessApply={() => {
+          try { window.sessionStorage.setItem("nf-gifts-business-referral", "1"); }
+          catch { /* Business page is still accessible without session storage. */ }
+          setView("partner");
+        }}
+      />
+    );
+  }
+
   /* ================= PARTNER ================= */
   if (view === "partner") {
     return <PartnerPage
@@ -13907,7 +14015,7 @@ export default function App() {
       onShopFlavor={(flavorId) => {
         const flavor = cat.flavors.find((item) => item.id === flavorId);
         if (flavor) {
-          const choice = (cat.sizes ?? [])
+          const choice = shopSizes
             .flatMap((size) => [
               { sizeId: size.id, typeId: "regular" },
               ...(spunEnabled ? [{ sizeId: size.id, typeId: "spun" }] : []),
@@ -14909,6 +15017,10 @@ export default function App() {
   return (
     <div className="nf"><style>{CSS}</style>
       <Header big right={nav} />
+      <GiftsHomepageFeature
+        onHoliday={() => setView("holidayGifts")}
+        onBusiness={() => setView("businessGifts")}
+      />
       {/* Beyond the Hive gives visitors a way to read and subscribe without shopping. */}
       <section className="nf-wrap" aria-label="Beyond the Hive stories" style={{paddingTop:20,paddingBottom:20}}>
         <a href="/stories" style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:16,flexWrap:"wrap",padding:"20px 24px",background:"#FFF9EF",color:"#4A3313",border:"1px solid #E8D6B5",borderRadius:16,textDecoration:"none"}}>
@@ -15320,7 +15432,7 @@ export default function App() {
 
           <div className={`nf-bundle-grid ${pickSize !== B.size ? "size-only" : ""}`}>
             <div className="nf-size-stack">
-              {cat.sizes.map((s) => (
+              {shopSizes.map((s) => (
                 <button
                   key={s.id}
                   className={`btn ${pickSize === s.id ? "on" : ""}`}
@@ -15412,7 +15524,7 @@ export default function App() {
               role="group"
               aria-label="Choose jar size"
             >
-              {cat.sizes.map((s) => (
+              {shopSizes.map((s) => (
                 <button
                   key={s.id}
                   type="button"
@@ -16295,7 +16407,8 @@ export default function App() {
                       <span className="nf-final-review-dot" style={{ background: item.hex }} />
                       <div className="nf-review-item-copy">
                         <strong>{item.flavor}</strong>
-                        <span>{sizeOf(item.size_id).label} · {typeName(item.type)}</span>
+                        <span>{sizeOf(item.size_id).label}{GIFT_SIZE_IDS.has(item.size_id) ? "" : ` · ${typeName(item.type)}`}</span>
+                        {!GIFT_SIZE_IDS.has(item.size_id) && (
                         <div className="nf-review-type-buttons">
                           {TYPES.map((typeOption) => {
                             const flavor = cat.flavors.find((f) => f.id === item.flavor_id);
@@ -16319,6 +16432,7 @@ export default function App() {
                             );
                           })}
                         </div>
+                        )}
                       </div>
                       <div className="nf-final-review-quantity">
                         <button type="button" onClick={() => bump(index, -1)} aria-label={`Remove one ${item.flavor}`}>−</button>
@@ -16540,7 +16654,7 @@ export default function App() {
                   <span className="nf-cart-item-name">
                     <strong>{item.flavor}</strong>
                     <small>
-                      {sizeOf(item.size_id).label} · {typeName(item.type)}
+                      {sizeOf(item.size_id).label}{GIFT_SIZE_IDS.has(item.size_id) ? "" : ` · ${typeName(item.type)}`}
                     </small>
                   </span>
                   <button

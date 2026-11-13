@@ -67,8 +67,16 @@ export default function PartnerPage({ Header, styles, onBack, onPartnerLogin, su
     }
   });
 
+  const [giftReferral] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      const referred = window.sessionStorage.getItem("nf-gifts-business-referral") === "1";
+      if (referred) window.sessionStorage.removeItem("nf-gifts-business-referral");
+      return referred;
+    } catch { return false; }
+  });
   const [selectedPrograms, setSelectedPrograms] = useState(() =>
-    specialEventReferral ? ["business_gifting"] : []
+    specialEventReferral || giftReferral ? ["business_gifting"] : []
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -176,7 +184,7 @@ export default function PartnerPage({ Header, styles, onBack, onPartnerLogin, su
         
 
 
-        {specialEventReferral && (
+        {(specialEventReferral || giftReferral) && (
           <section
             className="nf-program-section"
             style={{ marginTop: 20 }}
@@ -197,17 +205,15 @@ export default function PartnerPage({ Header, styles, onBack, onPartnerLogin, su
                   fontSize: 17,
                 }}
               >
-                Planning a special event for a business?
+                {giftReferral ? "Interested in business gifting or private label?" : "Planning a special event for a business?"}
               </strong>
 
               <span style={{ display: "block" }}>
-                Business accounts are reviewed for partner-only
-                special offers, volume event ordering, and
-                business gifting options. We selected{" "}
-                <strong>Business Gifting</strong> for you. Complete
-                the Partner application to request access; once
-                approved, your business offers and ordering tools
-                will be available through the Partner Portal.
+                {giftReferral ? (
+                  <>We selected <strong>Business Gifting</strong> for you. Tell us about your business and what you're looking for. Custom-label and private-label inquiries are discussed individually; options and pricing require confirmation.</>
+                ) : (
+                  <>Business accounts are reviewed for special event and volume gifting opportunities. We selected <strong>Business Gifting</strong> for you. Complete the Partner application to request access.</>
+                )}
               </span>
 
               <button
