@@ -102,3 +102,25 @@
 .nf-gifts-flavor-option span{font-size:14px;font-weight:700}
 .nf-gifts-flavor-option small{font-size:11px;color:#765f45;text-align:right}
 @media(max-width:680px){.nf-gifts-flavor-option{align-items:flex-start;flex-direction:column;gap:3px}.nf-gifts-flavor-option small{text-align:left}}
+
+/* nf-holiday-hero-image-contain-v1: Show entire wrapped honey bear without cropping. */
+/* Restrict this to the public holiday/overview hero. The business banner stays full-bleed. */
+.nf-gifts-hero:not(.nf-gifts-hero-business) > img {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  object-fit: contain;
+  object-position: center center;
+  padding: clamp(12px, 1.9vw, 24px);
+  background: #fff;
+}
+
+@media (max-width: 680px) {
+  /* The old 195px mobile image frame cropped the bow and jar base. */
+  .nf-gifts-hero:not(.nf-gifts-hero-business) > img {
+    height: clamp(290px, 80vw, 380px);
+    max-height: none;
+    padding: 16px 20px;
+  }
+}
