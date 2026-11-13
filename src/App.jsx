@@ -58,6 +58,16 @@ const GIFT_VARIANTS = [
   { key: "bear6cranberry", sizeId: "gift-bear-6oz", flavorName: "wild cranberry" },
 ];
 const GIFT_SIZE_IDS = new Set(GIFT_VARIANTS.map((item) => item.sizeId));
+// nf-gift-personalized-tags-v1: Keep gift presentation distinct per cart line.
+const giftTagText = (value) => String(value ?? "").replace(/\s+/g, " ").trim();
+const giftTagIsValid = (value) => {
+  const tag = giftTagText(value);
+  return tag.length > 0 && tag.length <= 80 && tag.split(" ").length <= 5;
+};
+const giftCartVariantKey = (item) => [
+  item.flavor_id, item.size_id, item.type,
+  item.giftWrap === true ? `gift:${giftTagText(item.giftTag)}` : "standard",
+].join("|");
 const isAllowedGiftFlavor = (sizeId, name) => GIFT_VARIANTS.some(
   (variant) => variant.sizeId === sizeId && variant.flavorName === String(name ?? "").trim().toLowerCase()
 );
@@ -12761,8 +12771,12 @@ export default function App() {
   const addJar = (
     f,
     sizeId = pickSize,
-    typeId = pickType
+    typeId = pickType,
+    giftOptions = null
   ) => {
+    const giftWrap = GIFT_SIZE_IDS.has(sizeId) && giftOptions?.giftWrap === true;
+    const giftTag = giftWrap ? giftTagText(giftOptions?.giftTag) : "";
+    if (giftWrap && !giftTagIsValid(giftTag)) return;
     preserveShopScroll();
     setCartOpen(false);
     setCart((cc) => {
@@ -12770,16 +12784,21 @@ export default function App() {
       (x) =>
         x.flavor_id === f.id &&
         x.size_id === sizeId &&
-        x.type === typeId
+        x.type === typeId &&
+        (!GIFT_SIZE_IDS.has(sizeId) ||
+          (Boolean(x.giftWrap) === giftWrap && giftTagText(x.giftTag) === giftTag))
     );
     const limit = inventoryLimit(
       f.id,
       sizeId,
       typeId
     );
-    const current = i > -1 ? cc[i].qty : 0;
+    // Enforce stock across both standard and gift-packaged lines of the same SKU.
+    const skuQty = cc.filter((x) =>
+      x.flavor_id === f.id && x.size_id === sizeId && x.type === typeId
+    ).reduce((sum, x) => sum + x.qty, 0);
 
-    if (limit !== null && current >= limit) return cc;
+    if (limit !== null && skuQty >= limit) return cc;
 
     if (i > -1) {
       const n = [...cc];
@@ -12793,7 +12812,8 @@ export default function App() {
       hex: f.hex,
       size_id: sizeId,
       type: typeId,
-      qty: 1
+      qty: 1,
+      ...(GIFT_SIZE_IDS.has(sizeId) ? { giftWrap, giftTag } : {}),
     }];
     });
   };
@@ -12805,9 +12825,9 @@ export default function App() {
         (f) => f.active !== false && String(f.name).trim().toLowerCase() === flavorName
       );
       const stock = flavor?.stock?.[`${sizeId}:regular`];
-      const remainingInCart = cart.find(
+      const remainingInCart = cart.filter(
         (item) => item.size_id === sizeId && item.flavor_id === flavor?.id && item.type === "regular"
-      )?.qty ?? 0;
+      ).reduce((total, item) => total + item.qty, 0);
       // A numeric count is mandatory for gifts; NULL is never treated as unlimited.
       const onHand = stock?.on_hand;
       const counted = typeof onHand === "number" && Number.isInteger(onHand) && onHand >= 0;
@@ -12820,14 +12840,18 @@ export default function App() {
     }));
   })();
 
-  const addGiftToCart = (giftKey) => {
+  const addGiftToCart = (giftKey, giftOptions = null) => {
     const gift = GIFT_VARIANTS.find((variant) => variant.key === giftKey);
     if (!gift || !giftInventory[giftKey]?.available) return;
+    if (giftOptions?.giftWrap === true && !giftTagIsValid(giftOptions?.giftTag)) {
+      setErr("Enter a personalized tag of one to five words before adding your gift.");
+      return;
+    }
     const flavor = cat?.flavors?.find(
       (f) => f.active !== false && String(f.name).trim().toLowerCase() === gift.flavorName
     );
     if (!flavor) return;
-    addJar(flavor, gift.sizeId, "regular");
+    addJar(flavor, gift.sizeId, "regular", giftOptions);
     setErr(null);
     pushHome();
     setView("shop");
@@ -12871,10 +12895,13 @@ export default function App() {
       const item = cc[i];
       if (!item) return cc;
 
-      const limit = inventoryLimit(item.flavor_id, item.size_id, item.type);
-      const nextQty = item.qty + d;
+        const limit = inventoryLimit(item.flavor_id, item.size_id, item.type);
+        const nextQty = item.qty + d;
+        const totalForSku = cc.filter((x) =>
+          x.flavor_id === item.flavor_id && x.size_id === item.size_id && x.type === item.type
+        ).reduce((sum, x) => sum + x.qty, 0);
 
-      if (d > 0 && limit !== null && nextQty > limit) return cc;
+        if (d > 0 && limit !== null && totalForSku + d > limit) return cc;
 
       return cc
         .map((x, j) => j === i ? { ...x, qty: nextQty } : x)
@@ -13134,8 +13161,11 @@ export default function App() {
     if (item.type === "undecided") return false;
     const flavor = cat.flavors.find((f) => f.id === item.flavor_id);
     const limit = inventoryLimit(item.flavor_id, item.size_id, item.type);
+    const totalForSku = cart.filter((x) =>
+      x.flavor_id === item.flavor_id && x.size_id === item.size_id && x.type === item.type
+    ).reduce((sum, x) => sum + x.qty, 0);
     return !flavorAvailableForType(flavor, item.size_id, item.type) ||
-      (limit !== null && limit < item.qty);
+      (limit !== null && limit < totalForSku);
   });
   const checkoutQuoteReady =
     checkoutQuoteMatches && !checkoutQuoteError;
@@ -13144,6 +13174,15 @@ export default function App() {
     unresolvedTypeItems.length === 0 &&
     unavailableTypeItems.length === 0 &&
     checkoutQuoteReady;
+
+  const giftPackagingNotes = cart
+    .filter((item) => GIFT_SIZE_IDS.has(item.size_id) && item.giftWrap === true)
+    .map((item) =>
+      `GIFT PACKAGING: ${item.qty} x ${sizeOf(item.size_id).label} / ${item.flavor}; ` +
+      `include 1 honey dipper and 1 personalized tag PER BEAR; ` +
+      `tag text: "${giftTagText(item.giftTag)}"`
+    ).join("\n");
+  const fullOrderNotes = [cust.notes?.trim(), giftPackagingNotes].filter(Boolean).join("\n\n");
 
   async function submit() {
     if (!canSubmitOrder) {
@@ -13177,10 +13216,20 @@ export default function App() {
 
     setBusy(true); setErr(null);
     try {
+      // The DB accepts one SKU quantity per line, while packaging is saved in order notes.
+      const combinedItems = Array.from(cart.reduce((map, item) => {
+        const key = `${item.flavor_id}|${item.size_id}|${item.type}`;
+        const existing = map.get(key);
+        if (existing) existing.qty += item.qty;
+        else map.set(key, {
+          flavor_id: item.flavor_id, size_id: item.size_id, type: item.type, qty: item.qty,
+        });
+        return map;
+      }, new Map()).values());
       const r = await api.placeOrder({
-        items: cart.map(({ flavor_id, size_id, type, qty }) => ({ flavor_id, size_id, type, qty })),
+        items: combinedItems,
         method, name: cust.name, phone: cust.phone, email: cust.email,
-        address: cust.address || null, city: cust.city || null, notes: cust.notes || null,
+        address: cust.address || null, city: cust.city || null, notes: fullOrderNotes || null,
         zip: method !== "market" ? zip : null,
         day: slot.kind === "delivery" ? iso(slot.date) : null,
         marketDateId: slot.kind === "market" ? slot.m.id : null,
@@ -16403,12 +16452,15 @@ export default function App() {
                 )}
                 <div className="nf-final-review-items">
                   {cart.map((item, index) => (
-                    <div className="nf-final-review-item" key={`${item.flavor_id}-${item.size_id}-${item.type}`}>
+                    <div className="nf-final-review-item" key={giftCartVariantKey(item)}>
                       <span className="nf-final-review-dot" style={{ background: item.hex }} />
                       <div className="nf-review-item-copy">
                         <strong>{item.flavor}</strong>
-                        <span>{sizeOf(item.size_id).label}{GIFT_SIZE_IDS.has(item.size_id) ? "" : ` · ${typeName(item.type)}`}</span>
-                        {!GIFT_SIZE_IDS.has(item.size_id) && (
+                          <span>{sizeOf(item.size_id).label}{GIFT_SIZE_IDS.has(item.size_id) ? "" : ` · ${typeName(item.type)}`}</span>
+                          {GIFT_SIZE_IDS.has(item.size_id) && item.giftWrap && (
+                            <span className="nf-gift-cart-personalization">Gift package · 1 dipper + 1 tag per bear · Tag: “{item.giftTag}”</span>
+                          )}
+                          {!GIFT_SIZE_IDS.has(item.size_id) && (
                         <div className="nf-review-type-buttons">
                           {TYPES.map((typeOption) => {
                             const flavor = cat.flavors.find((f) => f.id === item.flavor_id);
@@ -16487,6 +16539,11 @@ export default function App() {
                     </>
                   )}
                   {cust.notes && <span className="nf-final-review-notes">Note: {cust.notes}</span>}
+                  {giftPackagingNotes && (
+                    <span className="nf-final-review-notes" style={{ whiteSpace: "pre-line" }}>
+                      {giftPackagingNotes}
+                    </span>
+                  )}
                 </div>
 
                 <button
@@ -16645,7 +16702,7 @@ export default function App() {
               {cart.map((item, index) => (
                 <div
                   className="nf-cart-item"
-                  key={`${item.flavor_id}-${item.size_id}-${item.type}`}
+                  key={giftCartVariantKey(item)}
                 >
                   <span
                     className="nf-cart-item-dot"
@@ -16656,6 +16713,9 @@ export default function App() {
                     <small>
                       {sizeOf(item.size_id).label}{GIFT_SIZE_IDS.has(item.size_id) ? "" : ` · ${typeName(item.type)}`}
                     </small>
+                    {GIFT_SIZE_IDS.has(item.size_id) && item.giftWrap && (
+                      <small className="nf-gift-cart-personalization">Gift package · Dipper + tag: “{item.giftTag}” (each)</small>
+                    )}
                   </span>
                   <button
                     type="button"

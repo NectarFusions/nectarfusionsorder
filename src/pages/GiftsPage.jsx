@@ -54,9 +54,24 @@ function GiftTabs({ mode }) {
   );
 }
 
+// nf-gift-personalized-tags-v1: One dipper and one custom tag per selected bear.
+// The text is validated here and again in the App before the order is placed.
+const tidyGiftWords = (value) => String(value || "").replace(/\s+/g, " ").trim();
+const giftWordCount = (value) => tidyGiftWords(value).split(" ").filter(Boolean).length;
+
 function GiftCards({ onAddGift, giftInventory }) {
   const [sixOunceFlavor, setSixOunceFlavor] = useState("");
   const [flavorChoicesOpen, setFlavorChoicesOpen] = useState(false);
+  const [giftSettings, setGiftSettings] = useState({
+    bear6: { enabled: false, tag: "" },
+    bear13: { enabled: false, tag: "" },
+  });
+  const updateGiftSetting = (key, changes) => {
+    setGiftSettings((current) => ({
+      ...current,
+      [key]: { ...current[key], ...changes },
+    }));
+  };
 
   return (
     <>
@@ -73,6 +88,10 @@ function GiftCards({ onAddGift, giftInventory }) {
             ? `$${standardPrice.toFixed(2)}`
             : item.price;
           const selectedFlavor = sixOunceFlavors.find((flavor) => flavor.key === sixOunceFlavor);
+          const gift = giftSettings[item.key];
+          const tag = tidyGiftWords(gift.tag);
+          const tagWords = giftWordCount(gift.tag);
+          const giftDetailsReady = !gift.enabled || (tagWords >= 1 && tagWords <= 5 && tag.length <= 80);
 
           return (
             <article key={item.key} className="nf-gifts-featured-card">
@@ -129,16 +148,51 @@ function GiftCards({ onAddGift, giftInventory }) {
                   </div>
                 )}
 
+                <div className="nf-gifts-make-gift">
+                  <label className="nf-gifts-make-gift-toggle">
+                    <input
+                      type="checkbox"
+                      checked={gift.enabled}
+                      onChange={(event) => updateGiftSetting(item.key, { enabled: event.target.checked })}
+                    />
+                    <span>
+                      <strong>Make it a gift</strong>
+                      <small>Includes 1 honey dipper + 1 personalized tag per bear</small>
+                    </span>
+                  </label>
+                  {gift.enabled && (
+                    <div className="nf-gifts-custom-tag">
+                      <label htmlFor={`nf-gifts-tag-${item.key}`}>Personalized tag <span>(5 words maximum)</span></label>
+                      <input
+                        id={`nf-gifts-tag-${item.key}`}
+                        type="text"
+                        autoComplete="off"
+                        maxLength={80}
+                        value={gift.tag}
+                        placeholder="e.g., Wishing You Sweet Holidays"
+                        onChange={(event) => {
+                          const next = event.target.value.replace(/[\r\n\t]+/g, " ");
+                          if (giftWordCount(next) <= 5) updateGiftSetting(item.key, { tag: next });
+                        }}
+                        aria-describedby={`nf-gifts-tag-help-${item.key}`}
+                      />
+                      <small id={`nf-gifts-tag-help-${item.key}`} className="nf-gifts-custom-tag-help">
+                        {tagWords}/5 words · One tag per gifted bear. Each bear will receive the same text if you add multiple.
+                      </small>
+                    </div>
+                  )}
+                </div>
+
                 <button
                   type="button"
                   className="nf-gifts-primary"
-                  disabled={!chosenKey || !available}
-                  onClick={() => onAddGift?.(chosenKey)}
+                  disabled={!chosenKey || !available || !giftDetailsReady}
+                  onClick={() => onAddGift?.(chosenKey, gift.enabled ? { giftWrap: true, giftTag: tag } : { giftWrap: false })}
                   aria-label={needsFlavorChoice
                     ? `Add 6 oz ${selectedFlavor?.label || "honey"} bear to cart`
                     : `Add ${item.title} to cart`}
                 >
-                  {!chosenKey ? "Choose Flavor First" : available ? "Add to Cart →" : "Currently Unavailable"}
+                  {!chosenKey ? "Choose Flavor First" : !giftDetailsReady ? "Add Tag Text First" : available ? "Add to Cart →" : "Currently Unavailable"}
                 </button>
                 {!chosenKey ? (
                   <small className="nf-gifts-stock-note">Select Raw or Cranberry Infused above.</small>
@@ -163,7 +217,7 @@ function GiftCards({ onAddGift, giftInventory }) {
           <div className="nf-gifts-eyebrow">Nature's happiness, gifted</div>
           <h3>Made to Give. Made in Michigan.</h3>
           <p>Good honey is a gift all on its own. Our glass honey bears bring the warmth of Michigan honey to your holiday celebrations.</p>
-          <p className="nf-gifts-fineprint">Wrapping and accessories shown in photos are subject to availability and are not automatically included with a bear purchase.</p>
+          <p className="nf-gifts-fineprint">Select “Make it a gift” on either honey bear to include a honey dipper and one personalized tag per bear. Decorative wrapping shown in photos is subject to availability and is not included unless specified.</p>
         </div>
       </div>
     </>
