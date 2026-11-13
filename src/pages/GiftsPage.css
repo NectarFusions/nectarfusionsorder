@@ -87,5 +87,18 @@
 .nf-gifts-featured-copy .nf-gifts-primary:disabled{opacity:.62;cursor:not-allowed;background:#77736e;border-color:#77736e}
 .nf-gifts-stock-note{display:block;margin-top:9px;color:#6c5d4d;font-size:12px;line-height:1.5}
 
-/* 3 products on wide desktops, 2 on tablets, 1 on mobile. */
-@media(min-width:1100px){.nf-gifts-featured-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+/* Two gift sizes, with flavor options inside the 6 oz card. */
+.nf-gifts-flavor-picker{width:100%;margin:2px 0 12px}
+.nf-gifts-flavor-trigger{width:100%;min-height:58px;display:flex;align-items:center;justify-content:space-between;gap:14px;background:#fffaf1;border:1.5px solid #cfac72;border-radius:12px;color:#47311d;padding:11px 15px;text-align:left;font:inherit;cursor:pointer}
+.nf-gifts-flavor-trigger:hover,.nf-gifts-flavor-trigger:focus-visible{border-color:#9b6f2c;outline-offset:3px}
+.nf-gifts-flavor-trigger-caption{display:block;color:#815f31;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px}
+.nf-gifts-flavor-trigger strong{display:block;font-size:15px;font-weight:700}
+.nf-gifts-flavor-chevron{font-size:24px;line-height:1;color:#805d33}
+.nf-gifts-flavor-options{display:grid;gap:8px;margin-top:9px}
+.nf-gifts-flavor-options[hidden]{display:none}
+.nf-gifts-flavor-option{background:#fff;border:1px solid #e3d2b7;border-radius:11px;padding:12px 13px;display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;color:#41311f;font:inherit;cursor:pointer}
+.nf-gifts-flavor-option:hover,.nf-gifts-flavor-option:focus-visible{border-color:#b98d45;background:#fffaf1}
+.nf-gifts-flavor-option.selected{border-color:#956321;background:#fff6e4}
+.nf-gifts-flavor-option span{font-size:14px;font-weight:700}
+.nf-gifts-flavor-option small{font-size:11px;color:#765f45;text-align:right}
+@media(max-width:680px){.nf-gifts-flavor-option{align-items:flex-start;flex-direction:column;gap:3px}.nf-gifts-flavor-option small{text-align:left}}
