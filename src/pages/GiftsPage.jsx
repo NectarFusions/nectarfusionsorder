@@ -39,6 +39,25 @@ const sixOunceFlavors = [
   { key: "bear6cranberry", label: "Cranberry Infused Honey" },
 ];
 
+// nf-6oz-gallery-v1: Flavor-specific photos, optional gift photos, opt-in animated 360° perspectives.
+// Presentation only: onAddGift still receives the exact flavor-specific inventory key.
+const sixOunceGallery = {
+  bear6: {
+    label: "Raw Michigan Honey",
+    plain: "/images/gifts/honey-bear-6oz-raw.jpg",
+    gift: "/images/gifts/honey-bear-6oz-raw-gift.jpg",
+    spin: "/images/gifts/honey-bear-6oz-raw-360.gif",
+    spinPreview: "/images/gifts/honey-bear-6oz-raw-360-preview.jpg",
+  },
+  bear6cranberry: {
+    label: "Cranberry Infused Honey",
+    plain: "/images/gifts/honey-bear-6oz-cranberry.jpg",
+    gift: "/images/gifts/honey-bear-6oz-cranberry-gift.jpg",
+    spin: "/images/gifts/honey-bear-6oz-cranberry-360.gif",
+    spinPreview: "/images/gifts/honey-bear-6oz-cranberry-360-preview.jpg",
+  },
+};
+
 function GiftTabs({ mode }) {
   const links = [
     ["overview", "/gifts", "All Gifts"],
@@ -60,7 +79,8 @@ const tidyGiftWords = (value) => String(value || "").replace(/\s+/g, " ").trim()
 const giftWordCount = (value) => tidyGiftWords(value).split(" ").filter(Boolean).length;
 
 function GiftCards({ onAddGift, giftInventory }) {
-  const [sixOunceFlavor, setSixOunceFlavor] = useState("");
+  const [sixOunceFlavor, setSixOunceFlavor] = useState("bear6");
+  const [sixOunceView, setSixOunceView] = useState("photo");
   const [flavorChoicesOpen, setFlavorChoicesOpen] = useState(false);
   const [giftSettings, setGiftSettings] = useState({
     bear6: { enabled: false, tag: "" },
@@ -92,11 +112,37 @@ function GiftCards({ onAddGift, giftInventory }) {
           const tag = tidyGiftWords(gift.tag);
           const tagWords = giftWordCount(gift.tag);
           const giftDetailsReady = !gift.enabled || (tagWords >= 1 && tagWords <= 5 && tag.length <= 80);
+          const gallery = needsFlavorChoice ? sixOunceGallery[chosenKey] : null;
+          const mainPhoto = gallery ? (gift.enabled ? gallery.gift : gallery.plain) : item.image;
+          const shownImage = gallery && sixOunceView === "360" ? gallery.spin : mainPhoto;
+          const shownAlt = gallery
+            ? (sixOunceView === "360"
+              ? `360-degree rotating view of the 6 oz ${gallery.label} bear jar without gift packaging`
+              : `6 oz ${gallery.label} bear ${gift.enabled ? "wrapped as a gift with a honey dipper and tag" : "without gift wrapping"}`)
+            : item.alt;
 
           return (
             <article key={item.key} className="nf-gifts-featured-card">
-              <div className="nf-gifts-featured-image">
-                <img loading="lazy" src={item.image} alt={item.alt} />
+              <div className="nf-gifts-featured-media">
+                <div className="nf-gifts-featured-image">
+                  <img loading="lazy" src={shownImage} alt={shownAlt} />
+                </div>
+                {gallery && (
+                  <div className="nf-gifts-image-views" role="group" aria-label={`6 oz ${gallery.label} image perspectives`}>
+                    <button type="button" className={sixOunceView === "photo" ? "selected" : ""}
+                      aria-pressed={sixOunceView === "photo"} onClick={() => setSixOunceView("photo")}
+                      aria-label={`Show ${gift.enabled ? "wrapped gift" : "plain jar"} photo of ${gallery.label}`}>
+                      <img src={mainPhoto} loading="lazy" alt="" />
+                      <span>{gift.enabled ? "Gift photo" : "Product photo"}</span>
+                    </button>
+                    <button type="button" className={sixOunceView === "360" ? "selected" : ""}
+                      aria-pressed={sixOunceView === "360"} onClick={() => setSixOunceView("360")}
+                      aria-label={`Play 360-degree rotating view of the ${gallery.label} bear`}>
+                      <img src={gallery.spinPreview} loading="lazy" alt="" />
+                      <span>360° view</span>
+                    </button>
+                  </div>
+                )}
               </div>
               <div className="nf-gifts-featured-copy">
                 <div className="nf-gifts-eyebrow">{item.eyebrow}</div>
@@ -136,6 +182,7 @@ function GiftCards({ onAddGift, giftInventory }) {
                             aria-pressed={sixOunceFlavor === flavor.key}
                             onClick={() => {
                               setSixOunceFlavor(flavor.key);
+                              setSixOunceView("photo");
                               setFlavorChoicesOpen(false);
                             }}
                           >
@@ -153,7 +200,10 @@ function GiftCards({ onAddGift, giftInventory }) {
                     <input
                       type="checkbox"
                       checked={gift.enabled}
-                      onChange={(event) => updateGiftSetting(item.key, { enabled: event.target.checked })}
+                      onChange={(event) => {
+                        updateGiftSetting(item.key, { enabled: event.target.checked });
+                        if (needsFlavorChoice) setSixOunceView("photo");
+                      }}
                     />
                     <span>
                       <strong>Make it a gift</strong>
@@ -203,7 +253,7 @@ function GiftCards({ onAddGift, giftInventory }) {
                 )}
                 {needsFlavorChoice && (
                   <small className="nf-gifts-stock-note">
-                    Photo shows the bear jar; cranberry-infused honey may look different.
+                    Photos match your chosen flavor. The rotating view shows the unwrapped jar.
                   </small>
                 )}
               </div>
@@ -326,7 +376,7 @@ export default function GiftsPage({ mode = "overview", Header, styles, onShop, o
                 <p>Two glass bear sizes, three honey options. Choose a flavor for the 6 oz bear or select the 13 oz raw honey bear, then add to cart and check out securely.</p>
               </div>
               <GiftCards onAddGift={onAddGift} giftInventory={giftInventory} />
-              <p className="nf-gifts-photo-note">Gift photographs show our glass bear packaging. Cranberry-infused honey may differ in appearance. Wrapping and additional accessories are not included unless clearly specified.</p>
+              <p className="nf-gifts-photo-note">The 6 oz photos match the selected flavor and gift choice. The optional 360° view shows the jar without wrapping. A free honey dipper and one personalized tag are included when Make it a gift is selected; decorative wrapping is subject to availability.</p>
             </section>
             <section className="nf-gifts-choice-grid" aria-label="More ways to give honey">
               <div className="nf-gifts-choice-card nf-gifts-personal">

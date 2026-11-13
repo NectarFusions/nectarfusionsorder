@@ -138,3 +138,13 @@
 .nf-gifts-custom-tag input:focus-visible{outline:2px solid #1f403d;outline-offset:2px}
 .nf-gifts-custom-tag-help{display:block;font-size:11px;color:#6e614f;margin-top:6px;line-height:1.4}
 .nf-gift-cart-personalization{display:block;font-size:12px;color:#73501d;line-height:1.45;margin-top:4px;overflow-wrap:anywhere}
+
+/* nf-6oz-gallery-v1: Choose matching product/gift photo or optional 360° animation. */
+.nf-gifts-featured-media{width:100%;background:#fffdf8}
+.nf-gifts-image-views{display:flex;justify-content:center;flex-wrap:wrap;gap:12px;padding:9px 12px 16px;border-bottom:1px solid #f0e7dd}
+.nf-gifts-image-views button{display:flex;align-items:center;gap:9px;min-height:62px;max-width:calc(50% - 6px);padding:6px 10px;border:1.5px solid #ded0bb;background:#fff;border-radius:10px;color:#493929;font:inherit;font-size:12px;font-weight:700;cursor:pointer;text-align:left}
+.nf-gifts-image-views button:hover,.nf-gifts-image-views button:focus-visible{border-color:#956321;background:#fff9ef;outline-offset:2px}
+.nf-gifts-image-views button.selected{border-color:#1f403d;box-shadow:0 0 0 1px #1f403d;background:#f5faf6}
+.nf-gifts-image-views img{width:48px;height:48px;flex:0 0 48px;object-fit:contain;background:#fff}
+.nf-gifts-image-views button span{display:block}
+@media(max-width:680px){.nf-gifts-image-views{gap:9px}.nf-gifts-image-views button{min-width:0;padding:5px 7px;font-size:11px}.nf-gifts-image-views img{width:42px;height:42px;flex-basis:42px}}
