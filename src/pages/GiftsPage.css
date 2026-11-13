@@ -86,3 +86,6 @@
 /* Purchasable gift bear cards */
 .nf-gifts-featured-copy .nf-gifts-primary:disabled{opacity:.62;cursor:not-allowed;background:#77736e;border-color:#77736e}
 .nf-gifts-stock-note{display:block;margin-top:9px;color:#6c5d4d;font-size:12px;line-height:1.5}
+
+/* 3 products on wide desktops, 2 on tablets, 1 on mobile. */
+@media(min-width:1100px){.nf-gifts-featured-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}

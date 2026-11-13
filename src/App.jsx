@@ -50,7 +50,17 @@ const CADENCES = [
 
 const CONTACT = { email: "info@nectar-fusions.com", phone: "(989) 941-6385" };
 // Gift-bear SKU prices and inventory are always resolved by Supabase, not browser input.
-const GIFT_SIZE_IDS = new Set(["gift-bear-6oz", "gift-bear-13oz"]);
+// Gift SKUs share the existing server-priced sizes but have flavor-specific stock.
+// Both 6 oz versions are $16; the 13 oz raw version is $24.
+const GIFT_VARIANTS = [
+  { key: "bear13", sizeId: "gift-bear-13oz", flavorName: "original" },
+  { key: "bear6", sizeId: "gift-bear-6oz", flavorName: "original" },
+  { key: "bear6cranberry", sizeId: "gift-bear-6oz", flavorName: "wild cranberry" },
+];
+const GIFT_SIZE_IDS = new Set(GIFT_VARIANTS.map((item) => item.sizeId));
+const isAllowedGiftFlavor = (sizeId, name) => GIFT_VARIANTS.some(
+  (variant) => variant.sizeId === sizeId && variant.flavorName === String(name ?? "").trim().toLowerCase()
+);
 /* Default homepage hero image used until an Admin replacement is saved. */
 const HERO_IMAGE = "/nf-hero-product.png";
 
@@ -12541,7 +12551,7 @@ export default function App() {
   const flavorAvailableForType = (flavor, sizeId, type) => {
     if (!flavor) return false;
     if (GIFT_SIZE_IDS.has(sizeId)) {
-      if (type !== "regular" || String(flavor.name).trim().toLowerCase() !== "original") return false;
+      if (type !== "regular" || !isAllowedGiftFlavor(sizeId, flavor.name)) return false;
       const stockRow = flavor.stock?.[`${sizeId}:regular`];
       // Explicit counted availability only; never treat a missing row as unlimited.
       return stockRow?.in_stock === true &&
@@ -12573,6 +12583,7 @@ export default function App() {
   const inventoryLimit = (flavorId, sizeId, type) => {
     const flavor = cat?.flavors?.find((f) => f.id === flavorId);
     if (GIFT_SIZE_IDS.has(sizeId)) {
+      if (!isAllowedGiftFlavor(sizeId, flavor?.name)) return 0;
       const row = flavor?.stock?.[`${sizeId}:${type}`];
       const count = Number(row?.on_hand);
       return type === "regular" && row?.in_stock === true && Number.isInteger(count)
@@ -12788,24 +12799,37 @@ export default function App() {
   };
 
   const giftInventory = (() => {
-    const original = cat?.flavors?.find((f) => f.active !== false && f.name.trim().toLowerCase() === "original");
-    return Object.fromEntries([...GIFT_SIZE_IDS].map((id) => {
-      const size = cat?.sizes?.find((s) => s.id === id);
-      const stock = original?.stock?.[`${id}:regular`];
-      const remainingInCart = cart.find((item) => item.size_id === id && item.flavor_id === original?.id)?.qty ?? 0;
-      const onHand = Number(stock?.on_hand);
-      const available = Boolean(size && original && stock?.in_stock === true &&
-        Number.isInteger(onHand) && onHand > remainingInCart);
-      return [id, { available, remaining: Math.max(0, onHand - remainingInCart) || 0, price: size?.price ?? null }];
+    return Object.fromEntries(GIFT_VARIANTS.map(({ key, sizeId, flavorName }) => {
+      const size = cat?.sizes?.find((s) => s.id === sizeId);
+      const flavor = cat?.flavors?.find(
+        (f) => f.active !== false && String(f.name).trim().toLowerCase() === flavorName
+      );
+      const stock = flavor?.stock?.[`${sizeId}:regular`];
+      const remainingInCart = cart.find(
+        (item) => item.size_id === sizeId && item.flavor_id === flavor?.id && item.type === "regular"
+      )?.qty ?? 0;
+      // A numeric count is mandatory for gifts; NULL is never treated as unlimited.
+      const onHand = stock?.on_hand;
+      const counted = typeof onHand === "number" && Number.isInteger(onHand) && onHand >= 0;
+      const available = Boolean(size && flavor && stock?.in_stock === true && counted && onHand > remainingInCart);
+      return [key, {
+        available,
+        remaining: counted ? Math.max(0, onHand - remainingInCart) : 0,
+        price: size?.price ?? null,
+      }];
     }));
   })();
 
-  const addGiftToCart = (sizeId) => {
-    if (!GIFT_SIZE_IDS.has(sizeId) || !giftInventory[sizeId]?.available) return;
-    const original = cat?.flavors?.find((f) => f.active !== false && f.name.trim().toLowerCase() === "original");
-    if (!original) return;
-    addJar(original, sizeId, "regular");
+  const addGiftToCart = (giftKey) => {
+    const gift = GIFT_VARIANTS.find((variant) => variant.key === giftKey);
+    if (!gift || !giftInventory[giftKey]?.available) return;
+    const flavor = cat?.flavors?.find(
+      (f) => f.active !== false && String(f.name).trim().toLowerCase() === gift.flavorName
+    );
+    if (!flavor) return;
+    addJar(flavor, gift.sizeId, "regular");
     setErr(null);
+    pushHome();
     setView("shop");
     setCheckoutOpen(false);
     window.setTimeout(() => setCartOpen(true), 80);
@@ -16383,7 +16407,7 @@ export default function App() {
                       <span className="nf-final-review-dot" style={{ background: item.hex }} />
                       <div className="nf-review-item-copy">
                         <strong>{item.flavor}</strong>
-                        <span>{sizeOf(item.size_id).label} · {typeName(item.type)}</span>
+                        <span>{sizeOf(item.size_id).label}{GIFT_SIZE_IDS.has(item.size_id) ? "" : ` · ${typeName(item.type)}`}</span>
                         {!GIFT_SIZE_IDS.has(item.size_id) && (
                         <div className="nf-review-type-buttons">
                           {TYPES.map((typeOption) => {
@@ -16630,7 +16654,7 @@ export default function App() {
                   <span className="nf-cart-item-name">
                     <strong>{item.flavor}</strong>
                     <small>
-                      {sizeOf(item.size_id).label} · {typeName(item.type)}
+                      {sizeOf(item.size_id).label}{GIFT_SIZE_IDS.has(item.size_id) ? "" : ` · ${typeName(item.type)}`}
                     </small>
                   </span>
                   <button

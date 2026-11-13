@@ -14,8 +14,9 @@ const giftProducts = [
   {
     key: "bear13",
     sizeId: "gift-bear-13oz",
+    flavorName: "Original",
     eyebrow: "A holiday statement • Raw Michigan honey",
-    title: "13 oz Glass Honey Bear",
+    title: "13 oz Raw Michigan Honey Bear",
     price: "$24.00",
     copy: "A beautiful way to share a little piece of Michigan this holiday season. Filled with premium raw Michigan honey, gently strained to retain its naturally occurring pollen. Pure golden goodness in a charming glass bear that makes gifting feel extra special.",
     image: "/images/gifts/honey-bear-13oz.jpg",
@@ -25,13 +26,27 @@ const giftProducts = [
   {
     key: "bear6",
     sizeId: "gift-bear-6oz",
+    flavorName: "Original",
     eyebrow: "A thoughtful little gift • Raw Michigan honey",
-    title: "6 oz Glass Honey Bear",
+    title: "6 oz Raw Michigan Honey Bear",
     price: "$16.00",
     copy: "Small in size, special in every spoonful. Our 6 oz glass bear is filled with premium raw Michigan honey, gently strained to retain its naturally occurring pollen. A thoughtful little taste of Michigan for stockings, holiday hosts, teachers, and anyone who loves something naturally sweet.",
     image: "/images/gifts/honey-bear-6oz.jpg",
     alt: "6 oz glass bear filled with amber raw Michigan honey, with a metallic lid",
     details: "the 6 oz Premium Raw Michigan Honey Bear ($16)",
+  },
+  {
+    key: "bear6cranberry",
+    sizeId: "gift-bear-6oz",
+    flavorName: "Wild Cranberry",
+    eyebrow: "Limited holiday flavor • Cranberry infused",
+    title: "6 oz Cranberry Infused Honey Bear",
+    price: "$16.00",
+    copy: "Michigan honey infused with cranberry flavor, presented in our giftable 6 oz glass bear. A festive option for holiday stockings, hosts, and honey lovers.",
+    image: "/images/gifts/honey-bear-6oz.jpg",
+    alt: "6 oz NectarFusions glass honey bear packaging; cranberry-infused honey may differ in color from pictured raw honey",
+    details: "the 6 oz Cranberry Infused Honey Bear ($16)",
+    photoNote: "Glass bear packaging shown. Cranberry-infused honey may vary in appearance.",
   },
 ];
 
@@ -55,7 +70,7 @@ function GiftCards({ onAddGift, giftInventory }) {
     <>
       <div className="nf-gifts-featured-grid">
         {giftProducts.map((item) => {
-          const state = giftInventory?.[item.sizeId];
+          const state = giftInventory?.[item.key];
           const available = state?.available === true;
           const price = typeof state?.price === "number" ? `$${state.price.toFixed(2)}` : item.price;
           return (
@@ -66,17 +81,18 @@ function GiftCards({ onAddGift, giftInventory }) {
                 <h3>{item.title}</h3>
                 <strong className="nf-gifts-price">{price}</strong>
                 <p>{item.copy}</p>
+                {item.photoNote && <small className="nf-gifts-stock-note">{item.photoNote}</small>}
                 <button
                   type="button"
                   className="nf-gifts-primary"
                   disabled={!available}
-                  onClick={() => onAddGift?.(item.sizeId)}
+                  onClick={() => onAddGift?.(item.key)}
                   aria-label={`Add ${item.title} to cart`}
                 >
                   {available ? "Add to Cart →" : "Currently Unavailable"}
                 </button>
                 {available && <small className="nf-gifts-stock-note">{state.remaining} available · Complete checkout with Square</small>}
-                {!available && <small className="nf-gifts-stock-note">Stock quantity must be entered before online orders open.</small>}
+                {!available && <small className="nf-gifts-stock-note">Temporarily unavailable or sold out.</small>}
               </div>
             </article>
           );
@@ -143,7 +159,7 @@ export function GiftsHomepageFeature({ onHoliday, onBusiness }) {
       <div className="nf-gifts-home-copy">
         <div className="nf-gifts-eyebrow">The NectarFusions gift collection · Holiday 2026</div>
         <h2 id="nf-gift-home-heading">A little honey.<br /><em>A lot of happiness.</em></h2>
-        <p>Premium raw Michigan honey, gently strained to retain its naturally occurring pollen. Beautifully gifted for the holidays.</p>
+        <p>Michigan honey, raw or cranberry infused, in giftable glass bear jars for the holidays.</p>
         <div className="nf-gifts-home-actions">
           <button type="button" className="nf-gifts-primary" onClick={onHoliday}>Explore Holiday Gifts →</button>
           <button type="button" className="nf-gifts-quiet" onClick={onBusiness}>Business & Private Label</button>
@@ -178,7 +194,7 @@ export default function GiftsPage({ mode = "overview", Header, styles, onShop, o
             <div className="nf-gifts-hero-copy">
               <div className="nf-gifts-eyebrow">Holiday 2026 · Premium Raw Michigan Honey</div>
               <h1>A Little Piece of Michigan.<br /><em>A Whole Lot of Honey.</em></h1>
-              <p>Premium raw Michigan honey, gently strained to retain its naturally occurring pollen. Beautifully presented for the holidays.</p>
+              <p>Michigan honey in giftable glass bears—choose pure raw honey or a festive cranberry-infused option.</p>
               <div className="nf-gifts-hero-actions">
                 <a className="nf-gifts-primary" href="/gifts/holiday">{isHoliday ? "Browse the Gift Collection ↓" : "Explore Holiday Gifts →"}</a>
                 <a className="nf-gifts-quiet" href="/gifts/business">Business & Private Label</a>
@@ -194,10 +210,10 @@ export default function GiftsPage({ mode = "overview", Header, styles, onShop, o
               <div className="nf-gifts-section-title">
                 <div className="nf-gifts-eyebrow">Choose something sweet</div>
                 <h2 id="gift-collection-heading">Premium Raw Michigan Honey, Ready for the Holidays</h2>
-                <p>Two sizes of glass honey bears, filled with gently strained raw Michigan honey that retains its naturally occurring pollen. Add your favorites to the cart and complete your order through our secure checkout.</p>
+                <p>Two glass bear sizes, three ways to give: choose 6 oz raw honey, 6 oz cranberry-infused honey, or 13 oz raw honey. Add your favorites to the cart and complete checkout securely.</p>
               </div>
               <GiftCards onAddGift={onAddGift} giftInventory={giftInventory} />
-              <p className="nf-gifts-photo-note">Our featured bear photos show the actual honey jars. Gift wrapping and additional accessories are confirmed at ordering. Gift sets and other seasonal concepts are subject to availability.</p>
+              <p className="nf-gifts-photo-note">Gift photographs show our glass bear packaging. Cranberry-infused honey may differ in appearance. Wrapping and additional accessories are not included unless clearly specified.</p>
             </section>
             <section className="nf-gifts-choice-grid" aria-label="More ways to give honey">
               <div className="nf-gifts-choice-card nf-gifts-personal">
