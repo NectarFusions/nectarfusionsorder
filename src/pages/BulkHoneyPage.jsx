@@ -80,25 +80,23 @@ export function BulkHoneyHomepageFeature({ onOpen }) {
       <div className="nf-bulk-feature-copy">
         <span className="nf-bulk-feature-kicker">STOCK UP ON THE GOOD STUFF</span>
         <h2>Half Gallon Honey, <em>Made to Keep.</em></h2>
-        <p className="nf-bulk-feature-subtitle">Raw or infused. Rewarded on return.</p>
         <div className="nf-bulk-feature-prices" aria-label="Half-gallon honey prices">
           <div><span>6 lb Original Raw Honey</span><strong>$70</strong></div>
           <div><span>Top 5 Infused Favorites</span><strong>$95</strong></div>
         </div>
         <div className="nf-bulk-feature-reward">
           <strong>$4 BACK WITH JAR RETURN</strong>
-          <p>Select Yes at checkout for $4 off immediately. Bring your original, eligible empty NectarFusions 6 lb jar to pickup or delivery.</p>
+          <p>Choose Yes at checkout for $4 off now. Bring your eligible original NectarFusions 6 lb jar to pickup or delivery.</p>
         </div>
-        <p className="nf-bulk-feature-availability">Available for market pickup or eligible local delivery only.</p>
+        <p className="nf-bulk-feature-availability">Market pickup or eligible local delivery only.</p>
         <div className="nf-bulk-feature-actions">
           <button type="button" className="nf-bulk-feature-primary" onClick={onOpen}>Shop Half Gallon Honey →</button>
-          <a className="nf-bulk-feature-secondary" href="/bulk-honey#nf-bulk-rewards-title">How Jar Returns Work →</a>
+          <a className="nf-bulk-feature-secondary" href="/bulk-honey#nf-bulk-rewards-title">Jar Return Details →</a>
         </div>
       </div>
       <div className="nf-bulk-feature-art" aria-hidden="true">
         <span className="nf-bulk-feature-art-halo" />
         <img src="/images/bulk/half-gallon-honey-jar.webp" alt="" width={1086} height={1448} loading="lazy" decoding="async" />
-        <span className="nf-bulk-feature-art-caption">6 LB · HALF GALLON</span>
       </div>
     </section>
   );
