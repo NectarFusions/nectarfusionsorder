@@ -106,7 +106,7 @@ export default function BulkHoneyPage({ Header, styles, catalog, cart, onShop, o
           <span className="nf-bulk-eyebrow">NECTARFUSIONS · MICHIGAN HONEY</span>
           <h1>A little more honey to love.</h1>
           <p>Choose our 6 lb half-gallon jar of Original Raw Michigan Honey or one of our five most-ordered infused flavors.</p>
-          <div className="nf-bulk-hero-note">Local market pickup or eligible local delivery · Contact us for a shipping quote</div>
+          <div className="nf-bulk-hero-note">Market pickup or eligible local delivery only</div>
         </section>
         <section className="nf-bulk-section" aria-labelledby="nf-bulk-products-title">
           <span className="nf-bulk-eyebrow">SHOP HALF-GALLON HONEY</span>
