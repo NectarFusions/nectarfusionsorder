@@ -27,45 +27,70 @@ const countStock = (flavor, sizeId, cart) => {
   return Math.max(0, stock.on_hand - alreadyInCart);
 };
 
-// Return credit is a request only. Existing server-priced checkout charges
-// full price until eligible returned jars are inspected and approved.
+// nf-jar-return-discount-v2: The discount is applied on the server
+// with a tracked obligation to return a qualifying 6 lb jar.
 export function JarReturnCheckout({ eligible6, requested6, onChange, method }) {
   if (!eligible6) return null;
   const local = method === "market" || method === "delivery";
+  const returning = requested6 > 0;
   return (
-    <div className="nf-jar-return-checkout">
-      <span className="nf-bulk-eyebrow">Jar Return Rewards</span>
-      <strong>Returning a NectarFusions half-gallon jar?</strong>
-      <p>Receive $4 back for each qualifying original 6 lb NectarFusions jar returned with a matching-size purchase.</p>
+    <fieldset className="nf-jar-return-checkout" aria-label="Half-gallon jar return discount">
+      <legend>Jar Return Rewards</legend>
+      <h3>Returning an empty NectarFusions 6 lb jar?</h3>
+      <p className="nf-jar-return-question">Get <strong>$4 OFF immediately</strong> for each eligible jar you agree to return with a same-size purchase.</p>
       {local ? (
-        <div className="nf-jar-return-selects">
-          <label>6 lb jars you plan to return <small>(up to {eligible6})</small>
-            <input type="number" min="0" max={eligible6} step="1" inputMode="numeric" value={requested6}
-              onChange={(event) => onChange("sixLb", Math.max(0, Math.min(eligible6, Number.parseInt(event.target.value, 10) || 0)))} />
-          </label>
-          {requested6 > 0 && <div className="nf-jar-projected-credit">Potential reward: ${(requested6 * 4).toFixed(2)} after inspection</div>}
-        </div>
+        <>
+          <div className="nf-jar-return-answer" role="group" aria-label="Will you be returning a 6 lb jar?">
+            <button type="button" className={!returning ? "selected" : ""}
+              aria-pressed={!returning} onClick={() => onChange("sixLb", 0)}>No, not this time</button>
+            <button type="button" className={returning ? "selected" : ""}
+              aria-pressed={returning} onClick={() => onChange("sixLb", Math.max(1, requested6))}>
+              Yes, I'll return a jar
+            </button>
+          </div>
+          {returning && (
+            <div className="nf-jar-return-confirmation" role="status">
+              {eligible6 > 1 && (
+                <label>How many eligible jars will you return? (up to {eligible6})
+                  <select value={requested6}
+                    onChange={(event) => onChange("sixLb", Number(event.target.value))}>
+                    {Array.from({length: eligible6}, (_, index) => index + 1).map((qty) => (
+                      <option key={qty} value={qty}>{qty}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              <strong className="nf-jar-return-discount">−${(requested6 * 4).toFixed(2)} applied to your total now</strong>
+              <p>Bring {requested6 === 1 ? "your original empty NectarFusions 6 lb jar" : `all ${requested6} original empty NectarFusions 6 lb jars`} to pickup or delivery. Each must be undamaged and accepted at handoff.</p>
+              <p className="nf-jar-return-accountability">If you do not return an eligible jar, $4 per missing jar remains due to NectarFusions.</p>
+            </div>
+          )}
+          {!returning && <p className="nf-jar-return-help">Your regular jar price applies unless you select Yes.</p>}
+        </>
       ) : (
-        <p className="nf-bulk-reward-caution">Select market pickup or local delivery to request a return reward. Contact us for arrangements outside these methods.</p>
+        <p className="nf-bulk-reward-caution">Jar returns are currently available with local pickup or local delivery, not standard shipping.</p>
       )}
-      <small>Checkout charges the regular honey price. Return credit is issued separately only after the empty, undamaged jar is inspected. We do not refill returned jars at pickup.</small>
-    </div>
+      <p className="nf-jar-return-fineprint">One reward per original NectarFusions 6 lb jar and new 6 lb jar purchased. Containers are inspected and are not refilled at handoff.</p>
+    </fieldset>
   );
 }
-
 export function BulkHoneyHomepageFeature({ onOpen }) {
   return (
     <section className="nf-wrap nf-bulk-home-teaser" aria-label="Half-gallon honey and jar return rewards">
-      <div>
-        <span className="nf-bulk-eyebrow">More honey · Less waste</span>
-        <h2>Half-Gallon Honey. A Sweet Return.</h2>
-        <p>Shop 6 lb Original Raw for $70 or choose from five infused favorites for $95. Return an eligible half-gallon jar for a $4 reward.</p>
+      <div className="nf-bulk-home-copy">
+        <span className="nf-bulk-eyebrow">MORE HONEY · LESS WASTE</span>
+        <h2>Half-Gallon Honey. <em>A Sweet Return.</em></h2>
+        <p className="nf-bulk-home-price">6 lb Raw Michigan Honey <strong>$70</strong> <span aria-hidden="true">·</span> Infused <strong>$95</strong></p>
+        <div className="nf-bulk-home-reward">
+          <strong>$4 BACK</strong><span>when you bring an eligible half-gallon jar back</span>
+        </div>
       </div>
-      <button type="button" className="nf-bulk-link-button" onClick={onOpen}>Explore Half-Gallon Honey →</button>
+      <img className="nf-bulk-home-jar" src="/images/bulk/half-gallon-honey-jar.webp"
+        alt="Gold-lidded glass jar of golden NectarFusions honey" width={182} height={244} loading="lazy" decoding="async"/>
+      <button type="button" className="nf-bulk-link-button" onClick={onOpen}>Shop Half-Gallon Honey →</button>
     </section>
   );
 }
-
 export default function BulkHoneyPage({ Header, styles, catalog, cart, onShop, onAddBulk }) {
   const [infusion, setInfusion] = useState("");
   const flavors = catalog?.flavors ?? [];
@@ -145,16 +170,16 @@ export default function BulkHoneyPage({ Header, styles, catalog, cart, onShop, o
         <section className="nf-bulk-rewards" aria-labelledby="nf-bulk-rewards-title">
           <span className="nf-bulk-eyebrow">RETURN · REWARD · REPEAT</span>
           <h2 id="nf-bulk-rewards-title">Jar Return Rewards</h2>
-          <p>Return an original NectarFusions 6 lb jar with your new half-gallon honey purchase. Your qualifying return earns $4 back.</p>
+          <p>Bring back your original NectarFusions 6 lb jar with your half-gallon purchase. Select <strong>Yes</strong> at checkout to receive <strong>$4 OFF immediately</strong> per eligible returned jar.</p>
           <div className="nf-bulk-reward-grid"><div><span>6 LB / HALF-GALLON JAR</span><strong>$4 back</strong><small>One qualifying original jar returned per matching-size purchase</small></div></div>
           <h3>How it works</h3>
           <ol>
             <li>Buy a new 6 lb half-gallon jar at the regular listed price.</li>
-            <li>At checkout, choose a local pickup or delivery option and request your return reward.</li>
+            <li>At local pickup or delivery checkout, select <strong>Yes, I will return a jar</strong> to take $4 off now.</li>
             <li>Return your original NectarFusions 6 lb jar empty and free of chips, cracks, or contamination.</li>
-            <li>After inspection and approval, receive a separate $4 credit for each qualifying return.</li>
+            <li>Hand over your eligible jar at pickup or delivery. If it is missing or ineligible, $4 per missing jar remains due.</li>
           </ol>
-          <p className="nf-bulk-reward-caution">Returns are inspected before credit. Containers are not refilled at handoff. Any reuse requires the approved cleaning and sanitizing process.</p>
+          <p className="nf-bulk-reward-caution">Discount applies right away when you confirm your eligible return at checkout. One original 6 lb jar per matching purchase. Returned jars are inspected and never casually refilled.</p>
           <button type="button" className="nf-bulk-back" onClick={onShop}>Continue shopping →</button>
         </section>
       </main>

@@ -159,7 +159,15 @@ async function requestOrderConfirmationEmails(token) {
 
 export async function placeOrder(payload) {
   try {
-    const { data, error } = await supabase.rpc("place_order_v2", {
+    // nf-jar-return-immediate-v2: dedicated server RPC is required for a
+    // real $4 Square discount. Regular, gift and non-return orders use v2.
+    const jarReturnCount = Number(payload.jarReturnCount || 0);
+    if (!Number.isInteger(jarReturnCount) || jarReturnCount < 0) {
+      throw new Error("Invalid number of jar returns.");
+    }
+    const { data, error } = await supabase.rpc(
+      jarReturnCount > 0 ? "place_order_with_jar_return_v1" : "place_order_v2", {
+      ...(jarReturnCount > 0 ? { p_jar_return_qty: jarReturnCount } : {}),
       p_items: payload.items,          // [{flavor_id, size_id, type, qty}]
       p_method: payload.method,        // 'market' | 'delivery' | 'ship'
       p_name: payload.name,
