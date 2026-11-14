@@ -25,6 +25,7 @@ import AdminOrderDeliveryButton from "./pages/AdminOrderDeliveryButton";
 import AdminFulfillmentTimeline from "./components/AdminFulfillmentTimeline";
 import SpecialEventOrderPage from "./pages/SpecialEventOrderPage";
 import GiftsPage, { GiftsHomepageFeature } from "./pages/GiftsPage";
+import BulkHoneyPage, { BulkHoneyHomepageFeature, JarReturnCheckout } from "./pages/BulkHoneyPage";
 
 /* ============================================================
    NECTARFUSIONS — ORDER SYSTEM
@@ -58,6 +59,21 @@ const GIFT_VARIANTS = [
   { key: "bear6cranberry", sizeId: "gift-bear-6oz", flavorName: "wild cranberry" },
 ];
 const GIFT_SIZE_IDS = new Set(GIFT_VARIANTS.map((item) => item.sizeId));
+// nf-6lb-only-top5-shared-pool-v1: Half-gallons only. Infused flavor choices
+// share ONE counted 3-jar SKU through the checkout-only inactive flavor.
+const BULK_SKUS = [
+  { sizeId: "bulk-6lb-original", raw: true },
+  { sizeId: "bulk-6lb-infused", raw: false },
+];
+const BULK_SIZE_IDS = new Set(BULK_SKUS.map((item) => item.sizeId));
+const BULK_INFUSED_POOL_NAME = "Bulk Infused Selection";
+const BULK_FEATURED_FLAVORS = ["Pumpkin Spice", "Cinnamon", "Chipotle", "Espresso", "Hot Thai Chili"];
+const isAllowedBulkFlavor = (sizeId, name) => {
+  const normalized = String(name || "").trim().toLowerCase();
+  return sizeId === "bulk-6lb-original" ? normalized === "original"
+    : sizeId === "bulk-6lb-infused" ? normalized === BULK_INFUSED_POOL_NAME.toLowerCase()
+    : false;
+};
 // nf-gift-personalized-tags-v1: Keep gift presentation distinct per cart line.
 const giftTagText = (value) => String(value ?? "").replace(/\s+/g, " ").trim();
 const giftTagIsValid = (value) => {
@@ -66,7 +82,8 @@ const giftTagIsValid = (value) => {
 };
 const giftCartVariantKey = (item) => [
   item.flavor_id, item.size_id, item.type,
-  item.giftWrap === true ? `gift:${giftTagText(item.giftTag)}` : "standard",
+  item.bulkFlavorName ? `bulk:${item.bulkFlavorName}` :
+    item.giftWrap === true ? `gift:${giftTagText(item.giftTag)}` : "standard",
 ].join("|");
 const isAllowedGiftFlavor = (sizeId, name) => GIFT_VARIANTS.some(
   (variant) => variant.sizeId === sizeId && variant.flavorName === String(name ?? "").trim().toLowerCase()
@@ -508,6 +525,7 @@ const MY_NECTARFUSIONS_RE = /^\/my\/?$/i;
 const PUBLIC_VIEW_PATHS = Object.freeze({
   shop: "/",
   gifts: "/gifts",
+  bulkHoney: "/bulk-honey",
   holidayGifts: "/gifts/holiday",
   businessGifts: "/gifts/business",
   subscribe: "/honey-club",
@@ -539,6 +557,11 @@ const SEO_BY_VIEW = Object.freeze({
     title: "NectarFusions | Michigan Raw & Infused Honey",
     description:
       "Shop Michigan raw unfiltered honey and small-batch infused honey from NectarFusions. Real ingredients, cold-infused flavors, gifts, Honey Club, and more.",
+    image: "/nectarfusions-honey-hero.webp",
+  },
+  bulkHoney: {
+    title: "Bulk Michigan Honey & Jar Return Rewards | NectarFusions",
+    description: "Shop NectarFusions 3 lb and half-gallon Michigan honey. Earn eligible $2 or $4 jar return credits on qualifying same-size honey purchases.",
     image: "/nectarfusions-honey-hero.webp",
   },
   gifts: {
@@ -12201,6 +12224,7 @@ export default function App() {
   const [zip, setZip] = useState("");
   const [slot, setSlot] = useState(null);
   const [cust, setCust] = useState({ name: "", phone: "", email: "", address: "", city: "", notes: "" });
+  const [jarReturnRequest, setJarReturnRequest] = useState({ sixLb: 0 });
   const [receipt, setReceipt] = useState(null);
   const [ctaOff, setCtaOff] = useState(false);
   const [tick, setTick] = useState(0);
@@ -12549,7 +12573,7 @@ export default function App() {
   const sizeOf = (id) =>
     cat?.sizes?.find((s) => s.id === id) ?? { id, label: id, price: 0 };
   // Keep bear-gift SKUs out of regular infused-honey size selectors.
-  const shopSizes = (cat?.sizes ?? []).filter((size) => !GIFT_SIZE_IDS.has(size.id));
+  const shopSizes = (cat?.sizes ?? []).filter((size) => !GIFT_SIZE_IDS.has(size.id) && !BULK_SIZE_IDS.has(size.id));
   const typeName = (id) =>
     id === "undecided" ? "Decide in review" : TYPES.find((t) => t.id === id)?.name ?? "Regular";
 
@@ -12560,6 +12584,11 @@ export default function App() {
 
   const flavorAvailableForType = (flavor, sizeId, type) => {
     if (!flavor) return false;
+    if (BULK_SIZE_IDS.has(sizeId)) {
+      if (type !== "regular" || !isAllowedBulkFlavor(sizeId, flavor.name)) return false;
+      const row = flavor.stock?.[`${sizeId}:regular`];
+      return row?.in_stock === true && Number.isInteger(row.on_hand) && row.on_hand > 0;
+    }
     if (GIFT_SIZE_IDS.has(sizeId)) {
       if (type !== "regular" || !isAllowedGiftFlavor(sizeId, flavor.name)) return false;
       const stockRow = flavor.stock?.[`${sizeId}:regular`];
@@ -12592,6 +12621,11 @@ export default function App() {
 
   const inventoryLimit = (flavorId, sizeId, type) => {
     const flavor = cat?.flavors?.find((f) => f.id === flavorId);
+    if (BULK_SIZE_IDS.has(sizeId)) {
+      if (type !== "regular" || !isAllowedBulkFlavor(sizeId, flavor?.name)) return 0;
+      const row = flavor?.stock?.[`${sizeId}:regular`];
+      return row?.in_stock === true && Number.isInteger(row.on_hand) ? Math.max(0, row.on_hand) : 0;
+    }
     if (GIFT_SIZE_IDS.has(sizeId)) {
       if (!isAllowedGiftFlavor(sizeId, flavor?.name)) return 0;
       const row = flavor?.stock?.[`${sizeId}:${type}`];
@@ -12859,10 +12893,53 @@ export default function App() {
     window.setTimeout(() => setCartOpen(true), 80);
   };
 
+  const addBulkToCart = (sizeId, flavorId, selectedInfusion = null) => {
+    const flavor = cat?.flavors?.find((f) => f.id === flavorId);
+    if (!flavor || !isAllowedBulkFlavor(sizeId, flavor.name)) return;
+    if (!cat?.sizes?.some((size) => size.id === sizeId)) return;
+    const isInfused = sizeId === "bulk-6lb-infused";
+    const selected = String(selectedInfusion || "").trim();
+    if (isInfused && (
+      !BULK_FEATURED_FLAVORS.includes(selected) ||
+      !cat?.flavors?.some((f) => f.active !== false && String(f.name || "").trim() === selected)
+    )) return;
+    if (!isInfused && flavor.active === false) return;
+    const limit = inventoryLimit(flavorId, sizeId, "regular");
+    const total = cart.filter((line) => line.flavor_id === flavorId && line.size_id === sizeId && line.type === "regular")
+      .reduce((n, line) => n + line.qty, 0);
+    if (limit < 1 || total >= limit) return;
+    if (isInfused) {
+      // Distinct flavor choices stay distinct in the cart but are aggregated
+      // by SKU at the server: one three-jar stock row, never five x three.
+      setCart((current) => {
+        const quantity = current.filter((line) => line.flavor_id === flavorId && line.size_id === sizeId && line.type === "regular")
+          .reduce((n, line) => n + line.qty, 0);
+        if (quantity >= limit) return current;
+        const i = current.findIndex((line) => line.flavor_id === flavorId && line.size_id === sizeId
+          && line.type === "regular" && line.bulkFlavorName === selected);
+        if (i >= 0) return current.map((line, index) => index === i ? { ...line, qty: line.qty + 1 } : line);
+        return [...current, {
+          flavor_id: flavorId, flavor: `${selected} (Infused)`,
+          bulkFlavorName: selected, hex: flavor.hex,
+          size_id: sizeId, type: "regular", qty: 1,
+        }];
+      });
+    } else {
+      addJar(flavor, sizeId, "regular");
+    }
+    setErr(null);
+    setMethod(null);
+    setSlot(null);
+    pushHome();
+    setView("shop");
+    setCheckoutOpen(false);
+    window.setTimeout(() => setCartOpen(true), 80);
+  };
+
   const chooseCartItemType = (index, nextType) => {
     const item = cart[index];
     if (!item) return;
-    if (GIFT_SIZE_IDS.has(item.size_id)) return; // bears contain raw regular honey only
+    if (GIFT_SIZE_IDS.has(item.size_id) || BULK_SIZE_IDS.has(item.size_id)) return; // dedicated SKUs are regular texture only
 
     if (nextType === "spun" && !spunEnabled) {
       setTypeNotice(spunUnavailableMessage);
@@ -13155,7 +13232,11 @@ export default function App() {
       else if (method === "ship" && !shippingZipValid) missing.push("a Michigan ZIP code");
     }
   }
-  const canPlace = cart.length && slot && !missing.length && !belowMin && !busy;
+  const hasBulkCart = cart.some((line) => BULK_SIZE_IDS.has(line.size_id));
+  const eligible6 = cart.filter((line) => line.size_id.startsWith("bulk-6lb-")).reduce((n,line) => n + line.qty, 0);
+  const returned6 = method !== "ship" ? Math.min(eligible6, Math.max(0, Number(jarReturnRequest.sixLb) || 0)) : 0;
+  const estimatedJarCredit = returned6 * 4;
+  const canPlace = cart.length && slot && !missing.length && !belowMin && !busy && !(hasBulkCart && method === "ship");
   const unresolvedTypeItems = cart.filter((item) => item.type === "undecided");
   const unavailableTypeItems = cart.filter((item) => {
     if (item.type === "undecided") return false;
@@ -13182,9 +13263,21 @@ export default function App() {
       `include 1 honey dipper and 1 personalized tag PER BEAR; ` +
       `tag text: "${giftTagText(item.giftTag)}"`
     ).join("\n");
-  const fullOrderNotes = [cust.notes?.trim(), giftPackagingNotes].filter(Boolean).join("\n\n");
+  const jarReturnNotes = estimatedJarCredit > 0
+    ? `JAR RETURN REQUEST (PENDING INSPECTION): ${returned6} x original NectarFusions 6 lb half-gallon jars. ` +
+      `Potential credit $${estimatedJarCredit.toFixed(2)}. Customer charged full price; ` +
+      `inspect empty jars at handoff and issue approved credit separately. Do NOT refill jars.`
+    : "";
+  const bulkFlavorNotes = cart.filter((line) => line.size_id === "bulk-6lb-infused" && line.bulkFlavorName)
+    .map((line) => `BULK INFUSED FLAVOR: ${line.qty} x 6 lb half-gallon, ${line.bulkFlavorName}.`)
+    .join("\n");
+  const fullOrderNotes = [cust.notes?.trim(), giftPackagingNotes, bulkFlavorNotes, jarReturnNotes].filter(Boolean).join("\n\n");
 
   async function submit() {
+    if (hasBulkCart && method === "ship") {
+      setErr("6 lb half-gallon jars currently require market pickup or eligible local delivery. Contact us for a shipping quote.");
+      return;
+    }
     if (!canSubmitOrder) {
       setTypeNotice(
         unresolvedTypeItems.length
@@ -13948,6 +14041,7 @@ export default function App() {
   const nav = (
     <>
       <a className="btn ghost nf-gifts-nav-link" href="/gifts" onClick={(event) => handlePublicLink(event, "gifts")}>Gifts</a>
+      <a className="btn ghost" href="/bulk-honey" onClick={(event) => handlePublicLink(event, "bulkHoney")}>Bulk &amp; Rewards</a>
       <a className="btn ghost" href="/about" onClick={(event) => handlePublicLink(event, "about")}>About</a>
       <a className="btn ghost" href="/stories">Stories</a>
       <a className="btn ghost" href="/find-us" onClick={(event) => handlePublicLink(event, "find")}>Find Us</a>
@@ -14013,6 +14107,14 @@ export default function App() {
         }}
       />
     );
+  }
+
+  /* ================= BULK HONEY + JAR REWARDS ================= */
+  if (view === "bulkHoney") {
+    return <BulkHoneyPage
+      Header={Header} styles={CSS} catalog={cat} cart={cart}
+      onShop={() => setView("shop")} onAddBulk={addBulkToCart}
+    />;
   }
 
   /* ================= GIFTS ================= */
@@ -15070,6 +15172,7 @@ export default function App() {
         onHoliday={() => setView("holidayGifts")}
         onBusiness={() => setView("businessGifts")}
       />
+      <BulkHoneyHomepageFeature onOpen={() => setView("bulkHoney")} />
       {/* Beyond the Hive gives visitors a way to read and subscribe without shopping. */}
       <section className="nf-wrap" aria-label="Beyond the Hive stories" style={{paddingTop:20,paddingBottom:20}}>
         <a href="/stories" style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:16,flexWrap:"wrap",padding:"20px 24px",background:"#FFF9EF",color:"#4A3313",border:"1px solid #E8D6B5",borderRadius:16,textDecoration:"none"}}>
@@ -16126,7 +16229,9 @@ export default function App() {
               id="nf-shipping-method"
               className={`btn nf-shipping-method ${method === "ship" ? "on" : ""}`}
               aria-pressed={method === "ship"}
-              onClick={() => setMethod("ship")}
+              disabled={hasBulkCart}
+              aria-disabled={hasBulkCart}
+              onClick={() => { if (!hasBulkCart) setMethod("ship"); }}
             >
               <span className="display nf-shipping-method-label">SHIPPING</span>
               <span className="nf-shipping-method-detail">
@@ -16135,7 +16240,13 @@ export default function App() {
                   : `${money(cat.shipFlatFee)} flat-rate Michigan shipping · no minimum`}
               </span>
             </button>
-            {!shipsFree && (
+            {hasBulkCart && (
+              <div className="nf-shipping-threshold-note" role="status">
+                Half-gallon 6 lb honey is available for local pickup or eligible delivery.
+                Contact us for a shipping quote rather than using standard jar shipping.
+              </div>
+            )}
+            {!shipsFree && !hasBulkCart && (
               <div className="nf-shipping-threshold-note" role="status">
                 Shipping is <strong>{money(cat.shipFlatFee)} flat</strong> anywhere in Michigan.
                 Add <strong>{money(toShip)}</strong> more for free shipping at <strong>{money(cat.shipFreeOver)}</strong>.
@@ -16173,14 +16284,18 @@ export default function App() {
                   <div className="nf-shipping-out-of-area" role="status">
                     <strong>Local delivery isn&rsquo;t available in your area yet.</strong>
                     <div style={{ marginTop: 5 }}>
-                      {shipsFree
-                        ? "Your order qualifies for free shipping to Michigan addresses."
-                        : `Choose Michigan shipping for ${money(cat.shipFlatFee)} flat; free at ${money(cat.shipFreeOver)}.`}
+                      {hasBulkCart
+                        ? "Bulk honey currently requires local pickup or delivery. Contact us for a shipping quote."
+                        : shipsFree
+                          ? "Your order qualifies for free shipping to Michigan addresses."
+                          : `Choose Michigan shipping for ${money(cat.shipFlatFee)} flat; free at ${money(cat.shipFreeOver)}.`}
                     </div>
                     <button
                       type="button"
                       className="btn nf-shipping-switch"
+                      disabled={hasBulkCart}
                       onClick={() => {
+                        if (hasBulkCart) return;
                         setMethod("ship");
                         document.getElementById("nf-shipping-method")?.scrollIntoView({ behavior: "smooth", block: "center" });
                       }}
@@ -16308,6 +16423,10 @@ export default function App() {
                   <Field required={false} rows={2}
                     placeholder={method === "delivery" ? "Optional — gate code, porch, shade…" : "Optional — anything we should know?"}
                     value={cust.notes} onChange={(e) => setCust({ ...cust, notes: e.target.value })} />
+                  <JarReturnCheckout eligible6={eligible6}
+                    requested6={returned6}
+                    method={method}
+                    onChange={(key, value) => setJarReturnRequest((prev) => ({ ...prev, [key]: value }))} />
                 </div>
 
                 {missing.length > 0 && (
@@ -16460,7 +16579,7 @@ export default function App() {
                           {GIFT_SIZE_IDS.has(item.size_id) && item.giftWrap && (
                             <span className="nf-gift-cart-personalization">Gift package · 1 dipper + 1 tag per bear · Tag: “{item.giftTag}”</span>
                           )}
-                          {!GIFT_SIZE_IDS.has(item.size_id) && (
+                          {!GIFT_SIZE_IDS.has(item.size_id) && !BULK_SIZE_IDS.has(item.size_id) && (
                         <div className="nf-review-type-buttons">
                           {TYPES.map((typeOption) => {
                             const flavor = cat.flavors.find((f) => f.id === item.flavor_id);
@@ -16542,6 +16661,16 @@ export default function App() {
                   {giftPackagingNotes && (
                     <span className="nf-final-review-notes" style={{ whiteSpace: "pre-line" }}>
                       {giftPackagingNotes}
+                    </span>
+                  )}
+                  {bulkFlavorNotes && (
+                    <span className="nf-final-review-notes" style={{ whiteSpace: "pre-line" }}>
+                      {bulkFlavorNotes}
+                    </span>
+                  )}
+                  {jarReturnNotes && (
+                    <span className="nf-final-review-notes" style={{ whiteSpace: "pre-line" }}>
+                      {jarReturnNotes}
                     </span>
                   )}
                 </div>
@@ -20792,7 +20921,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                                         </div>
 
                                         <div className="nf-admin-limited-stock-grid">
-                                          {cat.sizes.map((size) => {
+                                          {cat.sizes.filter((size) => !BULK_SIZE_IDS.has(size.id) || (type.id === "regular" && isAllowedBulkFlavor(size.id, flavor.name))).map((size) => {
                                             const count =
                                               api.stockCount(
                                                 flavor,
@@ -22082,8 +22211,10 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
             {sortedFlavors.map((f, index) => {
               const open = openFlavor === f.id;
               const out = cat.sizes
+                .filter((s) => !BULK_SIZE_IDS.has(s.id) || isAllowedBulkFlavor(s.id, f.name))
                 .flatMap((s) =>
-                  TYPES.map((t) => !api.inStock(f, s.id, t.id))
+                  TYPES.filter((t) => !BULK_SIZE_IDS.has(s.id) || t.id === "regular")
+                    .map((t) => !api.inStock(f, s.id, t.id))
                 )
                 .filter(Boolean).length;
 
@@ -22269,7 +22400,7 @@ function Admin({ cat, reload, Header, onExit, onSignOut }) {
                             </div>
                           )}
                           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6 }}>
-                            {cat.sizes.map((s) => {
+                            {cat.sizes.filter((s) => !BULK_SIZE_IDS.has(s.id) || (t.id === "regular" && isAllowedBulkFlavor(s.id, f.name))).map((s) => {
                               const on = spunLocked
                                 ? false
                                 : api.inStock(f, s.id, t.id);
