@@ -12224,7 +12224,7 @@ export default function App() {
   const [zip, setZip] = useState("");
   const [slot, setSlot] = useState(null);
   const [cust, setCust] = useState({ name: "", phone: "", email: "", address: "", city: "", notes: "" });
-  const [jarReturnRequest, setJarReturnRequest] = useState({ sixLb: 0 });
+  const [jarReturnRequest, setJarReturnRequest] = useState({ sixLb: 0 }); // nf-jar-return-immediate-v2
   const [receipt, setReceipt] = useState(null);
   const [ctaOff, setCtaOff] = useState(false);
   const [tick, setTick] = useState(0);
@@ -13008,7 +13008,11 @@ export default function App() {
   const fee = method === "ship" ? shipFee
     : method === "delivery" && zone ? (price.sub >= zone.freeOver ? 0 : zone.fee) : 0;
   const belowMin = method === "delivery" && zone && price.sub < zone.minimum;
-  const total = price.sub + fee;
+  const hasBulkCart = cart.some((line) => BULK_SIZE_IDS.has(line.size_id));
+  const eligible6 = cart.filter((line) => line.size_id.startsWith("bulk-6lb-")).reduce((n,line) => n + line.qty, 0);
+  const returned6 = method !== "ship" ? Math.min(eligible6, Math.max(0, Number(jarReturnRequest.sixLb) || 0)) : 0;
+  const estimatedJarCredit = returned6 * 4;
+  const total = Math.max(0, price.sub + fee - estimatedJarCredit); // nf-jar-return-immediate-v2
 
   const checkoutBaseCents = Math.max(
     0,
@@ -13232,10 +13236,6 @@ export default function App() {
       else if (method === "ship" && !shippingZipValid) missing.push("a Michigan ZIP code");
     }
   }
-  const hasBulkCart = cart.some((line) => BULK_SIZE_IDS.has(line.size_id));
-  const eligible6 = cart.filter((line) => line.size_id.startsWith("bulk-6lb-")).reduce((n,line) => n + line.qty, 0);
-  const returned6 = method !== "ship" ? Math.min(eligible6, Math.max(0, Number(jarReturnRequest.sixLb) || 0)) : 0;
-  const estimatedJarCredit = returned6 * 4;
   const canPlace = cart.length && slot && !missing.length && !belowMin && !busy && !(hasBulkCart && method === "ship");
   const unresolvedTypeItems = cart.filter((item) => item.type === "undecided");
   const unavailableTypeItems = cart.filter((item) => {
@@ -13264,9 +13264,8 @@ export default function App() {
       `tag text: "${giftTagText(item.giftTag)}"`
     ).join("\n");
   const jarReturnNotes = estimatedJarCredit > 0
-    ? `JAR RETURN REQUEST (PENDING INSPECTION): ${returned6} x original NectarFusions 6 lb half-gallon jars. ` +
-      `Potential credit $${estimatedJarCredit.toFixed(2)}. Customer charged full price; ` +
-      `inspect empty jars at handoff and issue approved credit separately. Do NOT refill jars.`
+    ? `JAR RETURN PROMISE: ${returned6} x original NectarFusions 6 lb half-gallon jar(s) due at handoff. ` +
+      `Immediate $${estimatedJarCredit.toFixed(2)} discount applied. If not returned, $4 per missing jar is owed.`
     : "";
   const bulkFlavorNotes = cart.filter((line) => line.size_id === "bulk-6lb-infused" && line.bulkFlavorName)
     .map((line) => `BULK INFUSED FLAVOR: ${line.qty} x 6 lb half-gallon, ${line.bulkFlavorName}.`)
@@ -13321,6 +13320,7 @@ export default function App() {
       }, new Map()).values());
       const r = await api.placeOrder({
         items: combinedItems,
+        jarReturnCount: returned6, // nf-jar-return-immediate-v2: verified server-side
         method, name: cust.name, phone: cust.phone, email: cust.email,
         address: cust.address || null, city: cust.city || null, notes: fullOrderNotes || null,
         zip: method !== "market" ? zip : null,
@@ -16697,6 +16697,12 @@ export default function App() {
                   <div className="nf-final-review-price-row">
                     <span>Bundle discount</span>
                     <strong>−{money(price.saved)}</strong>
+                  </div>
+                )}
+                {estimatedJarCredit > 0 && (
+                  <div className="nf-final-review-price-row nf-jar-review-discount">
+                    <span>Jar Return Reward · {returned6} promised</span>
+                    <strong>−{money(estimatedJarCredit)}</strong>
                   </div>
                 )}
                 {method === "delivery" && (

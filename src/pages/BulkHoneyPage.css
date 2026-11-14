@@ -46,3 +46,99 @@
 .nf-jar-projected-credit{padding:9px 12px;background:#f0f6e9;border-radius:8px;font-size:12px;color:#36562f;font-weight:800;align-self:end}
 .nf-jar-return-checkout>small{display:block;color:#6e634f;margin-top:11px;font-size:11px;line-height:1.5}
 @media(max-width:700px){.nf-bulk-product-grid,.nf-bulk-reward-grid{grid-template-columns:1fr}.nf-bulk-home-teaser{flex-direction:column;align-items:stretch}.nf-bulk-link-button{width:100%}.nf-bulk-card{padding:22px}}
+
+/* nf-half-gallon-photo-v1: product photography for both 6 lb honey selections */
+.nf-bulk-product-photo {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 18px 0 2px;
+  padding: 12px 10px 14px;
+  border: 1px solid #eaddc9;
+  border-radius: 15px;
+  background: #ffffff;
+  text-align: center;
+}
+.nf-bulk-product-photo img {
+  display: block;
+  width: 100%;
+  height: clamp(265px, 30vw, 370px);
+  object-fit: contain;
+  object-position: center;
+}
+.nf-bulk-product-photo figcaption {
+  color: #776651;
+  font-size: 11px;
+  line-height: 1.45;
+  margin-top: 7px;
+}
+@media (max-width: 700px) {
+  .nf-bulk-product-photo img { height: 320px; }
+}
+
+
+/* nf-jar-return-immediate-v2: desktop + mobile premium banner, 16pt minimum. */
+.nf-bulk-home-teaser {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) minmax(140px,185px) auto;
+  align-items: center;
+  gap: clamp(18px,2.6vw,38px);
+  margin-top: 32px;
+  margin-bottom: 32px;
+  min-height: 290px;
+  padding: clamp(25px,3.8vw,44px);
+  background: #f7eddd;
+  border-color: #dec6a0;
+  border-radius: 22px;
+  box-shadow: 0 12px 28px rgba(45,27,8,.06);
+}
+.nf-bulk-home-copy { min-width:0; }
+.nf-bulk-home-teaser h2 { font: 500 clamp(29pt,3.4vw,43pt)/1.12 Georgia,serif !important; margin:13px 0 17px; color:#291b13; }
+.nf-bulk-home-teaser h2 em { color:#a37124; font-style:italic; font-size:inherit !important; }
+.nf-bulk-home-teaser .nf-bulk-home-price {margin:0 0 15px; color:#493526; font-size:16pt !important; line-height:1.5;}
+.nf-bulk-home-teaser .nf-bulk-home-price strong {font-size:17pt!important;}
+.nf-bulk-home-reward {display:flex; align-items:center; flex-wrap:wrap; gap:10px 16px;}
+.nf-bulk-home-teaser .nf-bulk-home-reward strong {display:inline-block;font:bold 27pt/1.1 Georgia,serif!important;color:#1f403d;white-space:nowrap;}
+.nf-bulk-home-teaser .nf-bulk-home-reward span {font-size:17pt!important;line-height:1.3;font-weight:700;color:#614425;}
+.nf-bulk-home-jar {display:block; width:100%; height:232px; max-width:185px; object-fit:contain; object-position:center; mix-blend-mode:multiply;}
+.nf-bulk-home-teaser .nf-bulk-link-button {font-size:16pt!important;line-height:1.28;white-space:normal;max-width:260px;min-width:165px;min-height:66px;padding:16px 21px;}
+/* Every non-heading text element newly introduced in the bulk module is >=16 pt. */
+.nf-bulk-home-teaser :is(p,small,span,button,label),
+.nf-bulk-page :is(p,small,li,label,select,option,button,figcaption,span),
+.nf-jar-return-checkout :is(p,small,span,button,legend,select,option,label),
+.nf-bulk-rewards .nf-bulk-reward-grid :is(span,small) {
+  font-size:16pt!important;
+  line-height:1.5;
+}
+.nf-bulk-page .nf-bulk-price {font-size:29pt!important;}
+.nf-bulk-home-teaser .nf-bulk-eyebrow {font-size:16pt!important;letter-spacing:.055em;}
+.nf-bulk-page .nf-bulk-eyebrow {font-size:16pt!important;letter-spacing:.055em;}
+.nf-bulk-home-teaser .nf-bulk-home-reward strong {font-size:27pt!important;}
+.nf-jar-return-checkout {min-inline-size:0; padding:23px;border:2px solid #cfa65f;background:#fff8e9;border-radius:17px;}
+.nf-jar-return-checkout legend {padding:0 10px;font-weight:850;letter-spacing:.03em;color:#8e5e20;}
+.nf-jar-return-checkout h3 {font:500 clamp(23pt,2.8vw,29pt)/1.18 Georgia,serif;margin:7px 0 14px;color:#261b12;}
+.nf-jar-return-checkout .nf-jar-return-question {font-size:17pt!important;margin:0 0 18px;}
+.nf-jar-return-checkout .nf-jar-return-question strong {font-size:22pt!important;color:#194a3f;}
+.nf-jar-return-answer {display:flex;flex-wrap:wrap;gap:12px;margin:12px 0;}
+.nf-jar-return-checkout .nf-jar-return-answer button {flex:1 1 200px;min-height:68px;line-height:1.3;padding:15px 16px;border-radius:11px;border:2px solid #bba589;background:white;color:#30231a;cursor:pointer;font-weight:750;}
+.nf-jar-return-checkout .nf-jar-return-answer button.selected {background:#1f403d;color:white;border-color:#1f403d;box-shadow:0 0 0 3px #e3eee8;}
+.nf-jar-return-checkout .nf-jar-return-answer button:focus-visible {outline:3px solid #b47e21;outline-offset:4px;}
+.nf-jar-return-confirmation {display:grid;gap:10px;margin-top:15px;padding:19px;border:1px solid #c1d5bf;background:#f1f8ee;border-radius:12px;}
+.nf-jar-return-confirmation label {display:grid;gap:10px;color:#273e2b;font-weight:700;}
+.nf-jar-return-confirmation select {max-width:150px;min-height:53px;padding:8px 12px;border:2px solid #6f977b;background:#fff;border-radius:8px;}
+.nf-jar-return-checkout .nf-jar-return-discount {color:#205c3d;font-size:24pt!important;line-height:1.3;}
+.nf-bulk-reward-grid strong {font-size:34pt!important;}
+.nf-final-review-price-row.nf-jar-review-discount :is(span,strong) {font-size:16pt!important;color:#205c3d;font-weight:800;}
+.nf-jar-return-checkout .nf-jar-return-accountability {font-weight:700;color:#66412e;}
+.nf-jar-return-checkout .nf-jar-return-fineprint {margin:15px 0 0;color:#5b4b3b;}
+@media (max-width:980px){
+  .nf-bulk-home-teaser {grid-template-columns:minmax(0,1fr) 145px;}
+  .nf-bulk-home-jar {height:190px;}
+  .nf-bulk-home-teaser .nf-bulk-link-button {grid-column:1 / -1;max-width:unset;width:100%;}
+}
+@media (max-width:600px){
+  .nf-bulk-home-teaser {grid-template-columns:minmax(0,1fr) 105px;padding:24px;gap:14px;margin-top:26px;}
+  .nf-bulk-home-jar{width:100%;height:156px;}
+  .nf-bulk-home-teaser h2 {font-size:27pt!important;}
+  .nf-bulk-home-reward {grid-column:1 / -1;}
+  .nf-jar-return-checkout {padding:14px;}
+}

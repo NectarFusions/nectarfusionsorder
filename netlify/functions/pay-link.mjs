@@ -47,7 +47,14 @@ export default async (req) => {
      rebuild the 3-for-$20 rule inside Square's catalog, we send the
      difference as a single discount line. One source of truth. */
   const listTotal = o.order_items.reduce((s, i) => s + i.qty * i.unit_cents, 0);
-  const discount = listTotal - o.subtotal_cents;
+  // nf-jar-return-immediate-v2: Split the server-approved jar return
+  // credit from any bundle discount. Client notes cannot set discount amounts.
+  const allDiscounts = Math.max(0, listTotal - o.subtotal_cents);
+  const promisedJarReturn = Math.max(0, Number(o.jar_return_discount_cents || 0));
+  if (!Number.isInteger(promisedJarReturn) || promisedJarReturn > allDiscounts) {
+    return bad("Invalid jar return discount. Contact NectarFusions.", 409);
+  }
+  const bundleDiscount = allDiscounts - promisedJarReturn;
 
   const checkoutBaseCents =
     Number(o.subtotal_cents || 0) + Number(o.fee_cents || 0);
@@ -74,12 +81,17 @@ export default async (req) => {
     location_id: process.env.SQUARE_LOCATION_ID,
     reference_id: o.order_no,
     line_items: lineItems,
-    ...(discount > 0 && {
-      discounts: [{
-        name: "Bundle — 3 for $20",
-        amount_money: { amount: discount, currency: "USD" },
-        scope: "ORDER",
-      }],
+    ...((bundleDiscount > 0 || promisedJarReturn > 0) && {
+      discounts: [
+        ...(bundleDiscount > 0 ? [{
+          name: "Bundle — 3 for $20",
+          amount_money: { amount: bundleDiscount, currency: "USD" }, scope: "ORDER",
+        }] : []),
+        ...(promisedJarReturn > 0 ? [{
+          name: "Jar Return Reward — bring jars to pickup/delivery",
+          amount_money: { amount: promisedJarReturn, currency: "USD" }, scope: "ORDER",
+        }] : []),
+      ],
     }),
     ...(serviceCharges.length > 0 && {
       service_charges: serviceCharges,
