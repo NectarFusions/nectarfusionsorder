@@ -1,148 +1,144 @@
 import { useState } from "react";
 import "./BulkHoneyPage.css";
 
-// Each server-priced size is a distinct SKU. Never charge an infused price
-// from a raw size record (or vice versa).
-const PRODUCTS = [
-  { id: "bulk-3lb-original", volume: "3 lb", kind: "raw", name: "Original Raw Michigan Honey", expected: 40, credit: 2 },
-  { id: "bulk-3lb-infused", volume: "3 lb", kind: "infused", name: "Infused Michigan Honey", expected: 55, credit: 2 },
-  { id: "bulk-6lb-original", volume: "6 lb · Half Gallon", kind: "raw", name: "Original Raw Michigan Honey", expected: 70, credit: 4 },
-  { id: "bulk-6lb-infused", volume: "6 lb · Half Gallon", kind: "infused", name: "Infused Michigan Honey", expected: 95, credit: 4 },
+// Five best-selling *active* infusions ranked by units sold in the existing
+// NectarFusions order records (November 2026 snapshot). All five share ONE
+// three-jar inventory pool. An inactive checkout-only flavor stores that pool.
+const FEATURED_INFUSIONS = [
+  "Pumpkin Spice",
+  "Cinnamon",
+  "Chipotle",
+  "Espresso",
+  "Hot Thai Chili",
 ];
-
-const isRaw = (name) => String(name || "").trim().toLowerCase() === "original";
-
-const stockRemaining = (flavor, sizeId, cart) => {
+const INFUSED_POOL = "Bulk Infused Selection";
+const PRODUCTS = [
+  { id: "bulk-6lb-original", name: "Original Raw Michigan Honey", expected: 70, kind: "raw" },
+  { id: "bulk-6lb-infused", name: "Infused Michigan Honey", expected: 95, kind: "infused" },
+];
+const nameEquals = (a, b) => String(a ?? "").trim().toLowerCase() === String(b ?? "").trim().toLowerCase();
+const countStock = (flavor, sizeId, cart) => {
   if (!flavor) return 0;
-  const row = flavor.stock?.[`${sizeId}:regular`];
-  // Bulk products must have explicitly counted, enabled inventory.
-  if (row?.in_stock !== true || !Number.isInteger(row.on_hand)) return 0;
-  const inCart = (cart || []).filter((line) =>
-    line.flavor_id === flavor.id && line.size_id === sizeId && line.type === "regular"
-  ).reduce((n, line) => n + Number(line.qty || 0), 0);
-  return Math.max(0, row.on_hand - inCart);
+  const stock = flavor.stock?.[`${sizeId}:regular`];
+  if (stock?.in_stock !== true || !Number.isInteger(stock?.on_hand)) return 0;
+  const alreadyInCart = (cart ?? [])
+    .filter((line) => line.flavor_id === flavor.id && line.size_id === sizeId && line.type === "regular")
+    .reduce((sum, line) => sum + Number(line.qty || 0), 0);
+  return Math.max(0, stock.on_hand - alreadyInCart);
 };
 
-export function JarReturnCheckout({ eligible3, eligible6, requested3, requested6, onChange, method }) {
-  if (!(eligible3 || eligible6)) return null;
-  const localOnly = method === "market" || method === "delivery";
-  const projected = (localOnly ? requested3 * 2 + requested6 * 4 : 0);
+// Return credit is a request only. Existing server-priced checkout charges
+// full price until eligible returned jars are inspected and approved.
+export function JarReturnCheckout({ eligible6, requested6, onChange, method }) {
+  if (!eligible6) return null;
+  const local = method === "market" || method === "delivery";
   return (
     <div className="nf-jar-return-checkout">
-      <div className="nf-bulk-eyebrow">Jar Return Rewards</div>
-      <strong>Bringing back a NectarFusions jar?</strong>
-      <p>Request your return reward here. One qualifying jar per matching-size honey purchase. We verify the empty, undamaged jar at handoff.</p>
-      {localOnly ? (
+      <span className="nf-bulk-eyebrow">Jar Return Rewards</span>
+      <strong>Returning a NectarFusions half-gallon jar?</strong>
+      <p>Receive $4 back for each qualifying original 6 lb NectarFusions jar returned with a matching-size purchase.</p>
+      {local ? (
         <div className="nf-jar-return-selects">
-          {eligible3 > 0 && (
-            <label>3 lb jars to return <small>($2 each, up to {eligible3})</small>
-              <input type="number" min="0" max={eligible3} step="1" inputMode="numeric" value={requested3}
-                onChange={(e) => onChange("threeLb", Math.max(0, Math.min(eligible3, Number.parseInt(e.target.value, 10) || 0)))} />
-            </label>
-          )}
-          {eligible6 > 0 && (
-            <label>6 lb jars to return <small>($4 each, up to {eligible6})</small>
-              <input type="number" min="0" max={eligible6} step="1" inputMode="numeric" value={requested6}
-                onChange={(e) => onChange("sixLb", Math.max(0, Math.min(eligible6, Number.parseInt(e.target.value, 10) || 0)))} />
-            </label>
-          )}
-          {projected > 0 && <div className="nf-jar-projected-credit">Potential return credit: ${projected.toFixed(2)} · pending inspection</div>}
+          <label>6 lb jars you plan to return <small>(up to {eligible6})</small>
+            <input type="number" min="0" max={eligible6} step="1" inputMode="numeric" value={requested6}
+              onChange={(event) => onChange("sixLb", Math.max(0, Math.min(eligible6, Number.parseInt(event.target.value, 10) || 0)))} />
+          </label>
+          {requested6 > 0 && <div className="nf-jar-projected-credit">Potential reward: ${(requested6 * 4).toFixed(2)} after inspection</div>}
         </div>
       ) : (
-        <p className="nf-bulk-reward-caution">Jar returns are accepted during eligible local pickup or delivery. Choose a local option to request credit; shipping orders require a separate return arrangement.</p>
+        <p className="nf-bulk-reward-caution">Select market pickup or local delivery to request a return reward. Contact us for arrangements outside these methods.</p>
       )}
-      <small>Checkout charges the regular price. After we receive and approve your jar, we will process the qualifying credit separately. Do not refill jars at pickup.</small>
+      <small>Checkout charges the regular honey price. Return credit is issued separately only after the empty, undamaged jar is inspected. We do not refill returned jars at pickup.</small>
     </div>
   );
 }
 
 export function BulkHoneyHomepageFeature({ onOpen }) {
   return (
-    <section className="nf-wrap nf-bulk-home-teaser" aria-label="Bulk honey and jar return rewards">
+    <section className="nf-wrap nf-bulk-home-teaser" aria-label="Half-gallon honey and jar return rewards">
       <div>
         <span className="nf-bulk-eyebrow">More honey · Less waste</span>
-        <h2>Big Jars. Better Value.</h2>
-        <p>Shop 3 lb and half-gallon Michigan honey, plus earn $2 or $4 back when you return an eligible NectarFusions jar.</p>
+        <h2>Half-Gallon Honey. A Sweet Return.</h2>
+        <p>Shop 6 lb Original Raw for $70 or choose from five infused favorites for $95. Return an eligible half-gallon jar for a $4 reward.</p>
       </div>
-      <button type="button" className="nf-bulk-link-button" onClick={onOpen}>Explore Bulk Honey &amp; Jar Rewards →</button>
+      <button type="button" className="nf-bulk-link-button" onClick={onOpen}>Explore Half-Gallon Honey →</button>
     </section>
   );
 }
 
 export default function BulkHoneyPage({ Header, styles, catalog, cart, onShop, onAddBulk }) {
-  const [chosenInfusedFlavor, setChosenInfusedFlavor] = useState({});
-  const flavors = (catalog?.flavors || []).filter((f) => f.active !== false);
-  const rawFlavor = flavors.find((f) => isRaw(f.name));
-  const infusedFlavors = flavors.filter((f) => !isRaw(f.name));
+  const [infusion, setInfusion] = useState("");
+  const flavors = catalog?.flavors ?? [];
+  const raw = flavors.find((f) => f.active !== false && nameEquals(f.name, "Original"));
+  const pool = flavors.find((f) => nameEquals(f.name, INFUSED_POOL));
+  const offered = FEATURED_INFUSIONS.filter((name) => flavors.some((f) => f.active !== false && nameEquals(f.name, name)));
   return (
     <div className="nf nf-bulk-page">
       <style>{styles}</style>
-      <Header title="BULK HONEY & JAR REWARDS" right={<button type="button" className="btn ghost" onClick={onShop}>Back to shop</button>} />
+      <Header title="HALF-GALLON HONEY & JAR REWARDS" right={<button type="button" className="btn ghost" onClick={onShop}>Back to shop</button>} />
       <main className="nf-wrap nf-bulk-main">
         <section className="nf-bulk-hero">
           <span className="nf-bulk-eyebrow">NECTARFUSIONS · MICHIGAN HONEY</span>
-          <h1>More of the honey you love.</h1>
-          <p>Stock the pantry with 3 lb jars or our 6 lb half-gallon size. Choose original raw Michigan honey or one of our infused flavors.</p>
-          <div className="nf-bulk-hero-note">Local market pickup and eligible local delivery · Ask us about shipping large jars</div>
+          <h1>A little more honey to love.</h1>
+          <p>Choose our 6 lb half-gallon jar of Original Raw Michigan Honey or one of our five most-ordered infused flavors.</p>
+          <div className="nf-bulk-hero-note">Local market pickup or eligible local delivery · Contact us for a shipping quote</div>
         </section>
-
         <section className="nf-bulk-section" aria-labelledby="nf-bulk-products-title">
-          <span className="nf-bulk-eyebrow">SHOP LARGER SIZES</span>
+          <span className="nf-bulk-eyebrow">SHOP HALF-GALLON HONEY</span>
           <h2 id="nf-bulk-products-title">Choose your honey</h2>
           <div className="nf-bulk-product-grid">
             {PRODUCTS.map((product) => {
+              const isInfused = product.kind === "infused";
+              const stockFlavor = isInfused ? pool : raw;
               const size = catalog?.sizes?.find((s) => s.id === product.id);
-              const dbPriceMatches = size && Number(size.price) === product.expected;
-              const flavor = product.kind === "raw" ? rawFlavor : infusedFlavors.find((f) => f.id === chosenInfusedFlavor[product.id]);
-              const remaining = dbPriceMatches ? stockRemaining(flavor, product.id, cart) : 0;
+              const priceMatches = Number(size?.price) === product.expected;
+              const remaining = priceMatches ? countStock(stockFlavor, product.id, cart) : 0;
+              const canAdd = remaining > 0 && (!isInfused || offered.includes(infusion));
               return (
                 <article className="nf-bulk-card" key={product.id}>
                   <div className="nf-bulk-card-top">
-                    <span className="nf-bulk-size">{product.volume}</span>
-                    <span className="nf-bulk-type">{product.kind === "raw" ? "RAW · UNFILTERED" : "INFUSED"}</span>
+                    <span className="nf-bulk-size">6 LB · HALF-GALLON</span>
+                    <span className="nf-bulk-type">{isInfused ? "INFUSED" : "RAW · UNFILTERED"}</span>
                   </div>
                   <h3>{product.name}</h3>
-                  <div className="nf-bulk-price">${(size?.price ?? product.expected).toFixed(2)}</div>
-                  <p>Return one qualifying {product.volume.startsWith("6") ? "half-gallon" : "3 lb"} NectarFusions jar for a ${product.credit} reward on a matching-size purchase.</p>
-                  {product.kind === "infused" && (
+                  <div className="nf-bulk-price">${product.expected.toFixed(2)}</div>
+                  <p>{isInfused
+                    ? "Choose from five best-selling infused honey flavors. Just three infused half-gallons are available across all flavor choices."
+                    : "Our signature golden Original Raw Michigan Honey in a generously sized half-gallon jar."}</p>
+                  {isInfused && (
                     <label className="nf-bulk-flavor-label">
-                      Choose an infused flavor
-                      <select value={chosenInfusedFlavor[product.id] || ""}
-                        onChange={(e) => setChosenInfusedFlavor((current) => ({ ...current, [product.id]: e.target.value }))}>
-                        <option value="">Select flavor</option>
-                        {infusedFlavors.map((f) => <option value={f.id} key={f.id}>{f.name.trim()}</option>)}
+                      Choose one of our five infused flavors
+                      <select value={infusion} onChange={(event) => setInfusion(event.target.value)}>
+                        <option value="">Select a flavor</option>
+                        {offered.map((name) => <option key={name} value={name}>{name}</option>)}
                       </select>
                     </label>
                   )}
-                  <button type="button" className="nf-bulk-add" disabled={remaining < 1}
-                    onClick={() => onAddBulk(product.id, flavor.id)}>
-                    {remaining > 0 ? "Add to cart →" : "Currently unavailable"}
+                  <button type="button" className="nf-bulk-add" disabled={!canAdd}
+                    onClick={() => onAddBulk(product.id, stockFlavor?.id, isInfused ? infusion : null)}>
+                    {canAdd ? "Add to cart →" : remaining <= 0 ? "Currently unavailable" : "Choose a flavor first"}
                   </button>
-                  {dbPriceMatches && remaining > 0
-                    ? <small>{remaining} available · Checkout through Square</small>
-                    : <small>{size && !dbPriceMatches ? "Price configuration is being checked." : "Contact us about upcoming bulk availability."}</small>}
+                  <small>{priceMatches && remaining > 0
+                    ? `${remaining} available${isInfused ? " total across all infused flavors" : ""} · Secure Square checkout`
+                    : priceMatches ? "Currently sold out" : "Available after inventory configuration"}</small>
                 </article>
               );
             })}
           </div>
         </section>
-
         <section className="nf-bulk-rewards" aria-labelledby="nf-bulk-rewards-title">
           <span className="nf-bulk-eyebrow">RETURN · REWARD · REPEAT</span>
           <h2 id="nf-bulk-rewards-title">Jar Return Rewards</h2>
-          <p>Bring back your original empty NectarFusions jar when buying the same size. Help reduce packaging waste and receive credit for a qualifying return.</p>
-          <div className="nf-bulk-reward-grid">
-            <div><span>3 LB JAR</span><strong>$2 back</strong><small>For one qualifying 3 lb jar returned with a 3 lb purchase</small></div>
-            <div><span>6 LB / HALF GALLON</span><strong>$4 back</strong><small>For one qualifying half-gallon jar returned with a half-gallon purchase</small></div>
-          </div>
+          <p>Return an original NectarFusions 6 lb jar with your new half-gallon honey purchase. Your qualifying return earns $4 back.</p>
+          <div className="nf-bulk-reward-grid"><div><span>6 LB / HALF-GALLON JAR</span><strong>$4 back</strong><small>One qualifying original jar returned per matching-size purchase</small></div></div>
           <h3>How it works</h3>
           <ol>
-            <li>Place your bulk honey order at the regular listed price.</li>
-            <li>Choose a local pickup or delivery option, and enter the number of same-size jars you plan to return.</li>
-            <li>Bring back your original NectarFusions jars, empty and free from cracks, chips, damage, or contamination.</li>
-            <li>After we inspect and approve the jars, your eligible $2 or $4 return credit will be processed separately.</li>
+            <li>Buy a new 6 lb half-gallon jar at the regular listed price.</li>
+            <li>At checkout, choose a local pickup or delivery option and request your return reward.</li>
+            <li>Return your original NectarFusions 6 lb jar empty and free of chips, cracks, or contamination.</li>
+            <li>After inspection and approval, receive a separate $4 credit for each qualifying return.</li>
           </ol>
-          <p className="nf-bulk-reward-caution">One credit per qualifying jar and same-size purchase. Returned jars are not refilled at pickup; any reuse follows our approved cleaning and sanitizing process.</p>
+          <p className="nf-bulk-reward-caution">Returns are inspected before credit. Containers are not refilled at handoff. Any reuse requires the approved cleaning and sanitizing process.</p>
           <button type="button" className="nf-bulk-back" onClick={onShop}>Continue shopping →</button>
         </section>
       </main>

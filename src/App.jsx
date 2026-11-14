@@ -59,18 +59,20 @@ const GIFT_VARIANTS = [
   { key: "bear6cranberry", sizeId: "gift-bear-6oz", flavorName: "wild cranberry" },
 ];
 const GIFT_SIZE_IDS = new Set(GIFT_VARIANTS.map((item) => item.sizeId));
-// nf-bulk-honey-jar-rewards-v1: priced by dedicated raw/infused SKU; local fulfillment only.
+// nf-6lb-only-top5-shared-pool-v1: Half-gallons only. Infused flavor choices
+// share ONE counted 3-jar SKU through the checkout-only inactive flavor.
 const BULK_SKUS = [
-  { sizeId: "bulk-3lb-original", raw: true },
-  { sizeId: "bulk-3lb-infused", raw: false },
   { sizeId: "bulk-6lb-original", raw: true },
   { sizeId: "bulk-6lb-infused", raw: false },
 ];
 const BULK_SIZE_IDS = new Set(BULK_SKUS.map((item) => item.sizeId));
+const BULK_INFUSED_POOL_NAME = "Bulk Infused Selection";
+const BULK_FEATURED_FLAVORS = ["Pumpkin Spice", "Cinnamon", "Chipotle", "Espresso", "Hot Thai Chili"];
 const isAllowedBulkFlavor = (sizeId, name) => {
-  const sku = BULK_SKUS.find((item) => item.sizeId === sizeId);
-  const isRaw = String(name || "").trim().toLowerCase() === "original";
-  return Boolean(sku) && sku.raw === isRaw;
+  const normalized = String(name || "").trim().toLowerCase();
+  return sizeId === "bulk-6lb-original" ? normalized === "original"
+    : sizeId === "bulk-6lb-infused" ? normalized === BULK_INFUSED_POOL_NAME.toLowerCase()
+    : false;
 };
 // nf-gift-personalized-tags-v1: Keep gift presentation distinct per cart line.
 const giftTagText = (value) => String(value ?? "").replace(/\s+/g, " ").trim();
@@ -80,7 +82,8 @@ const giftTagIsValid = (value) => {
 };
 const giftCartVariantKey = (item) => [
   item.flavor_id, item.size_id, item.type,
-  item.giftWrap === true ? `gift:${giftTagText(item.giftTag)}` : "standard",
+  item.bulkFlavorName ? `bulk:${item.bulkFlavorName}` :
+    item.giftWrap === true ? `gift:${giftTagText(item.giftTag)}` : "standard",
 ].join("|");
 const isAllowedGiftFlavor = (sizeId, name) => GIFT_VARIANTS.some(
   (variant) => variant.sizeId === sizeId && variant.flavorName === String(name ?? "").trim().toLowerCase()
@@ -12221,7 +12224,7 @@ export default function App() {
   const [zip, setZip] = useState("");
   const [slot, setSlot] = useState(null);
   const [cust, setCust] = useState({ name: "", phone: "", email: "", address: "", city: "", notes: "" });
-  const [jarReturnRequest, setJarReturnRequest] = useState({ threeLb: 0, sixLb: 0 });
+  const [jarReturnRequest, setJarReturnRequest] = useState({ sixLb: 0 });
   const [receipt, setReceipt] = useState(null);
   const [ctaOff, setCtaOff] = useState(false);
   const [tick, setTick] = useState(0);
@@ -12890,15 +12893,40 @@ export default function App() {
     window.setTimeout(() => setCartOpen(true), 80);
   };
 
-  const addBulkToCart = (sizeId, flavorId) => {
-    const flavor = cat?.flavors?.find((f) => f.active !== false && f.id === flavorId);
+  const addBulkToCart = (sizeId, flavorId, selectedInfusion = null) => {
+    const flavor = cat?.flavors?.find((f) => f.id === flavorId);
     if (!flavor || !isAllowedBulkFlavor(sizeId, flavor.name)) return;
     if (!cat?.sizes?.some((size) => size.id === sizeId)) return;
+    const isInfused = sizeId === "bulk-6lb-infused";
+    const selected = String(selectedInfusion || "").trim();
+    if (isInfused && (
+      !BULK_FEATURED_FLAVORS.includes(selected) ||
+      !cat?.flavors?.some((f) => f.active !== false && String(f.name || "").trim() === selected)
+    )) return;
+    if (!isInfused && flavor.active === false) return;
     const limit = inventoryLimit(flavorId, sizeId, "regular");
-    const ordered = cart.filter((line) => line.flavor_id === flavorId && line.size_id === sizeId && line.type === "regular")
+    const total = cart.filter((line) => line.flavor_id === flavorId && line.size_id === sizeId && line.type === "regular")
       .reduce((n, line) => n + line.qty, 0);
-    if (limit < 1 || ordered >= limit) return;
-    addJar(flavor, sizeId, "regular");
+    if (limit < 1 || total >= limit) return;
+    if (isInfused) {
+      // Distinct flavor choices stay distinct in the cart but are aggregated
+      // by SKU at the server: one three-jar stock row, never five x three.
+      setCart((current) => {
+        const quantity = current.filter((line) => line.flavor_id === flavorId && line.size_id === sizeId && line.type === "regular")
+          .reduce((n, line) => n + line.qty, 0);
+        if (quantity >= limit) return current;
+        const i = current.findIndex((line) => line.flavor_id === flavorId && line.size_id === sizeId
+          && line.type === "regular" && line.bulkFlavorName === selected);
+        if (i >= 0) return current.map((line, index) => index === i ? { ...line, qty: line.qty + 1 } : line);
+        return [...current, {
+          flavor_id: flavorId, flavor: `${selected} (Infused)`,
+          bulkFlavorName: selected, hex: flavor.hex,
+          size_id: sizeId, type: "regular", qty: 1,
+        }];
+      });
+    } else {
+      addJar(flavor, sizeId, "regular");
+    }
     setErr(null);
     setMethod(null);
     setSlot(null);
@@ -13205,11 +13233,9 @@ export default function App() {
     }
   }
   const hasBulkCart = cart.some((line) => BULK_SIZE_IDS.has(line.size_id));
-  const eligible3 = cart.filter((line) => line.size_id.startsWith("bulk-3lb-")).reduce((n,line) => n + line.qty, 0);
   const eligible6 = cart.filter((line) => line.size_id.startsWith("bulk-6lb-")).reduce((n,line) => n + line.qty, 0);
-  const returned3 = method !== "ship" ? Math.min(eligible3, Math.max(0, Number(jarReturnRequest.threeLb) || 0)) : 0;
   const returned6 = method !== "ship" ? Math.min(eligible6, Math.max(0, Number(jarReturnRequest.sixLb) || 0)) : 0;
-  const estimatedJarCredit = returned3 * 2 + returned6 * 4;
+  const estimatedJarCredit = returned6 * 4;
   const canPlace = cart.length && slot && !missing.length && !belowMin && !busy && !(hasBulkCart && method === "ship");
   const unresolvedTypeItems = cart.filter((item) => item.type === "undecided");
   const unavailableTypeItems = cart.filter((item) => {
@@ -13238,16 +13264,18 @@ export default function App() {
       `tag text: "${giftTagText(item.giftTag)}"`
     ).join("\n");
   const jarReturnNotes = estimatedJarCredit > 0
-    ? `JAR RETURN REQUEST (PENDING INSPECTION): ${returned3} x original NectarFusions 3 lb jars, ` +
-      `${returned6} x original NectarFusions 6 lb jars. Potential credit $${estimatedJarCredit.toFixed(2)}. ` +
-      `Customer charged full price; inspect same-size empty jars at handoff and issue approved credit separately. ` +
-      `Do NOT refill jars during pickup or delivery.`
+    ? `JAR RETURN REQUEST (PENDING INSPECTION): ${returned6} x original NectarFusions 6 lb half-gallon jars. ` +
+      `Potential credit $${estimatedJarCredit.toFixed(2)}. Customer charged full price; ` +
+      `inspect empty jars at handoff and issue approved credit separately. Do NOT refill jars.`
     : "";
-  const fullOrderNotes = [cust.notes?.trim(), giftPackagingNotes, jarReturnNotes].filter(Boolean).join("\n\n");
+  const bulkFlavorNotes = cart.filter((line) => line.size_id === "bulk-6lb-infused" && line.bulkFlavorName)
+    .map((line) => `BULK INFUSED FLAVOR: ${line.qty} x 6 lb half-gallon, ${line.bulkFlavorName}.`)
+    .join("\n");
+  const fullOrderNotes = [cust.notes?.trim(), giftPackagingNotes, bulkFlavorNotes, jarReturnNotes].filter(Boolean).join("\n\n");
 
   async function submit() {
     if (hasBulkCart && method === "ship") {
-      setErr("Large 3 lb and 6 lb jars currently require market pickup or eligible local delivery. Contact us for a shipping quote.");
+      setErr("6 lb half-gallon jars currently require market pickup or eligible local delivery. Contact us for a shipping quote.");
       return;
     }
     if (!canSubmitOrder) {
@@ -16214,7 +16242,7 @@ export default function App() {
             </button>
             {hasBulkCart && (
               <div className="nf-shipping-threshold-note" role="status">
-                Bulk 3 lb and 6 lb honey is available for local pickup or eligible delivery.
+                Half-gallon 6 lb honey is available for local pickup or eligible delivery.
                 Contact us for a shipping quote rather than using standard jar shipping.
               </div>
             )}
@@ -16395,8 +16423,8 @@ export default function App() {
                   <Field required={false} rows={2}
                     placeholder={method === "delivery" ? "Optional — gate code, porch, shade…" : "Optional — anything we should know?"}
                     value={cust.notes} onChange={(e) => setCust({ ...cust, notes: e.target.value })} />
-                  <JarReturnCheckout eligible3={eligible3} eligible6={eligible6}
-                    requested3={returned3} requested6={returned6}
+                  <JarReturnCheckout eligible6={eligible6}
+                    requested6={returned6}
                     method={method}
                     onChange={(key, value) => setJarReturnRequest((prev) => ({ ...prev, [key]: value }))} />
                 </div>
@@ -16633,6 +16661,11 @@ export default function App() {
                   {giftPackagingNotes && (
                     <span className="nf-final-review-notes" style={{ whiteSpace: "pre-line" }}>
                       {giftPackagingNotes}
+                    </span>
+                  )}
+                  {bulkFlavorNotes && (
+                    <span className="nf-final-review-notes" style={{ whiteSpace: "pre-line" }}>
+                      {bulkFlavorNotes}
                     </span>
                   )}
                   {jarReturnNotes && (
