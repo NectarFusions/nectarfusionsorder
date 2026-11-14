@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./BulkHoneyPage.css";
 
 // Five best-selling *active* infusions ranked by units sold in the existing
@@ -76,23 +76,44 @@ export function JarReturnCheckout({ eligible6, requested6, onChange, method }) {
 }
 export function BulkHoneyHomepageFeature({ onOpen }) {
   return (
-    <section className="nf-wrap nf-bulk-home-teaser" aria-label="Half-gallon honey and jar return rewards">
-      <div className="nf-bulk-home-copy">
-        <span className="nf-bulk-eyebrow">MORE HONEY · LESS WASTE</span>
-        <h2>Half-Gallon Honey. <em>A Sweet Return.</em></h2>
-        <p className="nf-bulk-home-price">6 lb Raw Michigan Honey <strong>$70</strong> <span aria-hidden="true">·</span> Infused <strong>$95</strong></p>
-        <div className="nf-bulk-home-reward">
-          <strong>$4 BACK</strong><span>when you bring an eligible half-gallon jar back</span>
+    <section className="nf-bulk-home-teaser nf-bulk-home-teaser--feature" aria-label="Stock up on half-gallon NectarFusions honey">
+      <div className="nf-bulk-feature-copy">
+        <span className="nf-bulk-feature-kicker">STOCK UP ON THE GOOD STUFF</span>
+        <h2>Half Gallon Honey, <em>Made to Keep.</em></h2>
+        <p className="nf-bulk-feature-subtitle">Raw or infused. Rewarded on return.</p>
+        <div className="nf-bulk-feature-prices" aria-label="Half-gallon honey prices">
+          <div><span>6 lb Original Raw Honey</span><strong>$70</strong></div>
+          <div><span>Top 5 Infused Favorites</span><strong>$95</strong></div>
+        </div>
+        <div className="nf-bulk-feature-reward">
+          <strong>$4 BACK WITH JAR RETURN</strong>
+          <p>Select Yes at checkout for $4 off immediately. Bring your original, eligible empty NectarFusions 6 lb jar to pickup or delivery.</p>
+        </div>
+        <p className="nf-bulk-feature-availability">Available for market pickup or eligible local delivery only.</p>
+        <div className="nf-bulk-feature-actions">
+          <button type="button" className="nf-bulk-feature-primary" onClick={onOpen}>Shop Half Gallon Honey →</button>
+          <a className="nf-bulk-feature-secondary" href="/bulk-honey#nf-bulk-rewards-title">How Jar Returns Work →</a>
         </div>
       </div>
-      <img className="nf-bulk-home-jar" src="/images/bulk/half-gallon-honey-jar.webp"
-        alt="Gold-lidded glass jar of golden NectarFusions honey" width={182} height={244} loading="lazy" decoding="async"/>
-      <button type="button" className="nf-bulk-link-button" onClick={onOpen}>Shop Half-Gallon Honey →</button>
+      <div className="nf-bulk-feature-art" aria-hidden="true">
+        <span className="nf-bulk-feature-art-halo" />
+        <img src="/images/bulk/half-gallon-honey-jar.webp" alt="" width={1086} height={1448} loading="lazy" decoding="async" />
+        <span className="nf-bulk-feature-art-caption">6 LB · HALF GALLON</span>
+      </div>
     </section>
   );
 }
+
 export default function BulkHoneyPage({ Header, styles, catalog, cart, onShop, onAddBulk }) {
   const [infusion, setInfusion] = useState("");
+  // Deep-link the secondary homepage button to the Jar Return Rewards section.
+  useEffect(() => {
+    if (window.location.hash !== "#nf-bulk-rewards-title") return undefined;
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById("nf-bulk-rewards-title")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
   const flavors = catalog?.flavors ?? [];
   const raw = flavors.find((f) => f.active !== false && nameEquals(f.name, "Original"));
   const pool = flavors.find((f) => nameEquals(f.name, INFUSED_POOL));
@@ -106,7 +127,7 @@ export default function BulkHoneyPage({ Header, styles, catalog, cart, onShop, o
           <span className="nf-bulk-eyebrow">NECTARFUSIONS · MICHIGAN HONEY</span>
           <h1>A little more honey to love.</h1>
           <p>Choose our 6 lb half-gallon jar of Original Raw Michigan Honey or one of our five most-ordered infused flavors.</p>
-          <div className="nf-bulk-hero-note">Local market pickup or eligible local delivery · Contact us for a shipping quote</div>
+          <div className="nf-bulk-hero-note">Market pickup or eligible local delivery only</div>
         </section>
         <section className="nf-bulk-section" aria-labelledby="nf-bulk-products-title">
           <span className="nf-bulk-eyebrow">SHOP HALF-GALLON HONEY</span>

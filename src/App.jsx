@@ -13274,7 +13274,7 @@ export default function App() {
 
   async function submit() {
     if (hasBulkCart && method === "ship") {
-      setErr("6 lb half-gallon jars currently require market pickup or eligible local delivery. Contact us for a shipping quote.");
+      setErr("6 lb half-gallon honey is available for Market Pickup or eligible Local Delivery only.");
       return;
     }
     if (!canSubmitOrder) {
@@ -13438,7 +13438,9 @@ export default function App() {
       guideContinue(
         "method",
         "order-method-section",
-        "Choose Market Pickup, Local Delivery, or Shipping to continue."
+        hasBulkCart
+           ? "Choose Market Pickup or Local Delivery to continue."
+           : "Choose Market Pickup, Local Delivery, or Shipping to continue."
       );
       return;
     }
@@ -13449,7 +13451,9 @@ export default function App() {
         "order-method-section",
         method === "market"
           ? "Select an available market and pickup date to continue."
-          : "Select an available delivery or shipping option to continue."
+          : hasBulkCart
+             ? "Select an available local pickup or delivery option to continue."
+             : "Select an available delivery or shipping option to continue."
       );
       return;
     }
@@ -15172,7 +15176,7 @@ export default function App() {
         onHoliday={() => setView("holidayGifts")}
         onBusiness={() => setView("businessGifts")}
       />
-      <BulkHoneyHomepageFeature onOpen={() => setView("bulkHoney")} />
+
       {/* Beyond the Hive gives visitors a way to read and subscribe without shopping. */}
       <section className="nf-wrap" aria-label="Beyond the Hive stories" style={{paddingTop:20,paddingBottom:20}}>
         <a href="/stories" style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:16,flexWrap:"wrap",padding:"20px 24px",background:"#FFF9EF",color:"#4A3313",border:"1px solid #E8D6B5",borderRadius:16,textDecoration:"none"}}>
@@ -15419,6 +15423,9 @@ export default function App() {
               Plan Your Event →
             </a>
           </section>
+
+          {/* nf-premium-half-gallon-home-v1: separate pantry staple offer below Planning Something Special. */}
+          <BulkHoneyHomepageFeature onOpen={() => setView("bulkHoney")} />
 
           <section className="nf-type-selector-section">
             <div className="nf-wrap">
@@ -16224,26 +16231,26 @@ export default function App() {
               </button>
             </div>
 
-            <button
-              type="button"
-              id="nf-shipping-method"
-              className={`btn nf-shipping-method ${method === "ship" ? "on" : ""}`}
-              aria-pressed={method === "ship"}
-              disabled={hasBulkCart}
-              aria-disabled={hasBulkCart}
-              onClick={() => { if (!hasBulkCart) setMethod("ship"); }}
-            >
-              <span className="display nf-shipping-method-label">SHIPPING</span>
-              <span className="nf-shipping-method-detail">
-                {shipsFree
-                  ? "FREE Michigan shipping · ships in 2–3 business days"
-                  : `${money(cat.shipFlatFee)} flat-rate Michigan shipping · no minimum`}
-              </span>
-            </button>
+            {/* nf-half-gallon-hide-shipping-v1: Shipping is not offered when any 6 lb half-gallon is in cart. */}
+            {!hasBulkCart && (
+              <button
+                type="button"
+                id="nf-shipping-method"
+                className={`btn nf-shipping-method ${method === "ship" ? "on" : ""}`}
+                aria-pressed={method === "ship"}
+                onClick={() => setMethod("ship")}
+              >
+                <span className="display nf-shipping-method-label">SHIPPING</span>
+                <span className="nf-shipping-method-detail">
+                  {shipsFree
+                    ? "FREE Michigan shipping · ships in 2–3 business days"
+                    : `${money(cat.shipFlatFee)} flat-rate Michigan shipping · no minimum`}
+                </span>
+              </button>
+            )}
             {hasBulkCart && (
               <div className="nf-shipping-threshold-note" role="status">
-                Half-gallon 6 lb honey is available for local pickup or eligible delivery.
-                Contact us for a shipping quote rather than using standard jar shipping.
+                Half-gallon honey is available for <strong>Market Pickup</strong> or <strong>Local Delivery</strong> only.
               </div>
             )}
             {!shipsFree && !hasBulkCart && (
@@ -16285,23 +16292,23 @@ export default function App() {
                     <strong>Local delivery isn&rsquo;t available in your area yet.</strong>
                     <div style={{ marginTop: 5 }}>
                       {hasBulkCart
-                        ? "Bulk honey currently requires local pickup or delivery. Contact us for a shipping quote."
+                        ? "Delivery is not available for this ZIP code. Please select Market Pickup for half-gallon honey."
                         : shipsFree
                           ? "Your order qualifies for free shipping to Michigan addresses."
                           : `Choose Michigan shipping for ${money(cat.shipFlatFee)} flat; free at ${money(cat.shipFreeOver)}.`}
                     </div>
-                    <button
-                      type="button"
-                      className="btn nf-shipping-switch"
-                      disabled={hasBulkCart}
-                      onClick={() => {
-                        if (hasBulkCart) return;
-                        setMethod("ship");
-                        document.getElementById("nf-shipping-method")?.scrollIntoView({ behavior: "smooth", block: "center" });
-                      }}
-                    >
-                      Choose Shipping →
-                    </button>
+                    {!hasBulkCart && (
+                      <button
+                        type="button"
+                        className="btn nf-shipping-switch"
+                        onClick={() => {
+                          setMethod("ship");
+                          document.getElementById("nf-shipping-method")?.scrollIntoView({ behavior: "smooth", block: "center" });
+                        }}
+                      >
+                        Choose Shipping →
+                      </button>
+                    )}
                   </div>
                 )}
                 {zone && (
