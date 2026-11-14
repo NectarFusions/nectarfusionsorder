@@ -100,6 +100,22 @@ export default function BulkHoneyPage({ Header, styles, catalog, cart, onShop, o
                     <span className="nf-bulk-size">6 LB · HALF-GALLON</span>
                     <span className="nf-bulk-type">{isInfused ? "INFUSED" : "RAW · UNFILTERED"}</span>
                   </div>
+                  {/* nf-half-gallon-photo-v1: user-supplied 6 lb jar photo, shared reference for both product types */}
+                  <figure className="nf-bulk-product-photo">
+                    <img
+                      src="/images/bulk/half-gallon-honey-jar.webp"
+                      alt="Wide-mouth glass jar filled with golden honey and topped with a gold lid"
+                      width={1086}
+                      height={1448}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    <figcaption>
+                      {isInfused
+                        ? "Jar photo for reference. Honey color may vary by infusion."
+                        : "6 lb half-gallon honey jar"}
+                    </figcaption>
+                  </figure>
                   <h3>{product.name}</h3>
                   <div className="nf-bulk-price">${product.expected.toFixed(2)}</div>
                   <p>{isInfused

@@ -46,3 +46,31 @@
 .nf-jar-projected-credit{padding:9px 12px;background:#f0f6e9;border-radius:8px;font-size:12px;color:#36562f;font-weight:800;align-self:end}
 .nf-jar-return-checkout>small{display:block;color:#6e634f;margin-top:11px;font-size:11px;line-height:1.5}
 @media(max-width:700px){.nf-bulk-product-grid,.nf-bulk-reward-grid{grid-template-columns:1fr}.nf-bulk-home-teaser{flex-direction:column;align-items:stretch}.nf-bulk-link-button{width:100%}.nf-bulk-card{padding:22px}}
+
+/* nf-half-gallon-photo-v1: product photography for both 6 lb honey selections */
+.nf-bulk-product-photo {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 18px 0 2px;
+  padding: 12px 10px 14px;
+  border: 1px solid #eaddc9;
+  border-radius: 15px;
+  background: #ffffff;
+  text-align: center;
+}
+.nf-bulk-product-photo img {
+  display: block;
+  width: 100%;
+  height: clamp(265px, 30vw, 370px);
+  object-fit: contain;
+  object-position: center;
+}
+.nf-bulk-product-photo figcaption {
+  color: #776651;
+  font-size: 11px;
+  line-height: 1.45;
+  margin-top: 7px;
+}
+@media (max-width: 700px) {
+  .nf-bulk-product-photo img { height: 320px; }
+}
